@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports 
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="lignes_commande_subreport" pageWidth="555" pageHeight="842" 
+              columnWidth="555" leftMargin="0" rightMargin="0" 
+              topMargin="0" bottomMargin="0">
+
+    <field name="produitReference" class="java.lang.String"/>
+    <field name="produitDescription" class="java.lang.String"/>
+    <field name="quantiteCommandee" class="java.math.BigDecimal"/>
+    <field name="prixUnitaire" class="java.math.BigDecimal"/>
+    <field name="montantLigne" class="java.math.BigDecimal"/>
+
+    <detail>
+        <band height="25">
+            <!-- Alternance de couleurs -->
+            <rectangle>
+                <reportElement x="0" y="0" width="555" height="25" backcolor="#F8F9FA">
+                    <printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></printWhenExpression>
+                </reportElement>
+                <graphicElement>
+                    <pen lineWidth="0"/>
+                </graphicElement>
+            </rectangle>
+            
+            <!-- Bordures -->
+            <line>
+                <reportElement x="0" y="24" width="555" height="1"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineColor="#DEE2E6"/>
+                </graphicElement>
+            </line>
+            
+            <!-- Données -->
+            <textField>
+                <reportElement x="10" y="5" width="80" height="15"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{produitReference}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="100" y="5" width="200" height="15"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="Arial" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{produitDescription}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00">
+                <reportElement x="310" y="5" width="60" height="15"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{quantiteCommandee}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00">
+                <reportElement x="380" y="5" width="80" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="Arial" size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{prixUnitaire} + " DH"]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00">
+                <reportElement x="470" y="5" width="80" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="Arial" size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{montantLigne} + " DH"]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+</jasperReport>
