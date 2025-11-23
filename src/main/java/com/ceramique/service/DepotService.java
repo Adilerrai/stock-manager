@@ -20,7 +20,6 @@ public class DepotService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un nouveau dépôt")
     public Depot createDepot(DepotDTO depotDTO) {
 
         if (depotRepository.existsByNom(depotDTO.getNom())) {
@@ -37,7 +36,7 @@ public class DepotService {
     }
 
     public List<Depot> getAllDepotsActifs() {
-        return depotRepository.findByActifTrue(true);
+        return depotRepository.findByActifTrue();
     }
 
     public Depot getDepotById(Long depotId) {
@@ -59,7 +58,6 @@ public class DepotService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Suppression d'un dépôt")
     public void deleteDepot(Long depotId) {
         Depot depot = getDepotById(depotId);
         depot.setActif(false);

@@ -13,7 +13,6 @@ import java.util.Optional;
 @Repository
 public interface ClientRepository extends JpaRepository<Client, Long> {
 
-    List<Client> findByPointDeVenteId(Long pointDeVenteId);
 
     List<Client> findByActif(Boolean actif);
 
@@ -21,13 +20,12 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
 
     Optional<Client> findByTelephone(String telephone);
 
-    Optional<Client> findByEmailAndPointDeVenteId(String email, Long pointDeVenteId);
 
-    @Query("SELECT c FROM Client c WHERE c.pointDeVente.id = :pointDeVenteId " +
-           "AND (LOWER(c.nomComplet) LIKE LOWER(CONCAT('%', :search, '%')) " +
+    @Query("SELECT c FROM Client c WHERE " +
+           " (LOWER(c.nomComplet) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(c.telephone) LIKE LOWER(CONCAT('%', :search, '%')) " +
            "OR LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')))")
-    List<Client> searchClients(@Param("pointDeVenteId") Long pointDeVenteId, @Param("search") String search);
+    List<Client> searchClients(@Param("search") String search);
 
     @Query("SELECT c FROM Client c WHERE c.creditUtilise > c.creditAutorise")
     List<Client> findClientsAvecDepassementCredit();

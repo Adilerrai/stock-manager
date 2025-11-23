@@ -15,15 +15,11 @@ import java.util.Optional;
 @Repository
 public interface VenteRepository extends JpaRepository<Vente, Long> {
 
-    List<Vente> findByPointDeVenteId(Long pointDeVenteId);
 
-    Optional<Vente> findByNumeroTicketAndPointDeVenteId(String numeroTicket, Long pointDeVenteId);
 
     List<Vente> findByClientId(Long clientId);
 
-    List<Vente> findByVendeurIdAndPointDeVenteId(Long vendeurId, Long pointDeVenteId);
 
-    List<Vente> findByStatutAndPointDeVenteId(StatutVente statut, Long pointDeVenteId);
 
     @Query("SELECT v FROM Vente v  " +
            "WHERE v.dateVente BETWEEN :dateDebut AND :dateFin " +

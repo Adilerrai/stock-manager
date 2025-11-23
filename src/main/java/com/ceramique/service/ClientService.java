@@ -70,8 +70,7 @@ public class ClientService {
     }
 
     public List<Client> rechercherClients(String search) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return clientRepository.searchClients(pointDeVenteId, search);
+        return clientRepository.searchClients(  search);
     }
 
     public Client findByTelephone(String telephone) {

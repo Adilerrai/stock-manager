@@ -99,7 +99,7 @@ public class LivraisonService {
                     .orElse(null);
             if (depot == null) {
                 log.warn("Depot with id {} not found for pointDeVente {} - falling back to first active depot", ligneDTO.getDepot().getId());
-                List<Depot> depots = depotRepository.findByActifTrue(true);
+                List<Depot> depots = depotRepository.findByActifTrue();
                 if (!depots.isEmpty()) {
                     depot = depots.get(0);
                 } else {
@@ -107,7 +107,7 @@ public class LivraisonService {
                 }
             }
         } else {
-            List<Depot> depots = depotRepository.findByActifTrue(true);
+            List<Depot> depots = depotRepository.findByActifTrue();
             if (depots.isEmpty()) {
                 log.warn("No active depots found  - depot will be left null");
             } else {
@@ -195,7 +195,7 @@ public class LivraisonService {
     public Livraison getLivraisonById(Long livraisonId) {
         Long tenantId = TenantContext.getCurrentTenant();
         
-        return livraisonRepository.findByIdAndPointDeVente_TenantId(livraisonId, tenantId)
+        return livraisonRepository.findById(livraisonId)
                 .orElseThrow(() -> new ResourceNotFoundException("Livraison", "id", livraisonId));
     }
 
@@ -310,7 +310,7 @@ public class LivraisonService {
                     .orElse(null);
             if (depot == null) {
                 log.warn("Depot with id {} not found - falling back to first active depot", ligneEntity.getDepot().getId());
-                List<Depot> depots = depotRepository.findByActifTrue(true);
+                List<Depot> depots = depotRepository.findByActifTrue();
                 if (!depots.isEmpty()) {
                     depot = depots.get(0);
                 } else {
@@ -318,7 +318,7 @@ public class LivraisonService {
                 }
             }
         } else {
-            List<Depot> depots = depotRepository.findByActifTrue(true);
+            List<Depot> depots = depotRepository.findByActifTrue();
             if (depots.isEmpty()) {
                 log.warn("No active depots found  - depot will be left null");
             } else {

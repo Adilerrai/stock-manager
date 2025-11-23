@@ -21,7 +21,6 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long> {
 
     List<Paiement> findByClientId(Long clientId);
 
-    List<Paiement> findByModePaiementAndPointDeVenteId(ModePaiement modePaiement);
 
     @Query("SELECT p FROM Paiement p WHERE " +
            " p.datePaiement BETWEEN :dateDebut AND :dateFin " +

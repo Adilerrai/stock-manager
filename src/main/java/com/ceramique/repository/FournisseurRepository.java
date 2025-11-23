@@ -14,10 +14,7 @@ public interface FournisseurRepository extends JpaRepository<Fournisseur, Long>,
 
     List<Fournisseur> findByActifTrue();
     
-    Optional<Fournisseur> findByIdAndPointDeVente_Id(Long id, Long pointDeVenteId);
-    
-    boolean existsByRaisonSocialeAndPointDeVente_Id(String nom, Long pointDeVenteId);
-    
+
     @Query("SELECT f FROM Fournisseur f WHERE f.actif = true ORDER BY f.raisonSociale ASC")
     List<Fournisseur> findActiveOrderByNom();
 

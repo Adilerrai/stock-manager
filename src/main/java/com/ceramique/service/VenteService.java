@@ -173,10 +173,9 @@ public class VenteService {
     }
 
     private String genererNumeroTicket() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
         String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         long count = venteRepository.count() + 1;
-        return "TK-" + pointDeVenteId + "-" + dateStr + "-" + String.format("%06d", count);
+        return "TK-" +  dateStr + "-" + String.format("%06d", count);
     }
 
     public Vente appliquerRemiseGlobale(Long venteId, BigDecimal remise) {

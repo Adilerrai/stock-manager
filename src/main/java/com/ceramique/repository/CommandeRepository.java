@@ -14,16 +14,13 @@ import java.util.Optional;
 @Repository
 public interface CommandeRepository extends JpaRepository<Commande, Long>, CommandeRepositoryCustom {
     
-    List<Commande> findAllByDateCommandeDesc();
 
-    Optional<Commande> findById(Long id);
 
     List<Commande> findByStatut(StatutCommande statut);
 
-    List<Commande> findByFournisseur_Id(Long fournisseurId);
-    
+
     @Query("SELECT c FROM Commande c WHERE c.dateCommande BETWEEN :dateDebut AND :dateFin ORDER BY c.dateCommande DESC")
-    List<Commande> findByPointDeVenteAndDateRange(@Param("dateDebut") LocalDateTime dateDebut,
+    List<Commande> findByDateRange(@Param("dateDebut") LocalDateTime dateDebut,
                                                   @Param("dateFin") LocalDateTime dateFin);
     
     boolean existsByNumeroCommande(String numeroCommande);

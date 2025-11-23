@@ -9,11 +9,8 @@ import java.util.Optional;
 
 @Repository
 public interface DepotRepository extends JpaRepository<Depot, Long> {
-    List<Depot> findByPointDeVente_IdAndActifTrue(Long pointDeVenteId);
-    Optional<Depot> findByIdAndPointDeVente_Id(Long id, Long pointDeVenteId);
-    Optional<Depot> findFirstByPointDeVente_IdAndActifTrue(Long pointDeVenteId);
 
-    List<Depot> findByActifTrue(Boolean actif);
+    List<Depot> findByActifTrue();
 
     boolean existsByNom(String nom);
 }
