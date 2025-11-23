@@ -11,7 +11,6 @@ public class CommandeDTO {
     private String numeroCommande;
     private Long fournisseurId;
     private String fournisseurNom;
-    private Long pointDeVenteId;
     private StatutCommande statut;
     @JsonFormat(pattern = "yyyy-MM-dd['T'HH:mm[:ss][.SSS]]", timezone = "UTC+1")
     private LocalDateTime dateCommande;
@@ -38,9 +37,6 @@ public class CommandeDTO {
 
     public String getFournisseurNom() { return fournisseurNom; }
     public void setFournisseurNom(String fournisseurNom) { this.fournisseurNom = fournisseurNom; }
-
-    public Long getPointDeVenteId() { return pointDeVenteId; }
-    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 
     public StatutCommande getStatut() { return statut; }
     public void setStatut(StatutCommande statut) { this.statut = statut; }

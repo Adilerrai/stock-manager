@@ -22,12 +22,12 @@ public class ProduitRepositoryImpl implements ProduitRepositoryCustom {
 
 
     @Override
-    public Page<Produit> findByCriteria(ProduitSearchCriteria criteria, Long pointDeVenteId, Pageable pageable) {
+    public Page<Produit> findByCriteria(ProduitSearchCriteria criteria, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Produit> query = cb.createQuery(Produit.class);
         Root<Produit> root = query.from(Produit.class);
         
-        List<Predicate> predicates = buildPredicates(cb, root, criteria, pointDeVenteId);
+        List<Predicate> predicates = buildPredicates(cb, root, criteria);
         
         query.where(predicates.toArray(new Predicate[0]));
         query.orderBy(cb.asc(root.get("description")));
@@ -35,7 +35,7 @@ public class ProduitRepositoryImpl implements ProduitRepositoryCustom {
         // Count query pour la pagination
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Produit> countRoot = countQuery.from(Produit.class);
-        List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria, pointDeVenteId);
+        List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria);
         countQuery.select(cb.count(countRoot));
         countQuery.where(countPredicates.toArray(new Predicate[0]));
         
@@ -50,12 +50,10 @@ public class ProduitRepositoryImpl implements ProduitRepositoryCustom {
     }
 
     private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Produit> root, 
-                                           ProduitSearchCriteria criteria, Long pointDeVenteId) {
+                                           ProduitSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
         
-        // Point de vente obligatoire
-        predicates.add(cb.equal(root.get("pointDeVente").get("id"), pointDeVenteId));
-        
+
         // Nom (utiliser 'description' au lieu de 'designation')
         if (criteria.getNom() != null && !criteria.getNom().trim().isEmpty()) {
             predicates.add(cb.like(cb.lower(root.get("description")), 

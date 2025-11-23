@@ -13,7 +13,6 @@ public class ProduitDTO {
     private UniteMesure uniteMesureStock;
     private BigDecimal prixAchat;
     private BigDecimal prixVente;
-    private Long pointDeVenteId;
     private ProduitImageDTO image;
     private Boolean actif;
     private GroupeArticle groupeArticle;
@@ -48,10 +47,7 @@ public class ProduitDTO {
     
     public BigDecimal getPrixVente() { return prixVente; }
     public void setPrixVente(BigDecimal prixVente) { this.prixVente = prixVente; }
-    
-    public Long getPointDeVenteId() { return pointDeVenteId; }
-    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
-    
+
     public ProduitImageDTO getImage() { return image; }
     public void setImage(ProduitImageDTO image) { this.image = image; }
     

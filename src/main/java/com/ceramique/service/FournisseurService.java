@@ -1,10 +1,6 @@
 package com.ceramique.service;
 
-import com.acommon.annotation.MultitenantSearchMethod;
 import com.acommon.exception.ResourceNotFoundException;
-import com.acommon.persistant.model.PointDeVente;
-import com.acommon.persistant.model.TenantContext;
-import com.acommon.repository.PointDeVenteRepository;
 import com.ceramique.persistent.dto.FournisseurDTO;
 import com.ceramique.persistent.dto.FournisseurSearchCriteria;
 import com.ceramique.persistent.model.Fournisseur;
@@ -20,22 +16,15 @@ import java.util.List;
 public class FournisseurService {
 
     private final FournisseurRepository fournisseurRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
 
-    public FournisseurService(FournisseurRepository fournisseurRepository, 
-                             PointDeVenteRepository pointDeVenteRepository) {
+    public FournisseurService(FournisseurRepository fournisseurRepository) {
         this.fournisseurRepository = fournisseurRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un nouveau fournisseur")
     public Fournisseur createFournisseur(FournisseurDTO fournisseurDTO) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        if (fournisseurRepository.existsByRaisonSocialeAndPointDeVente_Id(fournisseurDTO.getRaisonSociale(), pointDeVente.getId())) {
+        if (fournisseurRepository.existsByRaisonSociale((fournisseurDTO.getRaisonSociale())) ){
             throw new IllegalArgumentException("Un fournisseur avec ce nom existe déjà");
         }
 
@@ -45,33 +34,21 @@ public class FournisseurService {
         fournisseur.setTelephone(fournisseurDTO.getTelephone());
         fournisseur.setEmail(fournisseurDTO.getEmail());
         fournisseur.setContact(fournisseurDTO.getContact());
-        fournisseur.setPointDeVente(pointDeVente);
         fournisseur.setActif(true);
 
         return fournisseurRepository.save(fournisseur);
     }
 
-    @MultitenantSearchMethod(description = "Récupération de tous les fournisseurs actifs")
     public List<Fournisseur> getAllFournisseursActifs() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return fournisseurRepository.findActiveByPointDeVenteOrderByNom(pointDeVente.getId());
+        return fournisseurRepository.findActiveOrderByNom();
     }
 
-    @MultitenantSearchMethod(description = "Récupération d'un fournisseur par ID")
     public Fournisseur getFournisseurById(Long fournisseurId) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return fournisseurRepository.findByIdAndPointDeVente_Id(fournisseurId, pointDeVente.getId())
+        return fournisseurRepository.findById(fournisseurId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", fournisseurId));
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Mise à jour d'un fournisseur")
     public Fournisseur updateFournisseur(FournisseurDTO fournisseurDTO) {
         Fournisseur fournisseur = getFournisseurById(fournisseurDTO.getId());
         
@@ -99,20 +76,14 @@ public class FournisseurService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Suppression d'un fournisseur")
     public void deleteFournisseur(Long fournisseurId) {
         Fournisseur fournisseur = getFournisseurById(fournisseurId);
         fournisseur.setActif(false);
         fournisseurRepository.save(fournisseur);
     }
 
-    @MultitenantSearchMethod(description = "Recherche de fournisseurs par critères avec pagination")
     public Page<Fournisseur> searchFournisseurs(FournisseurSearchCriteria criteria, Pageable pageable) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        // Le filtre du point de vente sera ajouté dans le repository
         return fournisseurRepository.findByCriteria(criteria, pageable);
     }
 }

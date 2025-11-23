@@ -5,5 +5,5 @@ import com.ceramique.persistent.model.Commande;
 import java.util.List;
 
 public interface CommandeRepositoryCustom {
-    List<Commande> findByCriteria(CommandeSearchCriteria criteria, Long pointDeVenteId);
+    List<Commande> findByCriteria(CommandeSearchCriteria criteria);
 }

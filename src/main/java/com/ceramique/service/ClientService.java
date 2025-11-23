@@ -58,18 +58,15 @@ public class ClientService {
     }
 
     public List<Client> getAllClients() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return clientRepository.findByPointDeVenteId(pointDeVenteId);
+        return clientRepository.findAll();
     }
 
     public List<Client> getClientsActifs() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return clientRepository.findByPointDeVenteIdAndActif(pointDeVenteId, true);
+        return clientRepository.findByActif( true);
     }
 
     public List<Client> getClientsByCategorie(CategorieClient categorie) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return clientRepository.findByPointDeVenteIdAndCategorie(pointDeVenteId, categorie);
+        return clientRepository.findByCategorie(categorie);
     }
 
     public List<Client> rechercherClients(String search) {
@@ -78,8 +75,7 @@ public class ClientService {
     }
 
     public Client findByTelephone(String telephone) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return clientRepository.findByTelephoneAndPointDeVenteId(telephone, pointDeVenteId)
+        return clientRepository.findByTelephone(telephone)
                 .orElse(null);
     }
 
@@ -124,8 +120,7 @@ public class ClientService {
     }
 
     public List<Client> getClientsAvecDepassementCredit() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return clientRepository.findClientsAvecDepassementCredit(pointDeVenteId);
+        return clientRepository.findClientsAvecDepassementCredit();
     }
 }
 

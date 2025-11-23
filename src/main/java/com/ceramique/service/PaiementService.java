@@ -1,9 +1,7 @@
 package com.ceramique.service;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
-import com.acommon.repository.PointDeVenteRepository;
 import com.acommon.repository.UserRepository;
 import com.ceramique.persistent.enums.ModePaiement;
 import com.ceramique.persistent.model.Facture;
@@ -29,29 +27,23 @@ public class PaiementService {
     private final FactureRepository factureRepository;
     private final ClientService clientService;
     private final UserRepository userRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
 
     public PaiementService(PaiementRepository paiementRepository,
                           @Lazy VenteService venteService,
                           FactureRepository factureRepository,
                           ClientService clientService,
-                          UserRepository userRepository,
-                          PointDeVenteRepository pointDeVenteRepository) {
+                          UserRepository userRepository) {
         this.paiementRepository = paiementRepository;
         this.venteService = venteService;
         this.factureRepository = factureRepository;
         this.clientService = clientService;
         this.userRepository = userRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
     }
 
     public Paiement enregistrerPaiementVente(Long venteId, Paiement paiement, Long userId) {
         Vente vente = venteService.getVenteById(venteId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findById(pointDeVenteId)
-                .orElseThrow(() -> new RuntimeException("Point de vente non trouvé"));
 
         if (paiement.getMontant().compareTo(vente.getMontantRestant()) > 0) {
             throw new RuntimeException("Le montant du paiement dépasse le montant restant");
@@ -60,7 +52,6 @@ public class PaiementService {
         paiement.setVente(vente);
         paiement.setClient(vente.getClient());
         paiement.setEncaissePar(user);
-        paiement.setPointDeVente(pointDeVente);
         paiement.setNumeroPaiement(genererNumeroPaiement());
         paiement.setDatePaiement(LocalDateTime.now());
 
@@ -83,9 +74,6 @@ public class PaiementService {
                 .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findById(pointDeVenteId)
-                .orElseThrow(() -> new RuntimeException("Point de vente non trouvé"));
 
         if (paiement.getMontant().compareTo(facture.getMontantRestant()) > 0) {
             throw new RuntimeException("Le montant du paiement dépasse le montant restant");
@@ -94,7 +82,6 @@ public class PaiementService {
         paiement.setFacture(facture);
         paiement.setClient(facture.getClient());
         paiement.setEncaissePar(user);
-        paiement.setPointDeVente(pointDeVente);
         paiement.setNumeroPaiement(genererNumeroPaiement());
         paiement.setDatePaiement(LocalDateTime.now());
 
@@ -162,27 +149,23 @@ public class PaiementService {
     }
 
     public List<Paiement> getPaiementsByPeriode(LocalDateTime dateDebut, LocalDateTime dateFin) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return paiementRepository.findPaiementsByPeriode(pointDeVenteId, dateDebut, dateFin);
+        return paiementRepository.findPaiementsByPeriode( dateDebut, dateFin);
     }
 
     public BigDecimal getTotalPaiementsByPeriode(LocalDateTime dateDebut, LocalDateTime dateFin) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        BigDecimal total = paiementRepository.sumMontantByPeriode(pointDeVenteId, dateDebut, dateFin);
+        BigDecimal total = paiementRepository.sumMontantByPeriode( dateDebut, dateFin);
         return total != null ? total : BigDecimal.ZERO;
     }
 
     public BigDecimal getTotalPaiementsByModePaiement(ModePaiement modePaiement, LocalDateTime dateDebut, LocalDateTime dateFin) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        BigDecimal total = paiementRepository.sumMontantByModePaiement(pointDeVenteId, modePaiement, dateDebut, dateFin);
+        BigDecimal total = paiementRepository.sumMontantByModePaiement(modePaiement, dateDebut, dateFin);
         return total != null ? total : BigDecimal.ZERO;
     }
 
     private String genererNumeroPaiement() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
         String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         long count = paiementRepository.count() + 1;
-        return "PAY-" + pointDeVenteId + "-" + dateStr + "-" + String.format("%06d", count);
+        return "PAY-"+ dateStr + "-" + String.format("%06d", count);
     }
 }
 

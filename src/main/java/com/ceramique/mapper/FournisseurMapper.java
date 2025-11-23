@@ -11,12 +11,10 @@ public interface FournisseurMapper {
 
     FournisseurDTO toDto(Fournisseur fournisseur);
 
-    @Mapping(target = "pointDeVente", ignore = true)
     @Mapping(target = "dateCreation", ignore = true)
     Fournisseur toEntity(FournisseurDTO fournisseurDTO);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "pointDeVente", ignore = true)
     @Mapping(target = "dateCreation", ignore = true)
     void updateEntityFromDto(FournisseurDTO fournisseurDTO, @MappingTarget Fournisseur fournisseur);
 }

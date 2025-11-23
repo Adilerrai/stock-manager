@@ -1,9 +1,7 @@
 package com.ceramique.service;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
-import com.acommon.repository.PointDeVenteRepository;
 import com.acommon.repository.UserRepository;
 import com.ceramique.persistent.enums.StatutVente;
 import com.ceramique.persistent.model.*;
@@ -28,33 +26,26 @@ public class VenteService {
     private final ClientService clientService;
     private final StockService stockService;
     private final UserRepository userRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
 
     public VenteService(VenteRepository venteRepository,
                         LigneVenteRepository ligneVenteRepository,
                         ProduitRepository produitRepository,
                         ClientService clientService,
                         StockService stockService,
-                        UserRepository userRepository,
-                        PointDeVenteRepository pointDeVenteRepository) {
+                        UserRepository userRepository) {
         this.venteRepository = venteRepository;
         this.ligneVenteRepository = ligneVenteRepository;
         this.produitRepository = produitRepository;
         this.clientService = clientService;
         this.stockService = stockService;
         this.userRepository = userRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
     }
 
     public Vente creerVente(Vente vente, Long vendeurId) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findById(pointDeVenteId)
-                .orElseThrow(() -> new RuntimeException("Point de vente non trouvé"));
 
         User vendeur = userRepository.findById(vendeurId)
                 .orElseThrow(() -> new RuntimeException("Vendeur non trouvé"));
 
-        vente.setPointDeVente(pointDeVente);
         vente.setVendeur(vendeur);
         vente.setNumeroTicket(genererNumeroTicket());
         vente.setDateVente(LocalDateTime.now());
@@ -160,28 +151,24 @@ public class VenteService {
     }
 
     public List<Vente> getAllVentes() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return venteRepository.findByPointDeVenteId(pointDeVenteId);
+        return venteRepository.findAll();
     }
 
     public List<Vente> getVentesByClient(Long clientId) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return venteRepository.findByClientIdAndPointDeVenteId(clientId, pointDeVenteId);
+        return venteRepository.findByClientId(clientId);
     }
 
     public List<Vente> getVentesByPeriode(LocalDateTime dateDebut, LocalDateTime dateFin) {
         Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return venteRepository.findVentesByPeriode(pointDeVenteId, dateDebut, dateFin);
+        return venteRepository.findVentesByPeriode(dateDebut, dateFin);
     }
 
     public List<Vente> getVentesNonSoldees() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return venteRepository.findVentesNonSoldees(pointDeVenteId);
+        return venteRepository.findVentesNonSoldees();
     }
 
     public BigDecimal calculerChiffreAffaires(LocalDateTime dateDebut, LocalDateTime dateFin) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        BigDecimal ca = venteRepository.calculerChiffreAffaires(pointDeVenteId, dateDebut, dateFin);
+        BigDecimal ca = venteRepository.calculerChiffreAffaires( dateDebut, dateFin);
         return ca != null ? ca : BigDecimal.ZERO;
     }
 

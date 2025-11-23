@@ -3,9 +3,7 @@ package com.ceramique.service;
 import com.acommon.annotation.MultitenantSearchMethod;
 import com.acommon.exception.CommonException;
 import com.acommon.exception.ResourceNotFoundException;
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
-import com.acommon.repository.PointDeVenteRepository;
 import com.ceramique.mapper.ProduitMapper;
 import com.ceramique.persistent.dto.ProduitDTO;
 import com.ceramique.persistent.dto.ProduitSearchCriteria;
@@ -26,7 +24,6 @@ import java.util.List;
 public class ProduitService {
 
     private final ProduitRepository produitRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
     private final ProduitMapper produitMapper;
     private final ProduitImageRepository produitImageRepository;
     @Autowired
@@ -34,10 +31,8 @@ public class ProduitService {
 
     public ProduitService(
             ProduitRepository produitRepository,
-            PointDeVenteRepository pointDeVenteRepository,
             ProduitMapper produitMapper, ProduitImageRepository produitImageRepository) {
         this.produitRepository = produitRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
         this.produitMapper = produitMapper;
         this.produitImageRepository = produitImageRepository;
     }
@@ -45,13 +40,9 @@ public class ProduitService {
     @Transactional
     @MultitenantSearchMethod(description = "Création d'un nouveau produit")
     public Produit createProduit(Produit produit) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
         String reference = "PROD-" + System.currentTimeMillis();
         produit.setReference(reference);
-        produit.setPointDeVente(pointDeVente);
 
         return produitRepository.save(produit);
     }
@@ -59,11 +50,8 @@ public class ProduitService {
     @Transactional(readOnly = true)
     @MultitenantSearchMethod(description = "Récupération de tous les produits du point de vente")
     public List<Produit> getAllProduits() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        List<Produit> produits = produitRepository.findByPointDeVente_IdWithImages(pointDeVente.getId());
+        List<Produit> produits = produitRepository.findWithImages();
         
         // Debug: vérifier les données d'image
         for (Produit produit : produits) {
@@ -77,44 +65,31 @@ public class ProduitService {
         return produits;
     }
 
-    @MultitenantSearchMethod(description = "Récupération de tous les produits sans images")
-    public List<Produit> getAllProduitsWithoutImages() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
+     public List<Produit> getAllProduitsWithoutImages() {
 
-        return produitRepository.findByPointDeVente_Id(pointDeVente.getId());
+
+        return produitRepository.findAll();
     }
 
-    @MultitenantSearchMethod(description = "Récupération d'un produit par ID")
-    public Produit getProduitById(Long produitId) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
+     public Produit getProduitById(Long produitId) {
 
-        return produitRepository.findByIdAndPointDeVente_Id(produitId, pointDeVente.getId())
+        return produitRepository.findById(produitId )
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
     }
 
     @MultitenantSearchMethod(description = "Récupération d'un produit avec image par ID")
     public Produit getProduitWithImageById(Long produitId) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        return produitRepository.findByIdAndPointDeVente_Id(produitId, pointDeVente.getId())
+        return produitRepository.findById(produitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
     }
 
 
     @Transactional
-    @MultitenantSearchMethod(description = "Mise à jour d'un produit")
-    public Produit updateProduit(ProduitDTO produitDTO) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(produitDTO.getId(), pointDeVente.getId())
+    public Produit updateProduit(ProduitDTO produitDTO) {
+
+        Produit produit = produitRepository.findById(produitDTO.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitDTO.getId()));
         
         produitMapper.updateEntityFromDto(produitDTO, produit);
@@ -168,11 +143,8 @@ public class ProduitService {
     @Transactional
     @MultitenantSearchMethod(description = "Suppression d'un produit")
     public void deleteProduit(Long produitId) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(produitId, pointDeVente.getId())
+        Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
 
         produitRepository.delete(produit);
@@ -180,24 +152,17 @@ public class ProduitService {
 
     @MultitenantSearchMethod(description = "Recherche de produits par critères")
     public Page<Produit> searchProduits(ProduitSearchCriteria criteria, Pageable pageable) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        return produitRepository.findByCriteria(criteria, pointDeVente.getId(), pageable);
+        return produitRepository.findByCriteria(criteria, pageable);
     }
 
     /**
      * Upload d'une image pour un produit existant
      */
     @Transactional
-    @MultitenantSearchMethod(description = "Upload d'image pour un produit")
     public Produit uploadImageToProduit(Long produitId, org.springframework.web.multipart.MultipartFile file) throws Exception {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(produitId, pointDeVente.getId())
+        Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
 
         if (file == null || file.isEmpty()) {
@@ -240,11 +205,8 @@ public class ProduitService {
     @Transactional
     @MultitenantSearchMethod(description = "Suppression de l'image d'un produit")
     public void deleteImageFromProduit(Long produitId) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(produitId, pointDeVente.getId())
+        Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
 
         if (produit.getImage() != null) {
@@ -266,11 +228,6 @@ public class ProduitService {
             java.math.BigDecimal prixAchat,
             java.math.BigDecimal prixVente,
             org.springframework.web.multipart.MultipartFile imageFile) throws Exception {
-
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
         // Créer le produit
         Produit produit = new Produit();
         produit.setReference(reference != null && !reference.isEmpty() ? reference : "PROD-" + System.currentTimeMillis());
@@ -278,7 +235,6 @@ public class ProduitService {
         produit.setDescription(description);
         produit.setPrixAchat(prixAchat);
         produit.setPrixVente(prixVente);
-        produit.setPointDeVente(pointDeVente);
         produit.setActif(true);
 
         // Ajouter l'image si fournie

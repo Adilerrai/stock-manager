@@ -2,9 +2,7 @@ package com.ceramique.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
 import com.acommon.exception.ResourceNotFoundException;
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
-import com.acommon.repository.PointDeVenteRepository;
 import com.ceramique.persistent.dto.CommandeDTO;
 import com.ceramique.persistent.dto.CommandeSearchCriteria;
 import com.ceramique.persistent.dto.LigneCommandeDTO;
@@ -40,36 +38,29 @@ public class CommandeService {
     private final LigneCommandeRepository ligneCommandeRepository;
     private final FournisseurRepository fournisseurRepository;
     private final ProduitRepository produitRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
 
     public CommandeService(CommandeRepository commandeRepository,
                           LigneCommandeRepository ligneCommandeRepository,
                           FournisseurRepository fournisseurRepository,
-                          ProduitRepository produitRepository,
-                          PointDeVenteRepository pointDeVenteRepository) {
+                          ProduitRepository produitRepository) {
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.produitRepository = produitRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
     }
 
     @Transactional
     @MultitenantSearchMethod(description = "Création d'une nouvelle commande")
     public Commande createCommande(CommandeDTO commandeDTO) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        Fournisseur fournisseur = fournisseurRepository.findByIdAndPointDeVente_Id(
-                commandeDTO.getFournisseurId(), pointDeVente.getId())
+        Fournisseur fournisseur = fournisseurRepository.findById(
+                commandeDTO.getFournisseurId())
                 .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", commandeDTO.getFournisseurId()));
 
         Commande commande = new Commande();
         commande.setNumeroCommande(generateNumeroCommande());
         commande.setFournisseur(fournisseur);
-        commande.setPointDeVente(pointDeVente);
-        commande.setStatut(StatutCommande.EN_ATTENTE);
+         commande.setStatut(StatutCommande.EN_ATTENTE);
         commande.setDateLivraisonPrevue(commandeDTO.getDateLivraisonPrevue());
         commande.setObservations(commandeDTO.getObservations());
 
@@ -78,7 +69,7 @@ public class CommandeService {
         // Créer les lignes de commande
         BigDecimal montantTotal = BigDecimal.ZERO;
         for (LigneCommandeDTO ligneDTO : commandeDTO.getLignesCommande()) {
-            LigneCommande ligne = createLigneCommande(commande, ligneDTO, pointDeVente.getId());
+            LigneCommande ligne = createLigneCommande(commande, ligneDTO);
             montantTotal = montantTotal.add(ligne.getMontantLigne());
         }
 
@@ -86,8 +77,8 @@ public class CommandeService {
         return commandeRepository.save(commande);
     }
 
-    private LigneCommande createLigneCommande(Commande commande, LigneCommandeDTO ligneDTO, Long pointDeVenteId) {
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(ligneDTO.getProduitId(), pointDeVenteId)
+    private LigneCommande createLigneCommande(Commande commande, LigneCommandeDTO ligneDTO) {
+        Produit produit = produitRepository.findById(ligneDTO.getProduitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", ligneDTO.getProduitId()));
 
         LigneCommande ligne = new LigneCommande();
@@ -103,28 +94,18 @@ public class CommandeService {
 
     @MultitenantSearchMethod(description = "Récupération de toutes les commandes")
     public List<Commande> getAllCommandes() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return commandeRepository.findByPointDeVente_IdOrderByDateCommandeDesc(pointDeVente.getId());
+        return commandeRepository.findAll();
     }
 
     @MultitenantSearchMethod(description = "Récupération d'une commande par ID")
     public Commande getCommandeById(Long commandeId) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        
-        return commandeRepository.findByIdAndPointDeVente_Id(commandeId, tenantId)
+        return commandeRepository.findById(commandeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commande", "id", commandeId));
     }
 
     @MultitenantSearchMethod(description = "Récupération des commandes par statut")
     public List<Commande> getCommandesByStatut(StatutCommande statut) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return commandeRepository.findByPointDeVente_IdAndStatut(pointDeVente.getId(), statut);
+        return commandeRepository.findByStatut(statut);
     }
 
     @Transactional
@@ -162,10 +143,8 @@ public class CommandeService {
     @MultitenantSearchMethod(description = "Recherche de commandes par critères")
     public List<Commande> searchCommandes(CommandeSearchCriteria criteria) {
         Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        return commandeRepository.findByCriteria(criteria, pointDeVente.getId());
+        return commandeRepository.findByCriteria(criteria);
     }
 
     @MultitenantSearchMethod(description = "Génération PDF d'une commande")

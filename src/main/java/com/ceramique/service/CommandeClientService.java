@@ -2,9 +2,7 @@ package com.ceramique.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
 import com.acommon.exception.ResourceNotFoundException;
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
-import com.acommon.repository.PointDeVenteRepository;
 import com.ceramique.mapper.CommandeClientMapper;
 import com.ceramique.persistent.dto.CommandeClientDTO;
 import com.ceramique.persistent.dto.LigneCommandeClientDTO;
@@ -21,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class CommandeClientService {
@@ -29,31 +26,24 @@ public class CommandeClientService {
     private final CommandeClientRepository commandeClientRepository;
     private final LigneCommandeClientRepository ligneCommandeClientRepository;
     private final ProduitRepository produitRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
     private final CommandeClientMapper commandeClientMapper;
 
     public CommandeClientService(CommandeClientRepository commandeClientRepository,
                                 LigneCommandeClientRepository ligneCommandeClientRepository,
                                 ProduitRepository produitRepository,
-                                PointDeVenteRepository pointDeVenteRepository,
                                 CommandeClientMapper commandeClientMapper) {
         this.commandeClientRepository = commandeClientRepository;
         this.ligneCommandeClientRepository = ligneCommandeClientRepository;
         this.produitRepository = produitRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
         this.commandeClientMapper = commandeClientMapper;
     }
 
     @Transactional
     @MultitenantSearchMethod(description = "Création d'une commande client")
     public CommandeClient createCommandeClient(CommandeClientDTO commandeDTO) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
         CommandeClient commande = new CommandeClient();
         commande.setNumeroCommande(generateNumeroCommandeClient());
-        commande.setPointDeVente(pointDeVente);
         commande.setClientNom(commandeDTO.getClientNom());
         commande.setClientTelephone(commandeDTO.getClientTelephone());
         commande.setClientEmail(commandeDTO.getClientEmail());
@@ -69,7 +59,7 @@ public class CommandeClientService {
         // Créer les lignes de commande
         BigDecimal montantHT = BigDecimal.ZERO;
         for (LigneCommandeClientDTO ligneDTO : commandeDTO.getLignesCommande()) {
-            LigneCommandeClient ligne = createLigneCommandeClient(commande, ligneDTO, pointDeVente.getId());
+            LigneCommandeClient ligne = createLigneCommandeClient(commande, ligneDTO);
             montantHT = montantHT.add(ligne.getMontantLigne());
         }
 
@@ -79,8 +69,8 @@ public class CommandeClientService {
         return commandeClientRepository.save(commande);
     }
 
-    private LigneCommandeClient createLigneCommandeClient(CommandeClient commande, LigneCommandeClientDTO ligneDTO, Long pointDeVenteId) {
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(ligneDTO.getProduitId(), pointDeVenteId)
+    private LigneCommandeClient createLigneCommandeClient(CommandeClient commande, LigneCommandeClientDTO ligneDTO) {
+        Produit produit = produitRepository.findById(ligneDTO.getProduitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", ligneDTO.getProduitId()));
 
         LigneCommandeClient ligne = new LigneCommandeClient();
@@ -94,22 +84,15 @@ public class CommandeClientService {
         return ligneCommandeClientRepository.save(ligne);
     }
 
-    @MultitenantSearchMethod(description = "Récupération de toutes les commandes clients")
     public List<CommandeClient> getAllCommandesClient() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return commandeClientRepository.findByPointDeVente_IdOrderByDateCommandeDesc(pointDeVente.getId());
+        return commandeClientRepository.findAll();
     }
 
-    @MultitenantSearchMethod(description = "Récupération d'une commande client par ID")
     public CommandeClient getCommandeClientById(Long commandeId) {
         return getCommandeClientEntityById(commandeId);
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Mise à jour du statut d'une commande client")
     public CommandeClient updateStatut(Long commandeId, StatutCommandeClient nouveauStatut) {
         CommandeClient commande = getCommandeClientEntityById(commandeId);
         commande.setStatut(nouveauStatut);
@@ -118,19 +101,11 @@ public class CommandeClientService {
 
     @MultitenantSearchMethod(description = "Récupération des commandes par statut")
     public List<CommandeClient> getCommandesByStatut(StatutCommandeClient statut) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return commandeClientRepository.findByStatutAndPointDeVente_Id(statut, pointDeVente.getId());
+        return commandeClientRepository.findByStatut(statut);
     }
 
     private CommandeClient getCommandeClientEntityById(Long commandeId) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return commandeClientRepository.findByIdAndPointDeVente_Id(commandeId, pointDeVente.getId())
+        return commandeClientRepository.findById(commandeId)
                 .orElseThrow(() -> new ResourceNotFoundException("CommandeClient", "id", commandeId));
     }
 

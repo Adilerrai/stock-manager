@@ -19,34 +19,31 @@ public interface VenteRepository extends JpaRepository<Vente, Long> {
 
     Optional<Vente> findByNumeroTicketAndPointDeVenteId(String numeroTicket, Long pointDeVenteId);
 
-    List<Vente> findByClientIdAndPointDeVenteId(Long clientId, Long pointDeVenteId);
+    List<Vente> findByClientId(Long clientId);
 
     List<Vente> findByVendeurIdAndPointDeVenteId(Long vendeurId, Long pointDeVenteId);
 
     List<Vente> findByStatutAndPointDeVenteId(StatutVente statut, Long pointDeVenteId);
 
-    @Query("SELECT v FROM Vente v WHERE v.pointDeVente.id = :pointDeVenteId " +
-           "AND v.dateVente BETWEEN :dateDebut AND :dateFin " +
+    @Query("SELECT v FROM Vente v  " +
+           "WHERE v.dateVente BETWEEN :dateDebut AND :dateFin " +
            "ORDER BY v.dateVente DESC")
-    List<Vente> findVentesByPeriode(@Param("pointDeVenteId") Long pointDeVenteId,
-                                     @Param("dateDebut") LocalDateTime dateDebut,
+    List<Vente> findVentesByPeriode(@Param("dateDebut") LocalDateTime dateDebut,
                                      @Param("dateFin") LocalDateTime dateFin);
 
-    @Query("SELECT SUM(v.montantFinal) FROM Vente v WHERE v.pointDeVente.id = :pointDeVenteId " +
-           "AND v.statut = 'VALIDEE' AND v.dateVente BETWEEN :dateDebut AND :dateFin")
-    BigDecimal calculerChiffreAffaires(@Param("pointDeVenteId") Long pointDeVenteId,
-                                        @Param("dateDebut") LocalDateTime dateDebut,
+    @Query("SELECT SUM(v.montantFinal) FROM Vente v " +
+           "WHERE v.statut = 'VALIDEE' AND v.dateVente BETWEEN :dateDebut AND :dateFin")
+    BigDecimal calculerChiffreAffaires(@Param("dateDebut") LocalDateTime dateDebut,
                                         @Param("dateFin") LocalDateTime dateFin);
 
-    @Query("SELECT COUNT(v) FROM Vente v WHERE v.pointDeVente.id = :pointDeVenteId " +
-           "AND v.dateVente BETWEEN :dateDebut AND :dateFin")
-    Long countVentesByPeriode(@Param("pointDeVenteId") Long pointDeVenteId,
-                               @Param("dateDebut") LocalDateTime dateDebut,
+    @Query("SELECT COUNT(v) FROM Vente v WHERE  " +
+           " v.dateVente BETWEEN :dateDebut AND :dateFin")
+    Long countVentesByPeriode(@Param("dateDebut") LocalDateTime dateDebut,
                                @Param("dateFin") LocalDateTime dateFin);
 
-    @Query("SELECT v FROM Vente v WHERE v.pointDeVente.id = :pointDeVenteId " +
-           "AND v.montantRestant > 0 " +
+    @Query("SELECT v FROM Vente v WHERE " +
+           " v.montantRestant > 0 " +
            "ORDER BY v.dateVente DESC")
-    List<Vente> findVentesNonSoldees(@Param("pointDeVenteId") Long pointDeVenteId);
+    List<Vente> findVentesNonSoldees();
 }
 

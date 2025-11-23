@@ -43,10 +43,6 @@ public class User implements UserDetails {
     private Genre genre; // "HOMME" ou "FEMME"
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
-
     // Champs pour UserDetails
     private boolean accountNonExpired = true;
     private boolean accountNonLocked = true;
@@ -151,11 +147,4 @@ public class User implements UserDetails {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
-    public PointDeVente getPointDeVente() {
-        return pointDeVente;
-    }
-
-    public void setPointDeVente(PointDeVente pointDeVente) {
-        this.pointDeVente = pointDeVente;
-    }
 }

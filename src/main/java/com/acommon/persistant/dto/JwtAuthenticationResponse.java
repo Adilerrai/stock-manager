@@ -12,7 +12,6 @@ public class JwtAuthenticationResponse {
     private String username;
     private Long id;
     private String tokenType;
-    private Long pointDeVenteId;
 
     public JwtAuthenticationResponse() {
     }
@@ -28,7 +27,6 @@ public class JwtAuthenticationResponse {
         this.username = builder.username;
         this.id = builder.id;
         this.tokenType = builder.tokenType;
-        this.pointDeVenteId = builder.pointDeVenteId;
     }
 
     // Static builder method
@@ -47,7 +45,6 @@ public class JwtAuthenticationResponse {
         private String username;
         private Long id;
         private String tokenType;
-        private Long pointDeVenteId;
 
         public Builder token(String token) {
             this.token = token;
@@ -93,10 +90,7 @@ public class JwtAuthenticationResponse {
             return this;
         }
 
-        public Builder pointDeVenteId(Long pointDeVenteId) {
-            this.pointDeVenteId = pointDeVenteId;
-            return this;
-        }
+
 
         public JwtAuthenticationResponse build() {
             return new JwtAuthenticationResponse(this);
@@ -176,11 +170,4 @@ public class JwtAuthenticationResponse {
         this.tokenType = tokenType;
     }
 
-    public Long getPointDeVenteId() {
-        return pointDeVenteId;
-    }
-
-    public void setPointDeVenteId(Long pointDeVenteId) {
-        this.pointDeVenteId = pointDeVenteId;
-    }
 }

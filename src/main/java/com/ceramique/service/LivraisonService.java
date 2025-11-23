@@ -2,9 +2,7 @@ package com.ceramique.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
 import com.acommon.exception.ResourceNotFoundException;
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
-import com.acommon.repository.PointDeVenteRepository;
 import com.ceramique.persistent.dto.LivraisonDTO;
 import com.ceramique.persistent.dto.LigneLivraisonDTO;
 import com.ceramique.persistent.dto.LivraisonSearchCriteria;
@@ -35,8 +33,7 @@ public class LivraisonService {
     private final LigneLivraisonRepository ligneLivraisonRepository;
     private final ProduitRepository produitRepository;
     private final StockService stockService;
-    private final PointDeVenteRepository pointDeVenteRepository;
-    private final DepotRepository depotRepository;
+     private final DepotRepository depotRepository;
     private final MouvementStockService mouvementStockService;
     private final LotService lotService;
     private final CommandeRepository commandeRepository;
@@ -47,7 +44,6 @@ public class LivraisonService {
                            LigneLivraisonRepository ligneLivraisonRepository,
                            ProduitRepository produitRepository,
                            StockService stockService,
-                           PointDeVenteRepository pointDeVenteRepository,
                            DepotRepository depotRepository,
                            MouvementStockService mouvementStockService,
                            LotService lotService,
@@ -58,7 +54,6 @@ public class LivraisonService {
         this.ligneLivraisonRepository = ligneLivraisonRepository;
         this.produitRepository = produitRepository;
         this.stockService = stockService;
-        this.pointDeVenteRepository = pointDeVenteRepository;
         this.depotRepository = depotRepository;
         this.mouvementStockService = mouvementStockService;
         this.lotService = lotService;
@@ -69,13 +64,8 @@ public class LivraisonService {
     @Transactional
     @MultitenantSearchMethod(description = "Création d'une livraison en brouillon")
     public Livraison createLivraison(LivraisonDTO livraisonDTO) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
         Livraison livraison = new Livraison();
         livraison.setNumeroLivraison(generateNumeroLivraison());
-        livraison.setPointDeVente(pointDeVente);
         livraison.setTransporteur(livraisonDTO.getTransporteur());
         livraison.setNumeroSuivi(livraisonDTO.getNumeroSuivi());
         livraison.setObservations(livraisonDTO.getObservations());
@@ -88,7 +78,7 @@ public class LivraisonService {
         BigDecimal montantTotal = BigDecimal.ZERO;
         if (livraisonDTO.getLignesLivraison() != null) {
             for (LigneLivraisonDTO ligneDTO : livraisonDTO.getLignesLivraison()) {
-                LigneLivraison ligne = createLigneLivraison(livraison, ligneDTO, pointDeVente.getId());
+                LigneLivraison ligne = createLigneLivraison(livraison, ligneDTO);
                 montantTotal = montantTotal.add(ligne.getPrixProduit().multiply(
                         BigDecimal.valueOf(ligne.getQuantiteLivree())));
             }
@@ -98,29 +88,28 @@ public class LivraisonService {
         return livraisonRepository.save(livraison);
     }
 
-    private LigneLivraison createLigneLivraison(Livraison livraison, LigneLivraisonDTO ligneDTO, Long pointDeVenteId) {
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(ligneDTO.getProduit().getId(), pointDeVenteId)
+    private LigneLivraison createLigneLivraison(Livraison livraison, LigneLivraisonDTO ligneDTO) {
+        Produit produit = produitRepository.findById(ligneDTO.getProduit().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", ligneDTO.getProduit().getId()));
 
         // Get depot from DTO or use default depot
         Depot depot = null;
         if (ligneDTO.getDepot() != null && ligneDTO.getDepot().getId() != null) {
-            // try find by id (no longer strictly filtered by pointDeVente) and fallback to first active depot
-            depot = depotRepository.findByIdAndPointDeVente_Id(ligneDTO.getDepot().getId(), pointDeVenteId)
+            depot = depotRepository.findById(ligneDTO.getDepot().getId())
                     .orElse(null);
             if (depot == null) {
-                log.warn("Depot with id {} not found for pointDeVente {} - falling back to first active depot", ligneDTO.getDepot().getId(), pointDeVenteId);
-                List<Depot> depots = depotRepository.findByPointDeVente_IdAndActifTrue(pointDeVenteId);
+                log.warn("Depot with id {} not found for pointDeVente {} - falling back to first active depot", ligneDTO.getDepot().getId());
+                List<Depot> depots = depotRepository.findByActifTrue(true);
                 if (!depots.isEmpty()) {
                     depot = depots.get(0);
                 } else {
-                    log.warn("No active depots found for pointDeVente {} - depot will be left null", pointDeVenteId);
+                    log.warn("No active depots found  - depot will be left null");
                 }
             }
         } else {
-            List<Depot> depots = depotRepository.findByPointDeVente_IdAndActifTrue(pointDeVenteId);
+            List<Depot> depots = depotRepository.findByActifTrue(true);
             if (depots.isEmpty()) {
-                log.warn("No active depots found for pointDeVente {} - depot will be left null", pointDeVenteId);
+                log.warn("No active depots found  - depot will be left null");
             } else {
                 depot = depots.get(0);
             }
@@ -162,14 +151,6 @@ public class LivraisonService {
             Long depotId = null;
             if (ligne.getDepot() != null && ligne.getDepot().getId() != null) {
                 depotId = ligne.getDepot().getId();
-            } else if (livraison.getPointDeVente() != null && livraison.getPointDeVente().getId() != null) {
-                List<Depot> depots = depotRepository.findByPointDeVente_IdAndActifTrue(livraison.getPointDeVente().getId());
-                if (!depots.isEmpty()) {
-                    depotId = depots.get(0).getId();
-                    log.warn("Using fallback depot {} for livraison {}", depotId, livraison.getId());
-                } else {
-                    log.warn("No depot available for pointDeVente {} while validating livraison {}", livraison.getPointDeVente() != null ? livraison.getPointDeVente().getId() : null, livraison.getId());
-                }
             } else {
                 log.warn("Cannot resolve pointDeVente for livraison {} to find depot fallback", livraison.getId());
             }
@@ -231,14 +212,11 @@ public class LivraisonService {
         return livraisonRepository.save(livraison);
     }
 
-    @MultitenantSearchMethod(description = "Récupération des livraisons par statut")
     public List<Livraison> getLivraisonsByStatut(StatutLivraison statut) {
-        Long tenantId = TenantContext.getCurrentTenant();
         
-        return livraisonRepository.findByStatutAndPointDeVente_TenantId(statut, tenantId);
+        return livraisonRepository.findByStatut(statut);
     }
 
-    @MultitenantSearchMethod(description = "Récupération des détails d'une livraison")
     public Livraison getLivraisonWithDetails(Long livraisonId) {
         return getLivraisonById(livraisonId);
     }
@@ -249,15 +227,12 @@ public class LivraisonService {
         return prefix + timestamp;
     }
 
-    @MultitenantSearchMethod(description = "Récupération de toutes les livraisons")
     public List<Livraison> getAllLivraisons() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        
-        return livraisonRepository.findByPointDeVente_TenantId(tenantId);
+
+        return livraisonRepository.findAll();
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Mise à jour d'une livraison")
     public Livraison updateLivraison(LivraisonDTO livraisonDTO) {
         Livraison existingLivraison = getLivraisonById(livraisonDTO.getId());
         
@@ -270,7 +245,6 @@ public class LivraisonService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Suppression d'une livraison")
     public void deleteLivraison(Long id) {
         Livraison livraison = getLivraisonById(id);
         
@@ -281,20 +255,15 @@ public class LivraisonService {
         livraisonRepository.delete(livraison);
     }
 
-    @MultitenantSearchMethod(description = "Recherche de livraisons par critères")
     public List<Livraison> searchLivraisons(LivraisonSearchCriteria criteria) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        
-        return livraisonRepository.findByCriteria(criteria, tenantId);
+
+        return livraisonRepository.findByCriteria(criteria);
     }
 
     @Transactional
     public Livraison creerLivraison(Livraison livraison) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        Commande commande = commandeRepository.findByIdAndPointDeVente_Id(livraison.getCommande().getId(), pointDeVente.getId())
+        Commande commande = commandeRepository.findById(livraison.getCommande().getId())
                 .orElseThrow(RuntimeException::new);
         
         if (commande.getStatutLivraison() == StatutLivraison.LIVREE) {
@@ -306,7 +275,6 @@ public class LivraisonService {
         livraison.getLignesLivraison().clear();
 
         livraison.setNumeroLivraison(generateNumeroLivraison());
-        livraison.setPointDeVente(pointDeVente);
         livraison.setCommande(commande);
         livraison.setStatut(StatutLivraison.EN_ATTENTE);
         livraison.setDateLivraison(livraison.getDateLivraison() != null ?
@@ -318,7 +286,7 @@ public class LivraisonService {
         BigDecimal montantTotal = BigDecimal.ZERO;
         if (!originalLignes.isEmpty()) {
             for (LigneLivraison ligne : originalLignes) {
-                ligne = createLigneLivraison(livraison, ligne, pointDeVente.getId());
+                ligne = createLigneLivraison(livraison, ligne);
                 montantTotal = montantTotal.add(ligne.getPrixProduit().multiply(
                         BigDecimal.valueOf(ligne.getQuantiteLivree())));
             }
@@ -332,27 +300,27 @@ public class LivraisonService {
         return livraison;
     }
 
-    private LigneLivraison createLigneLivraison(Livraison livraison, LigneLivraison ligneEntity, Long pointDeVenteId) {
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(ligneEntity.getProduit().getId(), pointDeVenteId)
+    private LigneLivraison createLigneLivraison(Livraison livraison, LigneLivraison ligneEntity) {
+        Produit produit = produitRepository.findById(ligneEntity.getProduit().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", ligneEntity.getProduit().getId()));
 
         Depot depot = null;
         if (ligneEntity.getDepot() != null && ligneEntity.getDepot().getId() != null) {
-            depot = depotRepository.findByIdAndPointDeVente_Id(ligneEntity.getDepot().getId(), pointDeVenteId)
+            depot = depotRepository.findById(ligneEntity.getDepot().getId())
                     .orElse(null);
             if (depot == null) {
-                log.warn("Depot with id {} not found for pointDeVente {} - falling back to first active depot", ligneEntity.getDepot().getId(), pointDeVenteId);
-                List<Depot> depots = depotRepository.findByPointDeVente_IdAndActifTrue(pointDeVenteId);
+                log.warn("Depot with id {} not found - falling back to first active depot", ligneEntity.getDepot().getId());
+                List<Depot> depots = depotRepository.findByActifTrue(true);
                 if (!depots.isEmpty()) {
                     depot = depots.get(0);
                 } else {
-                    log.warn("No active depots found for pointDeVente {} - depot will be left null", pointDeVenteId);
+                    log.warn("No active depots found , depot will be left null");
                 }
             }
         } else {
-            List<Depot> depots = depotRepository.findByPointDeVente_IdAndActifTrue(pointDeVenteId);
+            List<Depot> depots = depotRepository.findByActifTrue(true);
             if (depots.isEmpty()) {
-                log.warn("No active depots found for pointDeVente {} - depot will be left null", pointDeVenteId);
+                log.warn("No active depots found  - depot will be left null");
             } else {
                 depot = depots.get(0);
             }

@@ -41,10 +41,10 @@ public class MouvementStockService {
                                          BigDecimal quantite, QualiteProduit qualite,
                                          String referenceDocument, String motif) {
         // Charger le produit et calculer quantités
-        Stock stock = stockRepository.findByProduitIdWithQualities(produitId).orElse(null);
+        Stock stock = stockRepository.findByProduitWithQualities(produitId).orElse(null);
         BigDecimal quantiteAvant = stock != null ? stock.getQuantiteTotaleDisponible() : BigDecimal.ZERO;
         appliquerMouvementStock(produitId, typeMouvement, quantite, qualite);
-        stock = stockRepository.findByProduitIdWithQualities(produitId).orElse(null);
+        stock = stockRepository.findByProduitWithQualities(produitId).orElse(null);
         BigDecimal quantiteApres = stock != null ? stock.getQuantiteTotaleDisponible() : BigDecimal.ZERO;
 
         Produit produit = produitRepository.findById(produitId).orElseThrow();
@@ -54,10 +54,7 @@ public class MouvementStockService {
         if (depotId != null) {
             depot = depotRepository.findById(depotId).orElse(null);
         }
-        if (depot == null && produit.getPointDeVente() != null && produit.getPointDeVente().getId() != null) {
-            Optional<Depot> opt = depotRepository.findFirstByPointDeVente_IdAndActifTrue(produit.getPointDeVente().getId());
-            if (opt.isPresent()) depot = opt.get();
-        }
+
         if (depot == null) {
             List<Depot> all = depotRepository.findAll();
             for (Depot d : all) {
@@ -113,7 +110,7 @@ public class MouvementStockService {
             case SORTIE_VENTE, SORTIE_COMMANDE, AJUSTEMENT_NEGATIF, TRANSFERT_SORTIE ->
                 stockService.retirerStockParQualite(produitId, qualite, quantite);
             case INVENTAIRE -> {
-                Stock stock = stockRepository.findByProduitIdWithQualities(produitId).orElse(null);
+                Stock stock = stockRepository.findByProduitWithQualities(produitId).orElse(null);
                 if (stock != null) {
                     StockQualite sq = stock.getStockByQualite(qualite);
                     if (sq != null) {

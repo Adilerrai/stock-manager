@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.User;
 import com.ceramique.persistent.enums.StatutVente;
 import jakarta.persistence.*;
@@ -60,10 +59,6 @@ public class Vente {
 
     @Column(name = "montant_restant", precision = 15, scale = 2)
     private BigDecimal montantRestant = BigDecimal.ZERO;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
 
     @OneToOne(mappedBy = "vente")
     private Facture facture;
@@ -203,14 +198,6 @@ public class Vente {
 
     public void setMontantRestant(BigDecimal montantRestant) {
         this.montantRestant = montantRestant;
-    }
-
-    public PointDeVente getPointDeVente() {
-        return pointDeVente;
-    }
-
-    public void setPointDeVente(PointDeVente pointDeVente) {
-        this.pointDeVente = pointDeVente;
     }
 
     public Facture getFacture() {

@@ -7,7 +7,6 @@ public class DepotDTO {
     private String nom;
     private String description;
     private String adresse;
-    private Long pointDeVenteId;
     private LocalDateTime dateCreation;
     private Boolean actif;
 
@@ -25,9 +24,6 @@ public class DepotDTO {
 
     public String getAdresse() { return adresse; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
-
-    public Long getPointDeVenteId() { return pointDeVenteId; }
-    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }

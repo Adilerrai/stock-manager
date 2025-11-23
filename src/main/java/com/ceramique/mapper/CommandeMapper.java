@@ -14,7 +14,6 @@ public interface CommandeMapper {
     CommandeDTO toDto(Commande commande);
 
     @Mapping(target = "fournisseur", ignore = true)
-    @Mapping(target = "pointDeVente", ignore = true)
     @Mapping(target = "dateCommande", ignore = true)
     @Mapping(target = "livraisons", ignore = true)
     Commande toEntity(CommandeDTO commandeDTO);
@@ -22,7 +21,6 @@ public interface CommandeMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "numeroCommande", ignore = true)
     @Mapping(target = "fournisseur", ignore = true)
-    @Mapping(target = "pointDeVente", ignore = true)
     @Mapping(target = "dateCommande", ignore = true)
     @Mapping(target = "livraisons", ignore = true)
     void updateEntityFromDto(CommandeDTO commandeDTO, @MappingTarget Commande commande);

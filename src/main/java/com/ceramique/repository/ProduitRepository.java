@@ -13,13 +13,11 @@ import java.util.Optional;
 @Repository
 public interface ProduitRepository extends JpaRepository<Produit, Long>, ProduitRepositoryCustom {
     
-    List<Produit> findByPointDeVente_Id(Long pointDeVenteId);
-    
-    Optional<Produit> findByIdAndPointDeVente_Id(Long id, Long pointDeVenteId);
 
-    @Query("SELECT p FROM Produit p LEFT JOIN FETCH p.image WHERE p.pointDeVente.id = :pointDeVenteId")
+
+    @Query("SELECT p FROM Produit p LEFT JOIN FETCH p.image ")
     @Transactional(readOnly = true)
-    List<Produit> findByPointDeVente_IdWithImages(@Param("pointDeVenteId") Long pointDeVenteId);
+    List<Produit> findWithImages();
 
     // Méthode de fallback sans images
 }

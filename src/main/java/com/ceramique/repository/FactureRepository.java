@@ -14,29 +14,28 @@ import java.util.Optional;
 @Repository
 public interface FactureRepository extends JpaRepository<Facture, Long> {
 
-    List<Facture> findByPointDeVenteId(Long pointDeVenteId);
 
-    Optional<Facture> findByNumeroFactureAndPointDeVenteId(String numeroFacture, Long pointDeVenteId);
+    Optional<Facture> findByNumeroFacture(String numeroFacture);
 
-    List<Facture> findByClientIdAndPointDeVenteId(Long clientId, Long pointDeVenteId);
+    List<Facture> findByClientId(Long clientId);
 
-    List<Facture> findByStatutAndPointDeVenteId(StatutFacture statut, Long pointDeVenteId);
+    List<Facture> findByStatut(StatutFacture statut);
 
-    @Query("SELECT f FROM Facture f WHERE f.pointDeVente.id = :pointDeVenteId " +
-           "AND f.dateFacture BETWEEN :dateDebut AND :dateFin " +
+    @Query("SELECT f FROM Facture f WHERE "+
+           "f.dateFacture BETWEEN :dateDebut AND :dateFin " +
            "ORDER BY f.dateFacture DESC")
-    List<Facture> findFacturesByPeriode(@Param("pointDeVenteId") Long pointDeVenteId,
-                                         @Param("dateDebut") LocalDate dateDebut,
+    List<Facture> findFacturesByPeriode(@Param("dateDebut") LocalDate dateDebut,
                                          @Param("dateFin") LocalDate dateFin);
 
-    @Query("SELECT f FROM Facture f WHERE f.pointDeVente.id = :pointDeVenteId " +
-           "AND f.montantRestant > 0 AND f.annulee = false " +
+    @Query("SELECT f FROM Facture f WHERE " +
+           "f.montantRestant > 0 AND f.annulee = false " +
            "ORDER BY f.dateFacture DESC")
-    List<Facture> findFacturesImpayees(@Param("pointDeVenteId") Long pointDeVenteId);
+    List<Facture> findFacturesImpayees();
 
-    @Query("SELECT f FROM Facture f WHERE f.pointDeVente.id = :pointDeVenteId " +
-           "AND f.dateEcheance < :date AND f.montantRestant > 0 AND f.annulee = false " +
+    @Query("SELECT f FROM Facture f WHERE " +
+           "f.dateEcheance < :date AND f.montantRestant > 0 AND f.annulee = false " +
            "ORDER BY f.dateEcheance ASC")
-    List<Facture> findFacturesEchues(@Param("pointDeVenteId") Long pointDeVenteId, @Param("date") LocalDate date);
+    List<Facture> findFacturesEchues(@Param("date") LocalDate date);
+
 }
 

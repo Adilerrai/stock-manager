@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.User;
 import com.ceramique.persistent.enums.StatutFacture;
 import jakarta.persistence.*;
@@ -69,9 +68,6 @@ public class Facture {
     @Column(name = "montant_restant", precision = 15, scale = 2)
     private BigDecimal montantRestant = BigDecimal.ZERO;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
 
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();
@@ -235,14 +231,6 @@ public class Facture {
 
     public void setMontantRestant(BigDecimal montantRestant) {
         this.montantRestant = montantRestant;
-    }
-
-    public PointDeVente getPointDeVente() {
-        return pointDeVente;
-    }
-
-    public void setPointDeVente(PointDeVente pointDeVente) {
-        this.pointDeVente = pointDeVente;
     }
 
     public LocalDateTime getDateCreation() {

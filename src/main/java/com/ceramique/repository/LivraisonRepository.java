@@ -21,4 +21,6 @@ public interface LivraisonRepository extends JpaRepository<Livraison, Long>, Liv
     List<Livraison> findByPointDeVente_TenantId(Long tenantId);
     
     List<Livraison> findByCommande_IdAndStatut(Long commandeId, StatutLivraison statut);
+
+    List<Livraison> findByStatut(StatutLivraison statut);
 }

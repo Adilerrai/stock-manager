@@ -9,18 +9,15 @@ import org.mapstruct.MappingTarget;
 @Mapper(componentModel = "spring")
 public interface ClientMapper {
 
-    @Mapping(target = "pointDeVenteId", source = "pointDeVente.id")
     @Mapping(target = "creditDisponible", expression = "java(client.getCreditDisponible())")
     ClientDTO toDto(Client client);
 
-    @Mapping(target = "pointDeVente", ignore = true)
     @Mapping(target = "ventes", ignore = true)
     @Mapping(target = "factures", ignore = true)
     @Mapping(target = "dateCreation", ignore = true)
     @Mapping(target = "dateDerniereVisite", ignore = true)
     Client toEntity(ClientDTO dto);
 
-    @Mapping(target = "pointDeVente", ignore = true)
     @Mapping(target = "ventes", ignore = true)
     @Mapping(target = "factures", ignore = true)
     @Mapping(target = "dateCreation", ignore = true)

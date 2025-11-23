@@ -19,9 +19,8 @@ public interface LigneCommandeRepository extends JpaRepository<LigneCommande, Lo
     
     Optional<LigneCommande> findByCommande_IdAndProduit_Id(Long commandeId, Long produitId);
     
-    @Query("SELECT lc FROM LigneCommande lc WHERE lc.commande.pointDeVente.id = :pointDeVenteId AND lc.produit.id = :produitId")
-    List<LigneCommande> findByPointDeVenteAndProduit(@Param("pointDeVenteId") Long pointDeVenteId, 
-                                                     @Param("produitId") Long produitId);
+    @Query("SELECT lc FROM LigneCommande lc WHERE lc.produit.id = :produitId")
+    List<LigneCommande> findByProduit( @Param("produitId") Long produitId);
     
     List<LigneCommande> findByCommande(Commande commande);
 }

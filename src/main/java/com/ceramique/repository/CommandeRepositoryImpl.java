@@ -18,7 +18,7 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
     private EntityManager entityManager;
 
     @Override
-    public List<Commande> findByCriteria(CommandeSearchCriteria criteria, Long pointDeVenteId) {
+    public List<Commande> findByCriteria(CommandeSearchCriteria criteria) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Commande> query = cb.createQuery(Commande.class);
         Root<Commande> root = query.from(Commande.class);
@@ -27,9 +27,7 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
         Join<Commande, Fournisseur> fournisseurJoin = root.join("fournisseur", JoinType.LEFT);
         
         List<Predicate> predicates = new ArrayList<>();
-        
-        // Point de vente obligatoire
-        predicates.add(cb.equal(root.get("pointDeVente").get("id"), pointDeVenteId));
+
         
         // Numéro de commande
         if (criteria.getNumeroCommande() != null && !criteria.getNumeroCommande().trim().isEmpty()) {

@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.ceramique.persistent.enums.StatutLivraison;
 import jakarta.persistence.*;
 
@@ -42,10 +41,6 @@ public class Livraison {
     @Column(name = "numero_suivi")
     private String numeroSuivi;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
-
     // Constructors, getters, setters
     public Livraison() {}
 
@@ -78,6 +73,4 @@ public class Livraison {
     public String getNumeroSuivi() { return numeroSuivi; }
     public void setNumeroSuivi(String numeroSuivi) { this.numeroSuivi = numeroSuivi; }
 
-    public PointDeVente getPointDeVente() { return pointDeVente; }
-    public void setPointDeVente(PointDeVente pointDeVente) { this.pointDeVente = pointDeVente; }
 }

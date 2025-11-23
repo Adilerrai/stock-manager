@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.ceramique.persistent.enums.UniteMesure;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -65,9 +64,6 @@ public class Produit {
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "produit")
     private ProduitImage image;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
 
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();
@@ -184,14 +180,7 @@ public class Produit {
     public void setDesignation(String designation) {
         this.designation = designation;
     }
-    public PointDeVente getPointDeVente() {
-        return pointDeVente;
-    }
-
-    public void setPointDeVente(PointDeVente pointDeVente) {
-        this.pointDeVente = pointDeVente;
-    }
-
+    
     public LocalDateTime getDateCreation() {
         return dateCreation;
     }

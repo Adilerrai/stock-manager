@@ -14,20 +14,20 @@ import java.util.Optional;
 @Repository
 public interface CommandeClientRepository extends JpaRepository<CommandeClient, Long> {
     
-    List<CommandeClient> findByPointDeVente_IdOrderByDateCommandeDesc(Long pointDeVenteId);
+    List<CommandeClient> findByAllOrderByDateCommandeDesc();
     
-    Optional<CommandeClient> findByIdAndPointDeVente_Id(Long id, Long pointDeVenteId);
+    Optional<CommandeClient> findById(Long id);
+
+    List<CommandeClient> findByStatut(StatutCommandeClient statut);
+
+    List<CommandeClient> findByClientNomContainingIgnoreCase(String clientNom);
     
-    List<CommandeClient> findByStatutAndPointDeVente_Id(StatutCommandeClient statut, Long pointDeVenteId);
-    
-    List<CommandeClient> findByClientNomContainingIgnoreCaseAndPointDeVente_Id(String clientNom, Long pointDeVenteId);
-    
-    @Query("SELECT c FROM CommandeClient c WHERE c.pointDeVente.id = :pointDeVenteId AND c.dateCommande BETWEEN :dateDebut AND :dateFin")
+    @Query("SELECT c FROM CommandeClient c WHERE  c.dateCommande BETWEEN :dateDebut AND :dateFin")
     List<CommandeClient> findByPointDeVenteAndDateCommandeBetween(
         @Param("pointDeVenteId") Long pointDeVenteId,
         @Param("dateDebut") LocalDateTime dateDebut,
         @Param("dateFin") LocalDateTime dateFin
     );
-    
-    boolean existsByNumeroCommandeAndPointDeVente_Id(String numeroCommande, Long pointDeVenteId);
+
+    boolean existsByNumeroCommande(String numeroCommande);
 }

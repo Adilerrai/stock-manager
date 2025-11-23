@@ -15,11 +15,11 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
 
     List<Client> findByPointDeVenteId(Long pointDeVenteId);
 
-    List<Client> findByPointDeVenteIdAndActif(Long pointDeVenteId, Boolean actif);
+    List<Client> findByActif(Boolean actif);
 
-    List<Client> findByPointDeVenteIdAndCategorie(Long pointDeVenteId, CategorieClient categorie);
+    List<Client> findByCategorie(CategorieClient categorie);
 
-    Optional<Client> findByTelephoneAndPointDeVenteId(String telephone, Long pointDeVenteId);
+    Optional<Client> findByTelephone(String telephone);
 
     Optional<Client> findByEmailAndPointDeVenteId(String email, Long pointDeVenteId);
 
@@ -29,8 +29,7 @@ public interface ClientRepository extends JpaRepository<Client, Long> {
            "OR LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')))")
     List<Client> searchClients(@Param("pointDeVenteId") Long pointDeVenteId, @Param("search") String search);
 
-    @Query("SELECT c FROM Client c WHERE c.pointDeVente.id = :pointDeVenteId " +
-           "AND c.creditUtilise > c.creditAutorise")
-    List<Client> findClientsAvecDepassementCredit(@Param("pointDeVenteId") Long pointDeVenteId);
+    @Query("SELECT c FROM Client c WHERE c.creditUtilise > c.creditAutorise")
+    List<Client> findClientsAvecDepassementCredit();
 }
 

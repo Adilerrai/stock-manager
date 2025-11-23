@@ -18,6 +18,6 @@ public interface MouvementStockRepository extends JpaRepository<MouvementStock, 
     List<MouvementStock> findByTypeMouvementAndDateMouvementBetween(
         TypeMouvement typeMouvement, LocalDateTime debut, LocalDateTime fin);
     
-    @Query("SELECT m FROM MouvementStock m WHERE m.produit.pointDeVente.tenantId = :tenantId ORDER BY m.dateMouvement DESC")
-    List<MouvementStock> findByTenantIdOrderByDateMouvementDesc(@Param("tenantId") Long tenantId);
+    @Query("SELECT m FROM MouvementStock m ORDER BY m.dateMouvement DESC")
+    List<MouvementStock> findOrderByDateMouvementDesc(@Param("tenantId") Long tenantId);
 }

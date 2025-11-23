@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.ceramique.persistent.enums.StatutCommandeClient;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -17,10 +16,6 @@ public class CommandeClient {
 
     @Column(unique = true, nullable = false)
     private String numeroCommande;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id")
@@ -71,9 +66,6 @@ public class CommandeClient {
 
     public String getNumeroCommande() { return numeroCommande; }
     public void setNumeroCommande(String numeroCommande) { this.numeroCommande = numeroCommande; }
-
-    public PointDeVente getPointDeVente() { return pointDeVente; }
-    public void setPointDeVente(PointDeVente pointDeVente) { this.pointDeVente = pointDeVente; }
 
     public String getClientNom() { return clientNom; }
     public void setClientNom(String clientNom) { this.clientNom = clientNom; }

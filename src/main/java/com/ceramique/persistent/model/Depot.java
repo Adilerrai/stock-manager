@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -18,10 +17,6 @@ public class Depot {
 
     @Column(nullable = false)
     private String adresse;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
 
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();
@@ -43,9 +38,6 @@ public class Depot {
 
     public String getAdresse() { return adresse; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
-
-    public PointDeVente getPointDeVente() { return pointDeVente; }
-    public void setPointDeVente(PointDeVente pointDeVente) { this.pointDeVente = pointDeVente; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }

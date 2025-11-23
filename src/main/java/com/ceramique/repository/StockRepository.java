@@ -13,14 +13,12 @@ import java.util.Optional;
 public interface StockRepository extends JpaRepository<Stock, Long> {
 
     // Liste des stocks par point de vente via produit.pointDeVente
-    @Query("SELECT s FROM Stock s WHERE s.produit.pointDeVente.id = :pointDeVenteId")
-    List<Stock> findByPointDeVenteId(@Param("pointDeVenteId") Long pointDeVenteId);
 
-    @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.stocksQualite WHERE s.produit.pointDeVente.id = :pointDeVenteId")
-    List<Stock> findByPointDeVenteIdWithQualities(@Param("pointDeVenteId") Long pointDeVenteId);
+    @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.stocksQualite ")
+    List<Stock> findWithQualities();
 
     @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.stocksQualite WHERE s.produit.id = :produitId")
-    Optional<Stock> findByProduitIdWithQualities(@Param("produitId") Long produitId);
+    Optional<Stock> findByProduitWithQualities(@Param("produitId") Long produitId);
 
     Optional<Stock> findByProduitId(Long produitId);
 }

@@ -18,7 +18,7 @@ public class LivraisonRepositoryImpl implements LivraisonRepositoryCustom {
     private EntityManager entityManager;
 
     @Override
-    public List<Livraison> findByCriteria(LivraisonSearchCriteria criteria, Long pointDeVenteId) {
+    public List<Livraison> findByCriteria(LivraisonSearchCriteria criteria) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Livraison> query = cb.createQuery(Livraison.class);
         Root<Livraison> root = query.from(Livraison.class);
@@ -27,9 +27,7 @@ public class LivraisonRepositoryImpl implements LivraisonRepositoryCustom {
         Join<Livraison, Commande> commandeJoin = root.join("commande", JoinType.INNER);
         
         List<Predicate> predicates = new ArrayList<>();
-        
-        // Point de vente obligatoire via commande
-        predicates.add(cb.equal(commandeJoin.get("pointDeVente").get("id"), pointDeVenteId));
+
         
         // Numéro de livraison
         if (criteria.getNumeroLivraison() != null && !criteria.getNumeroLivraison().trim().isEmpty()) {

@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.ceramique.persistent.enums.CategorieClient;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -62,10 +61,6 @@ public class Client {
     private LocalDateTime dateDerniereVisite;
 
     private String notes;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
     private List<Vente> ventes = new ArrayList<>();
@@ -229,14 +224,6 @@ public class Client {
 
     public void setNotes(String notes) {
         this.notes = notes;
-    }
-
-    public PointDeVente getPointDeVente() {
-        return pointDeVente;
-    }
-
-    public void setPointDeVente(PointDeVente pointDeVente) {
-        this.pointDeVente = pointDeVente;
     }
 
     public List<Vente> getVentes() {

@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.User;
 import com.ceramique.persistent.enums.ModePaiement;
 import jakarta.persistence.*;
@@ -56,9 +55,6 @@ public class Paiement {
     @JoinColumn(name = "encaisse_par_user_id", nullable = false)
     private User encaissePar;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
 
     private String notes;
 
@@ -181,14 +177,6 @@ public class Paiement {
 
     public void setEncaissePar(User encaissePar) {
         this.encaissePar = encaissePar;
-    }
-
-    public PointDeVente getPointDeVente() {
-        return pointDeVente;
-    }
-
-    public void setPointDeVente(PointDeVente pointDeVente) {
-        this.pointDeVente = pointDeVente;
     }
 
     public String getNotes() {

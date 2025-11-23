@@ -2,9 +2,6 @@ package com.ceramique.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
 import com.acommon.exception.ResourceNotFoundException;
-import com.acommon.persistant.model.PointDeVente;
-import com.acommon.persistant.model.TenantContext;
-import com.acommon.repository.PointDeVenteRepository;
 import com.ceramique.persistent.dto.DepotDTO;
 import com.ceramique.persistent.model.Depot;
 import com.ceramique.repository.DepotRepository;
@@ -17,21 +14,16 @@ import java.util.List;
 public class DepotService {
 
     private final DepotRepository depotRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
 
-    public DepotService(DepotRepository depotRepository, PointDeVenteRepository pointDeVenteRepository) {
+    public DepotService(DepotRepository depotRepository) {
         this.depotRepository = depotRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
     }
 
     @Transactional
     @MultitenantSearchMethod(description = "Création d'un nouveau dépôt")
     public Depot createDepot(DepotDTO depotDTO) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        if (depotRepository.existsByNomAndPointDeVente_Id(depotDTO.getNom(), pointDeVente.getId())) {
+        if (depotRepository.existsByNom(depotDTO.getNom())) {
             throw new IllegalArgumentException("Un dépôt avec ce nom existe déjà");
         }
 
@@ -39,33 +31,22 @@ public class DepotService {
         depot.setNom(depotDTO.getNom());
         depot.setDescription(depotDTO.getDescription());
         depot.setAdresse(depotDTO.getAdresse());
-        depot.setPointDeVente(pointDeVente);
         depot.setActif(true);
 
         return depotRepository.save(depot);
     }
 
-    @MultitenantSearchMethod(description = "Récupération de tous les dépôts actifs")
     public List<Depot> getAllDepotsActifs() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return depotRepository.findByPointDeVente_IdAndActifTrue(pointDeVente.getId());
+        return depotRepository.findByActifTrue(true);
     }
 
-    @MultitenantSearchMethod(description = "Récupération d'un dépôt par ID")
     public Depot getDepotById(Long depotId) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        return depotRepository.findByIdAndPointDeVente_Id(depotId, pointDeVente.getId())
+        return depotRepository.findById(depotId)
                 .orElseThrow(() -> new ResourceNotFoundException("Depot", "id", depotId));
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Mise à jour d'un dépôt")
     public Depot updateDepot(Long depotId, DepotDTO depotDTO) {
         Depot depot = getDepotById(depotId);
         

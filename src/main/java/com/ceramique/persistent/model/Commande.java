@@ -1,6 +1,5 @@
 package com.ceramique.persistent.model;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.ceramique.persistent.enums.StatutCommande;
 import com.ceramique.persistent.enums.StatutLivraison;
 import jakarta.persistence.*;
@@ -22,10 +21,6 @@ public class Commande {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fournisseur_id", nullable = false)
     private Fournisseur fournisseur;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "point_de_vente_id", nullable = false)
-    private PointDeVente pointDeVente;
 
     @Enumerated(EnumType.STRING)
     private StatutCommande statut = StatutCommande.EN_ATTENTE;
@@ -65,9 +60,6 @@ public class Commande {
 
     public Fournisseur getFournisseur() { return fournisseur; }
     public void setFournisseur(Fournisseur fournisseur) { this.fournisseur = fournisseur; }
-
-    public PointDeVente getPointDeVente() { return pointDeVente; }
-    public void setPointDeVente(PointDeVente pointDeVente) { this.pointDeVente = pointDeVente; }
 
     public StatutCommande getStatut() { return statut; }
     public void setStatut(StatutCommande statut) { this.statut = statut; }

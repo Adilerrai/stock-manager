@@ -11,20 +11,11 @@ public class UserResponse {
     private String telephone;
     private Genre genre;
     private String role;
-    private Long pointDeVenteId;
-    private String pointDeVenteNom;
     // Getters et Setters
     public Long getId() {
         return id;
     }
 
-    public Long getPointDeVenteId() {
-        return pointDeVenteId;
-    }
-
-    public void setPointDeVenteId(Long pointDeVenteId) {
-        this.pointDeVenteId = pointDeVenteId;
-    }
 
     public void setId(Long id) {
         this.id = id;

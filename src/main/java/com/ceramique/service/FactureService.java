@@ -1,9 +1,7 @@
 package com.ceramique.service;
 
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
-import com.acommon.repository.PointDeVenteRepository;
 import com.acommon.repository.UserRepository;
 import com.ceramique.persistent.enums.StatutFacture;
 import com.ceramique.persistent.model.*;
@@ -14,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -25,29 +22,21 @@ public class FactureService {
     private final LigneFactureRepository ligneFactureRepository;
     private final ClientService clientService;
     private final UserRepository userRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
 
     public FactureService(FactureRepository factureRepository,
                          LigneFactureRepository ligneFactureRepository,
                          ClientService clientService,
-                         UserRepository userRepository,
-                         PointDeVenteRepository pointDeVenteRepository) {
+                         UserRepository userRepository) {
         this.factureRepository = factureRepository;
         this.ligneFactureRepository = ligneFactureRepository;
         this.clientService = clientService;
         this.userRepository = userRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
     }
 
     public Facture creerFacture(Facture facture, Long userId) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findById(pointDeVenteId)
-                .orElseThrow(() -> new RuntimeException("Point de vente non trouvé"));
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
-
-        facture.setPointDeVente(pointDeVente);
         facture.setEmisePar(user);
         facture.setNumeroFacture(genererNumeroFacture());
         facture.setDateFacture(LocalDate.now());
@@ -93,28 +82,23 @@ public class FactureService {
     }
 
     public List<Facture> getAllFactures() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return factureRepository.findByPointDeVenteId(pointDeVenteId);
+        return factureRepository.findAll();
     }
 
     public List<Facture> getFacturesByClient(Long clientId) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return factureRepository.findByClientIdAndPointDeVenteId(clientId, pointDeVenteId);
+        return factureRepository.findByClientId((clientId));
     }
 
     public List<Facture> getFacturesByPeriode(LocalDate dateDebut, LocalDate dateFin) {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return factureRepository.findFacturesByPeriode(pointDeVenteId, dateDebut, dateFin);
+        return factureRepository.findFacturesByPeriode(dateDebut, dateFin);
     }
 
     public List<Facture> getFacturesImpayees() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return factureRepository.findFacturesImpayees(pointDeVenteId);
+        return factureRepository.findFacturesImpayees();
     }
 
     public List<Facture> getFacturesEchues() {
-        Long pointDeVenteId = TenantContext.getCurrentTenant();
-        return factureRepository.findFacturesEchues(pointDeVenteId, LocalDate.now());
+        return factureRepository.findFacturesEchues(LocalDate.now());
     }
 
     public Facture annulerFacture(Long factureId, String motif, Long userId) {

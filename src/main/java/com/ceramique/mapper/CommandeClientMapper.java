@@ -11,7 +11,6 @@ public interface CommandeClientMapper {
     @Mapping(target = "lignesCommande", source = "lignesCommande")
     CommandeClientDTO toDto(CommandeClient commandeClient);
 
-    @Mapping(target = "pointDeVente", ignore = true)
     @Mapping(target = "dateCommande", ignore = true)
     @Mapping(target = "lignesCommande", ignore = true)
     CommandeClient toEntity(CommandeClientDTO commandeClientDTO);

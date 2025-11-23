@@ -47,16 +47,6 @@ public class LotService {
             }
         }
 
-        // If depot still null, try first active depot for the product's pointDeVente
-        if (depot == null) {
-            if (produit.getPointDeVente() != null && produit.getPointDeVente().getId() != null) {
-                Optional<Depot> opt = depotRepository.findFirstByPointDeVente_IdAndActifTrue(produit.getPointDeVente().getId());
-                if (opt.isPresent()) {
-                    depot = opt.get();
-                    log.info("Using first active depot {} for pointDeVente {}", depot.getId(), produit.getPointDeVente().getId());
-                }
-            }
-        }
 
         // If still null, fallback to any active depot global
         if (depot == null) {

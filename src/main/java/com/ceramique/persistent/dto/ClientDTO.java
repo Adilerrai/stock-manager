@@ -25,7 +25,6 @@ public class ClientDTO {
     private LocalDateTime dateCreation;
     private LocalDateTime dateDerniereVisite;
     private String notes;
-    private Long pointDeVenteId;
 
     public ClientDTO() {}
 
@@ -90,7 +89,5 @@ public class ClientDTO {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
-    public Long getPointDeVenteId() { return pointDeVenteId; }
-    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 }
 

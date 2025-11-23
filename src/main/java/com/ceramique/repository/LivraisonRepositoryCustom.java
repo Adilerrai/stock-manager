@@ -5,5 +5,5 @@ import com.ceramique.persistent.model.Livraison;
 import java.util.List;
 
 public interface LivraisonRepositoryCustom {
-    List<Livraison> findByCriteria(LivraisonSearchCriteria criteria, Long pointDeVenteId);
+    List<Livraison> findByCriteria(LivraisonSearchCriteria criteria);
 }

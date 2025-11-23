@@ -2,9 +2,7 @@ package com.ceramique.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
 import com.acommon.exception.ResourceNotFoundException;
-import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
-import com.acommon.repository.PointDeVenteRepository;
 import com.ceramique.persistent.model.Produit;
 import com.ceramique.persistent.model.Stock;
 import com.ceramique.persistent.model.StockQualite;
@@ -24,14 +22,11 @@ public class StockService {
 
     private final StockRepository stockRepository;
     private final StockQualiteRepository stockQualiteRepository;
-    private final PointDeVenteRepository pointDeVenteRepository;
     private final ProduitRepository produitRepository;
 
-    public StockService(StockRepository stockRepository, StockQualiteRepository stockQualiteRepository,
-                       PointDeVenteRepository pointDeVenteRepository, ProduitRepository produitRepository) {
+    public StockService(StockRepository stockRepository, StockQualiteRepository stockQualiteRepository, ProduitRepository produitRepository) {
         this.stockRepository = stockRepository;
         this.stockQualiteRepository = stockQualiteRepository;
-        this.pointDeVenteRepository = pointDeVenteRepository;
         this.produitRepository = produitRepository;
     }
 
@@ -40,11 +35,8 @@ public class StockService {
     public Stock initializeStockWithQualities(Long produitId,
             Map<QualiteProduit, BigDecimal> quantitesParQualite, BigDecimal seuilAlerte) {
         
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(produitId, pointDeVente.getId())
+        Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
 
         // Vérifier si le stock existe déjà
@@ -73,12 +65,7 @@ public class StockService {
     @Transactional
     @MultitenantSearchMethod(description = "Ajout de stock par qualité")
     public Stock ajouterStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite) {
-        Long tenantId = TenantContext.getCurrentTenant();
-
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        Produit produit = produitRepository.findByIdAndPointDeVente_Id(produitId, pointDeVente.getId())
+        Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
 
         if (quantite == null || quantite.compareTo(BigDecimal.ZERO) <= 0) {
@@ -145,40 +132,25 @@ public class StockService {
 
     @MultitenantSearchMethod(description = "Récupération des stocks avec qualités")
     public List<Stock> getAllStocksWithQualities() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return stockRepository.findByPointDeVenteIdWithQualities(pointDeVente.getId());
+        return stockRepository.findWithQualities();
     }
 
     @MultitenantSearchMethod(description = "Récupération des stocks par qualité")
     public List<StockQualite> getStocksByQualite(QualiteProduit qualite) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        return stockQualiteRepository.findByPointDeVenteIdAndQualite(pointDeVente.getId(), qualite);
+        return stockQualiteRepository.findByQualite( qualite);
     }
 
     @MultitenantSearchMethod(description = "Récupération des stocks qualité en alerte")
     public List<StockQualite> getStocksQualiteEnAlerte() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
 
-        return stockQualiteRepository.findStocksEnAlerteByPointDeVente(pointDeVente.getId());
+        return stockQualiteRepository.findStocksEnAlerte();
     }
 
 
 
-    @MultitenantSearchMethod(description = "Récupération des stocks par point de vente")
     public List<Stock> getAllStocks() {
-        Long tenantId = TenantContext.getCurrentTenant();
-        PointDeVente pointDeVente = pointDeVenteRepository.findByTenantId(tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("PointDeVente", "tenantId", tenantId));
-
-        return stockRepository.findByPointDeVenteId(pointDeVente.getId());
+        return stockRepository.findAll();
     }
 
     private Stock getStockByProduit(Long produitId) {
