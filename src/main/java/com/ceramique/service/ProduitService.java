@@ -38,7 +38,6 @@ public class ProduitService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un nouveau produit")
     public Produit createProduit(Produit produit) {
 
         String reference = "PROD-" + System.currentTimeMillis();
@@ -48,7 +47,6 @@ public class ProduitService {
     }
 
     @Transactional(readOnly = true)
-    @MultitenantSearchMethod(description = "Récupération de tous les produits du point de vente")
     public List<Produit> getAllProduits() {
 
         List<Produit> produits = produitRepository.findWithImages();
@@ -77,7 +75,6 @@ public class ProduitService {
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
     }
 
-    @MultitenantSearchMethod(description = "Récupération d'un produit avec image par ID")
     public Produit getProduitWithImageById(Long produitId) {
 
         return produitRepository.findById(produitId)
@@ -141,7 +138,6 @@ public class ProduitService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Suppression d'un produit")
     public void deleteProduit(Long produitId) {
 
         Produit produit = produitRepository.findById(produitId)
@@ -150,7 +146,6 @@ public class ProduitService {
         produitRepository.delete(produit);
     }
 
-    @MultitenantSearchMethod(description = "Recherche de produits par critères")
     public Page<Produit> searchProduits(ProduitSearchCriteria criteria, Pageable pageable) {
 
         return produitRepository.findByCriteria(criteria, pageable);
@@ -220,7 +215,6 @@ public class ProduitService {
      * Création d'un produit avec image en une seule opération
      */
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un produit avec image")
     public Produit createProduitWithImage(
             String reference,
             String designation,
