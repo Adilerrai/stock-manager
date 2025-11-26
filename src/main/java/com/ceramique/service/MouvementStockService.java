@@ -36,7 +36,6 @@ public class MouvementStockService {
     }
     
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un mouvement de stock avec qualité et dépôt")
     public MouvementStock creerMouvement(Long produitId, Long depotId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, QualiteProduit qualite,
                                          String referenceDocument, String motif) {
@@ -81,7 +80,6 @@ public class MouvementStockService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un mouvement de stock avec qualité (sans depotId)")
     public MouvementStock creerMouvement(Long produitId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, QualiteProduit qualite,
                                          String referenceDocument, String motif) {
@@ -89,14 +87,12 @@ public class MouvementStockService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un mouvement de stock (qualité par défaut)")
     public MouvementStock creerMouvement(Long produitId, Long depotId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, String referenceDocument, String motif) {
         return creerMouvement(produitId, depotId, typeMouvement, quantite, QualiteProduit.PREMIERE_QUALITE, referenceDocument, motif);
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un mouvement de stock (qualité par défaut, sans depotId)")
     public MouvementStock creerMouvement(Long produitId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, String referenceDocument, String motif) {
         return creerMouvement(produitId, null, typeMouvement, quantite, QualiteProduit.PREMIERE_QUALITE, referenceDocument, motif);
@@ -130,7 +126,6 @@ public class MouvementStockService {
         }
     }
     
-    @MultitenantSearchMethod(description = "Historique des mouvements par produit")
     public List<MouvementStock> getHistoriqueProduit(Long produitId) {
         return mouvementStockRepository.findByProduitIdOrderByDateMouvementDesc(produitId);
     }

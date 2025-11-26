@@ -198,7 +198,6 @@ public class ProduitService {
      * Suppression de l'image d'un produit
      */
     @Transactional
-    @MultitenantSearchMethod(description = "Suppression de l'image d'un produit")
     public void deleteImageFromProduit(Long produitId) {
 
         Produit produit = produitRepository.findById(produitId)

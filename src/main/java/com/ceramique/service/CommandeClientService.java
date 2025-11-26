@@ -39,7 +39,6 @@ public class CommandeClientService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'une commande client")
     public CommandeClient createCommandeClient(CommandeClientDTO commandeDTO) {
 
         CommandeClient commande = new CommandeClient();
@@ -99,7 +98,6 @@ public class CommandeClientService {
         return commandeClientRepository.save(commande);
     }
 
-    @MultitenantSearchMethod(description = "Récupération des commandes par statut")
     public List<CommandeClient> getCommandesByStatut(StatutCommandeClient statut) {
         return commandeClientRepository.findByStatut(statut);
     }

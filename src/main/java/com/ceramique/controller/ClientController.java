@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/clients")
-@CrossOrigin(origins = "*")
 public class ClientController {
 
     private final ClientService clientService;
@@ -53,13 +52,13 @@ public class ClientController {
         return ResponseEntity.ok(dtos);
     }
 
-    @PatchMapping("/{id}/desactiver")
+    @PostMapping("/{id}/desactiver")
     public ResponseEntity<Void> desactiverClient(@PathVariable Long id) {
         clientService.desactiverClient(id);
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/{id}/activer")
+    @PostMapping("/{id}/activer")
     public ResponseEntity<Void> activerClient(@PathVariable Long id) {
         clientService.activerClient(id);
         return ResponseEntity.ok().build();

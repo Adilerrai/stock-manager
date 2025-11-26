@@ -31,7 +31,6 @@ public class StockService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Initialisation du stock avec qualités")
     public Stock initializeStockWithQualities(Long produitId,
             Map<QualiteProduit, BigDecimal> quantitesParQualite, BigDecimal seuilAlerte) {
         
@@ -63,7 +62,6 @@ public class StockService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Ajout de stock par qualité")
     public Stock ajouterStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite) {
         Produit produit = produitRepository.findById(produitId)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
@@ -92,7 +90,6 @@ public class StockService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Retrait de stock par qualité")
     public Stock retirerStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite) {
 
         Stock stock = getStockByProduit(produitId);
@@ -112,7 +109,6 @@ public class StockService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Réservation de stock par qualité")
     public boolean reserverStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite) {
 
         Stock stock = getStockByProduit(produitId);
@@ -130,18 +126,15 @@ public class StockService {
         return success;
     }
 
-    @MultitenantSearchMethod(description = "Récupération des stocks avec qualités")
     public List<Stock> getAllStocksWithQualities() {
         return stockRepository.findWithQualities();
     }
 
-    @MultitenantSearchMethod(description = "Récupération des stocks par qualité")
     public List<StockQualite> getStocksByQualite(QualiteProduit qualite) {
 
         return stockQualiteRepository.findByQualite( qualite);
     }
 
-    @MultitenantSearchMethod(description = "Récupération des stocks qualité en alerte")
     public List<StockQualite> getStocksQualiteEnAlerte() {
 
         return stockQualiteRepository.findStocksEnAlerte();
@@ -162,14 +155,12 @@ public class StockService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Sortie de stock (vente)")
     public void sortieStock(Long produitId, BigDecimal quantite, String motif) {
         // Sortir du stock avec qualité PREMIERE_QUALITE par défaut
         retirerStockParQualite(produitId, QualiteProduit.PREMIERE_QUALITE, quantite);
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Entrée de stock (retour, annulation)")
     public void entreeStock(Long produitId, BigDecimal quantite, String motif) {
         // Ajouter au stock avec qualité PREMIERE_QUALITE par défaut
         ajouterStockParQualite(produitId, QualiteProduit.PREMIERE_QUALITE, quantite);

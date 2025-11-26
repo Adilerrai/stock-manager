@@ -62,7 +62,6 @@ public class LivraisonService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'une livraison en brouillon")
     public Livraison createLivraison(LivraisonDTO livraisonDTO) {
         Livraison livraison = new Livraison();
         livraison.setNumeroLivraison(generateNumeroLivraison());
@@ -132,7 +131,6 @@ public class LivraisonService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Validation d'une livraison avec création de lots")
     public Livraison validerLivraison(Long livraisonId) {
         Livraison livraison = this.getLivraisonById(livraisonId);
         
@@ -200,7 +198,6 @@ public class LivraisonService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Annulation d'une livraison")
     public Livraison annulerLivraison(Long livraisonId) {
         Livraison livraison = getLivraisonById(livraisonId);
         

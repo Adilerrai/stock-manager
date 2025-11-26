@@ -29,8 +29,7 @@ public class LotService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'un nouveau lot")
-    public Lot creerLot(Long produitId, Long depotId, QualiteProduit qualite, 
+    public Lot creerLot(Long produitId, Long depotId, QualiteProduit qualite,
                        BigDecimal quantite, String numeroLivraison, String fournisseur, 
                        BigDecimal prixAchat) {
         Produit produit = produitRepository.findById(produitId)
@@ -79,7 +78,6 @@ public class LotService {
         return lotRepository.save(lot);
     }
 
-    @MultitenantSearchMethod(description = "Consommation d'un lot (FIFO)")
     public List<Lot> consommerStock(Long produitId, Long depotId, QualiteProduit qualite, BigDecimal quantiteAConsommer) {
         List<Lot> lotsDisponibles = lotRepository.findByProduitIdAndDepotIdAndQualiteAndQuantiteDisponibleGreaterThanOrderByDateReception(
             produitId, depotId, qualite, BigDecimal.ZERO);
@@ -94,7 +92,6 @@ public class LotService {
         return "LOT-" + System.currentTimeMillis();
     }
     
-    @MultitenantSearchMethod(description = "Lots par produit et dépôt")
     public List<Lot> getLotsByProduitAndDepot(Long produitId, Long depotId) {
         return lotRepository.findByProduitIdAndDepotIdAndActifTrueOrderByDateReception(produitId, depotId);
     }

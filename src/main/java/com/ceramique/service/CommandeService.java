@@ -50,7 +50,6 @@ public class CommandeService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Création d'une nouvelle commande")
     public Commande createCommande(CommandeDTO commandeDTO) {
 
         Fournisseur fournisseur = fournisseurRepository.findById(
@@ -92,24 +91,20 @@ public class CommandeService {
         return ligneCommandeRepository.save(ligne);
     }
 
-    @MultitenantSearchMethod(description = "Récupération de toutes les commandes")
     public List<Commande> getAllCommandes() {
         return commandeRepository.findAll();
     }
 
-    @MultitenantSearchMethod(description = "Récupération d'une commande par ID")
     public Commande getCommandeById(Long commandeId) {
         return commandeRepository.findById(commandeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commande", "id", commandeId));
     }
 
-    @MultitenantSearchMethod(description = "Récupération des commandes par statut")
     public List<Commande> getCommandesByStatut(StatutCommande statut) {
         return commandeRepository.findByStatut(statut);
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Mise à jour du statut d'une commande")
     public Commande updateStatutCommande(Long commandeId, StatutCommande nouveauStatut) {
         Commande commande = getCommandeById(commandeId);
         commande.setStatut(nouveauStatut);
@@ -122,7 +117,6 @@ public class CommandeService {
     }
 
     @Transactional
-    @MultitenantSearchMethod(description = "Annulation d'une commande")
     public Commande annulerCommande(Long commandeId) {
         Commande commande = getCommandeById(commandeId);
         
@@ -140,14 +134,12 @@ public class CommandeService {
         return prefix + timestamp;
     }
 
-    @MultitenantSearchMethod(description = "Recherche de commandes par critères")
     public List<Commande> searchCommandes(CommandeSearchCriteria criteria) {
         Long tenantId = TenantContext.getCurrentTenant();
 
         return commandeRepository.findByCriteria(criteria);
     }
 
-    @MultitenantSearchMethod(description = "Génération PDF d'une commande")
     public byte[] generateCommandePdf(Long commandeId) {
         Commande commande = getCommandeById(commandeId);
         
