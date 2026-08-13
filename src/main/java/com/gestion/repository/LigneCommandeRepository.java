@@ -1,0 +1,27 @@
+package com.gestion.repository;
+
+import com.gestion.persistent.model.LigneCommande;
+import com.gestion.persistent.model.Commande;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface LigneCommandeRepository extends JpaRepository<LigneCommande, Long> {
+    
+    List<LigneCommande> findByCommande_Id(Long commandeId);
+    
+    List<LigneCommande> findByProduit_Id(Long produitId);
+    
+    Optional<LigneCommande> findByCommande_IdAndProduit_Id(Long commandeId, Long produitId);
+    
+    @Query("SELECT lc FROM LigneCommande lc WHERE lc.produit.id = :produitId")
+    List<LigneCommande> findByProduit( @Param("produitId") Long produitId);
+    
+    List<LigneCommande> findByCommande(Commande commande);
+}
+
