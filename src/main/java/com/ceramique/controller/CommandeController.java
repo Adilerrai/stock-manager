@@ -19,16 +19,19 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/commandes")
+@RequestMapping({"/api/v1/commandes", "/api/v1/commandes-fournisseur"})
 public class CommandeController {
 
     private final CommandeService commandeService;
     private final CommandeMapper commandeMapper;
+    private final com.ceramique.service.LivraisonService livraisonService;
 
     public CommandeController(CommandeService commandeService, 
-                             CommandeMapper commandeMapper) {
+                             CommandeMapper commandeMapper,
+                             com.ceramique.service.LivraisonService livraisonService) {
         this.commandeService = commandeService;
         this.commandeMapper = commandeMapper;
+        this.livraisonService = livraisonService;
     }
 
     @PostMapping("/create")
@@ -73,7 +76,7 @@ public class CommandeController {
 
     @PutMapping("/{id}/confirmer")
     public ResponseEntity<CommandeDTO> confirmerVente(@PathVariable Long id) {
-        Commande commande = commandeService.updateStatutCommande(id, StatutCommande.CONFIRMEE);
+        Commande commande = commandeService.updateStatutCommande(id, StatutCommande.PASSEE);
         return ResponseEntity.ok(commandeMapper.toDto(commande));
     }
 
@@ -123,6 +126,51 @@ public class CommandeController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.TEXT_PLAIN)
                     .body(err.getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
+    @GetMapping("/statut/{statut}")
+    public ResponseEntity<List<CommandeDTO>> getCommandesByStatut(@PathVariable String statut) {
+        try {
+            StatutCommande s = StatutCommande.valueOf(statut.toUpperCase());
+            List<Commande> commandes = commandeService.getCommandesByStatut(s);
+            List<CommandeDTO> dtos = commandes.stream()
+                    .map(commandeMapper::toDto)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(dtos);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/fournisseur/{fournisseurId}")
+    public ResponseEntity<List<CommandeDTO>> getCommandesByFournisseur(@PathVariable Long fournisseurId) {
+        List<Commande> commandes = commandeService.getCommandesByFournisseur(fournisseurId);
+        List<CommandeDTO> dtos = commandes.stream()
+                .map(commandeMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PutMapping("/{id}/statut/{newStatut}")
+    public ResponseEntity<CommandeDTO> updateStatutPath(@PathVariable Long id, @PathVariable String newStatut) {
+        try {
+            StatutCommande s = StatutCommande.valueOf(newStatut.toUpperCase());
+            Commande commande = commandeService.updateStatutCommande(id, s);
+            return ResponseEntity.ok(commandeMapper.toDto(commande));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/{id}/convert-to-reception")
+    public ResponseEntity<Long> convertToReception(@PathVariable Long id) {
+        try {
+            Long receptionId = livraisonService.creerLivraisonDepuisCommande(id);
+            return ResponseEntity.ok(receptionId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().build();
         }
     }
 }

@@ -23,7 +23,7 @@ public class AuthController {
 
 
 
-    @PostMapping("/login")
+    @PostMapping({"/login", "/login/username"})
     public ResponseEntity<JwtAuthenticationResponse> authenticateUserByUsername(@RequestBody UserLoginRequest request) {
         JwtAuthenticationResponse response = authService.authenticateByUsername(request);
         return ResponseEntity.ok(response);

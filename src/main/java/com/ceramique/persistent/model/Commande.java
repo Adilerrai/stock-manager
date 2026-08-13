@@ -23,7 +23,7 @@ public class Commande {
     private Fournisseur fournisseur;
 
     @Enumerated(EnumType.STRING)
-    private StatutCommande statut = StatutCommande.EN_ATTENTE;
+    private StatutCommande statut = StatutCommande.BROUILLON;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "statut_livraison")

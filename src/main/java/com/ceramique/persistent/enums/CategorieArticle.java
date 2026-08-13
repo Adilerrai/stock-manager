@@ -10,7 +10,15 @@ public enum CategorieArticle {
     GRANITE("Granite"),
     PORCELAINE("Porcelaine"),
     MOSAIQUE("Mosaïque"),
-    ACCESSOIRES("Accessoires");
+    ACCESSOIRES("Accessoires"),
+    COSMETIQUE("Cosmétique"),
+    DROGUERIE("Droguerie"),
+    EPI("Équipement de Protection Individuelle"),
+    GENERIQUE("Générique"),
+    SOIN("Soin & Beauté"),
+    PEINTURE("Peinture & Solvants"),
+    OUTILLAGE("Outillage"),
+    HYGIENE("Hygiène & Entretien");
 
     private final String libelle;
 

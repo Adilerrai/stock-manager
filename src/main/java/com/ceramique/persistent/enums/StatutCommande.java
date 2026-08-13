@@ -1,10 +1,11 @@
 package com.ceramique.persistent.enums;
 
 public enum StatutCommande {
-    EN_ATTENTE("En attente"),
-    CONFIRMEE("Confirmée"),
-    EN_COURS("En cours"),
+    BROUILLON("Brouillon"),
+    PASSEE("Passée"),
+    PARTIELLE("Partiellement livrée"),
     LIVREE("Livrée"),
+    VALIDEE("Validée"),
     ANNULEE("Annulée");
 
     private final String label;

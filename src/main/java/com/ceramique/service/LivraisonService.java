@@ -6,6 +6,7 @@ import com.acommon.persistant.model.TenantContext;
 import com.ceramique.persistent.dto.LivraisonDTO;
 import com.ceramique.persistent.dto.LigneLivraisonDTO;
 import com.ceramique.persistent.dto.LivraisonSearchCriteria;
+import com.ceramique.persistent.enums.QualiteProduit;
 import com.ceramique.persistent.enums.StatutLivraison;
 import com.ceramique.persistent.enums.TypeMouvement;
 import com.ceramique.persistent.model.*;
@@ -381,5 +382,82 @@ public class LivraisonService {
         return livraisonMapper.toDto(livraison);
     }
 
+    @Transactional
+    public Long creerLivraisonDepuisCommande(Long commandeId) {
+        Commande commande = commandeRepository.findById(commandeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Commande", "id", commandeId));
+        
+        if (commande.getStatutLivraison() == StatutLivraison.LIVREE) {
+            throw new IllegalStateException("Cette commande est déjà entièrement livrée");
+        }
 
+        // Récupérer les livraisons déjà effectuées (LIVREE) pour calculer le reliquat
+        List<Livraison> livraisonsExistantes = livraisonRepository.findByCommande_IdAndStatut(commandeId, StatutLivraison.LIVREE);
+        Map<Long, Double> quantitesLivrees = new HashMap<>();
+        for (Livraison liv : livraisonsExistantes) {
+            for (LigneLivraison ligne : liv.getLignesLivraison()) {
+                Long produitId = ligne.getProduit().getId();
+                quantitesLivrees.merge(produitId, (double) ligne.getQuantiteLivree(), Double::sum);
+            }
+        }
+
+        List<LigneCommande> lignesCommande = ligneCommandeRepository.findByCommande_Id(commandeId);
+        
+        // Créer la nouvelle livraison
+        Livraison livraison = new Livraison();
+        livraison.setNumeroLivraison(generateNumeroLivraison());
+        livraison.setCommande(commande);
+        livraison.setStatut(StatutLivraison.EN_ATTENTE);
+        livraison.setDateLivraison(LocalDateTime.now());
+        livraison.setObservations("Généré depuis la commande " + commande.getNumeroCommande());
+        
+        // Enregistrer la livraison d'abord pour avoir son ID
+        livraison = livraisonRepository.save(livraison);
+        
+        BigDecimal montantTotal = BigDecimal.ZERO;
+        List<LigneLivraison> lignesLivraison = new ArrayList<>();
+        
+        for (LigneCommande ligneCmd : lignesCommande) {
+            double qteDejaLivree = quantitesLivrees.getOrDefault(ligneCmd.getProduit().getId(), 0.0);
+            double qteRestante = ligneCmd.getQuantiteCommandee() - qteDejaLivree;
+            
+            if (qteRestante > 0) {
+                LigneLivraison ligneLiv = new LigneLivraison();
+                ligneLiv.setLivraison(livraison);
+                ligneLiv.setProduit(ligneCmd.getProduit());
+                ligneLiv.setQuantiteLivree((long) qteRestante);
+                ligneLiv.setPrixProduit(ligneCmd.getPrixUnitaire());
+
+                // Qualité par défaut
+                ligneLiv.setQualiteProduit(QualiteProduit.PREMIERE_QUALITE);
+                
+                // Résoudre le dépôt par défaut
+                Depot depot = null;
+                List<Depot> depots = depotRepository.findByActifTrue();
+                if (!depots.isEmpty()) {
+                    depot = depots.get(0);
+                }
+                ligneLiv.setDepot(depot);
+                
+                ligneLiv = ligneLivraisonRepository.save(ligneLiv);
+                lignesLivraison.add(ligneLiv);
+                
+                montantTotal = montantTotal.add(ligneLiv.getPrixProduit().multiply(
+                        BigDecimal.valueOf(ligneLiv.getQuantiteLivree())));
+            }
+        }
+        
+        if (lignesLivraison.isEmpty()) {
+            throw new IllegalStateException("Tous les articles de cette commande ont déjà été livrés");
+        }
+        
+        livraison.setLignesLivraison(lignesLivraison);
+        livraison.setMontantTotal(montantTotal);
+        livraisonRepository.save(livraison);
+        
+        // Mettre à jour le statut de livraison de la commande (va passer à EN_LIVRAISON)
+        mettreAJourStatutLivraisonCommande(commande);
+        
+        return livraison.getId();
+    }
 }

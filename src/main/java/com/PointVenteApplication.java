@@ -49,13 +49,10 @@ public class PointVenteApplication {
 
 
 
-        User user;
-
-        if(userRepository.existsByUsername(("admin"))){
-            user = userRepository.findByUsername("admin").get();
-            logger.info("User admin already exists");
-        } else{
-            user = new User();
+        if (userRepository.existsByUsername("admin2")) {
+            logger.info("User admin2 already exists, skipping seed");
+        } else {
+            User user = new User();
             user.setUsername("admin2");
             user.setPassword(passwordEncoder.encode("admin"));
             user.setEmail("admin2@me.com");
@@ -63,7 +60,7 @@ public class PointVenteApplication {
             user.setTelephone("+1234567890");
             user.setRole(role);
             userRepository.save(user);
-            logger.info("User save successful");
+            logger.info("User admin2 created successfully");
         }
 
 

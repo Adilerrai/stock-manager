@@ -18,6 +18,8 @@ public interface CommandeRepository extends JpaRepository<Commande, Long>, Comma
 
     List<Commande> findByStatut(StatutCommande statut);
 
+    List<Commande> findByFournisseurId(Long fournisseurId);
+
 
     @Query("SELECT c FROM Commande c WHERE c.dateCommande BETWEEN :dateDebut AND :dateFin ORDER BY c.dateCommande DESC")
     List<Commande> findByDateRange(@Param("dateDebut") LocalDateTime dateDebut,

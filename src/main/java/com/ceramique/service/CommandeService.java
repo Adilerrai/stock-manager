@@ -59,7 +59,7 @@ public class CommandeService {
         Commande commande = new Commande();
         commande.setNumeroCommande(generateNumeroCommande());
         commande.setFournisseur(fournisseur);
-         commande.setStatut(StatutCommande.EN_ATTENTE);
+        commande.setStatut(StatutCommande.BROUILLON);
         commande.setDateLivraisonPrevue(commandeDTO.getDateLivraisonPrevue());
         commande.setObservations(commandeDTO.getObservations());
 
@@ -102,6 +102,10 @@ public class CommandeService {
 
     public List<Commande> getCommandesByStatut(StatutCommande statut) {
         return commandeRepository.findByStatut(statut);
+    }
+
+    public List<Commande> getCommandesByFournisseur(Long fournisseurId) {
+        return commandeRepository.findByFournisseurId(fournisseurId);
     }
 
     @Transactional
