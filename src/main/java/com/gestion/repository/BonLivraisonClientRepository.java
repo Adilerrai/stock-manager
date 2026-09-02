@@ -15,5 +15,8 @@ public interface BonLivraisonClientRepository extends JpaRepository<BonLivraison
     List<BonLivraisonClient> findByClientIdAndPointDeVenteId(Long clientId, Long pointDeVenteId);
     List<BonLivraisonClient> findByCommandeClientIdAndPointDeVenteId(Long commandeClientId, Long pointDeVenteId);
     List<BonLivraisonClient> findByStatutAndPointDeVenteId(StatutLivraison statut, Long pointDeVenteId);
+    List<BonLivraisonClient> findByClientIdAndFactureIsNullAndPointDeVenteId(Long clientId, Long pointDeVenteId);
+    List<BonLivraisonClient> findByFactureIsNullAndPointDeVenteId(Long pointDeVenteId);
+    List<BonLivraisonClient> findByFactureId(Long factureId);
 }
 
