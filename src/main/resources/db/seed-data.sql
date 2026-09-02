@@ -951,6 +951,27 @@ ON CONFLICT (id) DO UPDATE SET
     statut = EXCLUDED.statut;
 
 -- ==============================================================================
+-- 25. PROFIL ENTREPRISE (MULTI-TENANT SAAS / IMPRESSIONS)
+-- ==============================================================================
+INSERT INTO entreprise_profiles (
+    id, point_de_vente_id, nom_entreprise, activite, adresse, ville, code_postal,
+    telephone, telephone_secondaire, email, site_web, registre_commerce,
+    numero_identification_fiscale, numero_identification_statistique, article_imposition,
+    compte_bancaire_rib, nom_banque, pied_page, devise, date_mise_a_jour
+) VALUES
+(
+    1, 1, 'SARL COMPTOIR DU CARRELAGE & MATÉRIAUX',
+    'Importation & Distribution Carrelages, Faïences et Matériaux de Finition',
+    'Zone Industrielle Oued Smar, Lot N° 45', 'Alger', '16200',
+    '021 50 12 34', '0550 12 34 56', 'contact@comptoir-carrelage.dz', 'www.comptoir-carrelage.dz',
+    '16/00-0987654B16', '001609876543210', '0016098765432', '16098765432',
+    '002 00012 1234567890 55', 'Banque Nationale d''Algérie (BNA)',
+    'Garantie légale selon la réglementation en vigueur. Marchandise livrée sous réserve de propriété jusqu''au complet paiement. Merci pour votre confiance !',
+    'DZD', NOW()
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- ==============================================================================
 -- 26. MISE À JOUR DE TOUTES LES SÉQUENCES POSTGRESQL (Auto-Increment)
 -- ==============================================================================
 DO $$

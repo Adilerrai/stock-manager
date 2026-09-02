@@ -16,9 +16,20 @@ import java.util.List;
 public class FactureController {
 
     private final FactureService factureService;
+    private final com.gestion.service.ImpressionService impressionService;
 
-    public FactureController(FactureService factureService) {
+    public FactureController(FactureService factureService, com.gestion.service.ImpressionService impressionService) {
         this.factureService = factureService;
+        this.impressionService = impressionService;
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> getFacturePdf(@PathVariable Long id) {
+        byte[] pdf = impressionService.genererFacturePdf(id);
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"facture-" + id + ".pdf\"")
+                .body(pdf);
     }
 
     /**

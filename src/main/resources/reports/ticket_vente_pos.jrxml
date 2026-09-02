@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="ticket_vente_pos" pageWidth="226" pageHeight="842" columnWidth="216"
+              leftMargin="5" rightMargin="5" topMargin="10" bottomMargin="10" isIgnorePagination="true">
+
+    <parameter name="logoImage" class="java.awt.Image"/>
+    <parameter name="nomEntreprise" class="java.lang.String"/>
+    <parameter name="adresseEntreprise" class="java.lang.String"/>
+    <parameter name="telephoneEntreprise" class="java.lang.String"/>
+    <parameter name="nifEntreprise" class="java.lang.String"/>
+    <parameter name="rcEntreprise" class="java.lang.String"/>
+    <parameter name="piedPage" class="java.lang.String"/>
+    <parameter name="devise" class="java.lang.String"/>
+
+    <parameter name="numeroTicket" class="java.lang.String"/>
+    <parameter name="dateVente" class="java.lang.String"/>
+    <parameter name="vendeurNom" class="java.lang.String"/>
+    <parameter name="clientNom" class="java.lang.String"/>
+
+    <parameter name="totalHT" class="java.math.BigDecimal"/>
+    <parameter name="totalTVA" class="java.math.BigDecimal"/>
+    <parameter name="totalTTC" class="java.math.BigDecimal"/>
+    <parameter name="montantPaye" class="java.math.BigDecimal"/>
+    <parameter name="monnaieRendue" class="java.math.BigDecimal"/>
+    <parameter name="modePaiement" class="java.lang.String"/>
+
+    <field name="designation" class="java.lang.String"/>
+    <field name="quantite" class="java.math.BigDecimal"/>
+    <field name="prixUnitaireHT" class="java.math.BigDecimal"/>
+    <field name="montantTTC" class="java.math.BigDecimal"/>
+
+    <title>
+        <band height="140">
+            <!-- Logo Centré -->
+            <image scaleImage="RetainShape" onErrorType="Blank">
+                <reportElement x="58" y="0" width="100" height="40"/>
+                <imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
+            </image>
+
+            <!-- Nom Entreprise -->
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="42" width="216" height="16"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="10" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{nomEntreprise}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="58" width="216" height="12" forecolor="#444444"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="7"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{adresseEntreprise}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="70" width="216" height="12" forecolor="#444444"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="7"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Tél: " + ($P{telephoneEntreprise} != null ? $P{telephoneEntreprise} : "-")]]></textFieldExpression>
+            </textField>
+
+            <line>
+                <reportElement x="0" y="85" width="216" height="1"/>
+                <graphicElement><pen lineWidth="0.5" lineStyle="Dashed"/></graphicElement>
+            </line>
+
+            <!-- Infos Ticket -->
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="90" width="216" height="14"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="8" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA["TICKET: " + $P{numeroTicket}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="104" width="216" height="12" forecolor="#555555"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="7"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Date: " + $P{dateVente}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="116" width="216" height="12" forecolor="#555555"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="7"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Vendeur: " + ($P{vendeurNom} != null ? $P{vendeurNom} : "Caisse") + " | Client: " + ($P{clientNom} != null ? $P{clientNom} : "Passage")]]></textFieldExpression>
+            </textField>
+
+            <line>
+                <reportElement x="0" y="132" width="216" height="1"/>
+                <graphicElement><pen lineWidth="0.5" lineStyle="Dashed"/></graphicElement>
+            </line>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="16">
+            <staticText>
+                <reportElement x="0" y="0" width="110" height="14"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <text><![CDATA[ARTICLE]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="110" y="0" width="40" height="14"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <text><![CDATA[QTÉ]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="150" y="0" width="66" height="14"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <text><![CDATA[TOTAL]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="14">
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="0" width="110" height="13"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="7"/></textElement>
+                <textFieldExpression><![CDATA[$F{designation}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0" isBlankWhenNull="true">
+                <reportElement x="110" y="0" width="40" height="13"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="7"/></textElement>
+                <textFieldExpression><![CDATA[$F{quantite}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="150" y="0" width="66" height="13"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="7" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$F{montantTTC}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <summary>
+        <band height="100">
+            <line>
+                <reportElement x="0" y="5" width="216" height="1"/>
+                <graphicElement><pen lineWidth="1"/></graphicElement>
+            </line>
+
+            <!-- Total TTC -->
+            <staticText>
+                <reportElement x="0" y="10" width="90" height="18"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="10" isBold="true"/></textElement>
+                <text><![CDATA[TOTAL TTC :]]></text>
+            </staticText>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="90" y="10" width="126" height="18"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="11" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{totalTTC} + " " + $P{devise}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="0" y="30" width="90" height="12" forecolor="#555555"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="7"/></textElement>
+                <text><![CDATA[Mode de paiement :]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="90" y="30" width="126" height="12" forecolor="#555555"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="7"/></textElement>
+                <textFieldExpression><![CDATA[$P{modePaiement} != null ? $P{modePaiement} : "ESPÈCES"]]></textFieldExpression>
+            </textField>
+
+            <line>
+                <reportElement x="0" y="50" width="216" height="1"/>
+                <graphicElement><pen lineWidth="0.5" lineStyle="Dashed"/></graphicElement>
+            </line>
+
+            <staticText>
+                <reportElement x="0" y="58" width="216" height="14"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="8" isBold="true"/>
+                </textElement>
+                <text><![CDATA[MERCI POUR VOTRE VISITE !]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="0" y="72" width="216" height="20" forecolor="#666666"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font fontName="Arial" size="6" isItalic="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{piedPage} != null ? $P{piedPage} : "Les articles vendus ne sont ni repris ni échangés."]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+</jasperReport>

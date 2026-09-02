@@ -13,9 +13,21 @@ import java.util.List;
 public class BonLivraisonClientController {
 
     private final BonLivraisonClientService bonLivraisonClientService;
+    private final com.gestion.service.ImpressionService impressionService;
 
-    public BonLivraisonClientController(BonLivraisonClientService bonLivraisonClientService) {
+    public BonLivraisonClientController(BonLivraisonClientService bonLivraisonClientService,
+                                        com.gestion.service.ImpressionService impressionService) {
         this.bonLivraisonClientService = bonLivraisonClientService;
+        this.impressionService = impressionService;
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> getBonLivraisonPdf(@PathVariable Long id) {
+        byte[] pdf = impressionService.genererBonLivraisonPdf(id);
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"bon-livraison-" + id + ".pdf\"")
+                .body(pdf);
     }
 
     @PostMapping
