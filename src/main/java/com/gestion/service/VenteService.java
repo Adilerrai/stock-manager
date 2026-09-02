@@ -88,7 +88,7 @@ public class VenteService {
 
                 BigDecimal pu = ligneDto.getPrixUnitaireHT();
                 if (pu == null && produit != null) {
-                    pu = produit.getPrixVenteHT() != null ? produit.getPrixVenteHT() : produit.getPrixVenteTTC();
+                    pu = produit.getPrixVenteHt() != null ? produit.getPrixVenteHt() : produit.getPrixVenteTtc();
                 }
                 ligne.setPrixUnitaireHT(pu != null ? pu : BigDecimal.ZERO);
                 ligne.setTauxTVA(ligneDto.getTauxTVA() != null ? ligneDto.getTauxTVA() : new BigDecimal("19.00"));
@@ -157,6 +157,11 @@ public class VenteService {
 
         Vente saved = venteRepository.save(vente);
         return venteMapper.toDto(saved);
+    }
+
+    public Vente getVenteEntityById(Long id) {
+        return venteRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Vente non trouvée avec l'id: " + id));
     }
 
     public VenteDTO getVenteById(Long id) {

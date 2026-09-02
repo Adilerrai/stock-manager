@@ -41,7 +41,7 @@ public class PaiementService {
     }
 
     public Paiement enregistrerPaiementVente(Long venteId, Paiement paiement, Long userId) {
-        Vente vente = venteService.getVenteById(venteId);
+        Vente vente = venteService.getVenteEntityById(venteId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 

@@ -69,8 +69,9 @@ public class BonLivraisonClientService {
         if (clientId == null) {
             throw new IllegalArgumentException("Le clientId est obligatoire pour créer un bon de livraison");
         }
-        Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Client non trouvé avec l'id: " + clientId));
+        final Long targetClientId = clientId;
+        Client client = clientRepository.findById(targetClientId)
+                .orElseThrow(() -> new RuntimeException("Client non trouvé avec l'id: " + targetClientId));
         bl.setClient(client);
 
         // If order linked, load it

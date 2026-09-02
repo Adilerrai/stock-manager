@@ -60,8 +60,9 @@ public class FactureAchatService {
         if (fournisseurId == null) {
             throw new IllegalArgumentException("Le fournisseurId est obligatoire");
         }
-        Fournisseur fournisseur = fournisseurRepository.findById(fournisseurId)
-                .orElseThrow(() -> new RuntimeException("Fournisseur non trouvé avec l'id: " + fournisseurId));
+        final Long targetFournisseurId = fournisseurId;
+        Fournisseur fournisseur = fournisseurRepository.findById(targetFournisseurId)
+                .orElseThrow(() -> new RuntimeException("Fournisseur non trouvé avec l'id: " + targetFournisseurId));
         facture.setFournisseur(fournisseur);
 
         BigDecimal totalHt = BigDecimal.ZERO;
@@ -113,6 +114,12 @@ public class FactureAchatService {
         return factures.stream()
                 .map(factureAchatMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    public FactureAchat getFactureAchatEntityById(Long id) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureAchatRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
+                .orElseThrow(() -> new RuntimeException("Facture d'achat non trouvée avec l'id: " + id));
     }
 
     public FactureAchatDTO getFactureAchatById(Long id) {

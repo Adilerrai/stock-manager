@@ -32,7 +32,7 @@ public class ReglementFournisseurService {
         reglement.setNumeroReglement(genererNumeroReglement());
 
         // Validate invoice
-        FactureAchat facture = factureAchatService.getFactureAchatById(reglement.getFactureAchat().getId());
+        FactureAchat facture = factureAchatService.getFactureAchatEntityById(reglement.getFactureAchat().getId());
         reglement.setFactureAchat(facture);
 
         // Save payment

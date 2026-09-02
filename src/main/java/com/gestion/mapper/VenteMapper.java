@@ -12,7 +12,7 @@ public interface VenteMapper {
     @Mapping(target = "clientNom", expression = "java(entity.getClient() != null ? entity.getClient().getNomComplet() : null)")
     @Mapping(target = "clientTelephone", source = "client.telephone")
     @Mapping(target = "vendeurId", source = "vendeur.id")
-    @Mapping(target = "vendeurNom", expression = "java(entity.getVendeur() != null ? (entity.getVendeur().getPrenom() + \" \" + entity.getVendeur().getNom()) : null)")
+    @Mapping(target = "vendeurNom", expression = "java(entity.getVendeur() != null ? (entity.getVendeur().getNomComplet() != null ? entity.getVendeur().getNomComplet() : entity.getVendeur().getUsername()) : null)")
     @Mapping(target = "lignes", source = "lignes")
     VenteDTO toDto(Vente entity);
 

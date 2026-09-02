@@ -319,4 +319,28 @@ public class Produit {
             pointDeVenteId = tenant != null ? tenant : 1L;
         }
     }
+
+    public String getNom() {
+        return designation != null ? designation : description;
+    }
+
+    public void setNom(String nom) {
+        this.designation = nom;
+    }
+
+    public BigDecimal getPrixVenteHT() {
+        return getPrixVenteHt();
+    }
+
+    public BigDecimal getPrixVenteTTC() {
+        return getPrixVenteTtc();
+    }
+
+    public BigDecimal getPrixAchatHT() {
+        return getPrixAchatHt();
+    }
+
+    public BigDecimal getPrixAchatTTC() {
+        return getPrixAchatTtc();
+    }
 }

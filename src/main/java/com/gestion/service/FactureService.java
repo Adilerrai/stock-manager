@@ -105,7 +105,7 @@ public class FactureService {
                 throw new IllegalArgumentException("Le bon de livraison " + bl.getNumeroBl() + " n'appartient pas au client " + client.getNomComplet());
             }
 
-            blSelectionnes.add(bl);
+            blsSelectionnes.add(bl);
             blNumeros.add(bl.getNumeroBl());
 
             // Convertir chaque ligne du BL en ligne de facture
@@ -142,7 +142,7 @@ public class FactureService {
         Facture savedFacture = factureRepository.save(facture);
 
         // Rattacher les BLs à la facture créée
-        for (BonLivraisonClient bl : blSelectionnes) {
+        for (BonLivraisonClient bl : blsSelectionnes) {
             bl.setFacture(savedFacture);
             bonLivraisonClientRepository.save(bl);
             savedFacture.getBonsLivraison().add(bl);

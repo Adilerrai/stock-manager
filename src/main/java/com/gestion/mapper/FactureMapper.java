@@ -18,7 +18,7 @@ public interface FactureMapper {
     @Mapping(target = "clientTelephone", source = "client.telephone")
     @Mapping(target = "venteId", source = "vente.id")
     @Mapping(target = "emiseParUserId", source = "emisePar.id")
-    @Mapping(target = "emiseParNom", expression = "java(entity.getEmisePar() != null ? (entity.getEmisePar().getPrenom() + \" \" + entity.getEmisePar().getNom()) : null)")
+    @Mapping(target = "emiseParNom", expression = "java(entity.getEmisePar() != null ? (entity.getEmisePar().getNomComplet() != null ? entity.getEmisePar().getNomComplet() : entity.getEmisePar().getUsername()) : null)")
     @Mapping(target = "lignes", source = "lignes")
     @Mapping(target = "bonLivraisonIds", expression = "java(mapBlIds(entity))")
     @Mapping(target = "bonLivraisonNumeros", expression = "java(mapBlNumeros(entity))")
