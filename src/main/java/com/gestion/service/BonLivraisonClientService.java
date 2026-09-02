@@ -1,6 +1,8 @@
 package com.gestion.service;
 
 import com.acommon.persistant.model.TenantContext;
+import com.gestion.mapper.BonLivraisonClientMapper;
+import com.gestion.persistent.dto.BonLivraisonClientDTO;
 import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.TypeMouvement;
@@ -21,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -32,22 +35,26 @@ public class BonLivraisonClientService {
     private final ProduitRepository produitRepository;
     private final DepotRepository depotRepository;
     private final MouvementStockService mouvementStockService;
+    private final BonLivraisonClientMapper bonLivraisonClientMapper;
 
     public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
                                      ClientRepository clientRepository,
                                      CommandeClientRepository commandeClientRepository,
                                      ProduitRepository produitRepository,
                                      DepotRepository depotRepository,
-                                     MouvementStockService mouvementStockService) {
+                                     MouvementStockService mouvementStockService,
+                                     BonLivraisonClientMapper bonLivraisonClientMapper) {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.clientRepository = clientRepository;
         this.commandeClientRepository = commandeClientRepository;
         this.produitRepository = produitRepository;
         this.depotRepository = depotRepository;
         this.mouvementStockService = mouvementStockService;
+        this.bonLivraisonClientMapper = bonLivraisonClientMapper;
     }
 
-    public BonLivraisonClient creerBonLivraisonClient(BonLivraisonClient bl) {
+    public BonLivraisonClientDTO creerBonLivraisonClient(BonLivraisonClientDTO dto) {
+        BonLivraisonClient bl = bonLivraisonClientMapper.toEntity(dto);
         Long tenantId = TenantContext.getCurrentTenant();
         bl.setPointDeVenteId(tenantId != null ? tenantId : 1L);
         bl.setDateBl(LocalDateTime.now());
@@ -55,45 +62,62 @@ public class BonLivraisonClientService {
         bl.setStatut(StatutLivraison.EN_ATTENTE);
 
         // Load and validate client
-        Client client = clientRepository.findById(bl.getClient().getId())
-                .orElseThrow(() -> new RuntimeException("Client non trouvé"));
+        Long clientId = dto.getClientId();
+        if (clientId == null && bl.getClient() != null) {
+            clientId = bl.getClient().getId();
+        }
+        if (clientId == null) {
+            throw new IllegalArgumentException("Le clientId est obligatoire pour créer un bon de livraison");
+        }
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("Client non trouvé avec l'id: " + clientId));
         bl.setClient(client);
 
         // If order linked, load it
-        if (bl.getCommandeClient() != null && bl.getCommandeClient().getId() != null) {
-            CommandeClient commande = commandeClientRepository.findById(bl.getCommandeClient().getId())
+        if (dto.getCommandeClientId() != null) {
+            CommandeClient commande = commandeClientRepository.findById(dto.getCommandeClientId())
                     .orElseThrow(() -> new RuntimeException("Commande client non trouvée"));
             bl.setCommandeClient(commande);
         }
 
         BigDecimal montantTotal = BigDecimal.ZERO;
 
-        for (LigneBonLivraisonClient ligne : bl.getLignes()) {
-            ligne.setBonLivraisonClient(bl);
-            
-            // Validate product
-            ligne.setProduit(produitRepository.findById(ligne.getProduit().getId())
-                    .orElseThrow(() -> new RuntimeException("Produit non trouvé")));
+        if (dto.getLignes() != null) {
+            for (var ligneDto : dto.getLignes()) {
+                LigneBonLivraisonClient ligne = new LigneBonLivraisonClient();
+                ligne.setBonLivraisonClient(bl);
 
-            // Resolve depot
-            if (ligne.getDepot() != null && ligne.getDepot().getId() != null) {
-                ligne.setDepot(depotRepository.findById(ligne.getDepot().getId())
-                        .orElseThrow(() -> new RuntimeException("Dépôt non trouvé")));
+                // Validate product
+                if (ligneDto.getProduitId() != null) {
+                    ligne.setProduit(produitRepository.findById(ligneDto.getProduitId())
+                            .orElseThrow(() -> new RuntimeException("Produit non trouvé avec l'id: " + ligneDto.getProduitId())));
+                }
+
+                // Resolve depot
+                if (ligneDto.getDepotId() != null) {
+                    ligne.setDepot(depotRepository.findById(ligneDto.getDepotId())
+                            .orElseThrow(() -> new RuntimeException("Dépôt non trouvé avec l'id: " + ligneDto.getDepotId())));
+                }
+
+                ligne.setQuantiteLivree(ligneDto.getQuantiteLivree() != null ? ligneDto.getQuantiteLivree() : BigDecimal.ONE);
+                ligne.setPrixVente(ligneDto.getPrixVente() != null ? ligneDto.getPrixVente() : BigDecimal.ZERO);
+
+                BigDecimal montantLigne = ligne.getPrixVente().multiply(ligne.getQuantiteLivree());
+                montantTotal = montantTotal.add(montantLigne);
+
+                bl.getLignes().add(ligne);
             }
-
-            BigDecimal montantLigne = ligne.getPrixVente().multiply(ligne.getQuantiteLivree());
-            montantTotal = montantTotal.add(montantLigne);
         }
 
         bl.setMontantTotal(montantTotal);
-
-        return bonLivraisonClientRepository.save(bl);
+        BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+        return bonLivraisonClientMapper.toDto(saved);
     }
 
-    public BonLivraisonClient validerEtExpedierBL(Long blId) {
+    public BonLivraisonClientDTO validerEtExpedierBL(Long blId) {
         Long tenantId = TenantContext.getCurrentTenant();
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, tenantId != null ? tenantId : 1L)
-                .orElseThrow(() -> new RuntimeException("Bon de livraison non trouvé"));
+                .orElseThrow(() -> new RuntimeException("Bon de livraison non trouvé avec l'id: " + blId));
 
         if (bl.getStatut() == StatutLivraison.LIVREE) {
             throw new IllegalStateException("Ce bon de livraison est déjà validé et expédié");
@@ -122,18 +146,37 @@ public class BonLivraisonClientService {
             commandeClientRepository.save(commande);
         }
 
-        return bonLivraisonClientRepository.save(bl);
+        BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+        return bonLivraisonClientMapper.toDto(saved);
     }
 
-    public List<BonLivraisonClient> getBonsLivraison() {
+    public List<BonLivraisonClientDTO> getBonsLivraison() {
         Long tenantId = TenantContext.getCurrentTenant();
-        return bonLivraisonClientRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        return bls.stream()
+                .map(bonLivraisonClientMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public BonLivraisonClient getBonLivraisonById(Long id) {
+    public BonLivraisonClientDTO getBonLivraisonById(Long id) {
         Long tenantId = TenantContext.getCurrentTenant();
-        return bonLivraisonClientRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
-                .orElseThrow(() -> new RuntimeException("Bon de livraison non trouvé"));
+        BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
+                .orElseThrow(() -> new RuntimeException("Bon de livraison non trouvé avec l'id: " + id));
+        return bonLivraisonClientMapper.toDto(bl);
+    }
+
+    public List<BonLivraisonClientDTO> getBonsLivraisonNonFactures(Long clientId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) tenantId = 1L;
+        List<BonLivraisonClient> bls;
+        if (clientId != null) {
+            bls = bonLivraisonClientRepository.findByClientIdAndFactureIsNullAndPointDeVenteId(clientId, tenantId);
+        } else {
+            bls = bonLivraisonClientRepository.findByFactureIsNullAndPointDeVenteId(tenantId);
+        }
+        return bls.stream()
+                .map(bonLivraisonClientMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     private String genererNumeroBL() {
@@ -142,4 +185,3 @@ public class BonLivraisonClientService {
         return "BL-CLI-" + dateStr + "-" + String.format("%04d", count);
     }
 }
-

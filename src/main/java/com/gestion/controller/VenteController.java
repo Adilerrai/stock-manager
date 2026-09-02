@@ -1,17 +1,13 @@
 package com.gestion.controller;
 
-import com.gestion.persistent.model.LigneVente;
-import com.gestion.persistent.model.Vente;
+import com.gestion.persistent.dto.VenteDTO;
 import com.gestion.service.VenteService;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/ventes")
@@ -25,61 +21,46 @@ public class VenteController {
     }
 
     @PostMapping
-    public ResponseEntity<Vente> creerVente(@RequestBody Vente vente, @RequestParam Long vendeurId) {
-        Vente nouvelleVente = venteService.creerVente(vente, vendeurId);
+    public ResponseEntity<VenteDTO> creerVente(@RequestBody VenteDTO dto, @RequestParam Long vendeurId) {
+        VenteDTO nouvelleVente = venteService.creerVente(dto, vendeurId);
         return new ResponseEntity<>(nouvelleVente, HttpStatus.CREATED);
     }
 
-    @PostMapping("/{venteId}/lignes")
-    public ResponseEntity<Vente> ajouterLigne(@PathVariable Long venteId, @RequestBody LigneVente ligne) {
-        Vente vente = venteService.ajouterLigneVente(venteId, ligne);
-        return ResponseEntity.ok(vente);
-    }
-
-    @DeleteMapping("/{venteId}/lignes/{ligneId}")
-    public ResponseEntity<Vente> supprimerLigne(@PathVariable Long venteId, @PathVariable Long ligneId) {
-        Vente vente = venteService.supprimerLigneVente(venteId, ligneId);
-        return ResponseEntity.ok(vente);
-    }
-
     @PostMapping("/{venteId}/valider")
-    public ResponseEntity<Vente> validerVente(@PathVariable Long venteId) {
-        Vente vente = venteService.validerVente(venteId);
+    public ResponseEntity<VenteDTO> validerVente(@PathVariable Long venteId) {
+        VenteDTO vente = venteService.validerVente(venteId);
         return ResponseEntity.ok(vente);
     }
 
     @PostMapping("/{venteId}/annuler")
-    public ResponseEntity<Vente> annulerVente(@PathVariable Long venteId,
-                                               @RequestParam String motif,
-                                               @RequestParam Long userId) {
-        Vente vente = venteService.annulerVente(venteId, motif, userId);
+    public ResponseEntity<VenteDTO> annulerVente(@PathVariable Long venteId,
+                                                @RequestParam String motif,
+                                                @RequestParam Long userId) {
+        VenteDTO vente = venteService.annulerVente(venteId, motif, userId);
         return ResponseEntity.ok(vente);
     }
 
     @PatchMapping("/{venteId}/remise")
-    public ResponseEntity<Vente> appliquerRemise(@PathVariable Long venteId, @RequestParam BigDecimal remise) {
-        Vente vente = venteService.appliquerRemiseGlobale(venteId, remise);
+    public ResponseEntity<VenteDTO> appliquerRemise(@PathVariable Long venteId, @RequestParam BigDecimal remise) {
+        VenteDTO vente = venteService.appliquerRemiseGlobale(venteId, remise);
         return ResponseEntity.ok(vente);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Vente> getVente(@PathVariable Long id) {
-        Vente vente = venteService.getVenteById(id);
+    public ResponseEntity<VenteDTO> getVente(@PathVariable Long id) {
+        VenteDTO vente = venteService.getVenteById(id);
         return ResponseEntity.ok(vente);
     }
 
     @GetMapping
-    public ResponseEntity<List<Vente>> getAllVentes() {
-        List<Vente> ventes = venteService.getAllVentes();
+    public ResponseEntity<List<VenteDTO>> getAllVentes() {
+        List<VenteDTO> ventes = venteService.getAllVentes();
         return ResponseEntity.ok(ventes);
     }
 
-
-
-
-
-
-
+    @GetMapping("/client/{clientId}")
+    public ResponseEntity<List<VenteDTO>> getVentesByClient(@PathVariable Long clientId) {
+        List<VenteDTO> ventes = venteService.getVentesByClient(clientId);
+        return ResponseEntity.ok(ventes);
+    }
 }
-
-

@@ -1,10 +1,12 @@
 package com.gestion.service;
 
 import com.acommon.persistant.model.TenantContext;
+import com.gestion.mapper.FactureAchatMapper;
+import com.gestion.persistent.dto.FactureAchatDTO;
 import com.gestion.persistent.enums.StatutFacture;
 import com.gestion.persistent.model.FactureAchat;
-import com.gestion.persistent.model.LigneFactureAchat;
 import com.gestion.persistent.model.Fournisseur;
+import com.gestion.persistent.model.LigneFactureAchat;
 import com.gestion.repository.FactureAchatRepository;
 import com.gestion.repository.FournisseurRepository;
 import com.gestion.repository.ProduitRepository;
@@ -15,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -23,73 +26,100 @@ public class FactureAchatService {
     private final FactureAchatRepository factureAchatRepository;
     private final FournisseurRepository fournisseurRepository;
     private final ProduitRepository produitRepository;
+    private final FactureAchatMapper factureAchatMapper;
 
     public FactureAchatService(FactureAchatRepository factureAchatRepository,
                                FournisseurRepository fournisseurRepository,
-                               ProduitRepository produitRepository) {
+                               ProduitRepository produitRepository,
+                               FactureAchatMapper factureAchatMapper) {
         this.factureAchatRepository = factureAchatRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.produitRepository = produitRepository;
+        this.factureAchatMapper = factureAchatMapper;
     }
 
-    public FactureAchat creerFactureAchat(FactureAchat facture) {
+    public FactureAchatDTO creerFactureAchat(FactureAchatDTO dto) {
+        FactureAchat facture = factureAchatMapper.toEntity(dto);
         Long tenantId = TenantContext.getCurrentTenant();
         facture.setPointDeVenteId(tenantId != null ? tenantId : 1L);
-        facture.setDateFacture(LocalDateTime.now());
-        facture.setNumeroFacture(genererNumeroFactureAchat());
+        facture.setDateFacture(dto.getDateFacture() != null ? dto.getDateFacture() : LocalDateTime.now());
+        facture.setDateEcheance(dto.getDateEcheance());
+        if (dto.getNumeroFacture() != null && !dto.getNumeroFacture().isBlank()) {
+            facture.setNumeroFacture(dto.getNumeroFacture());
+        } else {
+            facture.setNumeroFacture(genererNumeroFactureAchat());
+        }
         facture.setStatut(StatutFacture.EN_ATTENTE);
+        facture.setObservations(dto.getObservations());
 
         // Load and validate supplier
-        Fournisseur fournisseur = fournisseurRepository.findById(facture.getFournisseur().getId())
-                .orElseThrow(() -> new RuntimeException("Fournisseur non trouvé"));
+        Long fournisseurId = dto.getFournisseurId();
+        if (fournisseurId == null && facture.getFournisseur() != null) {
+            fournisseurId = facture.getFournisseur().getId();
+        }
+        if (fournisseurId == null) {
+            throw new IllegalArgumentException("Le fournisseurId est obligatoire");
+        }
+        Fournisseur fournisseur = fournisseurRepository.findById(fournisseurId)
+                .orElseThrow(() -> new RuntimeException("Fournisseur non trouvé avec l'id: " + fournisseurId));
         facture.setFournisseur(fournisseur);
 
         BigDecimal totalHt = BigDecimal.ZERO;
         BigDecimal totalTva = BigDecimal.ZERO;
         BigDecimal totalTtc = BigDecimal.ZERO;
 
-        for (LigneFactureAchat ligne : facture.getLignes()) {
-            ligne.setFactureAchat(facture);
-            
-            // Validate product
-            ligne.setProduit(produitRepository.findById(ligne.getProduit().getId())
-                    .orElseThrow(() -> new RuntimeException("Produit non trouvé")));
+        if (dto.getLignes() != null) {
+            for (var ligneDto : dto.getLignes()) {
+                LigneFactureAchat ligne = new LigneFactureAchat();
+                ligne.setFactureAchat(facture);
 
-            // Default TVA rate is 19% if not provided
-            if (ligne.getTauxTva() == null) {
-                ligne.setTauxTva(BigDecimal.valueOf(19.00));
+                // Validate product
+                if (ligneDto.getProduitId() != null) {
+                    ligne.setProduit(produitRepository.findById(ligneDto.getProduitId())
+                            .orElseThrow(() -> new RuntimeException("Produit non trouvé avec l'id: " + ligneDto.getProduitId())));
+                }
+
+                ligne.setQuantite(ligneDto.getQuantite() != null ? ligneDto.getQuantite() : BigDecimal.ONE);
+                ligne.setPrixUnitaireHt(ligneDto.getPrixUnitaireHt() != null ? ligneDto.getPrixUnitaireHt() : BigDecimal.ZERO);
+                ligne.setTauxTva(ligneDto.getTauxTva() != null ? ligneDto.getTauxTva() : BigDecimal.valueOf(19.00));
+
+                BigDecimal ht = ligne.getPrixUnitaireHt().multiply(ligne.getQuantite());
+                BigDecimal tva = ht.multiply(ligne.getTauxTva()).divide(BigDecimal.valueOf(100));
+                BigDecimal ttc = ht.add(tva);
+
+                ligne.setMontantHt(ht);
+                ligne.setMontantTva(tva);
+                ligne.setMontantTtc(ttc);
+
+                totalHt = totalHt.add(ht);
+                totalTva = totalTva.add(tva);
+                totalTtc = totalTtc.add(ttc);
+
+                facture.getLignes().add(ligne);
             }
-
-            // Calculate line amounts
-            BigDecimal ht = ligne.getPrixUnitaireHt().multiply(ligne.getQuantite());
-            BigDecimal tva = ht.multiply(ligne.getTauxTva()).divide(BigDecimal.valueOf(100));
-            BigDecimal ttc = ht.add(tva);
-
-            ligne.setMontantHt(ht);
-            ligne.setMontantTva(tva);
-            ligne.setMontantTtc(ttc);
-
-            totalHt = totalHt.add(ht);
-            totalTva = totalTva.add(tva);
-            totalTtc = totalTtc.add(ttc);
         }
 
         facture.setMontantHt(totalHt);
         facture.setMontantTva(totalTva);
         facture.setMontantTtc(totalTtc);
 
-        return factureAchatRepository.save(facture);
+        FactureAchat saved = factureAchatRepository.save(facture);
+        return factureAchatMapper.toDto(saved);
     }
 
-    public List<FactureAchat> getFacturesAchat() {
+    public List<FactureAchatDTO> getFacturesAchat() {
         Long tenantId = TenantContext.getCurrentTenant();
-        return factureAchatRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        List<FactureAchat> factures = factureAchatRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        return factures.stream()
+                .map(factureAchatMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public FactureAchat getFactureAchatById(Long id) {
+    public FactureAchatDTO getFactureAchatById(Long id) {
         Long tenantId = TenantContext.getCurrentTenant();
-        return factureAchatRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
-                .orElseThrow(() -> new RuntimeException("Facture d'achat non trouvée"));
+        FactureAchat facture = factureAchatRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
+                .orElseThrow(() -> new RuntimeException("Facture d'achat non trouvée avec l'id: " + id));
+        return factureAchatMapper.toDto(facture);
     }
 
     public void updateStatutFacture(FactureAchat facture, BigDecimal montantRegleTotal) {
@@ -109,4 +139,3 @@ public class FactureAchatService {
         return "FAC-ACH-" + dateStr + "-" + String.format("%04d", count);
     }
 }
-
