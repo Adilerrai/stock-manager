@@ -14,7 +14,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 
 @Service
-@Transactional
 public class EntrepriseProfileService {
 
     private final EntrepriseProfileRepository entrepriseProfileRepository;
@@ -29,22 +28,30 @@ public class EntrepriseProfileService {
         this.imageCompressionService = imageCompressionService;
     }
 
+    @Transactional(readOnly = true)
     public EntrepriseProfile getProfileEntityByCurrentTenant() {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId == null) tenantId = 1L;
 
         final Long currentTenantId = tenantId;
         return entrepriseProfileRepository.findByPointDeVenteId(currentTenantId)
-                .orElseGet(() -> createDefaultProfile(currentTenantId));
+                .orElseGet(() -> buildDefaultProfile(currentTenantId));
     }
 
+    @Transactional(readOnly = true)
     public EntrepriseProfileDTO getProfileByCurrentTenant() {
         EntrepriseProfile profile = getProfileEntityByCurrentTenant();
         return entrepriseProfileMapper.toDto(profile);
     }
 
+    @Transactional
     public EntrepriseProfileDTO updateProfile(EntrepriseProfileDTO dto) {
-        EntrepriseProfile profile = getProfileEntityByCurrentTenant();
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) tenantId = 1L;
+
+        final Long currentTenantId = tenantId;
+        EntrepriseProfile profile = entrepriseProfileRepository.findByPointDeVenteId(currentTenantId)
+                .orElseGet(() -> buildDefaultProfile(currentTenantId));
 
         if (dto.getNomEntreprise() != null && !dto.getNomEntreprise().isBlank()) {
             profile.setNomEntreprise(dto.getNomEntreprise());
@@ -73,6 +80,7 @@ public class EntrepriseProfileService {
         return entrepriseProfileMapper.toDto(saved);
     }
 
+    @Transactional
     public EntrepriseProfileDTO uploadLogo(MultipartFile file) throws Exception {
         if (file == null || file.isEmpty()) {
             throw new CommonException("Fichier image vide", HttpStatus.BAD_REQUEST, "LOGO_EMPTY");
@@ -90,7 +98,13 @@ public class EntrepriseProfileService {
 
         byte[] compressedData = imageCompressionService.compressImage(file.getBytes(), contentType);
 
-        EntrepriseProfile profile = getProfileEntityByCurrentTenant();
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) tenantId = 1L;
+
+        final Long currentTenantId = tenantId;
+        EntrepriseProfile profile = entrepriseProfileRepository.findByPointDeVenteId(currentTenantId)
+                .orElseGet(() -> buildDefaultProfile(currentTenantId));
+
         profile.setLogoData(compressedData);
         profile.setLogoContentType(contentType);
         profile.setLogoFileName(file.getOriginalFilename());
@@ -100,34 +114,42 @@ public class EntrepriseProfileService {
         return entrepriseProfileMapper.toDto(saved);
     }
 
+    @Transactional
     public void removeLogo() {
-        EntrepriseProfile profile = getProfileEntityByCurrentTenant();
-        profile.setLogoData(null);
-        profile.setLogoContentType(null);
-        profile.setLogoFileName(null);
-        profile.setDateMiseAJour(LocalDateTime.now());
-        entrepriseProfileRepository.save(profile);
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) tenantId = 1L;
+
+        final Long currentTenantId = tenantId;
+        entrepriseProfileRepository.findByPointDeVenteId(currentTenantId).ifPresent(profile -> {
+            profile.setLogoData(null);
+            profile.setLogoContentType(null);
+            profile.setLogoFileName(null);
+            profile.setDateMiseAJour(LocalDateTime.now());
+            entrepriseProfileRepository.save(profile);
+        });
     }
 
-    private EntrepriseProfile createDefaultProfile(Long tenantId) {
+    private EntrepriseProfile buildDefaultProfile(Long tenantId) {
         EntrepriseProfile defaultProfile = new EntrepriseProfile();
         defaultProfile.setPointDeVenteId(tenantId);
-        defaultProfile.setNomEntreprise("POINT DE VENTE SAAS");
-        defaultProfile.setActivite("Commerce de Gros & Détail");
-        defaultProfile.setAdresse("Zone Industrielle");
+        defaultProfile.setNomEntreprise("SARL COMPTOIR DU CARRELAGE & MATÉRIAUX");
+        defaultProfile.setActivite("Importation & Distribution Carrelages et Sanitaires");
+        defaultProfile.setAdresse("Zone Industrielle Oued Smar, Lot N° 45");
         defaultProfile.setVille("Alger");
-        defaultProfile.setCodePostal("16000");
-        defaultProfile.setTelephone("021 00 00 00");
-        defaultProfile.setEmail("contact@pointvente.dz");
-        defaultProfile.setRegistreCommerce("16/00-1234567B16");
-        defaultProfile.setNumeroIdentificationFiscale("001612345678901");
-        defaultProfile.setNumeroIdentificationStatistique("0016123456789");
-        defaultProfile.setArticleImposition("16123456789");
-        defaultProfile.setCompteBancaireRib("002 00012 1234567890 12");
+        defaultProfile.setCodePostal("16200");
+        defaultProfile.setTelephone("021 50 12 34");
+        defaultProfile.setTelephoneSecondaire("0550 12 34 56");
+        defaultProfile.setEmail("contact@comptoir-carrelage.dz");
+        defaultProfile.setSiteWeb("www.comptoir-carrelage.dz");
+        defaultProfile.setRegistreCommerce("16/00-0987654B16");
+        defaultProfile.setNumeroIdentificationFiscale("001609876543210");
+        defaultProfile.setNumeroIdentificationStatistique("0016098765432");
+        defaultProfile.setArticleImposition("16098765432");
+        defaultProfile.setCompteBancaireRib("002 00012 1234567890 55");
         defaultProfile.setNomBanque("Banque Nationale d'Algérie (BNA)");
-        defaultProfile.setPiedPage("Garantie légale selon réglementation en vigueur. Merci pour votre confiance.");
+        defaultProfile.setPiedPage("Garantie légale selon réglementation en vigueur. Marchandise livrée sous réserve de propriété. Merci pour votre confiance !");
         defaultProfile.setDevise("DZD");
         defaultProfile.setDateMiseAJour(LocalDateTime.now());
-        return entrepriseProfileRepository.save(defaultProfile);
+        return defaultProfile;
     }
 }
