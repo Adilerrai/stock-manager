@@ -18,6 +18,7 @@ public class Livraison {
     @Column(unique = true, nullable = false)
     private String numeroLivraison;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_id", nullable = true)
     private Commande commande;

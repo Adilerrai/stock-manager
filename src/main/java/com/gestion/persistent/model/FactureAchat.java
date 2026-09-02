@@ -1,5 +1,6 @@
 package com.gestion.persistent.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gestion.persistent.enums.StatutFacture;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "factures_achat")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class FactureAchat {
 
     @Id

@@ -67,6 +67,9 @@ public class CommandeClient {
     public String getNumeroCommande() { return numeroCommande; }
     public void setNumeroCommande(String numeroCommande) { this.numeroCommande = numeroCommande; }
 
+    public Client getClient() { return client; }
+    public void setClient(Client client) { this.client = client; }
+
     public String getClientNom() { return clientNom; }
     public void setClientNom(String clientNom) { this.clientNom = clientNom; }
 

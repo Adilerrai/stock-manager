@@ -43,6 +43,11 @@ public class ProduitService {
         String reference = "PROD-" + System.currentTimeMillis();
         produit.setReference(reference);
 
+        if (produit.getPointDeVenteId() == null) {
+            Long tenantId = TenantContext.getCurrentTenant();
+            produit.setPointDeVenteId(tenantId != null ? tenantId : 1L);
+        }
+
         return produitRepository.save(produit);
     }
 

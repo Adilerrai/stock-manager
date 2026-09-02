@@ -10,6 +10,7 @@ public class LigneCommandeClient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "commande_client_id", nullable = false)
     private CommandeClient commandeClient;

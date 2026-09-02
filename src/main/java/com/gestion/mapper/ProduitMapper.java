@@ -11,7 +11,7 @@ import org.mapstruct.AfterMapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.HashMap;
 
-@Mapper(componentModel = "spring", uses = {ProduitImageMapper.class})
+@Mapper(componentModel = "spring", uses = {ProduitImageMapper.class, CategorieMapper.class})
 public abstract class ProduitMapper {
 
     @Autowired

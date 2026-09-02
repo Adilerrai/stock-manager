@@ -1,6 +1,7 @@
 package com.gestion.persistent.model;
 
 import com.acommon.persistant.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gestion.persistent.enums.StatutFacture;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "factures")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Facture {
 
     @Id
@@ -40,6 +42,10 @@ public class Facture {
 
     @OneToMany(mappedBy = "facture", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneFacture> lignes = new ArrayList<>();
+
+    @OneToMany(mappedBy = "facture")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private List<BonLivraisonClient> bonsLivraison = new ArrayList<>();
 
     @Column(name = "montant_ht", precision = 15, scale = 2)
     private BigDecimal montantHT = BigDecimal.ZERO;
@@ -328,6 +334,14 @@ public class Facture {
 
     public boolean estEchue() {
         return dateEcheance != null && LocalDate.now().isAfter(dateEcheance) && !estSoldee();
+    }
+
+    public List<BonLivraisonClient> getBonsLivraison() {
+        return bonsLivraison;
+    }
+
+    public void setBonsLivraison(List<BonLivraisonClient> bonsLivraison) {
+        this.bonsLivraison = bonsLivraison;
     }
 }
 

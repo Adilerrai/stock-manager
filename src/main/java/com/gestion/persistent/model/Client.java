@@ -1,5 +1,6 @@
 package com.gestion.persistent.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gestion.persistent.enums.CategorieClient;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "clients")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Client {
 
     @Id
@@ -62,9 +64,11 @@ public class Client {
 
     private String notes;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
     private List<Vente> ventes = new ArrayList<>();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL)
     private List<Facture> factures = new ArrayList<>();
 

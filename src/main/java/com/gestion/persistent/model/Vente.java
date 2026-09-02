@@ -1,6 +1,7 @@
 package com.gestion.persistent.model;
 
 import com.acommon.persistant.model.User;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gestion.persistent.enums.StatutVente;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -10,6 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "ventes")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Vente {
 
     @Id
@@ -60,6 +62,7 @@ public class Vente {
     @Column(name = "montant_restant", precision = 15, scale = 2)
     private BigDecimal montantRestant = BigDecimal.ZERO;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToOne(mappedBy = "vente")
     private Facture facture;
 

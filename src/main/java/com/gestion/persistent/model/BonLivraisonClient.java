@@ -74,7 +74,16 @@ public class BonLivraisonClient {
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "facture_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Facture facture;
+
     public List<LigneBonLivraisonClient> getLignes() { return lignes; }
     public void setLignes(List<LigneBonLivraisonClient> lignes) { this.lignes = lignes; }
+
+    public Facture getFacture() { return facture; }
+    public void setFacture(Facture facture) { this.facture = facture; }
+    public Boolean isFacture() { return facture != null; }
 }
 

@@ -31,6 +31,7 @@ public class StockQualite {
     @Column(name = "derniere_maj")
     private LocalDateTime derniereMaj;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "stock_id", nullable = false)
     private Stock stock;

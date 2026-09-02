@@ -1,5 +1,6 @@
 package com.gestion.persistent.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gestion.persistent.enums.UniteMesure;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -11,6 +12,7 @@ import java.util.Map;
 
 @Entity
 @Table(name = "produits")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Produit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,15 +28,18 @@ public class Produit {
 
     private Boolean actif = true;
 
-    @Enumerated(EnumType.STRING)
-    private GroupeArticle groupeArticle;
+    @Column(name = "groupe_article")
+    private String groupeArticle;
 
     @Column(name = "code_barre")
     private String codeBarre;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categorie_id")
+    private Categorie categorie;
+
     @Column(name = "categorie_article")
-    private com.gestion.persistent.enums.CategorieArticle categorieArticle;
+    private String categorieArticle;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "attributes", columnDefinition = "jsonb")
@@ -65,6 +70,9 @@ public class Produit {
     @Enumerated(EnumType.STRING)
     @Column(name = "unite_mesure_stock")
     private UniteMesure uniteMesureStock;
+
+    @Column(name = "point_de_vente_id")
+    private Long pointDeVenteId;
 
     public Produit() {
     }
@@ -152,11 +160,11 @@ public class Produit {
         this.actif = actif;
     }
 
-    public GroupeArticle getGroupeArticle() {
+    public String getGroupeArticle() {
         return groupeArticle;
     }
 
-    public void setGroupeArticle(GroupeArticle groupeArticle) {
+    public void setGroupeArticle(String groupeArticle) {
         this.groupeArticle = groupeArticle;
     }
 
@@ -168,11 +176,22 @@ public class Produit {
         this.codeBarre = codeBarre;
     }
 
-    public com.gestion.persistent.enums.CategorieArticle getCategorieArticle() {
+    public Categorie getCategorie() {
+        return categorie;
+    }
+
+    public void setCategorie(Categorie categorie) {
+        this.categorie = categorie;
+        if (categorie != null) {
+            this.categorieArticle = categorie.getNom();
+        }
+    }
+
+    public String getCategorieArticle() {
         return categorieArticle;
     }
 
-    public void setCategorieArticle(com.gestion.persistent.enums.CategorieArticle categorieArticle) {
+    public void setCategorieArticle(String categorieArticle) {
         this.categorieArticle = categorieArticle;
     }
 
@@ -281,11 +300,23 @@ public class Produit {
         return null;
     }
 
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
+    }
+
     @PrePersist
     @PreUpdate
     public void prePersist() {
         if (description == null || description.trim().isEmpty()) {
             description = designation != null ? designation : "Sans description";
+        }
+        if (pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            pointDeVenteId = tenant != null ? tenant : 1L;
         }
     }
 }

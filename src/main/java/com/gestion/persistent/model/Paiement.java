@@ -20,10 +20,12 @@ public class Paiement {
     @Column(name = "date_paiement", nullable = false)
     private LocalDateTime datePaiement = LocalDateTime.now();
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "vente_id")
     private Vente vente;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "facture_id")
     private Facture facture;

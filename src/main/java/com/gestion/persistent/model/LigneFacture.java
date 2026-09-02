@@ -11,6 +11,7 @@ public class LigneFacture {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "facture_id", nullable = false)
     private Facture facture;

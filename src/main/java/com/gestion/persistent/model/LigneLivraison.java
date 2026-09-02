@@ -11,6 +11,7 @@ public class LigneLivraison {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "livraison_id", nullable = false)
     private Livraison livraison;

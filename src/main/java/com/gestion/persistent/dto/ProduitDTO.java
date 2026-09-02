@@ -17,9 +17,9 @@ public class ProduitDTO {
     private BigDecimal prixVente;
     private ProduitImageDTO image;
     private Boolean actif;
-    private GroupeArticle groupeArticle;
+    private String groupeArticle;
     private String codeBarre;
-    private CategorieArticle categorieArticle;
+    private String categorieArticle;
     
     private Map<String, Object> attributes;
     
@@ -28,9 +28,36 @@ public class ProduitDTO {
     private BigDecimal prixAchatTtc;
     private BigDecimal prixVenteHt;
     private BigDecimal prixVenteTtc;
+    private Long pointDeVenteId;
+    private Long categorieId;
+    private CategorieDTO categorie;
 
     // Constructors
     public ProduitDTO() {
+    }
+
+    public Long getCategorieId() {
+        return categorieId;
+    }
+
+    public void setCategorieId(Long categorieId) {
+        this.categorieId = categorieId;
+    }
+
+    public CategorieDTO getCategorie() {
+        return categorie;
+    }
+
+    public void setCategorie(CategorieDTO categorie) {
+        this.categorie = categorie;
+    }
+
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
     }
 
     // Getters and Setters
@@ -106,11 +133,11 @@ public class ProduitDTO {
         this.actif = actif;
     }
 
-    public GroupeArticle getGroupeArticle() {
+    public String getGroupeArticle() {
         return groupeArticle;
     }
 
-    public void setGroupeArticle(GroupeArticle groupeArticle) {
+    public void setGroupeArticle(String groupeArticle) {
         this.groupeArticle = groupeArticle;
     }
 
@@ -122,11 +149,11 @@ public class ProduitDTO {
         this.codeBarre = codeBarre;
     }
 
-    public CategorieArticle getCategorieArticle() {
+    public String getCategorieArticle() {
         return categorieArticle;
     }
 
-    public void setCategorieArticle(CategorieArticle categorieArticle) {
+    public void setCategorieArticle(String categorieArticle) {
         this.categorieArticle = categorieArticle;
     }
 

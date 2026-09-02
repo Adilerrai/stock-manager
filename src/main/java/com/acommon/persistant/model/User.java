@@ -14,8 +14,11 @@ import java.util.stream.Collectors;
 
 
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "users")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "password"})
 public class User implements UserDetails {
 
     @Id
