@@ -27,6 +27,8 @@ ALTER TABLE comptes_financiers ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT
 ALTER TABLE objectifs_commerciaux ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;
 ALTER TABLE relances_clients ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;
 ALTER TABLE promesses_paiement ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;
+ALTER TABLE bons_livraison_client ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;
+ALTER TABLE commandes_client ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;
 
 -- ==============================================================================
 -- 1. POINTS DE VENTE (TENANTS)
@@ -379,6 +381,114 @@ INSERT INTO promesses_paiement (id, client_id, facture_id, date_promesse, date_e
 (2, 11, 11, NOW() - INTERVAL '1 day', CURRENT_DATE + 3,  85000.00, 'EN_ATTENTE', 12, 2)
 ON CONFLICT (id) DO NOTHING;
 
+-- ==============================================================================
+-- 16. COMMANDES FOURNISSEUR (ACHATS) PAR ENTREPRISE
+-- ==============================================================================
+INSERT INTO commandes (id, numero_commande, fournisseur_id, statut, statut_livraison, date_commande, date_livraison_prevue, date_livraison_reelle, montant_total, observations, point_de_vente_id) VALUES
+-- Adil (point_de_vente_id = 1)
+(1,  'CMD-FOUR-ADIL-001', 1,  'LIVREE',   'LIVREE',     NOW() - INTERVAL '10 days', NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days', 280000.00, 'Approvisionnement stock showroom carrelage Calacatta 60x60', 1),
+(2,  'CMD-FOUR-ADIL-002', 2,  'VALIDEE',  'EN_ATTENTE', NOW() - INTERVAL '5 days',  NOW() + INTERVAL '2 days', NULL,                     127500.00, 'Commande réapprovisionnement sacs mortier-colle C2TE 25kg',       1),
+-- Marouane (point_de_vente_id = 2)
+(10, 'CMD-FOUR-MAR-001',  11, 'LIVREE',   'LIVREE',     NOW() - INTERVAL '12 days', NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days',  65000.00, 'Réapprovisionnement filtres à huile Purflux LS932',               2),
+(11, 'CMD-FOUR-MAR-002',  12, 'VALIDEE',  'EN_ATTENTE', NOW() - INTERVAL '4 days',  NOW() + INTERVAL '3 days', NULL,                     160000.00, 'Commande plaquettes de frein Brembo P85020',                     2)
+ON CONFLICT (id) DO UPDATE SET
+    numero_commande = EXCLUDED.numero_commande,
+    statut = EXCLUDED.statut,
+    statut_livraison = EXCLUDED.statut_livraison,
+    montant_total = EXCLUDED.montant_total,
+    point_de_vente_id = EXCLUDED.point_de_vente_id;
+
+-- Lignes de commandes fournisseur
+INSERT INTO lignes_commande (id, commande_id, produit_id, quantite_commandee, quantite_livree, prix_unitaire, montant_ligne, qualite_produit) VALUES
+(1,  1,  1,   200, 200, 1400.00, 280000.00, 'PREMIERE_QUALITE'),
+(2,  2,  3,   150, 0,    850.00, 127500.00, 'PREMIERE_QUALITE'),
+(10, 10, 101, 100, 100,  650.00,  65000.00, 'PREMIERE_QUALITE'),
+(11, 11, 201,  50, 0,   3200.00, 160000.00, 'PREMIERE_QUALITE')
+ON CONFLICT (id) DO UPDATE SET
+    quantite_commandee = EXCLUDED.quantite_commandee,
+    quantite_livree = EXCLUDED.quantite_livree,
+    prix_unitaire = EXCLUDED.prix_unitaire,
+    montant_ligne = EXCLUDED.montant_ligne;
+
+-- ==============================================================================
+-- 17. LIVRAISONS FOURNISSEUR (RÉCEPTIONS DE COMMANDES) PAR ENTREPRISE
+-- ==============================================================================
+INSERT INTO livraisons (id, numero_livraison, commande_id, date_livraison, transporteur, numero_suivi, montant_total, observations, statut) VALUES
+-- Livraison sur commande 1 (Adil)
+(1,  'LIV-ADIL-2026-001', 1,  NOW() - INTERVAL '3 days', 'Transport Express Centre', 'TR-ALG-88901', 280000.00, 'Réception conforme 200m² Grès Calacatta au Hangar Oued Smar', 'LIVREE'),
+-- Livraison sur commande 10 (Marouane)
+(10, 'LIV-MAR-2026-001',  10, NOW() - INTERVAL '5 days', 'Messagerie Rapide Oran',  'MR-ORN-44120',  65000.00, 'Réception conforme 100 filtres Purflux au Hangar Logistique',       'LIVREE')
+ON CONFLICT (id) DO UPDATE SET
+    numero_livraison = EXCLUDED.numero_livraison,
+    commande_id = EXCLUDED.commande_id,
+    montant_total = EXCLUDED.montant_total,
+    statut = EXCLUDED.statut;
+
+-- Lignes de livraisons fournisseur
+INSERT INTO lignes_livraison (id, livraison_id, produit_id, depot_id, quantite_livree, prix_produit, qualite_produit) VALUES
+(1,  1,  1,   2, 200, 1400.00, 'PREMIERE_QUALITE'),
+(10, 10, 101, 4, 100,  650.00, 'PREMIERE_QUALITE')
+ON CONFLICT (id) DO UPDATE SET
+    quantite_livree = EXCLUDED.quantite_livree,
+    prix_produit = EXCLUDED.prix_produit;
+
+-- ==============================================================================
+-- 18. COMMANDES CLIENT (VENTES) PAR ENTREPRISE
+-- ==============================================================================
+INSERT INTO commandes_client (id, numero_commande, client_id, client_nom, client_telephone, client_email, adresse_livraison, statut, date_commande, date_livraison_prevue, montant_ht, montant_ttc, taux_tva, observations) VALUES
+-- Adil (point_de_vente_id = 1)
+(1,  'CMD-CL-ADIL-001', 1,  'BTPH SARL El Bahia',             '0550100200', 'contact@elbahia-btp.dz', 'Chantier Résidence Les Pins, Ben Aknoun, Alger', 'LIVREE',    NOW() - INTERVAL '4 days', NOW() - INTERVAL '2 days',  90000.00, 107100.00, 19.00, 'Livraison sur chantier BTPH Ben Aknoun par camion plateau'),
+(2,  'CMD-CL-ADIL-002', 2,  'Promotion Immobilière Sahel',    '0550300400', 'achats@sahel-immo.dz',   'Projet Tour Panoramique, El Biar, Alger',         'CONFIRMEE', NOW() - INTERVAL '1 day',  NOW() + INTERVAL '3 days', 120000.00, 142800.00, 19.00, 'Faïence murale métro pour 12 salles de bains'),
+-- Marouane (point_de_vente_id = 2)
+(10, 'CMD-CL-MAR-001',  10, 'Garage SARL Auto Express Oran',  '0555112233', 'atelier@autoexpress-oran.dz', 'Atelier Central, Rue Ben M''hidi, Oran',     'LIVREE',    NOW() - INTERVAL '5 days', NOW() - INTERVAL '2 days',  36000.00,  42840.00, 19.00, 'Filtres vidange rapide pour flotte taxi et particuliers'),
+(11, 'CMD-CL-MAR-002',  11, 'SARL Logistique Transport Ouest', '0555445566', 'flotte@transport-ouest.dz',   'Dépôt Maintenance Flotte, ZI Es Senia, Oran',      'CONFIRMEE', NOW() - INTERVAL '2 days', NOW() + INTERVAL '2 days',  60000.00,  71400.00, 19.00, 'Plaquettes Brembo pour révision de 15 utilitaires')
+ON CONFLICT (id) DO UPDATE SET
+    numero_commande = EXCLUDED.numero_commande,
+    client_id = EXCLUDED.client_id,
+    statut = EXCLUDED.statut,
+    montant_ht = EXCLUDED.montant_ht,
+    montant_ttc = EXCLUDED.montant_ttc;
+
+-- Lignes de commandes client
+INSERT INTO lignes_commande_client (id, commande_client_id, produit_id, quantite, prix_unitaire, montant_ligne, observations) VALUES
+(1,  1,  1,   50.000, 1800.00,  90000.00, 'Grès Cérame Calacatta 60x60'),
+(2,  2,  2,   80.000, 1500.00, 120000.00, 'Faïence Murale Metro Blanc'),
+(10, 10, 101, 40.000,  900.00,  36000.00, 'Filtres à huile Purflux LS932'),
+(11, 11, 201, 15.000, 4000.00,  60000.00, 'Plaquettes Avant Brembo P85020')
+ON CONFLICT (id) DO UPDATE SET
+    quantite = EXCLUDED.quantite,
+    prix_unitaire = EXCLUDED.prix_unitaire,
+    montant_ligne = EXCLUDED.montant_ligne;
+
+-- ==============================================================================
+-- 19. BONS DE LIVRAISON CLIENT (EXPÉDITIONS SUR COMMANDES) PAR ENTREPRISE
+-- ==============================================================================
+INSERT INTO bons_livraison_client (id, numero_bl, client_id, commande_client_id, facture_id, date_bl, montant_total, observations, point_de_vente_id, statut) VALUES
+-- Adil (point_de_vente_id = 1)
+(1,  'BL-ADIL-2026-001', 1,  1,  1,    NOW() - INTERVAL '2 days', 107100.00, 'Livraison réceptionnée et déchargée par le chef de chantier BTPH', 1, 'LIVREE'),
+(2,  'BL-ADIL-2026-002', 2,  2,  NULL, NOW(),                     142800.00, 'En cours d acheminement vers le chantier d El Biar',               1, 'EN_LIVRAISON'),
+-- Marouane (point_de_vente_id = 2)
+(10, 'BL-MAR-2026-001',  10, 10, 10,   NOW() - INTERVAL '2 days',  42840.00, 'Remis en main propre au chef d atelier Auto Express',              2, 'LIVREE'),
+(11, 'BL-MAR-2026-002',  11, 11, NULL, NOW(),                      71400.00, 'Livraison en cours par coursier interne Marouane',                 2, 'EN_LIVRAISON')
+ON CONFLICT (id) DO UPDATE SET
+    numero_bl = EXCLUDED.numero_bl,
+    client_id = EXCLUDED.client_id,
+    commande_client_id = EXCLUDED.commande_client_id,
+    facture_id = EXCLUDED.facture_id,
+    montant_total = EXCLUDED.montant_total,
+    point_de_vente_id = EXCLUDED.point_de_vente_id,
+    statut = EXCLUDED.statut;
+
+-- Lignes de bons de livraison client
+INSERT INTO lignes_bon_livraison_client (id, bon_livraison_client_id, produit_id, depot_id, quantite_livree, prix_vente) VALUES
+(1,  1,  1,   2, 50.000, 1800.00),
+(2,  2,  2,   2, 80.000, 1500.00),
+(10, 10, 101, 3, 40.000,  900.00),
+(11, 11, 201, 4, 15.000, 4000.00)
+ON CONFLICT (id) DO UPDATE SET
+    quantite_livree = EXCLUDED.quantite_livree,
+    prix_vente = EXCLUDED.prix_vente;
+
 -- Synchronisation des séquences PostgreSQL
 SELECT setval(pg_get_serial_sequence('point_de_vente', 'id'), COALESCE(MAX(id), 1)) FROM point_de_vente;
 SELECT setval(pg_get_serial_sequence('entreprise_profiles', 'id'), COALESCE(MAX(id), 1)) FROM entreprise_profiles;
@@ -397,5 +507,13 @@ SELECT setval(pg_get_serial_sequence('factures', 'id'), COALESCE(MAX(id), 1)) FR
 SELECT setval(pg_get_serial_sequence('paiements', 'id'), COALESCE(MAX(id), 1)) FROM paiements;
 SELECT setval(pg_get_serial_sequence('depenses', 'id'), COALESCE(MAX(id), 1)) FROM depenses;
 SELECT setval(pg_get_serial_sequence('objectifs_commerciaux', 'id'), COALESCE(MAX(id), 1)) FROM objectifs_commerciaux;
+SELECT setval(pg_get_serial_sequence('commandes', 'id'), COALESCE(MAX(id), 1)) FROM commandes;
+SELECT setval(pg_get_serial_sequence('lignes_commande', 'id'), COALESCE(MAX(id), 1)) FROM lignes_commande;
+SELECT setval(pg_get_serial_sequence('livraisons', 'id'), COALESCE(MAX(id), 1)) FROM livraisons;
+SELECT setval(pg_get_serial_sequence('lignes_livraison', 'id'), COALESCE(MAX(id), 1)) FROM lignes_livraison;
+SELECT setval(pg_get_serial_sequence('commandes_client', 'id'), COALESCE(MAX(id), 1)) FROM commandes_client;
+SELECT setval(pg_get_serial_sequence('lignes_commande_client', 'id'), COALESCE(MAX(id), 1)) FROM lignes_commande_client;
+SELECT setval(pg_get_serial_sequence('bons_livraison_client', 'id'), COALESCE(MAX(id), 1)) FROM bons_livraison_client;
+SELECT setval(pg_get_serial_sequence('lignes_bon_livraison_client', 'id'), COALESCE(MAX(id), 1)) FROM lignes_bon_livraison_client;
 
 COMMIT;
