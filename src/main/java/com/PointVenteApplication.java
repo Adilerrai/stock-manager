@@ -19,54 +19,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EntityScan("com")
 @EnableJpaRepositories("com")
 public class PointVenteApplication {
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    private Logger logger = org.slf4j.LoggerFactory.getLogger(PointVenteApplication.class);
+ 
 
     public static void main(String[] args) {
         SpringApplication.run(PointVenteApplication.class, args);
     }
 
-
-    @Bean
-    CommandLineRunner runner() {
-        Role role;
-        if(roleRepository.existsByNom(("ADMIN"))){
-           role = roleRepository.findByNom("ADMIN").get();
-            logger.info("Role ADMIN already exists");
-        } else{
-           role = new Role();
-           role.setNom("ADMIN");
-           roleRepository.save(role);
-           logger.info("Role ADMIN already exists");
-        }
-
-
-
-        if (userRepository.existsByUsername("admin2")) {
-            logger.info("User admin2 already exists, skipping seed");
-        } else {
-            User user = new User();
-            user.setUsername("admin2");
-            user.setPassword(passwordEncoder.encode("admin"));
-            user.setEmail("admin2@me.com");
-            user.setNomComplet("Admin Admin");
-            user.setTelephone("+1234567890");
-            user.setRole(role);
-            userRepository.save(user);
-            logger.info("User admin2 created successfully");
-        }
-
-
-
-        return args -> {
-            // Code to run at startup
-        };
-    }
 }

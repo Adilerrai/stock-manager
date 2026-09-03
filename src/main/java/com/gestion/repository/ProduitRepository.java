@@ -19,6 +19,10 @@ public interface ProduitRepository extends JpaRepository<Produit, Long>, Produit
     @Transactional(readOnly = true)
     List<Produit> findWithImages();
 
-    // Méthode de fallback sans images
+    List<Produit> findByCategorieId(Long categorieId);
+
+    List<Produit> findByCategorieIdIn(List<Long> categorieIds);
+
+    long countByCategorieId(Long categorieId);
 }
 

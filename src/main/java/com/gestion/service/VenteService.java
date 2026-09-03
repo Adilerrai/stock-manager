@@ -99,7 +99,11 @@ public class VenteService {
             }
         }
 
-        vente.setRemiseGlobale(dto.getRemiseGlobale() != null ? dto.getRemiseGlobale() : BigDecimal.ZERO);
+        BigDecimal remiseGlobale = dto.getRemiseGlobale();
+        if ((remiseGlobale == null || remiseGlobale.compareTo(BigDecimal.ZERO) == 0) && vente.getClient() != null && vente.getClient().getRemiseDefaut() != null) {
+            remiseGlobale = vente.getClient().getRemiseDefaut();
+        }
+        vente.setRemiseGlobale(remiseGlobale != null ? remiseGlobale : BigDecimal.ZERO);
         vente.calculerMontants();
 
         Vente saved = venteRepository.save(vente);

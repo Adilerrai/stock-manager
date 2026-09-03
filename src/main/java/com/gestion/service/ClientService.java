@@ -22,6 +22,10 @@ public class ClientService {
     }
 
     public Client creerClient(Client client) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (client.getPointDeVenteId() == null) {
+            client.setPointDeVenteId(tenantId != null ? tenantId : 1L);
+        }
         client.setDateCreation(LocalDateTime.now());
         if (client.getNom() != null && client.getPrenom() != null) {
             client.setNomComplet(client.getPrenom() + " " + client.getNom());
@@ -46,6 +50,11 @@ public class ClientService {
         client.setCategorie(clientModifie.getCategorie());
         client.setNumeroRegistreCommerce(clientModifie.getNumeroRegistreCommerce());
         client.setNumeroIdentificationFiscale(clientModifie.getNumeroIdentificationFiscale());
+        client.setIce(clientModifie.getIce());
+        client.setTarif(clientModifie.getTarif());
+        client.setDelaiPaiementJours(clientModifie.getDelaiPaiementJours());
+        client.setRemiseDefaut(clientModifie.getRemiseDefaut());
+        client.setCommercial(clientModifie.getCommercial());
         client.setCreditAutorise(clientModifie.getCreditAutorise());
         client.setNotes(clientModifie.getNotes());
 
@@ -58,24 +67,43 @@ public class ClientService {
     }
 
     public List<Client> getAllClients() {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return clientRepository.findByPointDeVenteId(tenantId);
+        }
         return clientRepository.findAll();
     }
 
     public List<Client> getClientsActifs() {
-        return clientRepository.findByActif( true);
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return clientRepository.findByActifAndPointDeVenteId(true, tenantId);
+        }
+        return clientRepository.findByActif(true);
     }
 
     public List<Client> getClientsByCategorie(CategorieClient categorie) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return clientRepository.findByPointDeVenteIdAndCategorie(tenantId, categorie);
+        }
         return clientRepository.findByCategorie(categorie);
     }
 
     public List<Client> rechercherClients(String search) {
-        return clientRepository.searchClients(  search);
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return clientRepository.searchClients(search, tenantId);
+        }
+        return clientRepository.searchClients(search);
     }
 
     public Client findByTelephone(String telephone) {
-        return clientRepository.findByTelephone(telephone)
-                .orElse(null);
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return clientRepository.findByTelephoneAndPointDeVenteId(telephone, tenantId).orElse(null);
+        }
+        return clientRepository.findByTelephone(telephone).orElse(null);
     }
 
     public void desactiverClient(Long id) {
@@ -119,6 +147,10 @@ public class ClientService {
     }
 
     public List<Client> getClientsAvecDepassementCredit() {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return clientRepository.findClientsAvecDepassementCredit(tenantId);
+        }
         return clientRepository.findClientsAvecDepassementCredit();
     }
 }

@@ -6,6 +6,7 @@ import com.gestion.persistent.dto.FactureDTO;
 import com.gestion.service.FactureService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class FactureController {
      * Crée une facture en regroupant manuellement les BLs sélectionnés par l'utilisateur
      */
     @PostMapping("/depuis-bl")
+    @PreAuthorize("hasAnyAuthority('FACTURE_CREER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMPTABLE')")
     public ResponseEntity<FactureDTO> creerFactureDepuisBL(@RequestBody FacturationBLRequest request) {
         FactureDTO factureDTO = factureService.creerFactureDepuisBonsLivraison(request);
         return new ResponseEntity<>(factureDTO, HttpStatus.CREATED);
@@ -60,6 +62,7 @@ public class FactureController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyAuthority('FACTURE_CREER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMPTABLE')")
     public ResponseEntity<FactureDTO> creerFacture(@RequestBody FactureDTO factureDTO, @RequestParam Long userId) {
         FactureDTO nouvelleFacture = factureService.creerFacture(factureDTO, userId);
         return new ResponseEntity<>(nouvelleFacture, HttpStatus.CREATED);
@@ -96,12 +99,14 @@ public class FactureController {
     }
 
     @PostMapping("/{factureId}/valider")
+    @PreAuthorize("hasAnyAuthority('FACTURE_VALIDER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
     public ResponseEntity<FactureDTO> validerFacture(@PathVariable Long factureId) {
         FactureDTO facture = factureService.validerFacture(factureId);
         return ResponseEntity.ok(facture);
     }
 
     @PostMapping("/{factureId}/annuler")
+    @PreAuthorize("hasAnyAuthority('FACTURE_ANNULER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE')")
     public ResponseEntity<FactureDTO> annulerFacture(@PathVariable Long factureId,
                                                    @RequestParam String motif,
                                                    @RequestParam Long userId) {

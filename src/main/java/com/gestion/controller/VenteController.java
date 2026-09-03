@@ -27,12 +27,14 @@ public class VenteController {
     }
 
     @PostMapping("/{venteId}/valider")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('VENTE_VALIDER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_VENDEUR')")
     public ResponseEntity<VenteDTO> validerVente(@PathVariable Long venteId) {
         VenteDTO vente = venteService.validerVente(venteId);
         return ResponseEntity.ok(vente);
     }
 
     @PostMapping("/{venteId}/annuler")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('VENTE_ANNULER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER')")
     public ResponseEntity<VenteDTO> annulerVente(@PathVariable Long venteId,
                                                 @RequestParam String motif,
                                                 @RequestParam Long userId) {
@@ -41,6 +43,7 @@ public class VenteController {
     }
 
     @PatchMapping("/{venteId}/remise")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('REMISE_VALIDER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL')")
     public ResponseEntity<VenteDTO> appliquerRemise(@PathVariable Long venteId, @RequestParam BigDecimal remise) {
         VenteDTO vente = venteService.appliquerRemiseGlobale(venteId, remise);
         return ResponseEntity.ok(vente);

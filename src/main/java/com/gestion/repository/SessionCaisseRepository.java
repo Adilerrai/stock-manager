@@ -18,4 +18,7 @@ public interface SessionCaisseRepository extends JpaRepository<SessionCaisse, Lo
     List<SessionCaisse> findByStatutOrderByDateOuvertureDesc(StatutSessionCaisse statut);
 
     List<SessionCaisse> findByPointDeVenteIdOrderByDateOuvertureDesc(Long pointDeVenteId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM SessionCaisse s WHERE s.ecartCaisse IS NOT NULL AND s.ecartCaisse != 0 ORDER BY s.dateOuverture DESC")
+    List<SessionCaisse> findSessionsAvecEcart();
 }

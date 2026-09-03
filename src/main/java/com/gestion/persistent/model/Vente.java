@@ -78,6 +78,21 @@ public class Vente {
     @JoinColumn(name = "annule_par_user_id")
     private User annulePar;
 
+    @Column(name = "point_de_vente_id", nullable = false)
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenant != null) {
+                this.pointDeVenteId = tenant;
+            } else {
+                this.pointDeVenteId = 1L;
+            }
+        }
+    }
+
     // Constructeurs
     public Vente() {
     }
@@ -266,6 +281,14 @@ public class Vente {
         this.montantTTC = montantHT.add(montantTVA);
         this.montantFinal = montantTTC.subtract(remiseGlobale != null ? remiseGlobale : BigDecimal.ZERO);
         this.montantRestant = montantFinal.subtract(montantPaye != null ? montantPaye : BigDecimal.ZERO);
+    }
+
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
     }
 
     public boolean estSoldee() {

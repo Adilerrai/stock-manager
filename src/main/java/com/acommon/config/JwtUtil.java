@@ -63,6 +63,15 @@ public class JwtUtil {
         return createToken(claims, userDetails.getUsername());
     }
 
+    public String generateToken(UserDetails userDetails, Long tenantId) {
+        Map<String, Object> claims = new HashMap<>();
+        if (tenantId != null) {
+            claims.put("tenantId", tenantId);
+            claims.put("pointDeVenteId", tenantId);
+        }
+        return createToken(claims, userDetails.getUsername());
+    }
+
     public String createToken(Map<String, Object> claims, String subject) {
         return Jwts.builder()
                 .setClaims(claims)

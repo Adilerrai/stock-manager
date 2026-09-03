@@ -25,6 +25,7 @@ public class PaiementController {
     }
 
     @PostMapping("/vente/{venteId}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('CAISSE_ENCAISSER', 'VENTE_CREATE', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_CAISSIER', 'ROLE_VENDEUR')")
     public ResponseEntity<Paiement> enregistrerPaiementVente(@PathVariable Long venteId,
                                                               @RequestBody Paiement paiement,
                                                               @RequestParam Long userId) {
@@ -33,6 +34,7 @@ public class PaiementController {
     }
 
     @PostMapping("/facture/{factureId}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('CAISSE_ENCAISSER', 'VENTE_CREATE', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_CAISSIER', 'ROLE_COMPTABLE')")
     public ResponseEntity<Paiement> enregistrerPaiementFacture(@PathVariable Long factureId,
                                                                 @RequestBody Paiement paiement,
                                                                 @RequestParam Long userId) {
@@ -41,6 +43,7 @@ public class PaiementController {
     }
 
     @PostMapping("/{paiementId}/annuler")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('PAIEMENT_ANNULER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE')")
     public ResponseEntity<Paiement> annulerPaiement(@PathVariable Long paiementId,
                                                      @RequestParam String motif,
                                                      @RequestParam Long userId) {

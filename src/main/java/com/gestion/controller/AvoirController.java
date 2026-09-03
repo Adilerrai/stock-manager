@@ -1,16 +1,20 @@
 package com.gestion.controller;
 
+import com.gestion.persistent.dto.StatistiqueMotifRetourDTO;
 import com.gestion.persistent.enums.TypeAvoir;
 import com.gestion.persistent.model.Avoir;
 import com.gestion.service.AvoirService;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/avoirs")
+@RequestMapping({"/api/v1/avoirs", "/api/avoirs"})
 @CrossOrigin(origins = "*")
 public class AvoirController {
 
@@ -77,5 +81,17 @@ public class AvoirController {
     public ResponseEntity<Void> supprimerAvoir(@PathVariable Long id) {
         avoirService.supprimerAvoir(id);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Analyse des causes de retours clients avec perte financière par motif :
+     * (Produit défectueux, erreur magasinier, erreur commande, etc.)
+     */
+    @GetMapping("/statistiques-motifs")
+    @PreAuthorize("hasAnyAuthority('DASHBOARD_VOIR', 'VENTE_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL')")
+    public ResponseEntity<List<StatistiqueMotifRetourDTO>> getStatistiquesMotifs(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
+        return ResponseEntity.ok(avoirService.getStatistiquesMotifsRetour(dateDebut, dateFin));
     }
 }

@@ -49,6 +49,21 @@ public class Commande {
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Livraison> livraisons = new ArrayList<>();
 
+    @Column(name = "point_de_vente_id", nullable = false)
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenant != null) {
+                this.pointDeVenteId = tenant;
+            } else {
+                this.pointDeVenteId = 1L;
+            }
+        }
+    }
+
     // Constructors, getters, setters
     public Commande() {}
 
@@ -87,4 +102,7 @@ public class Commande {
 
     public List<Livraison> getLivraisons() { return livraisons; }
     public void setLivraisons(List<Livraison> livraisons) { this.livraisons = livraisons; }
+
+    public Long getPointDeVenteId() { return pointDeVenteId; }
+    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 }

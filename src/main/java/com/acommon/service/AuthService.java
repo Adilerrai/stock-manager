@@ -61,7 +61,7 @@ public class AuthService {
             
             User authenticatedUser = (User) authentication.getPrincipal();
 
-            String token = jwtUtil.generateToken(authenticatedUser);
+            String token = jwtUtil.generateToken(authenticatedUser, authenticatedUser.getPointDeVenteId());
 
             return JwtAuthenticationResponse.builder()
                 .token(token)
@@ -70,8 +70,9 @@ public class AuthService {
                 .nomComplet(authenticatedUser.getNomComplet())
                 .telephone(authenticatedUser.getTelephone())
                 .genre(authenticatedUser.getGenre())
-                    .username(authenticatedUser.getUsername())
+                .username(authenticatedUser.getUsername())
                 .role(authenticatedUser.getRole().getNom())
+                .pointDeVenteId(authenticatedUser.getPointDeVenteId())
                 .tokenType("Bearer")
                 .build();
         } catch (Exception e) {

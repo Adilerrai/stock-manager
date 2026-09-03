@@ -10,6 +10,10 @@ public class CategorieDTO {
     private String couleur;
     private String icone;
     private Boolean actif;
+    private Long parentId;
+    private String parentNom;
+    private String cheminComplet;
+    private int niveau;
     private Long pointDeVenteId;
     private LocalDateTime dateCreation;
 
@@ -35,6 +39,18 @@ public class CategorieDTO {
 
     public Boolean getActif() { return actif; }
     public void setActif(Boolean actif) { this.actif = actif; }
+
+    public Long getParentId() { return parentId; }
+    public void setParentId(Long parentId) { this.parentId = parentId; }
+
+    public String getParentNom() { return parentNom; }
+    public void setParentNom(String parentNom) { this.parentNom = parentNom; }
+
+    public String getCheminComplet() { return cheminComplet; }
+    public void setCheminComplet(String cheminComplet) { this.cheminComplet = cheminComplet; }
+
+    public int getNiveau() { return niveau; }
+    public void setNiveau(int niveau) { this.niveau = niveau; }
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }

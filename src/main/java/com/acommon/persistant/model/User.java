@@ -45,6 +45,16 @@ public class User implements UserDetails {
 
     private Genre genre; // "HOMME" ou "FEMME"
 
+    @Column(name = "point_de_vente_id", nullable = false)
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            this.pointDeVenteId = (tenant != null) ? tenant : 1L;
+        }
+    }
 
     // Champs pour UserDetails
     private boolean accountNonExpired = true;
@@ -150,4 +160,6 @@ public class User implements UserDetails {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
+    public Long getPointDeVenteId() { return pointDeVenteId; }
+    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 }

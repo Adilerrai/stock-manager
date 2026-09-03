@@ -14,4 +14,13 @@ public interface CategorieRepository extends JpaRepository<Categorie, Long> {
     List<Categorie> findByPointDeVenteIdAndActifTrueOrderByNomAsc(Long pointDeVenteId);
 
     List<Categorie> findByActifTrueOrderByNomAsc();
+
+    // Méthodes pour la hiérarchie récursive (catégories & sous-catégories)
+    List<Categorie> findByParentIsNullOrderByNomAsc();
+
+    List<Categorie> findByParentIsNullAndPointDeVenteIdOrderByNomAsc(Long pointDeVenteId);
+
+    List<Categorie> findByParentIdOrderByNomAsc(Long parentId);
+
+    List<Categorie> findByParentIdAndPointDeVenteIdOrderByNomAsc(Long parentId, Long pointDeVenteId);
 }

@@ -23,10 +23,24 @@ public class Fournisseur {
     @Column(name = "actif")
     private Boolean actif = true;
 
+    @Column(name = "point_de_vente_id", nullable = false)
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenant != null) {
+                this.pointDeVenteId = tenant;
+            } else {
+                this.pointDeVenteId = 1L;
+            }
+        }
+    }
+
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();
 
-    // Getters and setters...
     public Fournisseur() {}
 
     public Long getId() { return id; }
@@ -57,4 +71,7 @@ public class Fournisseur {
 
     public Boolean getActif() { return actif; }
     public void setActif(Boolean actif) { this.actif = actif; }
+
+    public Long getPointDeVenteId() { return pointDeVenteId; }
+    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 }

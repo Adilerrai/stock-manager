@@ -84,8 +84,14 @@ public class FactureService {
         facture.setClient(client);
         facture.setEmisePar(user);
         facture.setNumeroFacture(genererNumeroFacture());
-        facture.setDateFacture(request.getDateFacture() != null ? request.getDateFacture() : LocalDate.now());
-        facture.setDateEcheance(request.getDateEcheance());
+        LocalDate dateFacture = request.getDateFacture() != null ? request.getDateFacture() : LocalDate.now();
+        facture.setDateFacture(dateFacture);
+
+        LocalDate echeance = request.getDateEcheance();
+        if (echeance == null && client.getDelaiPaiementJours() != null) {
+            echeance = dateFacture.plusDays(client.getDelaiPaiementJours());
+        }
+        facture.setDateEcheance(echeance);
         facture.setDateCreation(LocalDateTime.now());
         facture.setStatut(StatutFacture.EN_ATTENTE);
         facture.setNotes(request.getNotes());
@@ -257,7 +263,15 @@ public class FactureService {
         }
         facture.setEmisePar(user);
         facture.setNumeroFacture(genererNumeroFacture());
-        facture.setDateFacture(dto.getDateFacture() != null ? dto.getDateFacture() : LocalDate.now());
+        LocalDate dateFacture = dto.getDateFacture() != null ? dto.getDateFacture() : LocalDate.now();
+        facture.setDateFacture(dateFacture);
+
+        LocalDate echeance = dto.getDateEcheance();
+        if (echeance == null && facture.getClient() != null && facture.getClient().getDelaiPaiementJours() != null) {
+            echeance = dateFacture.plusDays(facture.getClient().getDelaiPaiementJours());
+        }
+        facture.setDateEcheance(echeance);
+
         facture.setDateCreation(LocalDateTime.now());
         facture.setStatut(StatutFacture.EN_ATTENTE);
         facture.calculerMontants();

@@ -1,7 +1,9 @@
 package com.gestion.persistent.model;
 
+import com.acommon.persistant.model.User;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gestion.persistent.enums.CategorieClient;
+import com.gestion.persistent.enums.TarifClient;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -45,6 +47,23 @@ public class Client {
     @Column(name = "numero_identification_fiscale")
     private String numeroIdentificationFiscale; // NIF
 
+    @Column(name = "ice")
+    private String ice; // Identifiant Commun de l'Entreprise
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "tarif")
+    private TarifClient tarif = TarifClient.DETAIL;
+
+    @Column(name = "delai_paiement_jours")
+    private Integer delaiPaiementJours = 30; // Délai d'échéance par défaut en jours
+
+    @Column(name = "remise_defaut", precision = 5, scale = 2)
+    private BigDecimal remiseDefaut = BigDecimal.ZERO; // Remise permanente par défaut en %
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "commercial_user_id")
+    private User commercial;
+
     @Column(name = "credit_autorise")
     private BigDecimal creditAutorise = BigDecimal.ZERO;
 
@@ -55,6 +74,21 @@ public class Client {
     private Integer pointsFidelite = 0;
 
     private Boolean actif = true;
+
+    @Column(name = "point_de_vente_id", nullable = false)
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenant != null) {
+                this.pointDeVenteId = tenant;
+            } else {
+                this.pointDeVenteId = 1L; // fallback uniquement si hors requête HTTP (ex: migrations)
+            }
+        }
+    }
 
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();
@@ -244,6 +278,29 @@ public class Client {
 
     public void setFactures(List<Facture> factures) {
         this.factures = factures;
+    }
+
+    public String getIce() { return ice; }
+    public void setIce(String ice) { this.ice = ice; }
+
+    public TarifClient getTarif() { return tarif; }
+    public void setTarif(TarifClient tarif) { this.tarif = tarif; }
+
+    public Integer getDelaiPaiementJours() { return delaiPaiementJours != null ? delaiPaiementJours : 30; }
+    public void setDelaiPaiementJours(Integer delaiPaiementJours) { this.delaiPaiementJours = delaiPaiementJours; }
+
+    public BigDecimal getRemiseDefaut() { return remiseDefaut != null ? remiseDefaut : BigDecimal.ZERO; }
+    public void setRemiseDefaut(BigDecimal remiseDefaut) { this.remiseDefaut = remiseDefaut; }
+
+    public User getCommercial() { return commercial; }
+    public void setCommercial(User commercial) { this.commercial = commercial; }
+
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
     }
 
     // Méthodes utilitaires

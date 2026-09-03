@@ -61,8 +61,14 @@ public class PaiementService {
         vente.setMontantPaye(vente.getMontantPaye().add(paiement.getMontant()));
         vente.setMontantRestant(vente.getMontantFinal().subtract(vente.getMontantPaye()));
 
-        // Si paiement à crédit, augmenter le crédit utilisé
+        // Si paiement à crédit, vérifier le plafond et augmenter le crédit utilisé
         if (paiement.getModePaiement() == ModePaiement.CREDIT && vente.getClient() != null) {
+            if (!vente.getClient().peutAcheterACredit(paiement.getMontant())) {
+                throw new IllegalStateException(String.format("Dépassement du crédit autorisé pour le client %s. Crédit disponible: %s DA, Montant demandé: %s DA",
+                        vente.getClient().getNomComplet() != null ? vente.getClient().getNomComplet() : vente.getClient().getNom(),
+                        vente.getClient().getCreditDisponible(),
+                        paiement.getMontant()));
+            }
             clientService.augmenterCreditUtilise(vente.getClient().getId(), paiement.getMontant());
         }
 

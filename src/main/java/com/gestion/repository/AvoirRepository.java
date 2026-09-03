@@ -32,4 +32,16 @@ public interface AvoirRepository extends JpaRepository<Avoir, Long> {
 
     @Query("SELECT COUNT(a) FROM Avoir a WHERE a.typeAvoir = :typeAvoir")
     long countByTypeAvoir(@Param("typeAvoir") TypeAvoir typeAvoir);
+
+    @Query("SELECT COALESCE(SUM(a.montantTTC), 0) FROM Avoir a WHERE a.typeAvoir = :typeAvoir AND a.statut != 'ANNULE' AND a.dateAvoir BETWEEN :dateDebut AND :dateFin")
+    java.math.BigDecimal sumMontantByPeriodeAndType(@Param("typeAvoir") TypeAvoir typeAvoir,
+                                                    @Param("dateDebut") LocalDate dateDebut,
+                                                    @Param("dateFin") LocalDate dateFin);
+
+    @Query("SELECT la.motifRetour, COUNT(la), SUM(la.montantTTC) FROM LigneAvoir la " +
+           "WHERE la.avoir.typeAvoir = 'CLIENT' AND la.avoir.statut != 'ANNULE' " +
+           "AND la.avoir.dateAvoir BETWEEN :dateDebut AND :dateFin " +
+           "GROUP BY la.motifRetour ORDER BY SUM(la.montantTTC) DESC")
+    List<Object[]> findStatsCausesRetour(@Param("dateDebut") LocalDate dateDebut,
+                                         @Param("dateFin") LocalDate dateFin);
 }

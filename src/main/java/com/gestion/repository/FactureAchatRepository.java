@@ -16,5 +16,8 @@ public interface FactureAchatRepository extends JpaRepository<FactureAchat, Long
     List<FactureAchat> findByFournisseurId(Long fournisseurId);
     List<FactureAchat> findByStatutAndPointDeVenteId(StatutFacture statut, Long pointDeVenteId);
     Optional<FactureAchat> findByNumeroFactureAndPointDeVenteId(String numeroFacture, Long pointDeVenteId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(f.montantTtc), 0) FROM FactureAchat f WHERE f.statut != 'PAYEE_TOTALEMENT' AND f.statut != 'ANNULEE'")
+    java.math.BigDecimal sumTotalDettesFournisseurs();
 }
 

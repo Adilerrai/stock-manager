@@ -82,6 +82,11 @@ public class BonLivraisonClient {
     public List<LigneBonLivraisonClient> getLignes() { return lignes; }
     public void setLignes(List<LigneBonLivraisonClient> lignes) { this.lignes = lignes; }
 
+    public void addLigne(LigneBonLivraisonClient ligne) {
+        this.lignes.add(ligne);
+        ligne.setBonLivraisonClient(this);
+    }
+
     public Facture getFacture() { return facture; }
     public void setFacture(Facture facture) { this.facture = facture; }
     public Boolean isFacture() { return facture != null; }

@@ -25,6 +25,15 @@ public class Categorie {
     @Column(nullable = false)
     private Boolean actif = true;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"parent", "sousCategories", "hibernateLazyInitializer", "handler"})
+    private Categorie parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private java.util.List<Categorie> sousCategories = new java.util.ArrayList<>();
+
     @Column(name = "point_de_vente_id")
     private Long pointDeVenteId;
 
@@ -112,5 +121,35 @@ public class Categorie {
 
     public void setDateCreation(LocalDateTime dateCreation) {
         this.dateCreation = dateCreation;
+    }
+
+    public Categorie getParent() {
+        return parent;
+    }
+
+    public void setParent(Categorie parent) {
+        this.parent = parent;
+    }
+
+    public java.util.List<Categorie> getSousCategories() {
+        return sousCategories;
+    }
+
+    public void setSousCategories(java.util.List<Categorie> sousCategories) {
+        this.sousCategories = sousCategories;
+    }
+
+    public String getCheminComplet() {
+        if (parent != null) {
+            return parent.getCheminComplet() + " > " + this.nom;
+        }
+        return this.nom;
+    }
+
+    public int getNiveau() {
+        if (parent != null) {
+            return parent.getNiveau() + 1;
+        }
+        return 0;
     }
 }

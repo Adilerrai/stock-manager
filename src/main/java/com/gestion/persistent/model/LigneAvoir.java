@@ -43,6 +43,10 @@ public class LigneAvoir {
     @Column(name = "remettre_en_stock")
     private Boolean remettreEnStock = true;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "motif_retour")
+    private com.gestion.persistent.enums.MotifRetour motifRetour = com.gestion.persistent.enums.MotifRetour.AUTRE;
+
     private String motif;
 
     public LigneAvoir() {
@@ -144,5 +148,13 @@ public class LigneAvoir {
 
     public void setMotif(String motif) {
         this.motif = motif;
+    }
+
+    public com.gestion.persistent.enums.MotifRetour getMotifRetour() {
+        return motifRetour;
+    }
+
+    public void setMotifRetour(com.gestion.persistent.enums.MotifRetour motifRetour) {
+        this.motifRetour = motifRetour;
     }
 }

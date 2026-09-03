@@ -17,6 +17,12 @@ public class ClientDTO {
     private CategorieClient categorie;
     private String numeroRegistreCommerce;
     private String numeroIdentificationFiscale;
+    private String ice;
+    private com.gestion.persistent.enums.TarifClient tarif;
+    private Integer delaiPaiementJours;
+    private BigDecimal remiseDefaut;
+    private Long commercialId;
+    private String commercialNom;
     private BigDecimal creditAutorise;
     private BigDecimal creditUtilise;
     private BigDecimal creditDisponible; // dérivé
@@ -89,6 +95,23 @@ public class ClientDTO {
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
 
+    public String getIce() { return ice; }
+    public void setIce(String ice) { this.ice = ice; }
+
+    public com.gestion.persistent.enums.TarifClient getTarif() { return tarif; }
+    public void setTarif(com.gestion.persistent.enums.TarifClient tarif) { this.tarif = tarif; }
+
+    public Integer getDelaiPaiementJours() { return delaiPaiementJours != null ? delaiPaiementJours : 30; }
+    public void setDelaiPaiementJours(Integer delaiPaiementJours) { this.delaiPaiementJours = delaiPaiementJours; }
+
+    public BigDecimal getRemiseDefaut() { return remiseDefaut != null ? remiseDefaut : BigDecimal.ZERO; }
+    public void setRemiseDefaut(BigDecimal remiseDefaut) { this.remiseDefaut = remiseDefaut; }
+
+    public Long getCommercialId() { return commercialId; }
+    public void setCommercialId(Long commercialId) { this.commercialId = commercialId; }
+
+    public String getCommercialNom() { return commercialNom; }
+    public void setCommercialNom(String commercialNom) { this.commercialNom = commercialNom; }
 }
 
 

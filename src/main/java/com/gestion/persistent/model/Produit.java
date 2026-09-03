@@ -71,10 +71,21 @@ public class Produit {
     @Column(name = "unite_mesure_stock")
     private UniteMesure uniteMesureStock;
 
+    @Column(name = "stock_minimum")
+    private BigDecimal stockMinimum = BigDecimal.ZERO;
+
     @Column(name = "point_de_vente_id")
     private Long pointDeVenteId;
 
     public Produit() {
+    }
+
+    public BigDecimal getStockMinimum() {
+        return stockMinimum != null ? stockMinimum : BigDecimal.ZERO;
+    }
+
+    public void setStockMinimum(BigDecimal stockMinimum) {
+        this.stockMinimum = stockMinimum;
     }
 
     public Long getId() {

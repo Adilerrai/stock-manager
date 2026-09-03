@@ -3,6 +3,8 @@ package com.gestion.service;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
+import com.gestion.persistent.dto.StatistiqueMotifRetourDTO;
+import com.gestion.persistent.enums.MotifRetour;
 import com.gestion.persistent.enums.QualiteProduit;
 import com.gestion.persistent.enums.StatutAvoir;
 import com.gestion.persistent.enums.TypeAvoir;
@@ -12,6 +14,8 @@ import com.gestion.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -241,6 +245,39 @@ public class AvoirService {
             throw new RuntimeException("Impossible de supprimer un avoir validé");
         }
         avoirRepository.delete(avoir);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StatistiqueMotifRetourDTO> getStatistiquesMotifsRetour(LocalDate debut, LocalDate fin) {
+        if (debut == null) debut = LocalDate.now().withDayOfMonth(1);
+        if (fin == null) fin = LocalDate.now();
+
+        List<Object[]> rows = avoirRepository.findStatsCausesRetour(debut, fin);
+        List<StatistiqueMotifRetourDTO> liste = new ArrayList<>();
+
+        BigDecimal grandTotal = BigDecimal.ZERO;
+        if (rows != null) {
+            for (Object[] r : rows) {
+                if (r[2] != null) {
+                    grandTotal = grandTotal.add(new BigDecimal(r[2].toString()));
+                }
+            }
+            for (Object[] r : rows) {
+                MotifRetour motif = (r[0] != null) ? (MotifRetour) r[0] : MotifRetour.AUTRE;
+                Long count = r[1] != null ? ((Number) r[1]).longValue() : 0L;
+                BigDecimal montant = r[2] != null ? new BigDecimal(r[2].toString()) : BigDecimal.ZERO;
+
+                StatistiqueMotifRetourDTO dto = new StatistiqueMotifRetourDTO(motif, count, montant);
+                if (grandTotal.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal pct = montant.multiply(new BigDecimal("100")).divide(grandTotal, 2, RoundingMode.HALF_UP);
+                    dto.setPourcentageMontant(pct);
+                } else {
+                    dto.setPourcentageMontant(BigDecimal.ZERO);
+                }
+                liste.add(dto);
+            }
+        }
+        return liste;
     }
 
     private String genererNumeroAvoir(String prefixe, TypeAvoir typeAvoir) {

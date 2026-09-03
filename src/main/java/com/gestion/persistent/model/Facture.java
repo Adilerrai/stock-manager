@@ -98,6 +98,21 @@ public class Facture {
     @Column(name = "chemin_pdf")
     private String cheminPdf;
 
+    @Column(name = "point_de_vente_id", nullable = false)
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenant != null) {
+                this.pointDeVenteId = tenant;
+            } else {
+                this.pointDeVenteId = 1L;
+            }
+        }
+    }
+
     // Constructeurs
     public Facture() {
     }
@@ -342,6 +357,14 @@ public class Facture {
 
     public void setBonsLivraison(List<BonLivraisonClient> bonsLivraison) {
         this.bonsLivraison = bonsLivraison;
+    }
+
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
     }
 }
 
