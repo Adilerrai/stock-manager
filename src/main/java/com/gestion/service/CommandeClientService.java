@@ -10,6 +10,7 @@ import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.model.CommandeClient;
 import com.gestion.persistent.model.LigneCommandeClient;
 import com.gestion.persistent.model.Produit;
+import com.gestion.repository.ClientRepository;
 import com.gestion.repository.CommandeClientRepository;
 import com.gestion.repository.LigneCommandeClientRepository;
 import com.gestion.repository.ProduitRepository;
@@ -26,15 +27,18 @@ public class CommandeClientService {
     private final CommandeClientRepository commandeClientRepository;
     private final LigneCommandeClientRepository ligneCommandeClientRepository;
     private final ProduitRepository produitRepository;
+    private final ClientRepository clientRepository;
     private final CommandeClientMapper commandeClientMapper;
 
     public CommandeClientService(CommandeClientRepository commandeClientRepository,
                                 LigneCommandeClientRepository ligneCommandeClientRepository,
                                 ProduitRepository produitRepository,
+                                ClientRepository clientRepository,
                                 CommandeClientMapper commandeClientMapper) {
         this.commandeClientRepository = commandeClientRepository;
         this.ligneCommandeClientRepository = ligneCommandeClientRepository;
         this.produitRepository = produitRepository;
+        this.clientRepository = clientRepository;
         this.commandeClientMapper = commandeClientMapper;
     }
 
@@ -43,12 +47,15 @@ public class CommandeClientService {
 
         CommandeClient commande = new CommandeClient();
         commande.setNumeroCommande(generateNumeroCommandeClient());
+        if (commandeDTO.getClientId() != null) {
+            clientRepository.findById(commandeDTO.getClientId()).ifPresent(commande::setClient);
+        }
         commande.setClientNom(commandeDTO.getClientNom());
         commande.setClientTelephone(commandeDTO.getClientTelephone());
         commande.setClientEmail(commandeDTO.getClientEmail());
         commande.setAdresseLivraison(commandeDTO.getAdresseLivraison());
-        commande.setStatut(StatutCommandeClient.BROUILLON);
-        commande.setDateCommande(LocalDateTime.now());
+        commande.setStatut(commandeDTO.getStatut() != null ? commandeDTO.getStatut() : StatutCommandeClient.BROUILLON);
+        commande.setDateCommande(commandeDTO.getDateCommande() != null ? commandeDTO.getDateCommande() : LocalDateTime.now());
         commande.setDateLivraisonPrevue(commandeDTO.getDateLivraisonPrevue());
         commande.setTauxTVA(commandeDTO.getTauxTVA());
         commande.setObservations(commandeDTO.getObservations());

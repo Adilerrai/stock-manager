@@ -14,7 +14,9 @@ public class CommandeClientDTO {
     private String clientEmail;
     private String adresseLivraison;
     private StatutCommandeClient statut;
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.acommon.config.FlexibleLocalDateTimeDeserializer.class)
     private LocalDateTime dateCommande;
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.acommon.config.FlexibleLocalDateTimeDeserializer.class)
     private LocalDateTime dateLivraisonPrevue;
     private BigDecimal montantHT;
     private BigDecimal montantTTC;

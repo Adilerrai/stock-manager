@@ -15,6 +15,8 @@ public class JacksonConfig {
             // Ignorer automatiquement les propriétés internes de proxy Hibernate sur toutes les entités
             builder.mixIn(HibernateProxy.class, HibernateProxyMixin.class);
             builder.failOnEmptyBeans(false);
+            // Parser flexiblement les LocalDateTime (yyyy-MM-dd, ISO, etc.)
+            builder.deserializerByType(java.time.LocalDateTime.class, new FlexibleLocalDateTimeDeserializer());
         };
     }
 
