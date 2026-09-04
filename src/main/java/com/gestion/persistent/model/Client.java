@@ -79,6 +79,7 @@ public class Client {
     private Long pointDeVenteId;
 
     @PrePersist
+    @PreUpdate
     public void prePersist() {
         if (this.pointDeVenteId == null) {
             Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
@@ -87,6 +88,21 @@ public class Client {
             } else {
                 this.pointDeVenteId = 1L; // fallback uniquement si hors requête HTTP (ex: migrations)
             }
+        }
+        if (this.creditAutorise == null) {
+            this.creditAutorise = BigDecimal.ZERO;
+        }
+        if (this.creditUtilise == null) {
+            this.creditUtilise = BigDecimal.ZERO;
+        }
+        if (this.remiseDefaut == null) {
+            this.remiseDefaut = BigDecimal.ZERO;
+        }
+        if (this.pointsFidelite == null) {
+            this.pointsFidelite = 0;
+        }
+        if (this.delaiPaiementJours == null) {
+            this.delaiPaiementJours = 30;
         }
     }
 
@@ -305,10 +321,13 @@ public class Client {
 
     // Méthodes utilitaires
     public BigDecimal getCreditDisponible() {
-        return creditAutorise.subtract(creditUtilise);
+        BigDecimal autorise = creditAutorise != null ? creditAutorise : BigDecimal.ZERO;
+        BigDecimal utilise = creditUtilise != null ? creditUtilise : BigDecimal.ZERO;
+        return autorise.subtract(utilise);
     }
 
     public boolean peutAcheterACredit(BigDecimal montant) {
+        if (montant == null) return false;
         return getCreditDisponible().compareTo(montant) >= 0;
     }
 }

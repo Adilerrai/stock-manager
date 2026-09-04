@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface FactureRepository extends JpaRepository<Facture, Long> {
+public interface FactureRepository extends JpaRepository<Facture, Long>, FactureRepositoryCustom {
 
 
     Optional<Facture> findByNumeroFacture(String numeroFacture);

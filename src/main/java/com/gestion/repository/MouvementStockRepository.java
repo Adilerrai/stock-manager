@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface MouvementStockRepository extends JpaRepository<MouvementStock, Long> {
+public interface MouvementStockRepository extends JpaRepository<MouvementStock, Long>, MouvementStockRepositoryCustom {
     
     List<MouvementStock> findByProduitIdOrderByDateMouvementDesc(Long produitId);
 

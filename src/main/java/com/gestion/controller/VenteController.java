@@ -1,7 +1,12 @@
 package com.gestion.controller;
 
+import com.gestion.mapper.VenteMapper;
 import com.gestion.persistent.dto.VenteDTO;
+import com.gestion.persistent.dto.VenteSearchCriteria;
+import com.gestion.persistent.model.Vente;
 import com.gestion.service.VenteService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,9 +20,17 @@ import java.util.List;
 public class VenteController {
 
     private final VenteService venteService;
+    private final VenteMapper venteMapper;
 
-    public VenteController(VenteService venteService) {
+    public VenteController(VenteService venteService, VenteMapper venteMapper) {
         this.venteService = venteService;
+        this.venteMapper = venteMapper;
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<VenteDTO>> searchVentes(@RequestBody VenteSearchCriteria criteria, Pageable pageable) {
+        Page<Vente> page = venteService.searchVentes(criteria, pageable);
+        return ResponseEntity.ok(page.map(venteMapper::toDto));
     }
 
     @PostMapping

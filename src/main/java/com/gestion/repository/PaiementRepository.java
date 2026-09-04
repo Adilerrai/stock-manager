@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
-public interface PaiementRepository extends JpaRepository<Paiement, Long> {
+public interface PaiementRepository extends JpaRepository<Paiement, Long>, PaiementRepositoryCustom {
 
 
     List<Paiement> findByVenteId(Long venteId);

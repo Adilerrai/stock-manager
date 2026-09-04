@@ -3,6 +3,7 @@ package com.gestion.service;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.mapper.BonLivraisonClientMapper;
 import com.gestion.persistent.dto.BonLivraisonClientDTO;
+import com.gestion.persistent.dto.BonLivraisonClientSearchCriteria;
 import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.TypeMouvement;
@@ -16,6 +17,8 @@ import com.gestion.repository.ClientRepository;
 import com.gestion.repository.CommandeClientRepository;
 import com.gestion.repository.ProduitRepository;
 import com.gestion.repository.DepotRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +54,10 @@ public class BonLivraisonClientService {
         this.depotRepository = depotRepository;
         this.mouvementStockService = mouvementStockService;
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
+    }
+
+    public Page<BonLivraisonClient> searchBonsLivraison(BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
+        return bonLivraisonClientRepository.findByCriteria(criteria, pageable);
     }
 
     public BonLivraisonClientDTO creerBonLivraisonClient(BonLivraisonClientDTO dto) {

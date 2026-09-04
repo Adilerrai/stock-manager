@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface VenteRepository extends JpaRepository<Vente, Long> {
+public interface VenteRepository extends JpaRepository<Vente, Long>, VenteRepositoryCustom {
 
 
 

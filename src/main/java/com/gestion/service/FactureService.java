@@ -8,12 +8,15 @@ import com.gestion.mapper.FactureMapper;
 import com.gestion.persistent.dto.BonLivraisonClientDTO;
 import com.gestion.persistent.dto.FacturationBLRequest;
 import com.gestion.persistent.dto.FactureDTO;
+import com.gestion.persistent.dto.FactureSearchCriteria;
 import com.gestion.persistent.enums.StatutFacture;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.BonLivraisonClientRepository;
 import com.gestion.repository.ClientRepository;
 import com.gestion.repository.FactureRepository;
 import com.gestion.repository.LigneFactureRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +38,7 @@ public class FactureService {
     private final UserRepository userRepository;
     private final FactureMapper factureMapper;
     private final BonLivraisonClientMapper bonLivraisonClientMapper;
+    private final ComptabiliteService comptabiliteService;
 
     public FactureService(FactureRepository factureRepository,
                           LigneFactureRepository ligneFactureRepository,
@@ -42,7 +46,8 @@ public class FactureService {
                           ClientRepository clientRepository,
                           UserRepository userRepository,
                           FactureMapper factureMapper,
-                          BonLivraisonClientMapper bonLivraisonClientMapper) {
+                          BonLivraisonClientMapper bonLivraisonClientMapper,
+                          @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService) {
         this.factureRepository = factureRepository;
         this.ligneFactureRepository = ligneFactureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -50,6 +55,11 @@ public class FactureService {
         this.userRepository = userRepository;
         this.factureMapper = factureMapper;
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
+        this.comptabiliteService = comptabiliteService;
+    }
+
+    public Page<Facture> searchFactures(FactureSearchCriteria criteria, Pageable pageable) {
+        return factureRepository.findByCriteria(criteria, pageable);
     }
 
     /**
@@ -220,7 +230,13 @@ public class FactureService {
         }
 
         facture.setStatut(StatutFacture.VALIDEE);
-        return factureMapper.toDto(factureRepository.save(facture));
+        Facture saved = factureRepository.save(facture);
+        try {
+            comptabiliteService.genererEcritureVente(saved);
+        } catch (Exception e) {
+            // Loguer sans bloquer la validation de la facture
+        }
+        return factureMapper.toDto(saved);
     }
 
     public FactureDTO annulerFacture(Long factureId, String motif, Long userId) {

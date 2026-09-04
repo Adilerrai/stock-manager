@@ -11,6 +11,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import com.gestion.mapper.FactureMapper;
+import com.gestion.persistent.dto.FactureSearchCriteria;
+import com.gestion.persistent.model.Facture;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @RestController
 @RequestMapping("/api/factures")
 @CrossOrigin(origins = "*")
@@ -18,10 +24,20 @@ public class FactureController {
 
     private final FactureService factureService;
     private final com.gestion.service.ImpressionService impressionService;
+    private final FactureMapper factureMapper;
 
-    public FactureController(FactureService factureService, com.gestion.service.ImpressionService impressionService) {
+    public FactureController(FactureService factureService, 
+                             com.gestion.service.ImpressionService impressionService,
+                             FactureMapper factureMapper) {
         this.factureService = factureService;
         this.impressionService = impressionService;
+        this.factureMapper = factureMapper;
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<FactureDTO>> searchFactures(@RequestBody FactureSearchCriteria criteria, Pageable pageable) {
+        Page<Facture> page = factureService.searchFactures(criteria, pageable);
+        return ResponseEntity.ok(page.map(factureMapper::toDto));
     }
 
     @GetMapping("/{id}/pdf")

@@ -1,9 +1,12 @@
 package com.gestion.service;
 
 import com.acommon.persistant.model.TenantContext;
+import com.gestion.persistent.dto.ClientSearchCriteria;
 import com.gestion.persistent.enums.CategorieClient;
 import com.gestion.persistent.model.Client;
 import com.gestion.repository.ClientRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +24,10 @@ public class ClientService {
         this.clientRepository = clientRepository;
     }
 
+    public Page<Client> searchClients(ClientSearchCriteria criteria, Pageable pageable) {
+        return clientRepository.findByCriteria(criteria, pageable);
+    }
+
     public Client creerClient(Client client) {
         Long tenantId = TenantContext.getCurrentTenant();
         if (client.getPointDeVenteId() == null) {
@@ -29,6 +36,21 @@ public class ClientService {
         client.setDateCreation(LocalDateTime.now());
         if (client.getNom() != null && client.getPrenom() != null) {
             client.setNomComplet(client.getPrenom() + " " + client.getNom());
+        }
+        if (client.getCreditAutorise() == null) {
+            client.setCreditAutorise(BigDecimal.ZERO);
+        }
+        if (client.getCreditUtilise() == null) {
+            client.setCreditUtilise(BigDecimal.ZERO);
+        }
+        if (client.getRemiseDefaut() == null) {
+            client.setRemiseDefaut(BigDecimal.ZERO);
+        }
+        if (client.getPointsFidelite() == null) {
+            client.setPointsFidelite(0);
+        }
+        if (client.getDelaiPaiementJours() == null) {
+            client.setDelaiPaiementJours(30);
         }
         return clientRepository.save(client);
     }
@@ -52,10 +74,15 @@ public class ClientService {
         client.setNumeroIdentificationFiscale(clientModifie.getNumeroIdentificationFiscale());
         client.setIce(clientModifie.getIce());
         client.setTarif(clientModifie.getTarif());
-        client.setDelaiPaiementJours(clientModifie.getDelaiPaiementJours());
-        client.setRemiseDefaut(clientModifie.getRemiseDefaut());
+        client.setDelaiPaiementJours(clientModifie.getDelaiPaiementJours() != null ? clientModifie.getDelaiPaiementJours() : 30);
+        client.setRemiseDefaut(clientModifie.getRemiseDefaut() != null ? clientModifie.getRemiseDefaut() : BigDecimal.ZERO);
         client.setCommercial(clientModifie.getCommercial());
-        client.setCreditAutorise(clientModifie.getCreditAutorise());
+        client.setCreditAutorise(clientModifie.getCreditAutorise() != null ? clientModifie.getCreditAutorise() : BigDecimal.ZERO);
+        if (clientModifie.getCreditUtilise() != null) {
+            client.setCreditUtilise(clientModifie.getCreditUtilise());
+        } else if (client.getCreditUtilise() == null) {
+            client.setCreditUtilise(BigDecimal.ZERO);
+        }
         client.setNotes(clientModifie.getNotes());
 
         return clientRepository.save(client);
@@ -120,13 +147,17 @@ public class ClientService {
 
     public void augmenterCreditUtilise(Long clientId, BigDecimal montant) {
         Client client = getClientById(clientId);
-        client.setCreditUtilise(client.getCreditUtilise().add(montant));
+        BigDecimal utilise = client.getCreditUtilise() != null ? client.getCreditUtilise() : BigDecimal.ZERO;
+        BigDecimal mt = montant != null ? montant : BigDecimal.ZERO;
+        client.setCreditUtilise(utilise.add(mt));
         clientRepository.save(client);
     }
 
     public void diminuerCreditUtilise(Long clientId, BigDecimal montant) {
         Client client = getClientById(clientId);
-        BigDecimal nouveauCredit = client.getCreditUtilise().subtract(montant);
+        BigDecimal utilise = client.getCreditUtilise() != null ? client.getCreditUtilise() : BigDecimal.ZERO;
+        BigDecimal mt = montant != null ? montant : BigDecimal.ZERO;
+        BigDecimal nouveauCredit = utilise.subtract(mt);
         if (nouveauCredit.compareTo(BigDecimal.ZERO) < 0) {
             nouveauCredit = BigDecimal.ZERO;
         }
@@ -136,7 +167,9 @@ public class ClientService {
 
     public void ajouterPointsFidelite(Long clientId, Integer points) {
         Client client = getClientById(clientId);
-        client.setPointsFidelite(client.getPointsFidelite() + points);
+        int current = client.getPointsFidelite() != null ? client.getPointsFidelite() : 0;
+        int pts = points != null ? points : 0;
+        client.setPointsFidelite(current + pts);
         clientRepository.save(client);
     }
 

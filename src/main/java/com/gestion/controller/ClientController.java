@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.gestion.persistent.dto.ClientSearchCriteria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @RestController
 @RequestMapping("/api/clients")
 public class ClientController {
@@ -22,6 +26,12 @@ public class ClientController {
     public ClientController(ClientService clientService, ClientMapper clientMapper) {
         this.clientService = clientService;
         this.clientMapper = clientMapper;
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<ClientDTO>> searchClients(@RequestBody ClientSearchCriteria criteria, Pageable pageable) {
+        Page<Client> page = clientService.searchClients(criteria, pageable);
+        return ResponseEntity.ok(page.map(clientMapper::toDto));
     }
 
     @PostMapping

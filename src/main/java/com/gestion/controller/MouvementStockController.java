@@ -12,8 +12,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.gestion.persistent.dto.MouvementStockSearchCriteria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @RestController
-@RequestMapping("/api/v1/mouvements-stock")
+@RequestMapping({"/api/v1/mouvements-stock", "/api/mouvements-stock"})
 public class MouvementStockController {
 
     private final MouvementStockService mouvementStockService;
@@ -26,6 +30,13 @@ public class MouvementStockController {
         this.mouvementStockService = mouvementStockService;
         this.mouvementStockRepository = mouvementStockRepository;
         this.mouvementStockMapper = mouvementStockMapper;
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<MouvementStockDTO>> searchMouvements(
+            @RequestBody MouvementStockSearchCriteria criteria, Pageable pageable) {
+        Page<MouvementStock> page = mouvementStockService.searchMouvements(criteria, pageable);
+        return ResponseEntity.ok(page.map(mouvementStockMapper::toDto));
     }
 
     @GetMapping

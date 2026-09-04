@@ -12,6 +12,9 @@ import com.gestion.repository.ClientRepository;
 import com.gestion.repository.LigneVenteRepository;
 import com.gestion.repository.ProduitRepository;
 import com.gestion.repository.VenteRepository;
+import com.gestion.persistent.dto.VenteSearchCriteria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +53,10 @@ public class VenteService {
         this.stockService = stockService;
         this.userRepository = userRepository;
         this.venteMapper = venteMapper;
+    }
+
+    public Page<Vente> searchVentes(VenteSearchCriteria criteria, Pageable pageable) {
+        return venteRepository.findByCriteria(criteria, pageable);
     }
 
     public VenteDTO creerVente(VenteDTO dto, Long vendeurId) {

@@ -1,24 +1,39 @@
 package com.gestion.controller;
 
+import com.gestion.mapper.BonLivraisonClientMapper;
 import com.gestion.persistent.dto.BonLivraisonClientDTO;
+import com.gestion.persistent.dto.BonLivraisonClientSearchCriteria;
+import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.service.BonLivraisonClientService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/livraisons-client")
+@RequestMapping({"/api/v1/livraisons-client", "/api/bons-livraison-clients"})
 @CrossOrigin(origins = "*")
 public class BonLivraisonClientController {
 
     private final BonLivraisonClientService bonLivraisonClientService;
     private final com.gestion.service.ImpressionService impressionService;
+    private final BonLivraisonClientMapper bonLivraisonClientMapper;
 
     public BonLivraisonClientController(BonLivraisonClientService bonLivraisonClientService,
-                                        com.gestion.service.ImpressionService impressionService) {
+                                        com.gestion.service.ImpressionService impressionService,
+                                        BonLivraisonClientMapper bonLivraisonClientMapper) {
         this.bonLivraisonClientService = bonLivraisonClientService;
         this.impressionService = impressionService;
+        this.bonLivraisonClientMapper = bonLivraisonClientMapper;
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<BonLivraisonClientDTO>> searchBonsLivraison(
+            @RequestBody BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
+        Page<BonLivraisonClient> page = bonLivraisonClientService.searchBonsLivraison(criteria, pageable);
+        return ResponseEntity.ok(page.map(bonLivraisonClientMapper::toDto));
     }
 
     @GetMapping("/{id}/pdf")

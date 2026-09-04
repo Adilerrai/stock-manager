@@ -13,6 +13,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import com.gestion.persistent.dto.PaiementSearchCriteria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @RestController
 @RequestMapping("/api/paiements")
 @CrossOrigin(origins = "*")
@@ -22,6 +26,12 @@ public class PaiementController {
 
     public PaiementController(PaiementService paiementService) {
         this.paiementService = paiementService;
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<Paiement>> searchPaiements(
+            @RequestBody PaiementSearchCriteria criteria, Pageable pageable) {
+        return ResponseEntity.ok(paiementService.searchPaiements(criteria, pageable));
     }
 
     @PostMapping("/vente/{venteId}")

@@ -9,6 +9,9 @@ import com.gestion.persistent.model.Paiement;
 import com.gestion.persistent.model.Vente;
 import com.gestion.repository.PaiementRepository;
 import com.gestion.repository.FactureRepository;
+import com.gestion.persistent.dto.PaiementSearchCriteria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,17 +30,24 @@ public class PaiementService {
     private final FactureRepository factureRepository;
     private final ClientService clientService;
     private final UserRepository userRepository;
+    private final ComptabiliteService comptabiliteService;
 
     public PaiementService(PaiementRepository paiementRepository,
                           @Lazy VenteService venteService,
                           FactureRepository factureRepository,
                           ClientService clientService,
-                          UserRepository userRepository) {
+                          UserRepository userRepository,
+                          @Lazy ComptabiliteService comptabiliteService) {
         this.paiementRepository = paiementRepository;
         this.venteService = venteService;
         this.factureRepository = factureRepository;
         this.clientService = clientService;
         this.userRepository = userRepository;
+        this.comptabiliteService = comptabiliteService;
+    }
+
+    public Page<Paiement> searchPaiements(PaiementSearchCriteria criteria, Pageable pageable) {
+        return paiementRepository.findByCriteria(criteria, pageable);
     }
 
     public Paiement enregistrerPaiementVente(Long venteId, Paiement paiement, Long userId) {
@@ -72,6 +82,12 @@ public class PaiementService {
             clientService.augmenterCreditUtilise(vente.getClient().getId(), paiement.getMontant());
         }
 
+        try {
+            comptabiliteService.genererEcriturePaiementClient(paiement);
+        } catch (Exception e) {
+            // Ne pas bloquer l'encaissement en cas d'erreur de journal
+        }
+
         return paiement;
     }
 
@@ -100,6 +116,12 @@ public class PaiementService {
         // Diminuer le crédit utilisé du client
         if (facture.getClient() != null) {
             clientService.diminuerCreditUtilise(facture.getClient().getId(), paiement.getMontant());
+        }
+
+        try {
+            comptabiliteService.genererEcriturePaiementClient(paiement);
+        } catch (Exception e) {
+            // Ne pas bloquer l'encaissement en cas d'erreur de journal
         }
 
         return paiement;

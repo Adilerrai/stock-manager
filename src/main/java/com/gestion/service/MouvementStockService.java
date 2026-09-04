@@ -1,10 +1,13 @@
 package com.gestion.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
+import com.gestion.persistent.dto.MouvementStockSearchCriteria;
 import com.gestion.persistent.model.*;
 import com.gestion.persistent.enums.TypeMouvement;
 import com.gestion.persistent.enums.QualiteProduit;
 import com.gestion.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +36,10 @@ public class MouvementStockService {
         this.produitRepository = produitRepository;
         this.depotRepository = depotRepository;
         this.stockService = stockService;
+    }
+
+    public Page<MouvementStock> searchMouvements(MouvementStockSearchCriteria criteria, Pageable pageable) {
+        return mouvementStockRepository.findByCriteria(criteria, pageable);
     }
     
     @Transactional

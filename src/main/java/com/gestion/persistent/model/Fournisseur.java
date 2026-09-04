@@ -54,6 +54,14 @@ public class Fournisseur {
         this.raisonSociale = raisonSociale;
     }
 
+    public String getNom() {
+        return raisonSociale;
+    }
+
+    public void setNom(String nom) {
+        this.raisonSociale = nom;
+    }
+
     public String getAdresse() { return adresse; }
     public void setAdresse(String adresse) { this.adresse = adresse; }
 
