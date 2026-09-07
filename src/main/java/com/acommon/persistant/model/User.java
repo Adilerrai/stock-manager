@@ -45,14 +45,18 @@ public class User implements UserDetails {
 
     private Genre genre; // "HOMME" ou "FEMME"
 
-    @Column(name = "point_de_vente_id", nullable = false)
-    private Long pointDeVenteId;
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "point_de_vente_id", nullable = true)
+    private PointDeVente pointDeVente;
 
     @PrePersist
     public void prePersist() {
-        if (this.pointDeVenteId == null) {
+        if (this.tenantId == null) {
             Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
-            this.pointDeVenteId = (tenant != null) ? tenant : 1L;
+            this.tenantId = (tenant != null) ? tenant : 1L;
         }
     }
 
@@ -160,6 +164,33 @@ public class User implements UserDetails {
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
 
-    public Long getPointDeVenteId() { return pointDeVenteId; }
-    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
+    public PointDeVente getPointDeVente() {
+        return pointDeVente;
+    }
+
+    public void setPointDeVente(PointDeVente pointDeVente) {
+        this.pointDeVente = pointDeVente;
+    }
+
+    public Long getPointDeVenteId() {
+        return (this.pointDeVente != null) ? this.pointDeVente.getId() : null;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        if (pointDeVenteId == null) {
+            this.pointDeVente = null;
+        } else if (this.pointDeVente == null || !pointDeVenteId.equals(this.pointDeVente.getId())) {
+            PointDeVente pdv = new PointDeVente();
+            pdv.setId(pointDeVenteId);
+            this.pointDeVente = pdv;
+        }
+    }
 }

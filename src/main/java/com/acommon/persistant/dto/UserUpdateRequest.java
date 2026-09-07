@@ -1,30 +1,31 @@
 package com.acommon.persistant.dto;
 
 import com.acommon.persistant.enums.Genre;
+import jakarta.validation.constraints.Email;
 
-public class UserResponse {
+public class UserUpdateRequest {
 
-    private Long id;
-    private String email;
-    private String username;
     private String nomComplet;
+
+    @Email(message = "Format d'email invalide")
+    private String email;
+
+    private String username;
     private String telephone;
     private Genre genre;
     private String role;
-    private Long tenantId;
     private Long pointDeVenteId;
-    private String nomPointDeVente;
     private Boolean enabled;
 
-    public UserResponse() {}
+    public UserUpdateRequest() {}
 
-    // Getters et Setters
-    public Long getId() {
-        return id;
+    // Getters and Setters
+    public String getNomComplet() {
+        return nomComplet;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setNomComplet(String nomComplet) {
+        this.nomComplet = nomComplet;
     }
 
     public String getEmail() {
@@ -41,14 +42,6 @@ public class UserResponse {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getNomComplet() {
-        return nomComplet;
-    }
-
-    public void setNomComplet(String nomComplet) {
-        this.nomComplet = nomComplet;
     }
 
     public String getTelephone() {
@@ -75,28 +68,12 @@ public class UserResponse {
         this.role = role;
     }
 
-    public Long getTenantId() {
-        return tenantId;
-    }
-
-    public void setTenantId(Long tenantId) {
-        this.tenantId = tenantId;
-    }
-
     public Long getPointDeVenteId() {
         return pointDeVenteId;
     }
 
     public void setPointDeVenteId(Long pointDeVenteId) {
         this.pointDeVenteId = pointDeVenteId;
-    }
-
-    public String getNomPointDeVente() {
-        return nomPointDeVente;
-    }
-
-    public void setNomPointDeVente(String nomPointDeVente) {
-        this.nomPointDeVente = nomPointDeVente;
     }
 
     public Boolean getEnabled() {

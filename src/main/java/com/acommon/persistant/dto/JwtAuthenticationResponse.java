@@ -12,7 +12,9 @@ public class JwtAuthenticationResponse {
     private String username;
     private Long id;
     private String tokenType;
+    private Long tenantId;
     private Long pointDeVenteId;
+    private String nomPointDeVente;
 
     public JwtAuthenticationResponse() {
     }
@@ -28,7 +30,9 @@ public class JwtAuthenticationResponse {
         this.username = builder.username;
         this.id = builder.id;
         this.tokenType = builder.tokenType;
+        this.tenantId = builder.tenantId;
         this.pointDeVenteId = builder.pointDeVenteId;
+        this.nomPointDeVente = builder.nomPointDeVente;
     }
 
     // Static builder method
@@ -44,10 +48,11 @@ public class JwtAuthenticationResponse {
         private String telephone;
         private Genre genre;
         private String role;
-        private String username;
         private Long id;
         private String tokenType;
+        private Long tenantId;
         private Long pointDeVenteId;
+        private String nomPointDeVente;
 
         public Builder token(String token) {
             this.token = token;
@@ -93,8 +98,18 @@ public class JwtAuthenticationResponse {
             return this;
         }
 
+        public Builder tenantId(Long tenantId) {
+            this.tenantId = tenantId;
+            return this;
+        }
+
         public Builder pointDeVenteId(Long pointDeVenteId) {
             this.pointDeVenteId = pointDeVenteId;
+            return this;
+        }
+
+        public Builder nomPointDeVente(String nomPointDeVente) {
+            this.nomPointDeVente = nomPointDeVente;
             return this;
         }
 
@@ -103,12 +118,28 @@ public class JwtAuthenticationResponse {
         }
     }
 
+    public Long getTenantId() {
+        return tenantId;
+    }
+
+    public void setTenantId(Long tenantId) {
+        this.tenantId = tenantId;
+    }
+
     public Long getPointDeVenteId() {
         return pointDeVenteId;
     }
 
     public void setPointDeVenteId(Long pointDeVenteId) {
         this.pointDeVenteId = pointDeVenteId;
+    }
+
+    public String getNomPointDeVente() {
+        return nomPointDeVente;
+    }
+
+    public void setNomPointDeVente(String nomPointDeVente) {
+        this.nomPointDeVente = nomPointDeVente;
     }
 
     // Getters and setters

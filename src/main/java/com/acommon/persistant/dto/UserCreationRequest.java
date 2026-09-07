@@ -1,6 +1,5 @@
 package com.acommon.persistant.dto;
 
-
 import com.acommon.persistant.enums.Genre;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,6 +11,9 @@ public class UserCreationRequest {
     @Email(message = "Format d'email invalide")
     private String email;
 
+    @NotBlank(message = "Le nom d'utilisateur est obligatoire")
+    private String username;
+
     @NotBlank(message = "Le mot de passe est obligatoire")
     @Size(min = 6, message = "Le mot de passe doit contenir au moins 6 caractères")
     private String password;
@@ -21,13 +23,15 @@ public class UserCreationRequest {
 
     private String telephone;
 
-    @NotBlank(message = "Le genre est obligatoire")
-    private String username;
-
     private Genre genre;
 
     @NotBlank(message = "Le rôle est obligatoire")
     private String role;
+
+    // Optionnel : spécifié par un SuperAdmin pour rattacher l'utilisateur à une entreprise spécifique
+    private Long pointDeVenteId;
+
+    public UserCreationRequest() {}
 
     // Getters et Setters
     public String getEmail() {
@@ -62,11 +66,11 @@ public class UserCreationRequest {
         this.telephone = telephone;
     }
 
-    public @NotBlank(message = "Le genre est obligatoire") String getUsername() {
+    public String getUsername() {
         return username;
     }
 
-    public void setUsername(@NotBlank(message = "Le genre est obligatoire") String username) {
+    public void setUsername(String username) {
         this.username = username;
     }
 
@@ -84,5 +88,13 @@ public class UserCreationRequest {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
     }
 }

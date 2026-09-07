@@ -64,10 +64,16 @@ public class JwtUtil {
     }
 
     public String generateToken(UserDetails userDetails, Long tenantId) {
+        return generateToken(userDetails, tenantId, tenantId);
+    }
+
+    public String generateToken(UserDetails userDetails, Long tenantId, Long pointDeVenteId) {
         Map<String, Object> claims = new HashMap<>();
         if (tenantId != null) {
             claims.put("tenantId", tenantId);
-            claims.put("pointDeVenteId", tenantId);
+        }
+        if (pointDeVenteId != null) {
+            claims.put("pointDeVenteId", pointDeVenteId);
         }
         return createToken(claims, userDetails.getUsername());
     }
