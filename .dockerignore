@@ -1,0 +1,13 @@
+.git
+.gitignore
+.vscode
+.mvn
+node_modules
+target/classes
+target/generated-sources
+target/maven-status
+target/test-classes
+*.md
+*.bat
+*.cmd
+*.ps1
