@@ -48,6 +48,7 @@ public class JwtAuthenticationResponse {
         private String telephone;
         private Genre genre;
         private String role;
+        private String username;
         private Long id;
         private String tokenType;
         private Long tenantId;
