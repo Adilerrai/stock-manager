@@ -72,12 +72,16 @@ public class User implements UserDetails {
         Set<GrantedAuthority> authorities = new HashSet<>();
 
         // 1. Ajouter le rôle principal (ex: "ROLE_AVOCAT")
-        authorities.add(new SimpleGrantedAuthority(this.role.getNom()));
+        if (this.role != null && this.role.getNom() != null) {
+            authorities.add(new SimpleGrantedAuthority(this.role.getNom()));
 
-        // 2. Ajouter toutes les habilitations associées à ce rôle
-        authorities.addAll(this.role.getHabilitations().stream()
-                .map(habilitation -> new SimpleGrantedAuthority(habilitation.getNom()))
-                .collect(Collectors.toSet()));
+            // 2. Ajouter toutes les habilitations associées à ce rôle
+            if (this.role.getHabilitations() != null) {
+                authorities.addAll(this.role.getHabilitations().stream()
+                        .map(habilitation -> new SimpleGrantedAuthority(habilitation.getNom()))
+                        .collect(Collectors.toSet()));
+            }
+        }
 
         return authorities;
     }

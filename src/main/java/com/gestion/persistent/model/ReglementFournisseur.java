@@ -36,6 +36,15 @@ public class ReglementFournisseur {
     @Column(name = "notes")
     private String notes;
 
+    @Column(name = "nom_banque")
+    private String nomBanque;
+
+    @Column(name = "numero_cheque")
+    private String numeroCheque;
+
+    @Column(name = "date_echeance")
+    private LocalDateTime dateEcheance;
+
     @Column(name = "point_de_vente_id", nullable = false)
     private Long pointDeVenteId;
 
@@ -64,6 +73,15 @@ public class ReglementFournisseur {
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public String getNomBanque() { return nomBanque; }
+    public void setNomBanque(String nomBanque) { this.nomBanque = nomBanque; }
+
+    public String getNumeroCheque() { return numeroCheque; }
+    public void setNumeroCheque(String numeroCheque) { this.numeroCheque = numeroCheque; }
+
+    public LocalDateTime getDateEcheance() { return dateEcheance; }
+    public void setDateEcheance(LocalDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }

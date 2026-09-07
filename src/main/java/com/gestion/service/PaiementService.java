@@ -19,7 +19,20 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
+import com.gestion.persistent.dto.AffectationItemDTO;
+import com.gestion.persistent.dto.FactureImpayeeDTO;
+import com.gestion.persistent.dto.ReglementClientRequest;
+import com.gestion.persistent.enums.SensEffet;
+import com.gestion.persistent.enums.StatutEffet;
+import com.gestion.persistent.enums.StatutFacture;
+import com.gestion.persistent.enums.TypeEffet;
+import com.gestion.persistent.model.*;
+import com.gestion.repository.ChequeEffetRepository;
+import com.gestion.repository.ClientRepository;
+import com.gestion.repository.PaiementAffectationRepository;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -31,19 +44,28 @@ public class PaiementService {
     private final ClientService clientService;
     private final UserRepository userRepository;
     private final ComptabiliteService comptabiliteService;
+    private final PaiementAffectationRepository affectationRepository;
+    private final ChequeEffetRepository chequeEffetRepository;
+    private final ClientRepository clientRepository;
 
     public PaiementService(PaiementRepository paiementRepository,
                           @Lazy VenteService venteService,
                           FactureRepository factureRepository,
                           ClientService clientService,
                           UserRepository userRepository,
-                          @Lazy ComptabiliteService comptabiliteService) {
+                          @Lazy ComptabiliteService comptabiliteService,
+                          PaiementAffectationRepository affectationRepository,
+                          ChequeEffetRepository chequeEffetRepository,
+                          ClientRepository clientRepository) {
         this.paiementRepository = paiementRepository;
         this.venteService = venteService;
         this.factureRepository = factureRepository;
         this.clientService = clientService;
         this.userRepository = userRepository;
         this.comptabiliteService = comptabiliteService;
+        this.affectationRepository = affectationRepository;
+        this.chequeEffetRepository = chequeEffetRepository;
+        this.clientRepository = clientRepository;
     }
 
     public Page<Paiement> searchPaiements(PaiementSearchCriteria criteria, Pageable pageable) {
@@ -188,6 +210,140 @@ public class PaiementService {
     public BigDecimal getTotalPaiementsByModePaiement(ModePaiement modePaiement, LocalDateTime dateDebut, LocalDateTime dateFin) {
         BigDecimal total = paiementRepository.sumMontantByModePaiement(modePaiement, dateDebut, dateFin);
         return total != null ? total : BigDecimal.ZERO;
+    }
+
+    public List<FactureImpayeeDTO> getFacturesImpayeesClient(Long clientId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) tenantId = 1L;
+        List<Facture> factures = factureRepository.findFacturesImpayeesByClientIdAndPointDeVenteId(clientId, tenantId);
+        return factures.stream().map(f -> new FactureImpayeeDTO(
+                f.getId(),
+                f.getNumeroFacture(),
+                f.getDateFacture(),
+                f.getDateEcheance(),
+                f.getMontantFinal(),
+                f.getMontantPaye(),
+                f.getMontantRestant(),
+                f.getStatut()
+        )).collect(Collectors.toList());
+    }
+
+    public Paiement enregistrerReglementClient(ReglementClientRequest req, Long userId) {
+        if (req.getClientId() == null) {
+            throw new IllegalArgumentException("Le client est obligatoire");
+        }
+        if (req.getMontant() == null || req.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant du règlement doit être supérieur à zéro");
+        }
+
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) tenantId = 1L;
+
+        Client client = clientRepository.findById(req.getClientId())
+                .orElseThrow(() -> new RuntimeException("Client non trouvé avec l'id : " + req.getClientId()));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'id : " + userId));
+
+        // 1. Création de l'enregistrement Paiement principal
+        Paiement paiement = new Paiement();
+        paiement.setNumeroPaiement(genererNumeroPaiement());
+        paiement.setDatePaiement(req.getDatePaiement() != null ? req.getDatePaiement() : LocalDateTime.now());
+        paiement.setClient(client);
+        paiement.setMontant(req.getMontant());
+        paiement.setModePaiement(req.getModePaiement() != null ? req.getModePaiement() : ModePaiement.ESPECES);
+        paiement.setNomBanque(req.getNomBanque());
+        paiement.setNumeroCheque(req.getNumeroCheque());
+        paiement.setDateEcheance(req.getDateEcheance() != null ? req.getDateEcheance().atStartOfDay() : null);
+        paiement.setEncaissePar(user);
+        paiement.setNotes(req.getNotes());
+        paiement.setPointDeVenteId(tenantId);
+        paiement = paiementRepository.save(paiement);
+
+        BigDecimal montantDisponible = req.getMontant();
+        BigDecimal totalAffecte = BigDecimal.ZERO;
+
+        // 2. Gestion de l'affectation selon le type
+        String type = req.getTypeAffectation() != null ? req.getTypeAffectation().toUpperCase() : "GLOBAL_FIFO";
+
+        if ("GLOBAL_FIFO".equals(type)) {
+            // Solder en priorité les factures les plus anciennes
+            List<Facture> facturesImpayees = factureRepository.findFacturesImpayeesByClientIdAndPointDeVenteId(client.getId(), tenantId);
+            for (Facture f : facturesImpayees) {
+                if (montantDisponible.compareTo(BigDecimal.ZERO) <= 0) break;
+
+                BigDecimal aPayer = montantDisponible.min(f.getMontantRestant());
+                f.setMontantPaye(f.getMontantPaye().add(aPayer));
+                f.setMontantRestant(f.getMontantFinal().subtract(f.getMontantPaye()));
+                if (f.getMontantRestant().compareTo(BigDecimal.ZERO) <= 0) {
+                    f.setStatut(StatutFacture.PAYEE_TOTALEMENT);
+                } else {
+                    f.setStatut(StatutFacture.PAYEE_PARTIELLEMENT);
+                }
+                factureRepository.save(f);
+
+                PaiementAffectation affectation = new PaiementAffectation(paiement, f, aPayer);
+                affectationRepository.save(affectation);
+
+                montantDisponible = montantDisponible.subtract(aPayer);
+                totalAffecte = totalAffecte.add(aPayer);
+            }
+        } else if ("MANUELLE".equals(type) && req.getAffectations() != null && !req.getAffectations().isEmpty()) {
+            for (AffectationItemDTO item : req.getAffectations()) {
+                if (item.getMontant() == null || item.getMontant().compareTo(BigDecimal.ZERO) <= 0) continue;
+                Facture f = factureRepository.findById(item.getFactureId())
+                        .orElseThrow(() -> new RuntimeException("Facture introuvable avec l'id : " + item.getFactureId()));
+
+                BigDecimal aPayer = item.getMontant().min(f.getMontantRestant());
+                f.setMontantPaye(f.getMontantPaye().add(aPayer));
+                f.setMontantRestant(f.getMontantFinal().subtract(f.getMontantPaye()));
+                if (f.getMontantRestant().compareTo(BigDecimal.ZERO) <= 0) {
+                    f.setStatut(StatutFacture.PAYEE_TOTALEMENT);
+                } else {
+                    f.setStatut(StatutFacture.PAYEE_PARTIELLEMENT);
+                }
+                factureRepository.save(f);
+
+                PaiementAffectation affectation = new PaiementAffectation(paiement, f, aPayer);
+                affectationRepository.save(affectation);
+
+                totalAffecte = totalAffecte.add(aPayer);
+            }
+        }
+
+        // 3. Mise à jour de la dette du client (crédit utilisé)
+        BigDecimal montantReductionDette = totalAffecte.compareTo(BigDecimal.ZERO) > 0 ? totalAffecte : req.getMontant();
+        clientService.diminuerCreditUtilise(client.getId(), montantReductionDette);
+
+        // 4. Si Mode de paiement = CHEQUE, créer l'effet dans le portefeuille Trésorerie
+        if (req.getModePaiement() == ModePaiement.CHEQUE) {
+            ChequeEffet cheque = new ChequeEffet();
+            cheque.setNumeroPiece(req.getNumeroCheque() != null && !req.getNumeroCheque().trim().isEmpty()
+                    ? req.getNumeroCheque().trim() : paiement.getNumeroPaiement());
+            cheque.setTypeEffet(TypeEffet.CHEQUE);
+            cheque.setSens(SensEffet.ENCAISSEMENT_CLIENT);
+            cheque.setStatut(req.getStatutCheque() != null ? req.getStatutCheque() : StatutEffet.EN_PORTEFEUILLE);
+            cheque.setMontant(req.getMontant());
+            cheque.setDateEmission(req.getDatePaiement() != null ? req.getDatePaiement().toLocalDate() : LocalDate.now());
+            cheque.setDateEcheance(req.getDateEcheance() != null ? req.getDateEcheance() : cheque.getDateEmission());
+            cheque.setBanqueEmettrice(req.getNomBanque());
+            cheque.setTireur(client.getNomComplet() != null ? client.getNomComplet() : client.getNom());
+            cheque.setBeneficiaire("Entreprise");
+            cheque.setReferencePaiement(paiement.getNumeroPaiement());
+            cheque.setClient(client);
+            cheque.setNotes(req.getNotes());
+            cheque.setPointDeVenteId(tenantId);
+            cheque.setDateCreation(LocalDateTime.now());
+            chequeEffetRepository.save(cheque);
+        }
+
+        // 5. Génération de l'écriture comptable
+        try {
+            comptabiliteService.genererEcriturePaiementClient(paiement);
+        } catch (Exception e) {
+            // Ignorer si la compta n'est pas encore activée
+        }
+
+        return paiement;
     }
 
     private String genererNumeroPaiement() {

@@ -113,4 +113,18 @@ public class ComptabiliteController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
         return ResponseEntity.ok(comptabiliteService.getDeclarationTva(dateDebut, dateFin));
     }
+
+    @GetMapping(value = "/export/csv", produces = "text/csv; charset=UTF-8")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<byte[]> exporterEcrituresCsv(
+            @RequestParam(required = false) Long journalId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
+        byte[] csvBytes = comptabiliteService.exporterEcrituresCsv(journalId, dateDebut, dateFin);
+        String filename = "ecritures_comptables_" + LocalDate.now() + ".csv";
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
+                .body(csvBytes);
+    }
 }

@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="releve_compte_client" pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+
+    <parameter name="logoImage" class="java.awt.Image"/>
+    <parameter name="nomEntreprise" class="java.lang.String"/>
+    <parameter name="adresseEntreprise" class="java.lang.String"/>
+    <parameter name="telephoneEntreprise" class="java.lang.String"/>
+    <parameter name="rcEntreprise" class="java.lang.String"/>
+    <parameter name="nifEntreprise" class="java.lang.String"/>
+    <parameter name="devise" class="java.lang.String"/>
+
+    <parameter name="clientNom" class="java.lang.String"/>
+    <parameter name="clientTelephone" class="java.lang.String"/>
+    <parameter name="clientAdresse" class="java.lang.String"/>
+    <parameter name="clientIce" class="java.lang.String"/>
+    <parameter name="periode" class="java.lang.String"/>
+    <parameter name="totalDebit" class="java.math.BigDecimal"/>
+    <parameter name="totalCredit" class="java.math.BigDecimal"/>
+    <parameter name="soldeFinal" class="java.math.BigDecimal"/>
+
+    <field name="datePiece" class="java.lang.String"/>
+    <field name="referencePiece" class="java.lang.String"/>
+    <field name="libelle" class="java.lang.String"/>
+    <field name="debit" class="java.math.BigDecimal"/>
+    <field name="credit" class="java.math.BigDecimal"/>
+    <field name="soldeProgressif" class="java.math.BigDecimal"/>
+
+    <title>
+        <band height="150">
+            <image scaleImage="RetainShape" onErrorType="Blank">
+                <reportElement x="0" y="0" width="120" height="55"/>
+                <imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
+            </image>
+            <textField isBlankWhenNull="true">
+                <reportElement x="130" y="0" width="230" height="18"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="12" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{nomEntreprise}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="130" y="18" width="230" height="14" forecolor="#555555"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$P{adresseEntreprise} + " - Tél: " + $P{telephoneEntreprise}]]></textFieldExpression>
+            </textField>
+
+            <!-- Titre Extrait de Compte -->
+            <rectangle radius="4">
+                <reportElement x="370" y="0" width="185" height="50" backcolor="#F8FAFC"/>
+                <graphicElement><pen lineWidth="1.0" lineColor="#CBD5E1"/></graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="370" y="6" width="185" height="16" forecolor="#1E293B"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="Arial" size="10" isBold="true"/></textElement>
+                <text><![CDATA[RELEVÉ DE COMPTE CLIENT]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="370" y="24" width="185" height="14" forecolor="#64748B"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$P{periode}]]></textFieldExpression>
+            </textField>
+
+            <!-- Cadre Fiche Client -->
+            <rectangle radius="4">
+                <reportElement x="0" y="75" width="555" height="60" backcolor="#F1F5F9"/>
+                <graphicElement><pen lineWidth="0.5" lineColor="#CBD5E1"/></graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="15" y="80" width="60" height="15" forecolor="#475569"/>
+                <textElement><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Client :]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="80" y="80" width="260" height="15" forecolor="#0F172A"/>
+                <textElement><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{clientNom}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="15" y="98" width="60" height="15" forecolor="#475569"/>
+                <textElement><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Adresse :]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="80" y="98" width="260" height="15"/>
+                <textElement><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$P{clientAdresse} + " - Tél: " + $P{clientTelephone}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="15" y="115" width="60" height="15" forecolor="#475569"/>
+                <textElement><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[ICE / IF :]]></text>
+            </staticText>
+            <textField isBlankWhenNull="true">
+                <reportElement x="80" y="115" width="260" height="15"/>
+                <textElement><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$P{clientIce} != null ? $P{clientIce} : "-"]]></textFieldExpression>
+            </textField>
+
+            <!-- Solde Actuel Dû -->
+            <rectangle radius="3">
+                <reportElement x="375" y="82" width="165" height="45" backcolor="#FFFFFF"/>
+                <graphicElement><pen lineWidth="1.0" lineColor="#EF4444"/></graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="380" y="86" width="155" height="14" forecolor="#64748B"/>
+                <textElement textAlignment="Center"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[SOLDE NET DÛ (EXIGIBLE)]]></text>
+            </staticText>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="380" y="102" width="155" height="20" forecolor="#DC2626"/>
+                <textElement textAlignment="Center"><font fontName="Arial" size="12" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{soldeFinal} + " " + $P{devise}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="24">
+            <rectangle radius="2">
+                <reportElement x="0" y="0" width="555" height="24" backcolor="#E2E8F0"/>
+                <graphicElement><pen lineWidth="0.5" lineColor="#CBD5E1"/></graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="5" y="4" width="65" height="16"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Date]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="75" y="4" width="85" height="16"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[N° Pièce / Réf]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="165" y="4" width="150" height="16"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Libellé de l'opération]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="320" y="4" width="75" height="16"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Débit (Facturé)]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="400" y="4" width="75" height="16"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Crédit (Réglé)]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="480" y="4" width="70" height="16"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <text><![CDATA[Solde dû]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="18">
+            <line>
+                <reportElement x="0" y="17" width="555" height="1" forecolor="#F1F5F9"/>
+            </line>
+            <textField isBlankWhenNull="true">
+                <reportElement x="5" y="1" width="65" height="15"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{datePiece}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="75" y="1" width="85" height="15"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$F{referencePiece}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="165" y="1" width="150" height="15"/>
+                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{libelle}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="320" y="1" width="75" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{debit} != null && $F{debit}.compareTo(java.math.BigDecimal.ZERO) > 0 ? $F{debit} : "-"]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="400" y="1" width="75" height="15" forecolor="#16A34A"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textFieldExpression><![CDATA[$F{credit} != null && $F{credit}.compareTo(java.math.BigDecimal.ZERO) > 0 ? $F{credit} : "-"]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="480" y="1" width="70" height="15"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$F{soldeProgressif}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <summary>
+        <band height="60">
+            <line>
+                <reportElement x="0" y="5" width="555" height="1" forecolor="#CBD5E1"/>
+            </line>
+            <staticText>
+                <reportElement x="220" y="10" width="95" height="16"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <text><![CDATA[TOTAUX :]]></text>
+            </staticText>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="320" y="10" width="75" height="16"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{totalDebit}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="400" y="10" width="75" height="16" forecolor="#16A34A"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{totalCredit}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0.00" isBlankWhenNull="true">
+                <reportElement x="480" y="10" width="70" height="16" forecolor="#DC2626"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{soldeFinal}]]></textFieldExpression>
+            </textField>
+        </band>
+    </summary>
+</jasperReport>

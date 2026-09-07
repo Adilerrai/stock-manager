@@ -52,6 +52,21 @@ public class PaiementController {
         return new ResponseEntity<>(nouveauPaiement, HttpStatus.CREATED);
     }
 
+    @GetMapping("/clients/{clientId}/factures-impayees")
+    public ResponseEntity<List<com.gestion.persistent.dto.FactureImpayeeDTO>> getFacturesImpayeesClient(@PathVariable Long clientId) {
+        return ResponseEntity.ok(paiementService.getFacturesImpayeesClient(clientId));
+    }
+
+    @PostMapping("/reglement-client")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('CAISSE_ENCAISSER', 'VENTE_CREATE', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_CAISSIER', 'ROLE_COMPTABLE')")
+    public ResponseEntity<Paiement> enregistrerReglementClient(
+            @RequestBody com.gestion.persistent.dto.ReglementClientRequest request,
+            @RequestParam(required = false) Long userId) {
+        Long effectiveUserId = userId != null ? userId : 1L;
+        Paiement paiement = paiementService.enregistrerReglementClient(request, effectiveUserId);
+        return new ResponseEntity<>(paiement, HttpStatus.CREATED);
+    }
+
     @PostMapping("/{paiementId}/annuler")
     @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('PAIEMENT_ANNULER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE')")
     public ResponseEntity<Paiement> annulerPaiement(@PathVariable Long paiementId,

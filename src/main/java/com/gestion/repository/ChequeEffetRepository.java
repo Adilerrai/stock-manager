@@ -30,6 +30,8 @@ public interface ChequeEffetRepository extends JpaRepository<ChequeEffet, Long>,
 
     Optional<ChequeEffet> findByNumeroPieceAndPointDeVenteId(String numeroPiece, Long pointDeVenteId);
 
+    List<ChequeEffet> findByBordereauRemiseId(Long bordereauRemiseId);
+
     @Query("SELECT COALESCE(SUM(c.montant), 0) FROM ChequeEffet c WHERE c.pointDeVenteId = :tenantId " +
            "AND c.sens = :sens AND c.statut = :statut")
     BigDecimal sumMontantBySensAndStatut(

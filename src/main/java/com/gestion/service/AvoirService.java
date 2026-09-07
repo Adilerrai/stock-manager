@@ -35,6 +35,7 @@ public class AvoirService {
     private final FactureRepository factureRepository;
     private final FactureAchatRepository factureAchatRepository;
     private final MouvementStockService mouvementStockService;
+    private final ClientService clientService;
 
     public AvoirService(AvoirRepository avoirRepository,
                         LigneAvoirRepository ligneAvoirRepository,
@@ -44,7 +45,8 @@ public class AvoirService {
                         UserRepository userRepository,
                         FactureRepository factureRepository,
                         FactureAchatRepository factureAchatRepository,
-                        MouvementStockService mouvementStockService) {
+                        MouvementStockService mouvementStockService,
+                        ClientService clientService) {
         this.avoirRepository = avoirRepository;
         this.ligneAvoirRepository = ligneAvoirRepository;
         this.clientRepository = clientRepository;
@@ -54,6 +56,7 @@ public class AvoirService {
         this.factureRepository = factureRepository;
         this.factureAchatRepository = factureAchatRepository;
         this.mouvementStockService = mouvementStockService;
+        this.clientService = clientService;
     }
 
     public Avoir creerAvoir(Avoir avoir, Long userId) {
@@ -145,7 +148,34 @@ public class AvoirService {
         }
 
         avoir.setStatut(StatutAvoir.VALIDE);
-        return avoirRepository.save(avoir);
+        Avoir saved = avoirRepository.save(avoir);
+
+        // Déduction financière sur la dette et la facture
+        if (saved.getTypeAvoir() == TypeAvoir.CLIENT && saved.getClient() != null) {
+            BigDecimal montantAvoir = saved.getMontantTTC() != null ? saved.getMontantTTC() : BigDecimal.ZERO;
+            if (montantAvoir.compareTo(BigDecimal.ZERO) > 0) {
+                // Diminuer le crédit utilisé du client
+                clientService.diminuerCreditUtilise(saved.getClient().getId(), montantAvoir);
+            }
+
+            // Déduire sur la facture d'origine si spécifiée
+            if (saved.getFactureOrigineId() != null) {
+                factureRepository.findById(saved.getFactureOrigineId()).ifPresent(f -> {
+                    BigDecimal reste = f.getMontantRestant() != null ? f.getMontantRestant() : f.getMontantFinal();
+                    BigDecimal nouveauRestant = reste.subtract(montantAvoir);
+                    if (nouveauRestant.compareTo(BigDecimal.ZERO) <= 0) {
+                        f.setMontantRestant(BigDecimal.ZERO);
+                        f.setStatut(com.gestion.persistent.enums.StatutFacture.PAYEE_TOTALEMENT);
+                    } else {
+                        f.setMontantRestant(nouveauRestant);
+                        f.setStatut(com.gestion.persistent.enums.StatutFacture.PAYEE_PARTIELLEMENT);
+                    }
+                    factureRepository.save(f);
+                });
+            }
+        }
+
+        return saved;
     }
 
     public Avoir creerAvoirDepuisFacture(Long factureId, String motif, Long userId) {

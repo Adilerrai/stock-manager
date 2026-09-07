@@ -36,6 +36,9 @@ public interface FactureRepository extends JpaRepository<Facture, Long>, Facture
     @Query("SELECT f FROM Facture f WHERE f.pointDeVenteId = :pointDeVenteId AND f.montantRestant > 0 AND (f.annulee = false OR f.annulee IS NULL) ORDER BY f.dateFacture DESC")
     List<Facture> findFacturesImpayeesByPointDeVenteId(@Param("pointDeVenteId") Long pointDeVenteId);
 
+    @Query("SELECT f FROM Facture f WHERE f.client.id = :clientId AND f.pointDeVenteId = :pointDeVenteId AND f.montantRestant > 0 AND (f.annulee = false OR f.annulee IS NULL) ORDER BY f.dateFacture ASC, f.id ASC")
+    List<Facture> findFacturesImpayeesByClientIdAndPointDeVenteId(@Param("clientId") Long clientId, @Param("pointDeVenteId") Long pointDeVenteId);
+
     @Query("SELECT f FROM Facture f WHERE f.pointDeVenteId = :pointDeVenteId AND f.dateEcheance < :date AND f.montantRestant > 0 AND (f.annulee = false OR f.annulee IS NULL) ORDER BY f.dateEcheance ASC")
     List<Facture> findFacturesEchuesByPointDeVenteId(@Param("date") LocalDate date, @Param("pointDeVenteId") Long pointDeVenteId);
 

@@ -14,6 +14,10 @@ public class CompteFinancierDTO {
     private String devise;
     private String numeroCompteRib;
     private String nomBanque;
+    private Long banqueId;
+    private String agence;
+    private String codeAgence;
+    private String titulaire;
     private Boolean actif;
     private Long pointDeVenteId;
     private LocalDateTime dateCreation;
@@ -49,6 +53,18 @@ public class CompteFinancierDTO {
 
     public String getNomBanque() { return nomBanque; }
     public void setNomBanque(String nomBanque) { this.nomBanque = nomBanque; }
+
+    public Long getBanqueId() { return banqueId; }
+    public void setBanqueId(Long banqueId) { this.banqueId = banqueId; }
+
+    public String getAgence() { return agence; }
+    public void setAgence(String agence) { this.agence = agence; }
+
+    public String getCodeAgence() { return codeAgence; }
+    public void setCodeAgence(String codeAgence) { this.codeAgence = codeAgence; }
+
+    public String getTitulaire() { return titulaire; }
+    public void setTitulaire(String titulaire) { this.titulaire = titulaire; }
 
     public Boolean getActif() { return actif; }
     public void setActif(Boolean actif) { this.actif = actif; }

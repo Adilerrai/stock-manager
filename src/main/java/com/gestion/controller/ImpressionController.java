@@ -59,6 +59,21 @@ public class ImpressionController {
         return createPdfResponse(pdf, "ticket-vente-" + id + ".pdf");
     }
 
+    @GetMapping("/bordereaux-remise/{id}")
+    public ResponseEntity<byte[]> imprimerBordereauRemise(@PathVariable Long id) {
+        byte[] pdf = impressionService.genererBordereauRemisePdf(id);
+        return createPdfResponse(pdf, "bordereau-remise-" + id + ".pdf");
+    }
+
+    @GetMapping("/releve-client/{clientId}")
+    public ResponseEntity<byte[]> imprimerReleveClient(
+            @PathVariable Long clientId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateDebut,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateFin) {
+        byte[] pdf = impressionService.genererReleveClientPdf(clientId, dateDebut, dateFin);
+        return createPdfResponse(pdf, "releve-client-" + clientId + ".pdf");
+    }
+
     private ResponseEntity<byte[]> createPdfResponse(byte[] pdfData, String fileName) {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)

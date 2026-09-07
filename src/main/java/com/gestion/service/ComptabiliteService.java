@@ -808,4 +808,35 @@ public class ComptabiliteService {
         dto.setLettrage(l.getLettrage());
         return dto;
     }
+
+    public byte[] exporterEcrituresCsv(Long journalId, LocalDate dateDebut, LocalDate dateFin) {
+        List<EcritureComptableDTO> ecritures = getEcritures(journalId, dateDebut, dateFin);
+        StringBuilder sb = new StringBuilder();
+        // BOM UTF-8 pour ouverture directe dans Excel
+        sb.append("\uFEFF");
+        sb.append("Date;Journal;NumeroPiece;ReferencePiece;CompteNum;CompteLibelle;LibelleEcriture;Debit;Credit\n");
+
+        for (EcritureComptableDTO e : ecritures) {
+            String dateStr = e.getDateEcriture() != null ? e.getDateEcriture().toString() : "";
+            String journalCode = e.getJournalCode() != null ? e.getJournalCode() : "";
+            String numPiece = e.getNumeroPiece() != null ? e.getNumeroPiece() : "";
+            String refPiece = e.getReferencePiece() != null ? e.getReferencePiece() : "";
+            String libelle = e.getLibelle() != null ? e.getLibelle().replace(";", ",") : "";
+
+            if (e.getLignes() != null) {
+                for (LigneEcritureDTO l : e.getLignes()) {
+                    sb.append(dateStr).append(";")
+                      .append(journalCode).append(";")
+                      .append(numPiece).append(";")
+                      .append(refPiece).append(";")
+                      .append(l.getNumeroCompte() != null ? l.getNumeroCompte() : "").append(";")
+                      .append(l.getLibelleCompte() != null ? l.getLibelleCompte().replace(";", ",") : "").append(";")
+                      .append(l.getLibelleLigne() != null ? l.getLibelleLigne().replace(";", ",") : libelle).append(";")
+                      .append(l.getDebit() != null ? l.getDebit().toPlainString() : "0.00").append(";")
+                      .append(l.getCredit() != null ? l.getCredit().toPlainString() : "0.00").append("\n");
+                }
+            }
+        }
+        return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
 }

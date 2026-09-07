@@ -18,11 +18,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    List<User> findByPointDeVenteId(Long pointDeVenteId);
+    List<User> findByPointDeVente_Id(Long pointDeVenteId);
 
-    int countByPointDeVenteId(Long pointDeVenteId);
+    int countByPointDeVente_Id(Long pointDeVenteId);
 
-    Optional<User> findFirstByPointDeVenteIdAndRoleNom(Long pointDeVenteId, String roleNom);
+    Optional<User> findFirstByPointDeVente_IdAndRoleNom(Long pointDeVenteId, String roleNom);
 
     List<User> findByTenantId(Long tenantId);
 
@@ -30,7 +30,23 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findFirstByTenantIdAndRoleNom(Long tenantId, String roleNom);
 
-    List<User> findByTenantIdAndPointDeVenteId(Long tenantId, Long pointDeVenteId);
+    List<User> findByTenantIdAndPointDeVente_Id(Long tenantId, Long pointDeVenteId);
 
     boolean existsByRoleNom(String roleNom);
+
+    default List<User> findByPointDeVenteId(Long pointDeVenteId) {
+        return findByPointDeVente_Id(pointDeVenteId);
+    }
+
+    default int countByPointDeVenteId(Long pointDeVenteId) {
+        return countByPointDeVente_Id(pointDeVenteId);
+    }
+
+    default Optional<User> findFirstByPointDeVenteIdAndRoleNom(Long pointDeVenteId, String roleNom) {
+        return findFirstByPointDeVente_IdAndRoleNom(pointDeVenteId, roleNom);
+    }
+
+    default List<User> findByTenantIdAndPointDeVenteId(Long tenantId, Long pointDeVenteId) {
+        return findByTenantIdAndPointDeVente_Id(tenantId, pointDeVenteId);
+    }
 }

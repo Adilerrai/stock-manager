@@ -37,6 +37,9 @@ public class ImpressionService {
     private final CommandeRepository commandeRepository;
     private final AvoirRepository avoirRepository;
     private final VenteRepository venteRepository;
+    private final BordereauRemiseRepository bordereauRemiseRepository;
+    private final ChequeEffetRepository chequeEffetRepository;
+    private final TresorerieService tresorerieService;
 
     public ImpressionService(EntrepriseProfileService entrepriseProfileService,
                              FactureRepository factureRepository,
@@ -45,7 +48,10 @@ public class ImpressionService {
                              CommandeClientRepository commandeClientRepository,
                              CommandeRepository commandeRepository,
                              AvoirRepository avoirRepository,
-                             VenteRepository venteRepository) {
+                             VenteRepository venteRepository,
+                             BordereauRemiseRepository bordereauRemiseRepository,
+                             ChequeEffetRepository chequeEffetRepository,
+                             @org.springframework.context.annotation.Lazy TresorerieService tresorerieService) {
         this.entrepriseProfileService = entrepriseProfileService;
         this.factureRepository = factureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -54,6 +60,9 @@ public class ImpressionService {
         this.commandeRepository = commandeRepository;
         this.avoirRepository = avoirRepository;
         this.venteRepository = venteRepository;
+        this.bordereauRemiseRepository = bordereauRemiseRepository;
+        this.chequeEffetRepository = chequeEffetRepository;
+        this.tresorerieService = tresorerieService;
     }
 
     // ==========================================
@@ -362,6 +371,76 @@ public class ImpressionService {
         }
 
         return exportToPdf("ticket_vente_pos", params, lignes);
+    }
+
+    // ==========================================
+    // 8. Impression Bordereau de Remise Chèques
+    // ==========================================
+    public byte[] genererBordereauRemisePdf(Long bordereauId) {
+        BordereauRemise bordereau = bordereauRemiseRepository.findById(bordereauId)
+                .orElseThrow(() -> new RuntimeException("Bordereau de remise introuvable: " + bordereauId));
+
+        Map<String, Object> params = initCommonTenantParams();
+        params.put("numeroBordereau", bordereau.getNumeroBordereau() != null ? bordereau.getNumeroBordereau() : "-");
+        params.put("dateRemise", bordereau.getDateRemise() != null ? bordereau.getDateRemise().format(DATE_FORMATTER) : java.time.LocalDate.now().format(DATE_FORMATTER));
+        params.put("nomBanqueDepot", bordereau.getNomBanque() != null ? bordereau.getNomBanque() : "-");
+        params.put("compteBancaire", bordereau.getCompteBancaire() != null ? bordereau.getCompteBancaire() : "-");
+        params.put("nombreCheques", bordereau.getNombreValeurs() != null ? bordereau.getNombreValeurs() : 0);
+        params.put("montantTotal", bordereau.getMontantTotal() != null ? bordereau.getMontantTotal() : BigDecimal.ZERO);
+
+        List<ChequeEffet> cheques = chequeEffetRepository.findByBordereauRemiseId(bordereauId);
+        List<Map<String, Object>> lignes = new ArrayList<>();
+        for (ChequeEffet c : cheques) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("numeroPiece", c.getNumeroPiece());
+            m.put("tireur", c.getTireur() != null ? c.getTireur() : "-");
+            m.put("banqueEmettrice", c.getBanqueEmettrice() != null ? c.getBanqueEmettrice() : "-");
+            m.put("dateEcheance", c.getDateEcheance() != null ? c.getDateEcheance().format(DATE_FORMATTER) : "-");
+            m.put("montant", c.getMontant() != null ? c.getMontant() : BigDecimal.ZERO);
+            lignes.add(m);
+        }
+
+        return exportToPdf("bordereau_remise", params, lignes);
+    }
+
+    // ==========================================
+    // 9. Impression Relevé de Compte Client
+    // ==========================================
+    public byte[] genererReleveClientPdf(Long clientId, java.time.LocalDate dateDebut, java.time.LocalDate dateFin) {
+        com.gestion.persistent.dto.ReleveClientDTO releve = tresorerieService.genererReleveClient(clientId, dateDebut, dateFin);
+
+        Map<String, Object> params = initCommonTenantParams();
+        params.put("clientNom", releve.getClientNom() != null ? releve.getClientNom() : "Client");
+        params.put("clientTelephone", releve.getTelephone() != null ? releve.getTelephone() : "-");
+        params.put("clientAdresse", releve.getEmail() != null ? releve.getEmail() : "-");
+        params.put("clientIce", releve.getIce() != null ? releve.getIce() : "-");
+
+        String periodeStr = "Au " + java.time.LocalDate.now().format(DATE_FORMATTER);
+        if (dateDebut != null && dateFin != null) {
+            periodeStr = "Du " + dateDebut.format(DATE_FORMATTER) + " au " + dateFin.format(DATE_FORMATTER);
+        } else if (dateDebut != null) {
+            periodeStr = "À partir du " + dateDebut.format(DATE_FORMATTER);
+        }
+        params.put("periode", periodeStr);
+        params.put("totalDebit", releve.getTotalFactures() != null ? releve.getTotalFactures() : BigDecimal.ZERO);
+        params.put("totalCredit", releve.getTotalPaiements() != null ? releve.getTotalPaiements() : BigDecimal.ZERO);
+        params.put("soldeFinal", releve.getSoldeActuel() != null ? releve.getSoldeActuel() : BigDecimal.ZERO);
+
+        List<Map<String, Object>> lignes = new ArrayList<>();
+        if (releve.getOperations() != null) {
+            for (com.gestion.persistent.dto.ReleveClientDTO.LigneReleveDTO op : releve.getOperations()) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("datePiece", op.getDate() != null ? op.getDate().format(DATE_FORMATTER) : "-");
+                m.put("referencePiece", op.getReference() != null ? op.getReference() : "-");
+                m.put("libelle", op.getLibelle() != null ? op.getLibelle() : "-");
+                m.put("debit", op.getDebit() != null ? op.getDebit() : BigDecimal.ZERO);
+                m.put("credit", op.getCredit() != null ? op.getCredit() : BigDecimal.ZERO);
+                m.put("soldeProgressif", op.getSoldeProgressif() != null ? op.getSoldeProgressif() : BigDecimal.ZERO);
+                lignes.add(m);
+            }
+        }
+
+        return exportToPdf("releve_compte_client", params, lignes);
     }
 
     // ==========================================

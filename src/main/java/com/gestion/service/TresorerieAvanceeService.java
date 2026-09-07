@@ -10,6 +10,7 @@ import com.gestion.persistent.enums.TypeCompteFinancier;
 import com.gestion.persistent.enums.TypeMouvementTresorerie;
 import com.gestion.persistent.model.CompteFinancier;
 import com.gestion.persistent.model.MouvementTresorerie;
+import com.gestion.repository.BanqueRepository;
 import com.gestion.repository.CompteFinancierRepository;
 import com.gestion.repository.MouvementTresorerieRepository;
 import org.springframework.stereotype.Service;
@@ -31,13 +32,16 @@ public class TresorerieAvanceeService {
     private final CompteFinancierRepository compteRepository;
     private final MouvementTresorerieRepository mouvementRepository;
     private final UserRepository userRepository;
+    private final BanqueRepository banqueRepository;
 
     public TresorerieAvanceeService(CompteFinancierRepository compteRepository,
                                    MouvementTresorerieRepository mouvementRepository,
-                                   UserRepository userRepository) {
+                                   UserRepository userRepository,
+                                   BanqueRepository banqueRepository) {
         this.compteRepository = compteRepository;
         this.mouvementRepository = mouvementRepository;
         this.userRepository = userRepository;
+        this.banqueRepository = banqueRepository;
     }
 
     /**
@@ -83,6 +87,12 @@ public class TresorerieAvanceeService {
         c.setDevise(dto.getDevise() != null ? dto.getDevise() : "DZD");
         c.setNumeroCompteRib(dto.getNumeroCompteRib());
         c.setNomBanque(dto.getNomBanque());
+        if (dto.getBanqueId() != null) {
+            banqueRepository.findById(dto.getBanqueId()).ifPresent(c::setBanque);
+        }
+        c.setAgence(dto.getAgence());
+        c.setCodeAgence(dto.getCodeAgence());
+        c.setTitulaire(dto.getTitulaire());
         c.setActif(true);
 
         Long tenantId = TenantContext.getCurrentTenant();
@@ -204,6 +214,13 @@ public class TresorerieAvanceeService {
         dto.setDevise(c.getDevise());
         dto.setNumeroCompteRib(c.getNumeroCompteRib());
         dto.setNomBanque(c.getNomBanque());
+        if (c.getBanque() != null) {
+            dto.setBanqueId(c.getBanque().getId());
+            dto.setNomBanque(c.getBanque().getNom());
+        }
+        dto.setAgence(c.getAgence());
+        dto.setCodeAgence(c.getCodeAgence());
+        dto.setTitulaire(c.getTitulaire());
         dto.setActif(c.getActif());
         dto.setPointDeVenteId(c.getPointDeVenteId());
         dto.setDateCreation(c.getDateCreation());

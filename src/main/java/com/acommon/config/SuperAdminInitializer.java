@@ -26,16 +26,19 @@ public class SuperAdminInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
+    private final com.gestion.service.BanqueService banqueService;
 
     public SuperAdminInitializer(
             RoleRepository roleRepository,
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            JdbcTemplate jdbcTemplate) {
+            JdbcTemplate jdbcTemplate,
+            com.gestion.service.BanqueService banqueService) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jdbcTemplate = jdbcTemplate;
+        this.banqueService = banqueService;
     }
 
     @Override
@@ -45,6 +48,16 @@ public class SuperAdminInitializer implements CommandLineRunner {
         initRoles();
         syncSequences();
         initSuperAdmin();
+        initBanques();
+    }
+
+    private void initBanques() {
+        try {
+            banqueService.initialiserBanquesStandardsSiVide(1L);
+            log.info("🏦 Banques de référence vérifiées/initialisées avec succès.");
+        } catch (Exception e) {
+            log.debug("Initialisation banques : {}", e.getMessage());
+        }
     }
 
     private void syncSequences() {

@@ -38,6 +38,19 @@ public class CompteFinancier {
     @Column(name = "nom_banque")
     private String nomBanque;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "banque_id")
+    private Banque banque;
+
+    @Column(length = 150)
+    private String agence; // Ex: Agence Maarif, Agence Hassan II
+
+    @Column(name = "code_agence", length = 50)
+    private String codeAgence;
+
+    @Column(length = 150)
+    private String titulaire;
+
     @Column(nullable = false)
     private Boolean actif = true;
 
@@ -70,8 +83,25 @@ public class CompteFinancier {
     public String getNumeroCompteRib() { return numeroCompteRib; }
     public void setNumeroCompteRib(String numeroCompteRib) { this.numeroCompteRib = numeroCompteRib; }
 
-    public String getNomBanque() { return nomBanque; }
+    public String getNomBanque() { 
+        if (banque != null && banque.getNom() != null) {
+            return banque.getNom();
+        }
+        return nomBanque; 
+    }
     public void setNomBanque(String nomBanque) { this.nomBanque = nomBanque; }
+
+    public Banque getBanque() { return banque; }
+    public void setBanque(Banque banque) { this.banque = banque; }
+
+    public String getAgence() { return agence; }
+    public void setAgence(String agence) { this.agence = agence; }
+
+    public String getCodeAgence() { return codeAgence; }
+    public void setCodeAgence(String codeAgence) { this.codeAgence = codeAgence; }
+
+    public String getTitulaire() { return titulaire; }
+    public void setTitulaire(String titulaire) { this.titulaire = titulaire; }
 
     public Boolean getActif() { return actif; }
     public void setActif(Boolean actif) { this.actif = actif; }

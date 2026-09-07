@@ -168,9 +168,8 @@ class MultiTenancyUserPointDeVenteTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 connectedAdmin, null, connectedAdmin.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
-        TenantContext.setCurrentTenant(11L);
-
-        when(userRepository.findByEmail("admin@tech.com")).thenReturn(Optional.of(connectedAdmin));
+        when(userRepository.findByEmail("vendeur@tech.com")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("vendeur1")).thenReturn(Optional.empty());
 
         // When the admin creates a new seller without specifying pointDeVenteId
         UserCreationRequest request = new UserCreationRequest();
@@ -223,8 +222,6 @@ class MultiTenancyUserPointDeVenteTest {
                 connectedAdmin, null, connectedAdmin.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
 
-        when(userRepository.findByEmail("admin@tech.com")).thenReturn(Optional.of(connectedAdmin));
-
         // Another company's PointDeVente belonging to tenant 99
         PointDeVente foreignPdv = new PointDeVente();
         foreignPdv.setId(999L);
@@ -260,8 +257,6 @@ class MultiTenancyUserPointDeVenteTest {
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 connectedAdmin, null, connectedAdmin.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(auth);
-
-        when(userRepository.findByEmail("admin@tech.com")).thenReturn(Optional.of(connectedAdmin));
 
         User userTenant11 = new User();
         userTenant11.setId(501L);

@@ -7,6 +7,7 @@ import com.gestion.persistent.dto.PortefeuilleStatsDTO;
 import com.gestion.persistent.enums.SensCompte;
 import com.gestion.persistent.enums.SensEffet;
 import com.gestion.persistent.enums.StatutEffet;
+import com.gestion.persistent.enums.StatutFacture;
 import com.gestion.persistent.enums.TypeEffet;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
@@ -32,6 +33,10 @@ public class ChequeEffetService {
     private final EcritureComptableRepository ecritureRepository;
     private final JournalComptableRepository journalRepository;
     private final CompteComptableRepository compteRepository;
+    private final PaiementRepository paiementRepository;
+    private final PaiementAffectationRepository affectationRepository;
+    private final FactureRepository factureRepository;
+    private final ClientService clientService;
 
     public ChequeEffetService(ChequeEffetRepository chequeRepository,
                               ClientRepository clientRepository,
@@ -39,7 +44,11 @@ public class ChequeEffetService {
                               BordereauRemiseRepository bordereauRepository,
                               EcritureComptableRepository ecritureRepository,
                               JournalComptableRepository journalRepository,
-                              CompteComptableRepository compteRepository) {
+                              CompteComptableRepository compteRepository,
+                              PaiementRepository paiementRepository,
+                              PaiementAffectationRepository affectationRepository,
+                              FactureRepository factureRepository,
+                              ClientService clientService) {
         this.chequeRepository = chequeRepository;
         this.clientRepository = clientRepository;
         this.fournisseurRepository = fournisseurRepository;
@@ -47,6 +56,10 @@ public class ChequeEffetService {
         this.ecritureRepository = ecritureRepository;
         this.journalRepository = journalRepository;
         this.compteRepository = compteRepository;
+        this.paiementRepository = paiementRepository;
+        this.affectationRepository = affectationRepository;
+        this.factureRepository = factureRepository;
+        this.clientService = clientService;
     }
 
     @Transactional(readOnly = true)
@@ -194,7 +207,84 @@ public class ChequeEffetService {
         cheque.setStatut(StatutEffet.IMPAYE_REJETE);
         cheque.setMotifRejet(motif != null ? motif : "Impayé bancaire");
 
+        // 1. Réouverture de la dette du client si chèque client
+        if (cheque.getClient() != null && cheque.getMontant() != null) {
+            clientService.augmenterCreditUtilise(cheque.getClient().getId(), cheque.getMontant());
+        }
+
+        // 2. Annulation du paiement et réouverture des factures ventilées
+        if (cheque.getReferencePaiement() != null && !cheque.getReferencePaiement().trim().isEmpty()) {
+            Optional<Paiement> paiementOpt = paiementRepository.findByNumeroPaiement(cheque.getReferencePaiement().trim());
+            if (paiementOpt.isPresent()) {
+                Paiement paiement = paiementOpt.get();
+                paiement.setAnnule(true);
+                paiement.setDateAnnulation(LocalDateTime.now());
+                paiement.setMotifAnnulation("Rejet chèque N° " + cheque.getNumeroPiece() + " : " + (motif != null ? motif : "Impayé bancaire"));
+                paiementRepository.save(paiement);
+
+                // Réouvrir les factures affectées
+                List<PaiementAffectation> affectations = affectationRepository.findByPaiementId(paiement.getId());
+                for (PaiementAffectation aff : affectations) {
+                    Facture f = aff.getFacture();
+                    if (f != null) {
+                        BigDecimal montantAReouvrir = aff.getMontantAffecte();
+                        BigDecimal nouveauPaye = f.getMontantPaye().subtract(montantAReouvrir);
+                        if (nouveauPaye.compareTo(BigDecimal.ZERO) < 0) {
+                            nouveauPaye = BigDecimal.ZERO;
+                        }
+                        f.setMontantPaye(nouveauPaye);
+                        f.setMontantRestant(f.getMontantFinal().subtract(nouveauPaye));
+                        if (nouveauPaye.compareTo(BigDecimal.ZERO) <= 0) {
+                            f.setStatut(StatutFacture.EN_ATTENTE);
+                        } else {
+                            f.setStatut(StatutFacture.PAYEE_PARTIELLEMENT);
+                        }
+                        factureRepository.save(f);
+                    }
+                }
+            }
+        }
+
+        // 3. Écriture comptable d'impayé
+        try {
+            genererEcritureRejetCheque(cheque);
+        } catch (Exception e) {
+            // Ne pas bloquer si la compta n'est pas initialisée
+        }
+
         return toDto(chequeRepository.save(cheque));
+    }
+
+    private void genererEcritureRejetCheque(ChequeEffet cheque) {
+        Long tenantId = cheque.getPointDeVenteId();
+        String refPiece = "REJ-" + cheque.getNumeroPiece();
+
+        if (ecritureRepository.findByReferencePieceAndPointDeVenteId(refPiece, tenantId).isPresent()) {
+            return;
+        }
+
+        JournalComptable journalOD = journalRepository.findByCodeAndPointDeVenteId("OD", tenantId)
+                .orElseGet(() -> journalRepository.findByCodeAndPointDeVenteId("BQ", tenantId).orElse(null));
+        if (journalOD == null) return;
+
+        CompteComptable compteClient = findOrCreateCompte("34210000", "Clients", 3, SensCompte.DEBIT, tenantId);
+        CompteComptable compteContrepartie = findOrCreateCompte("51110000", "Chèques à encaisser", 5, SensCompte.DEBIT, tenantId);
+
+        EcritureComptable ecriture = new EcritureComptable();
+        ecriture.setJournal(journalOD);
+        ecriture.setDateEcriture(LocalDate.now());
+        ecriture.setLibelle("Rejet chèque impayé N° " + cheque.getNumeroPiece() + " - " + (cheque.getTireur() != null ? cheque.getTireur() : "Client"));
+        ecriture.setReferencePiece(refPiece);
+        ecriture.setPointDeVenteId(tenantId);
+        ecriture.setNumeroPiece("REJ-" + LocalDate.now().getYear() + "-" + System.currentTimeMillis() % 100000);
+        ecriture.setValidee(true);
+
+        // Débit Client 3421 (la dette réapparaît)
+        ecriture.addLigne(new LigneEcriture(compteClient, cheque.getMontant(), BigDecimal.ZERO, "Impayé chèque " + cheque.getNumeroPiece(), tenantId));
+        // Crédit Chèques à encaisser 5111
+        ecriture.addLigne(new LigneEcriture(compteContrepartie, BigDecimal.ZERO, cheque.getMontant(), "Annulation chèque rejeté", tenantId));
+
+        ecritureRepository.save(ecriture);
     }
 
     public ChequeEffetDTO annulerCheque(Long id) {
