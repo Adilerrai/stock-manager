@@ -31,6 +31,8 @@ public class FournisseurRepositoryImpl implements FournisseurRepositoryCustom {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId != null) {
             predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
+        } else {
+            predicates.add(cb.equal(root.get("pointDeVenteId"), -1L));
         }
 
         // Point de vente obligatoire - géré via l'annotation @MultitenantSearchMethod
@@ -102,6 +104,11 @@ public class FournisseurRepositoryImpl implements FournisseurRepositoryCustom {
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Fournisseur> countRoot = countQuery.from(Fournisseur.class);
         List<Predicate> countPredicates = new ArrayList<>();
+        if (tenantId != null) {
+            countPredicates.add(cb.equal(countRoot.get("pointDeVenteId"), tenantId));
+        } else {
+            countPredicates.add(cb.equal(countRoot.get("pointDeVenteId"), -1L));
+        }
         // Raison sociale
         if (criteria.getRaisonSociale() != null && !criteria.getRaisonSociale().trim().isEmpty()) {
             countPredicates.add(cb.like(cb.lower(countRoot.get("raisonSociale")), "%" + criteria.getRaisonSociale().toLowerCase() + "%"));

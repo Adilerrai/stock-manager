@@ -27,14 +27,13 @@ public class Fournisseur {
     private Long pointDeVenteId;
 
     @PrePersist
+    @PreUpdate
     public void prePersist() {
-        if (this.pointDeVenteId == null) {
-            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
-            if (tenant != null) {
-                this.pointDeVenteId = tenant;
-            } else {
-                this.pointDeVenteId = 1L;
-            }
+        Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (tenant != null) {
+            this.pointDeVenteId = tenant;
+        } else if (this.pointDeVenteId == null) {
+            this.pointDeVenteId = 1L;
         }
     }
 

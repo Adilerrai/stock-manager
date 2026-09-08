@@ -59,10 +59,12 @@ public interface LigneVenteRepository extends JpaRepository<LigneVente, Long> {
     @Query("SELECT SUM(lv.montantHT), SUM(lv.quantite * COALESCE(lv.produit.prixAchatHt, lv.produit.prixAchat, 0)), " +
            "SUM(COALESCE(lv.remiseMontant, 0)) " +
            "FROM LigneVente lv WHERE (lv.vente.vendeur.id = :commercialId OR lv.vente.client.commercial.id = :commercialId) " +
-           "AND lv.vente.statut = 'VALIDEE' AND lv.vente.dateVente BETWEEN :debut AND :fin")
+           "AND lv.vente.statut = 'VALIDEE' AND lv.vente.dateVente BETWEEN :debut AND :fin " +
+           "AND (:pointDeVenteId IS NULL OR lv.vente.pointDeVenteId = :pointDeVenteId)")
     List<Object[]> calculerTotauxMargeByCommercial(@Param("commercialId") Long commercialId,
                                                    @Param("debut") LocalDateTime debut,
-                                                   @Param("fin") LocalDateTime fin);
+                                                   @Param("fin") LocalDateTime fin,
+                                                   @Param("pointDeVenteId") Long pointDeVenteId);
 }
 
 

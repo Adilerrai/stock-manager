@@ -44,14 +44,26 @@ public interface ClientRepository extends JpaRepository<Client, Long>, ClientRep
     @Query("SELECT c FROM Client c WHERE c.creditUtilise > c.creditAutorise")
     List<Client> findClientsAvecDepassementCredit();
 
+    Optional<Client> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
+
     List<Client> findByCommercialId(Long commercialId);
 
+    List<Client> findByCommercialIdAndPointDeVenteId(Long commercialId, Long pointDeVenteId);
+
     Long countByCommercialId(Long commercialId);
+
+    Long countByCommercialIdAndPointDeVenteId(Long commercialId, Long pointDeVenteId);
 
     @Query("SELECT COUNT(c) FROM Client c WHERE c.commercial.id = :commercialId AND c.dateCreation BETWEEN :debut AND :fin")
     Long countNouveauxClientsByCommercial(@Param("commercialId") Long commercialId,
                                           @Param("debut") java.time.LocalDateTime debut,
                                           @Param("fin") java.time.LocalDateTime fin);
+
+    @Query("SELECT COUNT(c) FROM Client c WHERE c.commercial.id = :commercialId AND c.pointDeVenteId = :pointDeVenteId AND c.dateCreation BETWEEN :debut AND :fin")
+    Long countNouveauxClientsByCommercialAndPointDeVenteId(@Param("commercialId") Long commercialId,
+                                                           @Param("debut") java.time.LocalDateTime debut,
+                                                           @Param("fin") java.time.LocalDateTime fin,
+                                                           @Param("pointDeVenteId") Long pointDeVenteId);
 }
 
 

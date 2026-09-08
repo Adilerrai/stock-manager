@@ -37,7 +37,18 @@ public class ObjectifCommercial {
     private String notes;
 
     @Column(name = "point_de_vente_id", nullable = false)
-    private Long pointDeVenteId = 1L;
+    private Long pointDeVenteId;
+
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (tenant != null) {
+            this.pointDeVenteId = tenant;
+        } else if (this.pointDeVenteId == null) {
+            this.pointDeVenteId = 1L;
+        }
+    }
 
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();

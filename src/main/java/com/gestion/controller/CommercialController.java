@@ -24,6 +24,12 @@ public class CommercialController {
         this.commercialService = commercialService;
     }
 
+    @GetMapping("")
+    @PreAuthorize("hasAnyAuthority('COMMERCIAL_VOIR', 'DASHBOARD_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMMERCIAL')")
+    public ResponseEntity<List<com.acommon.persistant.dto.UserResponse>> getCommerciaux() {
+        return ResponseEntity.ok(commercialService.getCommerciaux());
+    }
+
     @GetMapping("/performances")
     @PreAuthorize("hasAnyAuthority('COMMERCIAL_VOIR', 'DASHBOARD_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL')")
     public ResponseEntity<List<PerformanceCommercialDTO>> getPerformances(

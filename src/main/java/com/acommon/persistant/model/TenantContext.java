@@ -24,7 +24,23 @@ public class TenantContext {
      * @return L'ID du tenant ou null si aucun tenant n'est défini
      */
     public static Long getCurrentTenant() {
-        return CURRENT_TENANT.get();
+        Long tenant = CURRENT_TENANT.get();
+        if (tenant != null) {
+            return tenant;
+        }
+        try {
+            org.springframework.security.core.Authentication auth =
+                    org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.getPrincipal() instanceof User user) {
+                Long t = user.getTenantId() != null ? user.getTenantId() : user.getPointDeVenteId();
+                if (t != null) {
+                    CURRENT_TENANT.set(t);
+                    return t;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
     /**

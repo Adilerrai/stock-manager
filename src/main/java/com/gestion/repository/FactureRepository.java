@@ -72,8 +72,9 @@ public interface FactureRepository extends JpaRepository<Facture, Long>, Facture
     @Query("SELECT COUNT(f) FROM Facture f WHERE f.montantRestant > 0 AND (f.annulee = false OR f.annulee IS NULL)")
     Long countFacturesImpayees();
 
-    @Query("SELECT COALESCE(SUM(f.montantRestant), 0) FROM Facture f WHERE f.client.commercial.id = :commercialId AND f.montantRestant > 0 AND (f.annulee = false OR f.annulee IS NULL)")
-    BigDecimal sumImpayesByCommercial(@Param("commercialId") Long commercialId);
+    @Query("SELECT COALESCE(SUM(f.montantRestant), 0) FROM Facture f WHERE f.client.commercial.id = :commercialId AND f.montantRestant > 0 AND (f.annulee = false OR f.annulee IS NULL) AND (:pointDeVenteId IS NULL OR f.pointDeVenteId = :pointDeVenteId)")
+    BigDecimal sumImpayesByCommercial(@Param("commercialId") Long commercialId,
+                                      @Param("pointDeVenteId") Long pointDeVenteId);
 }
 
 

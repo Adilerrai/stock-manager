@@ -43,14 +43,65 @@ public class CommercialService {
     }
 
     /**
-     * Récupère la performance de tous les commerciaux pour une période donnée
+     * Récupère la liste des commerciaux pour l'entreprise courante
+     */
+    @Transactional(readOnly = true)
+    public List<com.acommon.persistant.dto.UserResponse> getCommerciaux() {
+        Long currentTenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (currentTenant == null) {
+            return List.of();
+        }
+
+        List<User> users = userRepository.findByTenantId(currentTenant);
+        if (users.isEmpty()) {
+            users = userRepository.findByPointDeVenteId(currentTenant);
+        }
+
+        return users.stream()
+                .filter(u -> {
+                    String roleNom = (u.getRole() != null && u.getRole().getNom() != null) ? u.getRole().getNom() : "";
+                    return roleNom.contains("COMMERCIAL") || roleNom.contains("VENDEUR") || roleNom.contains("ADMIN") || roleNom.contains("GESTIONNAIRE");
+                })
+                .map(this::mapToUserResponse)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private com.acommon.persistant.dto.UserResponse mapToUserResponse(User user) {
+        com.acommon.persistant.dto.UserResponse response = new com.acommon.persistant.dto.UserResponse();
+        response.setId(user.getId());
+        response.setEmail(user.getEmail());
+        response.setUsername(user.getUsername());
+        response.setNomComplet(user.getNomComplet());
+        response.setTelephone(user.getTelephone());
+        response.setGenre(user.getGenre());
+        response.setRole(user.getRole() != null ? user.getRole().getNom() : null);
+        response.setTenantId(user.getTenantId());
+        response.setPointDeVenteId(user.getPointDeVenteId());
+        if (user.getPointDeVente() != null) {
+            response.setNomPointDeVente(user.getPointDeVente().getNomPointDeVente());
+        }
+        response.setEnabled(user.isEnabled());
+        return response;
+    }
+
+    /**
+     * Récupère la performance de tous les commerciaux pour une période donnée dans le tenant courant
      */
     @Transactional(readOnly = true)
     public List<PerformanceCommercialDTO> getPerformancesCommerciaux(LocalDate dateDebut, LocalDate dateFin) {
         if (dateDebut == null) dateDebut = LocalDate.now().withDayOfMonth(1);
         if (dateFin == null) dateFin = LocalDate.now();
 
-        List<User> users = userRepository.findAll();
+        Long currentTenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (currentTenant == null) {
+            return List.of();
+        }
+
+        List<User> users = userRepository.findByTenantId(currentTenant);
+        if (users.isEmpty()) {
+            users = userRepository.findByPointDeVenteId(currentTenant);
+        }
+
         List<PerformanceCommercialDTO> performances = new ArrayList<>();
 
         for (User u : users) {
@@ -58,9 +109,9 @@ public class CommercialService {
             String roleNom = (u.getRole() != null && u.getRole().getNom() != null) ? u.getRole().getNom() : "";
             boolean isCommercial = roleNom.contains("COMMERCIAL") || roleNom.contains("VENDEUR") || roleNom.contains("ADMIN") || roleNom.contains("GESTIONNAIRE");
 
-            Long clientsPortefeuille = clientRepository.countByCommercialId(u.getId());
+            Long clientsPortefeuille = clientRepository.countByCommercialIdAndPointDeVenteId(u.getId(), currentTenant);
             if (isCommercial || (clientsPortefeuille != null && clientsPortefeuille > 0)) {
-                performances.add(calculerPerformanceUser(u, dateDebut, dateFin, clientsPortefeuille));
+                performances.add(calculerPerformanceUser(u, dateDebut, dateFin, clientsPortefeuille, currentTenant));
             }
         }
 
@@ -68,18 +119,28 @@ public class CommercialService {
     }
 
     /**
-     * Récupère la performance détaillée d'un commercial spécifique
+     * Récupère la performance détaillée d'un commercial spécifique dans son tenant
      */
     @Transactional(readOnly = true)
     public PerformanceCommercialDTO getPerformanceByCommercial(Long commercialId, LocalDate dateDebut, LocalDate dateFin) {
         if (dateDebut == null) dateDebut = LocalDate.now().withDayOfMonth(1);
         if (dateFin == null) dateFin = LocalDate.now();
 
+        Long currentTenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
         User user = userRepository.findById(commercialId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé avec l'id: " + commercialId));
 
-        Long clientsPortefeuille = clientRepository.countByCommercialId(commercialId);
-        return calculerPerformanceUser(user, dateDebut, dateFin, clientsPortefeuille);
+        if (currentTenant != null) {
+            boolean matches = currentTenant.equals(user.getTenantId())
+                    || (user.getPointDeVente() != null && currentTenant.equals(user.getPointDeVente().getTenantId()))
+                    || currentTenant.equals(user.getPointDeVenteId());
+            if (!matches) {
+                throw new org.springframework.security.access.AccessDeniedException("Accès refusé : cet utilisateur appartient à une autre entreprise");
+            }
+        }
+
+        Long clientsPortefeuille = clientRepository.countByCommercialIdAndPointDeVenteId(commercialId, currentTenant);
+        return calculerPerformanceUser(user, dateDebut, dateFin, clientsPortefeuille, currentTenant);
     }
 
     /**
@@ -87,8 +148,18 @@ public class CommercialService {
      */
     public ObjectifCommercial definirObjectif(Long commercialId, Integer annee, Integer mois,
                                               BigDecimal objectifCA, BigDecimal objectifMarge, String notes) {
+        Long currentTenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
         User commercial = userRepository.findById(commercialId)
                 .orElseThrow(() -> new RuntimeException("Commercial non trouvé avec l'id: " + commercialId));
+
+        if (currentTenant != null) {
+            boolean matches = currentTenant.equals(commercial.getTenantId())
+                    || (commercial.getPointDeVente() != null && currentTenant.equals(commercial.getPointDeVente().getTenantId()))
+                    || currentTenant.equals(commercial.getPointDeVenteId());
+            if (!matches) {
+                throw new org.springframework.security.access.AccessDeniedException("Accès refusé : ce commercial appartient à une autre entreprise");
+            }
+        }
 
         Optional<ObjectifCommercial> opt = objectifCommercialRepository.findByCommercialIdAndAnneeAndMois(commercialId, annee, mois);
         ObjectifCommercial obj = opt.orElseGet(ObjectifCommercial::new);
@@ -99,16 +170,30 @@ public class CommercialService {
         obj.setObjectifCA(objectifCA != null ? objectifCA : BigDecimal.ZERO);
         obj.setObjectifMarge(objectifMarge != null ? objectifMarge : BigDecimal.ZERO);
         obj.setNotes(notes);
+        obj.setPointDeVenteId(currentTenant != null ? currentTenant : 1L);
 
         return objectifCommercialRepository.save(obj);
     }
 
     @Transactional(readOnly = true)
     public List<ObjectifCommercial> getObjectifsByCommercial(Long commercialId) {
+        Long currentTenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        User commercial = userRepository.findById(commercialId)
+                .orElseThrow(() -> new RuntimeException("Commercial non trouvé avec l'id: " + commercialId));
+
+        if (currentTenant != null) {
+            boolean matches = currentTenant.equals(commercial.getTenantId())
+                    || (commercial.getPointDeVente() != null && currentTenant.equals(commercial.getPointDeVente().getTenantId()))
+                    || currentTenant.equals(commercial.getPointDeVenteId());
+            if (!matches) {
+                throw new org.springframework.security.access.AccessDeniedException("Accès refusé : ce commercial appartient à une autre entreprise");
+            }
+        }
+
         return objectifCommercialRepository.findByCommercialId(commercialId);
     }
 
-    private PerformanceCommercialDTO calculerPerformanceUser(User u, LocalDate debut, LocalDate fin, Long clientsPortefeuille) {
+    private PerformanceCommercialDTO calculerPerformanceUser(User u, LocalDate debut, LocalDate fin, Long clientsPortefeuille, Long tenantId) {
         LocalDateTime debutDT = debut.atStartOfDay();
         LocalDateTime finDT = fin.atTime(LocalTime.MAX);
 
@@ -118,15 +203,15 @@ public class CommercialService {
         dto.setEmail(u.getEmail());
         dto.setTelephone(u.getTelephone());
 
-        // 1. CA et nombre de ventes
-        BigDecimal ca = venteRepository.sumCAByCommercial(u.getId(), debutDT, finDT);
+        // 1. CA et nombre de ventes isolés par pointDeVenteId
+        BigDecimal ca = venteRepository.sumCAByCommercial(u.getId(), debutDT, finDT, tenantId);
         dto.setCaRealise(ca != null ? ca : BigDecimal.ZERO);
 
-        Long nbVentes = venteRepository.countVentesByCommercial(u.getId(), debutDT, finDT);
+        Long nbVentes = venteRepository.countVentesByCommercial(u.getId(), debutDT, finDT, tenantId);
         dto.setNombreVentes(nbVentes != null ? nbVentes : 0L);
 
-        // 2. Marge réalisée
-        List<Object[]> margesRaw = ligneVenteRepository.calculerTotauxMargeByCommercial(u.getId(), debutDT, finDT);
+        // 2. Marge réalisée isolée par pointDeVenteId
+        List<Object[]> margesRaw = ligneVenteRepository.calculerTotauxMargeByCommercial(u.getId(), debutDT, finDT, tenantId);
         BigDecimal marge = BigDecimal.ZERO;
         if (margesRaw != null && !margesRaw.isEmpty()) {
             Object[] r = margesRaw.get(0);
@@ -166,11 +251,11 @@ public class CommercialService {
         // 5. Portefeuille clients
         dto.setNombreClientsPortefeuille(clientsPortefeuille != null ? clientsPortefeuille : 0L);
 
-        Long nouveauxClients = clientRepository.countNouveauxClientsByCommercial(u.getId(), debutDT, finDT);
+        Long nouveauxClients = clientRepository.countNouveauxClientsByCommercialAndPointDeVenteId(u.getId(), debutDT, finDT, tenantId);
         dto.setNouveauxClientsPeriode(nouveauxClients != null ? nouveauxClients : 0L);
 
-        // 6. Impayés clients sous sa responsabilité
-        BigDecimal impayes = factureRepository.sumImpayesByCommercial(u.getId());
+        // 6. Impayés clients sous sa responsabilité isolés par pointDeVenteId
+        BigDecimal impayes = factureRepository.sumImpayesByCommercial(u.getId(), tenantId);
         dto.setTotalImpayesClients(impayes != null ? impayes : BigDecimal.ZERO);
 
         return dto;

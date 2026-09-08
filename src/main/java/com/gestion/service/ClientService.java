@@ -19,9 +19,11 @@ import java.util.List;
 public class ClientService {
 
     private final ClientRepository clientRepository;
+    private final com.acommon.repository.UserRepository userRepository;
 
-    public ClientService(ClientRepository clientRepository) {
+    public ClientService(ClientRepository clientRepository, com.acommon.repository.UserRepository userRepository) {
         this.clientRepository = clientRepository;
+        this.userRepository = userRepository;
     }
 
     public Page<Client> searchClients(ClientSearchCriteria criteria, Pageable pageable) {
@@ -30,9 +32,7 @@ public class ClientService {
 
     public Client creerClient(Client client) {
         Long tenantId = TenantContext.getCurrentTenant();
-        if (client.getPointDeVenteId() == null) {
-            client.setPointDeVenteId(tenantId != null ? tenantId : 1L);
-        }
+        client.setPointDeVenteId(tenantId != null ? tenantId : 1L);
         client.setDateCreation(LocalDateTime.now());
         if (client.getNom() != null && client.getPrenom() != null) {
             client.setNomComplet(client.getPrenom() + " " + client.getNom());
@@ -52,12 +52,23 @@ public class ClientService {
         if (client.getDelaiPaiementJours() == null) {
             client.setDelaiPaiementJours(30);
         }
+
+        // Rattachement sécurisé du commercial du même tenant
+        Long commId = client.getCommercialId();
+        if (commId != null) {
+            userRepository.findById(commId).ifPresent(user -> {
+                Long targetTenant = tenantId != null ? tenantId : 1L;
+                if (targetTenant.equals(user.getTenantId()) || targetTenant.equals(user.getPointDeVenteId())) {
+                    client.setCommercial(user);
+                }
+            });
+        }
+
         return clientRepository.save(client);
     }
 
     public Client modifierClient(Long id, Client clientModifie) {
-        Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client non trouvé"));
+        Client client = getClientById(id);
 
         client.setNom(clientModifie.getNom());
         client.setPrenom(clientModifie.getPrenom());
@@ -76,7 +87,22 @@ public class ClientService {
         client.setTarif(clientModifie.getTarif());
         client.setDelaiPaiementJours(clientModifie.getDelaiPaiementJours() != null ? clientModifie.getDelaiPaiementJours() : 30);
         client.setRemiseDefaut(clientModifie.getRemiseDefaut() != null ? clientModifie.getRemiseDefaut() : BigDecimal.ZERO);
-        client.setCommercial(clientModifie.getCommercial());
+
+        Long commId = clientModifie.getCommercialId();
+        if (commId == null && clientModifie.getCommercial() != null) {
+            commId = clientModifie.getCommercial().getId();
+        }
+        if (commId != null) {
+            Long tenantId = TenantContext.getCurrentTenant();
+            Long targetTenant = tenantId != null ? tenantId : client.getPointDeVenteId();
+            com.acommon.persistant.model.User commercial = userRepository.findById(commId).orElse(null);
+            if (commercial != null && (targetTenant == null || targetTenant.equals(commercial.getTenantId()) || targetTenant.equals(commercial.getPointDeVenteId()))) {
+                client.setCommercial(commercial);
+            }
+        } else {
+            client.setCommercial(null);
+        }
+
         client.setCreditAutorise(clientModifie.getCreditAutorise() != null ? clientModifie.getCreditAutorise() : BigDecimal.ZERO);
         if (clientModifie.getCreditUtilise() != null) {
             client.setCreditUtilise(clientModifie.getCreditUtilise());
@@ -89,8 +115,13 @@ public class ClientService {
     }
 
     public Client getClientById(Long id) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return clientRepository.findByIdAndPointDeVenteId(id, tenantId)
+                    .orElseThrow(() -> new com.acommon.exception.ResourceNotFoundException("Client", "id", id));
+        }
         return clientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client non trouvé"));
+                .orElseThrow(() -> new com.acommon.exception.ResourceNotFoundException("Client", "id", id));
     }
 
     public List<Client> getAllClients() {
@@ -98,7 +129,7 @@ public class ClientService {
         if (tenantId != null) {
             return clientRepository.findByPointDeVenteId(tenantId);
         }
-        return clientRepository.findAll();
+        return List.of();
     }
 
     public List<Client> getClientsActifs() {
@@ -106,7 +137,7 @@ public class ClientService {
         if (tenantId != null) {
             return clientRepository.findByActifAndPointDeVenteId(true, tenantId);
         }
-        return clientRepository.findByActif(true);
+        return List.of();
     }
 
     public List<Client> getClientsByCategorie(CategorieClient categorie) {
@@ -114,7 +145,7 @@ public class ClientService {
         if (tenantId != null) {
             return clientRepository.findByPointDeVenteIdAndCategorie(tenantId, categorie);
         }
-        return clientRepository.findByCategorie(categorie);
+        return List.of();
     }
 
     public List<Client> rechercherClients(String search) {
@@ -122,7 +153,7 @@ public class ClientService {
         if (tenantId != null) {
             return clientRepository.searchClients(search, tenantId);
         }
-        return clientRepository.searchClients(search);
+        return List.of();
     }
 
     public Client findByTelephone(String telephone) {
@@ -130,7 +161,7 @@ public class ClientService {
         if (tenantId != null) {
             return clientRepository.findByTelephoneAndPointDeVenteId(telephone, tenantId).orElse(null);
         }
-        return clientRepository.findByTelephone(telephone).orElse(null);
+        return null;
     }
 
     public void desactiverClient(Long id) {
@@ -184,7 +215,7 @@ public class ClientService {
         if (tenantId != null) {
             return clientRepository.findClientsAvecDepassementCredit(tenantId);
         }
-        return clientRepository.findClientsAvecDepassementCredit();
+        return List.of();
     }
 }
 

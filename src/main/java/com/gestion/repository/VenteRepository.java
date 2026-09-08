@@ -76,15 +76,17 @@ public interface VenteRepository extends JpaRepository<Vente, Long>, VenteReposi
                                         @Param("dateDebut") LocalDateTime dateDebut,
                                         @Param("dateFin") LocalDateTime dateFin);
 
-    @Query("SELECT COALESCE(SUM(v.montantFinal), 0) FROM Vente v WHERE (v.vendeur.id = :commercialId OR v.client.commercial.id = :commercialId) AND v.statut = 'VALIDEE' AND v.dateVente BETWEEN :debut AND :fin")
+    @Query("SELECT COALESCE(SUM(v.montantFinal), 0) FROM Vente v WHERE (v.vendeur.id = :commercialId OR v.client.commercial.id = :commercialId) AND v.statut = 'VALIDEE' AND v.dateVente BETWEEN :debut AND :fin AND (:pointDeVenteId IS NULL OR v.pointDeVenteId = :pointDeVenteId)")
     BigDecimal sumCAByCommercial(@Param("commercialId") Long commercialId,
                                  @Param("debut") LocalDateTime debut,
-                                 @Param("fin") LocalDateTime fin);
+                                 @Param("fin") LocalDateTime fin,
+                                 @Param("pointDeVenteId") Long pointDeVenteId);
 
-    @Query("SELECT COUNT(v) FROM Vente v WHERE (v.vendeur.id = :commercialId OR v.client.commercial.id = :commercialId) AND v.statut = 'VALIDEE' AND v.dateVente BETWEEN :debut AND :fin")
+    @Query("SELECT COUNT(v) FROM Vente v WHERE (v.vendeur.id = :commercialId OR v.client.commercial.id = :commercialId) AND v.statut = 'VALIDEE' AND v.dateVente BETWEEN :debut AND :fin AND (:pointDeVenteId IS NULL OR v.pointDeVenteId = :pointDeVenteId)")
     Long countVentesByCommercial(@Param("commercialId") Long commercialId,
                                  @Param("debut") LocalDateTime debut,
-                                 @Param("fin") LocalDateTime fin);
+                                 @Param("fin") LocalDateTime fin,
+                                 @Param("pointDeVenteId") Long pointDeVenteId);
 }
 
 

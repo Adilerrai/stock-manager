@@ -24,7 +24,10 @@ public class FournisseurService {
 
     private Long getTenantId() {
         Long tenant = TenantContext.getCurrentTenant();
-        return tenant != null ? tenant : 1L;
+        if (tenant == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Impossible d'identifier l'entreprise (tenant) courante");
+        }
+        return tenant;
     }
 
     @Transactional
@@ -47,8 +50,11 @@ public class FournisseurService {
     }
 
     public List<Fournisseur> getAllFournisseursActifs() {
-        Long tenantId = getTenantId();
-        return fournisseurRepository.findActiveByPointDeVenteIdOrderByNom(tenantId);
+        Long tenant = TenantContext.getCurrentTenant();
+        if (tenant == null) {
+            return List.of();
+        }
+        return fournisseurRepository.findActiveByPointDeVenteIdOrderByNom(tenant);
     }
 
     public Fournisseur getFournisseurById(Long fournisseurId) {

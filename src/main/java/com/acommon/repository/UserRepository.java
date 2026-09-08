@@ -32,6 +32,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByTenantIdAndPointDeVente_Id(Long tenantId, Long pointDeVenteId);
 
+    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE u.tenantId = :tenantId OR (u.pointDeVente IS NOT NULL AND u.pointDeVente.tenantId = :tenantId)")
+    List<User> findByTenantOrPointDeVenteTenant(@org.springframework.data.repository.query.Param("tenantId") Long tenantId);
+
     boolean existsByRoleNom(String roleNom);
 
     default List<User> findByPointDeVenteId(Long pointDeVenteId) {

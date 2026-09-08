@@ -58,8 +58,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
+                    Long effectiveTenantId = tenantId;
+                    if (effectiveTenantId == null && userDetails instanceof com.acommon.persistant.model.User u) {
+                        effectiveTenantId = u.getTenantId() != null ? u.getTenantId() : u.getPointDeVenteId();
+                    }
                     // Définir le contexte du tenant
-                    TenantContext.setCurrentTenant(tenantId);
+                    TenantContext.setCurrentTenant(effectiveTenantId);
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
