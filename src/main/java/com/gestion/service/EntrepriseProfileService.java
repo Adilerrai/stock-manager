@@ -21,8 +21,8 @@ public class EntrepriseProfileService {
     private final ImageCompressionService imageCompressionService;
 
     public EntrepriseProfileService(EntrepriseProfileRepository entrepriseProfileRepository,
-                                  EntrepriseProfileMapper entrepriseProfileMapper,
-                                  ImageCompressionService imageCompressionService) {
+            EntrepriseProfileMapper entrepriseProfileMapper,
+            ImageCompressionService imageCompressionService) {
         this.entrepriseProfileRepository = entrepriseProfileRepository;
         this.entrepriseProfileMapper = entrepriseProfileMapper;
         this.imageCompressionService = imageCompressionService;
@@ -31,7 +31,8 @@ public class EntrepriseProfileService {
     @Transactional(readOnly = true)
     public EntrepriseProfile getProfileEntityByCurrentTenant() {
         Long tenantId = TenantContext.getCurrentTenant();
-        if (tenantId == null) tenantId = 1L;
+        if (tenantId == null)
+            tenantId = 1L;
 
         final Long currentTenantId = tenantId;
         return entrepriseProfileRepository.findByPointDeVenteId(currentTenantId)
@@ -47,7 +48,8 @@ public class EntrepriseProfileService {
     @Transactional
     public EntrepriseProfileDTO updateProfile(EntrepriseProfileDTO dto) {
         Long tenantId = TenantContext.getCurrentTenant();
-        if (tenantId == null) tenantId = 1L;
+        if (tenantId == null)
+            tenantId = 1L;
 
         final Long currentTenantId = tenantId;
         EntrepriseProfile profile = entrepriseProfileRepository.findByPointDeVenteId(currentTenantId)
@@ -88,18 +90,22 @@ public class EntrepriseProfileService {
 
         long maxBytes = 5L * 1024 * 1024; // 5 MB
         if (file.getSize() > maxBytes) {
-            throw new CommonException("Le logo est trop volumineux (max 5MB)", HttpStatus.PAYLOAD_TOO_LARGE, "LOGO_TOO_LARGE");
+            throw new CommonException("Le logo est trop volumineux (max 5MB)", HttpStatus.PAYLOAD_TOO_LARGE,
+                    "LOGO_TOO_LARGE");
         }
 
         String contentType = file.getContentType();
-        if (contentType == null || !(contentType.equalsIgnoreCase("image/jpeg") || contentType.equalsIgnoreCase("image/png") || contentType.equalsIgnoreCase("image/webp"))) {
-            throw new CommonException("Format non supporté (JPEG, PNG, WEBP acceptés)", HttpStatus.UNSUPPORTED_MEDIA_TYPE, "LOGO_FORMAT_INVALID");
+        if (contentType == null || !(contentType.equalsIgnoreCase("image/jpeg")
+                || contentType.equalsIgnoreCase("image/png") || contentType.equalsIgnoreCase("image/webp"))) {
+            throw new CommonException("Format non supporté (JPEG, PNG, WEBP acceptés)",
+                    HttpStatus.UNSUPPORTED_MEDIA_TYPE, "LOGO_FORMAT_INVALID");
         }
 
         byte[] compressedData = imageCompressionService.compressImage(file.getBytes(), contentType);
 
         Long tenantId = TenantContext.getCurrentTenant();
-        if (tenantId == null) tenantId = 1L;
+        if (tenantId == null)
+            tenantId = 1L;
 
         final Long currentTenantId = tenantId;
         EntrepriseProfile profile = entrepriseProfileRepository.findByPointDeVenteId(currentTenantId)
@@ -117,7 +123,8 @@ public class EntrepriseProfileService {
     @Transactional
     public void removeLogo() {
         Long tenantId = TenantContext.getCurrentTenant();
-        if (tenantId == null) tenantId = 1L;
+        if (tenantId == null)
+            tenantId = 1L;
 
         final Long currentTenantId = tenantId;
         entrepriseProfileRepository.findByPointDeVenteId(currentTenantId).ifPresent(profile -> {
@@ -147,8 +154,9 @@ public class EntrepriseProfileService {
         defaultProfile.setArticleImposition("16098765432");
         defaultProfile.setCompteBancaireRib("002 00012 1234567890 55");
         defaultProfile.setNomBanque("Banque Nationale d'Algérie (BNA)");
-        defaultProfile.setPiedPage("Garantie légale selon réglementation en vigueur. Marchandise livrée sous réserve de propriété. Merci pour votre confiance !");
-        defaultProfile.setDevise("DZD");
+        defaultProfile.setPiedPage(
+                "Garantie légale selon réglementation en vigueur. Marchandise livrée sous réserve de propriété. Merci pour votre confiance !");
+        defaultProfile.setDevise("MAD");
         defaultProfile.setDateMiseAJour(LocalDateTime.now());
         return defaultProfile;
     }

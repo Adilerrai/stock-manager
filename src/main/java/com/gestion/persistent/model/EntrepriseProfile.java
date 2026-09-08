@@ -69,81 +69,197 @@ public class EntrepriseProfile {
     private String piedPage;
 
     @Column(name = "devise")
-    private String devise = "DZD";
+    private String devise = "MAD";
 
     @Column(name = "date_mise_a_jour")
     private LocalDateTime dateMiseAJour = LocalDateTime.now();
 
-    public EntrepriseProfile() {}
+    public EntrepriseProfile() {
+    }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getPointDeVenteId() { return pointDeVenteId; }
-    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getNomEntreprise() { return nomEntreprise; }
-    public void setNomEntreprise(String nomEntreprise) { this.nomEntreprise = nomEntreprise; }
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
 
-    public String getActivite() { return activite; }
-    public void setActivite(String activite) { this.activite = activite; }
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
+    }
 
-    public String getAdresse() { return adresse; }
-    public void setAdresse(String adresse) { this.adresse = adresse; }
+    public String getNomEntreprise() {
+        return nomEntreprise;
+    }
 
-    public String getVille() { return ville; }
-    public void setVille(String ville) { this.ville = ville; }
+    public void setNomEntreprise(String nomEntreprise) {
+        this.nomEntreprise = nomEntreprise;
+    }
 
-    public String getCodePostal() { return codePostal; }
-    public void setCodePostal(String codePostal) { this.codePostal = codePostal; }
+    public String getActivite() {
+        return activite;
+    }
 
-    public String getTelephone() { return telephone; }
-    public void setTelephone(String telephone) { this.telephone = telephone; }
+    public void setActivite(String activite) {
+        this.activite = activite;
+    }
 
-    public String getTelephoneSecondaire() { return telephoneSecondaire; }
-    public void setTelephoneSecondaire(String telephoneSecondaire) { this.telephoneSecondaire = telephoneSecondaire; }
+    public String getAdresse() {
+        return adresse;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setAdresse(String adresse) {
+        this.adresse = adresse;
+    }
 
-    public String getSiteWeb() { return siteWeb; }
-    public void setSiteWeb(String siteWeb) { this.siteWeb = siteWeb; }
+    public String getVille() {
+        return ville;
+    }
 
-    public String getRegistreCommerce() { return registreCommerce; }
-    public void setRegistreCommerce(String registreCommerce) { this.registreCommerce = registreCommerce; }
+    public void setVille(String ville) {
+        this.ville = ville;
+    }
 
-    public String getNumeroIdentificationFiscale() { return numeroIdentificationFiscale; }
-    public void setNumeroIdentificationFiscale(String numeroIdentificationFiscale) { this.numeroIdentificationFiscale = numeroIdentificationFiscale; }
+    public String getCodePostal() {
+        return codePostal;
+    }
 
-    public String getNumeroIdentificationStatistique() { return numeroIdentificationStatistique; }
-    public void setNumeroIdentificationStatistique(String numeroIdentificationStatistique) { this.numeroIdentificationStatistique = numeroIdentificationStatistique; }
+    public void setCodePostal(String codePostal) {
+        this.codePostal = codePostal;
+    }
 
-    public String getArticleImposition() { return articleImposition; }
-    public void setArticleImposition(String articleImposition) { this.articleImposition = articleImposition; }
+    public String getTelephone() {
+        return telephone;
+    }
 
-    public String getCompteBancaireRib() { return compteBancaireRib; }
-    public void setCompteBancaireRib(String compteBancaireRib) { this.compteBancaireRib = compteBancaireRib; }
+    public void setTelephone(String telephone) {
+        this.telephone = telephone;
+    }
 
-    public String getNomBanque() { return nomBanque; }
-    public void setNomBanque(String nomBanque) { this.nomBanque = nomBanque; }
+    public String getTelephoneSecondaire() {
+        return telephoneSecondaire;
+    }
 
-    public byte[] getLogoData() { return logoData; }
-    public void setLogoData(byte[] logoData) { this.logoData = logoData; }
+    public void setTelephoneSecondaire(String telephoneSecondaire) {
+        this.telephoneSecondaire = telephoneSecondaire;
+    }
 
-    public String getLogoContentType() { return logoContentType; }
-    public void setLogoContentType(String logoContentType) { this.logoContentType = logoContentType; }
+    public String getEmail() {
+        return email;
+    }
 
-    public String getLogoFileName() { return logoFileName; }
-    public void setLogoFileName(String logoFileName) { this.logoFileName = logoFileName; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public String getPiedPage() { return piedPage; }
-    public void setPiedPage(String piedPage) { this.piedPage = piedPage; }
+    public String getSiteWeb() {
+        return siteWeb;
+    }
 
-    public String getDevise() { return devise; }
-    public void setDevise(String devise) { this.devise = devise; }
+    public void setSiteWeb(String siteWeb) {
+        this.siteWeb = siteWeb;
+    }
 
-    public LocalDateTime getDateMiseAJour() { return dateMiseAJour; }
-    public void setDateMiseAJour(LocalDateTime dateMiseAJour) { this.dateMiseAJour = dateMiseAJour; }
+    public String getRegistreCommerce() {
+        return registreCommerce;
+    }
+
+    public void setRegistreCommerce(String registreCommerce) {
+        this.registreCommerce = registreCommerce;
+    }
+
+    public String getNumeroIdentificationFiscale() {
+        return numeroIdentificationFiscale;
+    }
+
+    public void setNumeroIdentificationFiscale(String numeroIdentificationFiscale) {
+        this.numeroIdentificationFiscale = numeroIdentificationFiscale;
+    }
+
+    public String getNumeroIdentificationStatistique() {
+        return numeroIdentificationStatistique;
+    }
+
+    public void setNumeroIdentificationStatistique(String numeroIdentificationStatistique) {
+        this.numeroIdentificationStatistique = numeroIdentificationStatistique;
+    }
+
+    public String getArticleImposition() {
+        return articleImposition;
+    }
+
+    public void setArticleImposition(String articleImposition) {
+        this.articleImposition = articleImposition;
+    }
+
+    public String getCompteBancaireRib() {
+        return compteBancaireRib;
+    }
+
+    public void setCompteBancaireRib(String compteBancaireRib) {
+        this.compteBancaireRib = compteBancaireRib;
+    }
+
+    public String getNomBanque() {
+        return nomBanque;
+    }
+
+    public void setNomBanque(String nomBanque) {
+        this.nomBanque = nomBanque;
+    }
+
+    public byte[] getLogoData() {
+        return logoData;
+    }
+
+    public void setLogoData(byte[] logoData) {
+        this.logoData = logoData;
+    }
+
+    public String getLogoContentType() {
+        return logoContentType;
+    }
+
+    public void setLogoContentType(String logoContentType) {
+        this.logoContentType = logoContentType;
+    }
+
+    public String getLogoFileName() {
+        return logoFileName;
+    }
+
+    public void setLogoFileName(String logoFileName) {
+        this.logoFileName = logoFileName;
+    }
+
+    public String getPiedPage() {
+        return piedPage;
+    }
+
+    public void setPiedPage(String piedPage) {
+        this.piedPage = piedPage;
+    }
+
+    public String getDevise() {
+        return devise;
+    }
+
+    public void setDevise(String devise) {
+        this.devise = devise;
+    }
+
+    public LocalDateTime getDateMiseAJour() {
+        return dateMiseAJour;
+    }
+
+    public void setDateMiseAJour(LocalDateTime dateMiseAJour) {
+        this.dateMiseAJour = dateMiseAJour;
+    }
 
     public boolean hasLogo() {
         return logoData != null && logoData.length > 0;

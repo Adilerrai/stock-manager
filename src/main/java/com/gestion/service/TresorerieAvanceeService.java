@@ -35,9 +35,9 @@ public class TresorerieAvanceeService {
     private final BanqueRepository banqueRepository;
 
     public TresorerieAvanceeService(CompteFinancierRepository compteRepository,
-                                   MouvementTresorerieRepository mouvementRepository,
-                                   UserRepository userRepository,
-                                   BanqueRepository banqueRepository) {
+            MouvementTresorerieRepository mouvementRepository,
+            UserRepository userRepository,
+            BanqueRepository banqueRepository) {
         this.compteRepository = compteRepository;
         this.mouvementRepository = mouvementRepository;
         this.userRepository = userRepository;
@@ -52,8 +52,10 @@ public class TresorerieAvanceeService {
     public SyntheseTresorerieDTO getSynthese() {
         BigDecimal totalCaisses = compteRepository.sumSoldeByType(TypeCompteFinancier.CAISSE_PHYSIQUE);
         BigDecimal totalBanques = compteRepository.sumSoldeByType(TypeCompteFinancier.COMPTE_BANCAIRE);
-        if (totalCaisses == null) totalCaisses = BigDecimal.ZERO;
-        if (totalBanques == null) totalBanques = BigDecimal.ZERO;
+        if (totalCaisses == null)
+            totalCaisses = BigDecimal.ZERO;
+        if (totalBanques == null)
+            totalBanques = BigDecimal.ZERO;
 
         List<CompteFinancierDTO> caisses = compteRepository.findByTypeAndActifTrue(TypeCompteFinancier.CAISSE_PHYSIQUE)
                 .stream().map(this::toDto).collect(Collectors.toList());
@@ -84,7 +86,7 @@ public class TresorerieAvanceeService {
         c.setNom(dto.getNom());
         c.setType(dto.getType() != null ? dto.getType() : TypeCompteFinancier.CAISSE_PHYSIQUE);
         c.setSoldeActuel(dto.getSoldeActuel() != null ? dto.getSoldeActuel() : BigDecimal.ZERO);
-        c.setDevise(dto.getDevise() != null ? dto.getDevise() : "DZD");
+        c.setDevise(dto.getDevise() != null ? dto.getDevise() : "MAD");
         c.setNumeroCompteRib(dto.getNumeroCompteRib());
         c.setNomBanque(dto.getNomBanque());
         if (dto.getBanqueId() != null) {
@@ -103,7 +105,8 @@ public class TresorerieAvanceeService {
     }
 
     /**
-     * Enregistre un mouvement de trésorerie (retrait gérant, versement banque, apport, etc.)
+     * Enregistre un mouvement de trésorerie (retrait gérant, versement banque,
+     * apport, etc.)
      * et met à jour immédiatement les soldes en direct.
      */
     public MouvementTresorerieDTO enregistrerMouvement(MouvementTresorerieDTO dto, Long userId) {
@@ -123,7 +126,8 @@ public class TresorerieAvanceeService {
                     .orElseThrow(() -> new RuntimeException("Compte destination non trouvé"));
         }
 
-        TypeMouvementTresorerie type = dto.getTypeMouvement() != null ? dto.getTypeMouvement() : TypeMouvementTresorerie.RETRAIT_ESPECES_GERANT;
+        TypeMouvementTresorerie type = dto.getTypeMouvement() != null ? dto.getTypeMouvement()
+                : TypeMouvementTresorerie.RETRAIT_ESPECES_GERANT;
         BigDecimal montant = dto.getMontant();
 
         // Application des flux sur les soldes
@@ -131,7 +135,8 @@ public class TresorerieAvanceeService {
             case RETRAIT_ESPECES_GERANT:
             case DECAISSEMENT_DIVERS:
                 if (source.getSoldeActuel().compareTo(montant) < 0) {
-                    throw new IllegalStateException("Solde insuffisant sur le compte source (" + source.getNom() + " : " + source.getSoldeActuel() + " " + source.getDevise() + ")");
+                    throw new IllegalStateException("Solde insuffisant sur le compte source (" + source.getNom() + " : "
+                            + source.getSoldeActuel() + " " + source.getDevise() + ")");
                 }
                 source.setSoldeActuel(source.getSoldeActuel().subtract(montant));
                 break;
@@ -144,10 +149,12 @@ public class TresorerieAvanceeService {
             case DEPOT_BANQUE:
             case TRANSFERT_INTERNE:
                 if (destination == null) {
-                    throw new IllegalArgumentException("Un compte de destination est obligatoire pour un transfert ou dépôt bancaire");
+                    throw new IllegalArgumentException(
+                            "Un compte de destination est obligatoire pour un transfert ou dépôt bancaire");
                 }
                 if (source.getSoldeActuel().compareTo(montant) < 0) {
-                    throw new IllegalStateException("Solde insuffisant pour effectuer le transfert (" + source.getNom() + " : " + source.getSoldeActuel() + " " + source.getDevise() + ")");
+                    throw new IllegalStateException("Solde insuffisant pour effectuer le transfert (" + source.getNom()
+                            + " : " + source.getSoldeActuel() + " " + source.getDevise() + ")");
                 }
                 source.setSoldeActuel(source.getSoldeActuel().subtract(montant));
                 destination.setSoldeActuel(destination.getSoldeActuel().add(montant));
@@ -246,7 +253,8 @@ public class TresorerieAvanceeService {
         dto.setJustificatifReference(m.getJustificatifReference());
         if (m.getEffectuePar() != null) {
             dto.setEffectueParUserId(m.getEffectuePar().getId());
-            dto.setEffectueParNom(m.getEffectuePar().getNomComplet() != null ? m.getEffectuePar().getNomComplet() : m.getEffectuePar().getUsername());
+            dto.setEffectueParNom(m.getEffectuePar().getNomComplet() != null ? m.getEffectuePar().getNomComplet()
+                    : m.getEffectuePar().getUsername());
         }
         dto.setSoldeApresSource(m.getSoldeApresSource());
         dto.setSoldeApresDestination(m.getSoldeApresDestination());

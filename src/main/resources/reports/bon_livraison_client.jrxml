@@ -242,7 +242,7 @@
                 <textElement textAlignment="Right" verticalAlignment="Middle">
                     <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
-                <text><![CDATA[P.U. (DZD)]]></text>
+                <text><![CDATA[P.U. (MAD)]]></text>
             </staticText>
         </band>
     </columnHeader>

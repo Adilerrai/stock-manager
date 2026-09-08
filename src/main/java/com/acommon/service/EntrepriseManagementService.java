@@ -51,20 +51,24 @@ public class EntrepriseManagementService {
     public EntrepriseResponse creerEntreprise(EntrepriseRegistrationRequest request) {
         // 1. Validation de l'unicité
         if (pointDeVenteRepository.existsByNomPointDeVente(request.getNomEntreprise())) {
-            throw new IllegalArgumentException("Une entreprise avec le nom '" + request.getNomEntreprise() + "' existe déjà");
+            throw new IllegalArgumentException(
+                    "Une entreprise avec le nom '" + request.getNomEntreprise() + "' existe déjà");
         }
         if (userRepository.existsByEmail(request.getAdminEmail())) {
-            throw new IllegalArgumentException("Un utilisateur avec l'email '" + request.getAdminEmail() + "' existe déjà");
+            throw new IllegalArgumentException(
+                    "Un utilisateur avec l'email '" + request.getAdminEmail() + "' existe déjà");
         }
         if (userRepository.existsByUsername(request.getAdminUsername())) {
-            throw new IllegalArgumentException("Un utilisateur avec l'identifiant '" + request.getAdminUsername() + "' existe déjà");
+            throw new IllegalArgumentException(
+                    "Un utilisateur avec l'identifiant '" + request.getAdminUsername() + "' existe déjà");
         }
 
         // 2. Calcul ou validation du nouveau tenantId unique
         Long newTenantId;
         if (request.getTenantId() != null) {
             if (pointDeVenteRepository.existsByTenantId(request.getTenantId())) {
-                throw new IllegalArgumentException("Une entreprise avec le tenant ID '" + request.getTenantId() + "' existe déjà");
+                throw new IllegalArgumentException(
+                        "Une entreprise avec le tenant ID '" + request.getTenantId() + "' existe déjà");
             }
             newTenantId = request.getTenantId();
         } else {
@@ -79,7 +83,8 @@ public class EntrepriseManagementService {
         pdv.setNom(request.getNomEntreprise());
         pdv.setAdresse(request.getAdresse());
         pdv.setTelephone(request.getTelephone());
-        pdv.setEmail(request.getEmail() != null && !request.getEmail().isBlank() ? request.getEmail() : request.getAdminEmail());
+        pdv.setEmail(request.getEmail() != null && !request.getEmail().isBlank() ? request.getEmail()
+                : request.getAdminEmail());
         pdv.setPassword(passwordEncoder.encode(request.getAdminPassword()));
         pdv.setActif(true);
         pdv.setDateCreation(LocalDateTime.now());
@@ -98,7 +103,7 @@ public class EntrepriseManagementService {
         profile.setTelephone(request.getTelephone());
         profile.setEmail(request.getEmail());
         profile.setSiteWeb(request.getSiteWeb());
-        profile.setDevise(request.getDevise() != null && !request.getDevise().isBlank() ? request.getDevise() : "DZD");
+        profile.setDevise(request.getDevise() != null && !request.getDevise().isBlank() ? request.getDevise() : "MAD");
         profile.setRegistreCommerce(request.getRegistreCommerce());
         profile.setNumeroIdentificationFiscale(request.getNumeroIdentificationFiscale());
         profile.setNumeroIdentificationStatistique(request.getNumeroIdentificationStatistique());
@@ -112,7 +117,8 @@ public class EntrepriseManagementService {
         Depot defaultDepot = new Depot();
         defaultDepot.setNom("Dépôt Principal");
         defaultDepot.setDescription("Dépôt principal par défaut de " + request.getNomEntreprise());
-        defaultDepot.setAdresse(request.getAdresse() != null && !request.getAdresse().isBlank() ? request.getAdresse() : "Siège principal");
+        defaultDepot.setAdresse(request.getAdresse() != null && !request.getAdresse().isBlank() ? request.getAdresse()
+                : "Siège principal");
         defaultDepot.setPointDeVenteId(tenantPointDeVenteId);
         defaultDepot.setActif(true);
         defaultDepot.setDateCreation(LocalDateTime.now());
@@ -209,7 +215,8 @@ public class EntrepriseManagementService {
         profile.setTelephone(request.getTelephone());
         profile.setEmail(request.getEmail());
         profile.setSiteWeb(request.getSiteWeb());
-        if (request.getDevise() != null) profile.setDevise(request.getDevise());
+        if (request.getDevise() != null)
+            profile.setDevise(request.getDevise());
         profile.setRegistreCommerce(request.getRegistreCommerce());
         profile.setNumeroIdentificationFiscale(request.getNumeroIdentificationFiscale());
         profile.setNumeroIdentificationStatistique(request.getNumeroIdentificationStatistique());

@@ -94,14 +94,14 @@ CREATE TABLE IF NOT EXISTS entreprise_profiles (
     article_imposition VARCHAR(100),
     compte_bancaire_rib VARCHAR(100),
     nom_banque VARCHAR(100),
-    devise VARCHAR(10) DEFAULT 'DZD',
+    devise VARCHAR(10) DEFAULT 'MAD',
     point_de_vente_id BIGINT UNIQUE NOT NULL,
     date_mise_a_jour TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO entreprise_profiles (id, nom_entreprise, activite, adresse, ville, telephone, email, registre_commerce, numero_identification_fiscale, numero_identification_statistique, article_imposition, compte_bancaire_rib, nom_banque, devise, point_de_vente_id, date_mise_a_jour) VALUES
-(1, 'SARL ADIL CÉRAMIQUE & NÉGOCE', 'Importation et distribution céramique, faïence et sanitaire', 'Zone Industrielle Oued Smar Hangar 4', 'Alger', '023 85 10 20', 'contact@adil-ceramique.dz', '16/00-0987654B19', '001916012345678', '19850101002233', '1622334455', '00200015015220003344', 'BNA Banque', 'DZD', 1, NOW()),
-(2, 'SARL MAROUANE FILTRATION & AUTO', 'Distribution pièces automobiles, filtration et freinage', 'Boulevard des Martyrs, Es Senia', 'Oran', '041 55 40 30', 'contact@marouane-auto.dz', '31/00-1122334A21', '002231098765432', '20010202004455', '3155667788', '00400031031440008899', 'BEA Banque', 'DZD', 2, NOW())
+(1, 'SARL ADIL CÉRAMIQUE & NÉGOCE', 'Importation et distribution céramique, faïence et sanitaire', 'Zone Industrielle Oued Smar Hangar 4', 'Alger', '023 85 10 20', 'contact@adil-ceramique.dz', '16/00-0987654B19', '001916012345678', '19850101002233', '1622334455', '00200015015220003344', 'BNA Banque', 'MAD', 1, NOW()),
+(2, 'SARL MAROUANE FILTRATION & AUTO', 'Distribution pièces automobiles, filtration et freinage', 'Boulevard des Martyrs, Es Senia', 'Oran', '041 55 40 30', 'contact@marouane-auto.dz', '31/00-1122334A21', '002231098765432', '20010202004455', '3155667788', '00400031031440008899', 'BEA Banque', 'MAD', 2, NOW())
 ON CONFLICT (id) DO UPDATE SET
     nom_entreprise = EXCLUDED.nom_entreprise,
     adresse = EXCLUDED.adresse,
@@ -289,12 +289,12 @@ ON CONFLICT (id) DO UPDATE SET
 -- ==============================================================================
 INSERT INTO comptes_financiers (id, code, nom, type, solde_actuel, devise, numero_compte_rib, nom_banque, actif, point_de_vente_id, date_creation) VALUES
 -- Comptes Adil (1)
-(1, 'CAISSE-ADIL', 'Caisse Principale Adil Oued Smar', 'CAISSE_PHYSIQUE', 95000.00, 'DZD', NULL, NULL, true, 1, NOW()),
-(2, 'BNA-ADIL', 'Compte BNA Banque Adil Alger', 'COMPTE_BANCAIRE', 2850000.00, 'DZD', '00200015015220003344', 'BNA', true, 1, NOW()),
+(1, 'CAISSE-ADIL', 'Caisse Principale Adil Oued Smar', 'CAISSE_PHYSIQUE', 95000.00, 'MAD', NULL, NULL, true, 1, NOW()),
+(2, 'BNA-ADIL', 'Compte BNA Banque Adil Alger', 'COMPTE_BANCAIRE', 2850000.00, 'MAD', '00200015015220003344', 'BNA', true, 1, NOW()),
 
 -- Comptes Marouane (2)
-(3, 'CAISSE-MAR', 'Caisse Magasin Marouane Oran', 'CAISSE_PHYSIQUE', 145000.00, 'DZD', NULL, NULL, true, 2, NOW()),
-(4, 'BEA-MAR', 'Compte BEA Banque Marouane Oran', 'COMPTE_BANCAIRE', 4200000.00, 'DZD', '00400031031440008899', 'BEA', true, 2, NOW())
+(3, 'CAISSE-MAR', 'Caisse Magasin Marouane Oran', 'CAISSE_PHYSIQUE', 145000.00, 'MAD', NULL, NULL, true, 2, NOW()),
+(4, 'BEA-MAR', 'Compte BEA Banque Marouane Oran', 'COMPTE_BANCAIRE', 4200000.00, 'MAD', '00400031031440008899', 'BEA', true, 2, NOW())
 ON CONFLICT (id) DO UPDATE SET
     nom = EXCLUDED.nom,
     solde_actuel = EXCLUDED.solde_actuel,

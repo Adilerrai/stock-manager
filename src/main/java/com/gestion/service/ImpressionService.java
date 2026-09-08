@@ -35,7 +35,8 @@ public class ImpressionService {
     private static final int MIN_LIGNES_PAR_DEFAUT = 8;
 
     private void completerLignesVides(List<Map<String, Object>> lignes, int minLignes) {
-        if (lignes == null) return;
+        if (lignes == null)
+            return;
         int act = lignes.size();
         for (int i = act; i < minLignes; i++) {
             Map<String, Object> emptyRow = new HashMap<>();
@@ -72,16 +73,16 @@ public class ImpressionService {
     private final TresorerieService tresorerieService;
 
     public ImpressionService(EntrepriseProfileService entrepriseProfileService,
-                             FactureRepository factureRepository,
-                             BonLivraisonClientRepository bonLivraisonClientRepository,
-                             DevisRepository devisRepository,
-                             CommandeClientRepository commandeClientRepository,
-                             CommandeRepository commandeRepository,
-                             AvoirRepository avoirRepository,
-                             VenteRepository venteRepository,
-                             BordereauRemiseRepository bordereauRemiseRepository,
-                             ChequeEffetRepository chequeEffetRepository,
-                             @org.springframework.context.annotation.Lazy TresorerieService tresorerieService) {
+            FactureRepository factureRepository,
+            BonLivraisonClientRepository bonLivraisonClientRepository,
+            DevisRepository devisRepository,
+            CommandeClientRepository commandeClientRepository,
+            CommandeRepository commandeRepository,
+            AvoirRepository avoirRepository,
+            VenteRepository venteRepository,
+            BordereauRemiseRepository bordereauRemiseRepository,
+            ChequeEffetRepository chequeEffetRepository,
+            @org.springframework.context.annotation.Lazy TresorerieService tresorerieService) {
         this.entrepriseProfileService = entrepriseProfileService;
         this.factureRepository = factureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -104,11 +105,16 @@ public class ImpressionService {
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroFacture", facture.getNumeroFacture());
-        params.put("dateFacture", facture.getDateFacture() != null ? facture.getDateFacture().format(DATE_FORMATTER) : "-");
-        params.put("dateEcheance", facture.getDateEcheance() != null ? facture.getDateEcheance().format(DATE_FORMATTER) : "À réception");
+        params.put("dateFacture",
+                facture.getDateFacture() != null ? facture.getDateFacture().format(DATE_FORMATTER) : "-");
+        params.put("dateEcheance",
+                facture.getDateEcheance() != null ? facture.getDateEcheance().format(DATE_FORMATTER) : "À réception");
         params.put("statutFacture", facture.getStatut() != null ? facture.getStatut().toString() : "EN_ATTENTE");
-        params.put("emiseParNom", facture.getEmisePar() != null ? 
-                (facture.getEmisePar().getNomComplet() != null ? facture.getEmisePar().getNomComplet() : facture.getEmisePar().getUsername()) : "Direction");
+        params.put("emiseParNom",
+                facture.getEmisePar() != null
+                        ? (facture.getEmisePar().getNomComplet() != null ? facture.getEmisePar().getNomComplet()
+                                : facture.getEmisePar().getUsername())
+                        : "Direction");
 
         // Numéros des BLs associés si existants
         if (facture.getBonsLivraison() != null && !facture.getBonsLivraison().isEmpty()) {
@@ -127,7 +133,8 @@ public class ImpressionService {
             Client c = facture.getClient();
             params.put("clientNom", c.getNomComplet());
             params.put("clientTelephone", c.getTelephone());
-            params.put("clientAdresse", c.getAdresse() != null ? c.getAdresse() + " " + (c.getVille() != null ? c.getVille() : "") : "");
+            params.put("clientAdresse",
+                    c.getAdresse() != null ? c.getAdresse() + " " + (c.getVille() != null ? c.getVille() : "") : "");
             params.put("clientNif", c.getNumeroIdentificationFiscale());
             params.put("clientRc", c.getNumeroRegistreCommerce());
         }
@@ -171,7 +178,8 @@ public class ImpressionService {
         params.put("numeroBl", bl.getNumeroBl());
         params.put("dateBl", bl.getDateBl() != null ? bl.getDateBl().format(DATETIME_FORMATTER) : "-");
         params.put("statut", bl.getStatut() != null ? bl.getStatut().toString() : "LIVRÉ");
-        params.put("commandeReference", bl.getCommandeClient() != null ? bl.getCommandeClient().getNumeroCommande() : "-");
+        params.put("commandeReference",
+                bl.getCommandeClient() != null ? bl.getCommandeClient().getNumeroCommande() : "-");
         params.put("notes", bl.getObservations());
         params.put("montantTotal", bl.getMontantTotal());
 
@@ -179,7 +187,8 @@ public class ImpressionService {
             Client c = bl.getClient();
             params.put("clientNom", c.getNomComplet());
             params.put("clientTelephone", c.getTelephone());
-            params.put("clientAdresse", c.getAdresse() != null ? c.getAdresse() + " " + (c.getVille() != null ? c.getVille() : "") : "");
+            params.put("clientAdresse",
+                    c.getAdresse() != null ? c.getAdresse() + " " + (c.getVille() != null ? c.getVille() : "") : "");
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();
@@ -191,7 +200,8 @@ public class ImpressionService {
                 map.put("produitDesignation", lbl.getProduit() != null ? lbl.getProduit().getDesignation() : "Article");
                 String depotNom = lbl.getDepot() != null ? lbl.getDepot().getNom() : "-";
                 map.put("depotNom", depotNom);
-                if (lbl.getDepot() != null) premierDepot = lbl.getDepot().getNom();
+                if (lbl.getDepot() != null)
+                    premierDepot = lbl.getDepot().getNom();
                 map.put("quantiteLivree", lbl.getQuantiteLivree() != null ? lbl.getQuantiteLivree() : BigDecimal.ZERO);
                 map.put("prixVente", lbl.getPrixVente() != null ? lbl.getPrixVente() : BigDecimal.ZERO);
                 lignes.add(map);
@@ -212,7 +222,8 @@ public class ImpressionService {
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroDevis", devis.getNumeroDevis());
         params.put("dateDevis", devis.getDateDevis() != null ? devis.getDateDevis().format(DATE_FORMATTER) : "-");
-        params.put("dateValidite", devis.getDateValidite() != null ? devis.getDateValidite().format(DATE_FORMATTER) : "30 jours");
+        params.put("dateValidite",
+                devis.getDateValidite() != null ? devis.getDateValidite().format(DATE_FORMATTER) : "30 jours");
         params.put("notes", devis.getNotes());
         params.put("montantHT", devis.getMontantHT());
         params.put("montantTVA", devis.getMontantTVA());
@@ -251,13 +262,18 @@ public class ImpressionService {
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroCommande", commande.getNumeroCommande());
-        params.put("dateCommande", commande.getDateCommande() != null ? commande.getDateCommande().format(DATETIME_FORMATTER) : "-");
-        params.put("dateLivraisonPrevue", commande.getDateLivraisonPrevue() != null ? commande.getDateLivraisonPrevue().format(DATE_FORMATTER) : "À convenir");
+        params.put("dateCommande",
+                commande.getDateCommande() != null ? commande.getDateCommande().format(DATETIME_FORMATTER) : "-");
+        params.put("dateLivraisonPrevue",
+                commande.getDateLivraisonPrevue() != null ? commande.getDateLivraisonPrevue().format(DATE_FORMATTER)
+                        : "À convenir");
         params.put("statut", commande.getStatut() != null ? commande.getStatut().toString() : "ENREGISTRÉE");
         params.put("notes", commande.getObservations());
-        params.put("montantTotal", commande.getMontantTTC() != null ? commande.getMontantTTC() : commande.getMontantHT());
+        params.put("montantTotal",
+                commande.getMontantTTC() != null ? commande.getMontantTTC() : commande.getMontantHT());
         params.put("acompteVerse", BigDecimal.ZERO);
-        params.put("soldeRestant", commande.getMontantTTC() != null ? commande.getMontantTTC() : commande.getMontantHT());
+        params.put("soldeRestant",
+                commande.getMontantTTC() != null ? commande.getMontantTTC() : commande.getMontantHT());
 
         if (commande.getClient() != null) {
             Client c = commande.getClient();
@@ -291,8 +307,11 @@ public class ImpressionService {
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroCommande", commande.getNumeroCommande());
-        params.put("dateCommande", commande.getDateCommande() != null ? commande.getDateCommande().format(DATETIME_FORMATTER) : "-");
-        params.put("dateLivraisonPrevue", commande.getDateLivraisonPrevue() != null ? commande.getDateLivraisonPrevue().format(DATE_FORMATTER) : "À convenir");
+        params.put("dateCommande",
+                commande.getDateCommande() != null ? commande.getDateCommande().format(DATETIME_FORMATTER) : "-");
+        params.put("dateLivraisonPrevue",
+                commande.getDateLivraisonPrevue() != null ? commande.getDateLivraisonPrevue().format(DATE_FORMATTER)
+                        : "À convenir");
         params.put("statut", commande.getStatut() != null ? commande.getStatut().toString() : "TRANSMISE");
         params.put("observations", commande.getObservations());
         params.put("montantTotal", commande.getMontantTotal());
@@ -310,7 +329,8 @@ public class ImpressionService {
                 Map<String, Object> map = new HashMap<>();
                 map.put("reference", lc.getProduit() != null ? lc.getProduit().getReference() : "");
                 map.put("designation", lc.getProduit() != null ? lc.getProduit().getDesignation() : "Article");
-                map.put("quantite", lc.getQuantiteCommandee() != null ? BigDecimal.valueOf(lc.getQuantiteCommandee()) : BigDecimal.ZERO);
+                map.put("quantite", lc.getQuantiteCommandee() != null ? BigDecimal.valueOf(lc.getQuantiteCommandee())
+                        : BigDecimal.ZERO);
                 map.put("prixUnitaire", lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO);
                 map.put("montantTotal", lc.getMontantLigne() != null ? lc.getMontantLigne() : BigDecimal.ZERO);
                 lignes.add(map);
@@ -330,7 +350,8 @@ public class ImpressionService {
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroAvoir", avoir.getNumeroAvoir());
         params.put("dateAvoir", avoir.getDateAvoir() != null ? avoir.getDateAvoir().format(DATE_FORMATTER) : "-");
-        params.put("factureOrigineNumero", avoir.getNumeroFactureOrigine() != null ? avoir.getNumeroFactureOrigine() : "-");
+        params.put("factureOrigineNumero",
+                avoir.getNumeroFactureOrigine() != null ? avoir.getNumeroFactureOrigine() : "-");
         params.put("motif", avoir.getMotif() != null ? avoir.getMotif() : "Retour marchandise");
         params.put("montantHT", avoir.getMontantHT());
         params.put("montantTVA", avoir.getMontantTVA());
@@ -369,8 +390,11 @@ public class ImpressionService {
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroTicket", vente.getNumeroTicket());
         params.put("dateVente", vente.getDateVente() != null ? vente.getDateVente().format(DATETIME_FORMATTER) : "-");
-        params.put("vendeurNom", vente.getVendeur() != null ? 
-                (vente.getVendeur().getNomComplet() != null ? vente.getVendeur().getNomComplet() : vente.getVendeur().getUsername()) : "Caisse");
+        params.put("vendeurNom",
+                vente.getVendeur() != null
+                        ? (vente.getVendeur().getNomComplet() != null ? vente.getVendeur().getNomComplet()
+                                : vente.getVendeur().getUsername())
+                        : "Caisse");
         params.put("clientNom", vente.getClient() != null ? vente.getClient().getNomComplet() : "Client Passage");
 
         params.put("totalHT", vente.getMontantHT());
@@ -412,7 +436,8 @@ public class ImpressionService {
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroBordereau", bordereau.getNumeroBordereau() != null ? bordereau.getNumeroBordereau() : "-");
-        params.put("dateRemise", bordereau.getDateRemise() != null ? bordereau.getDateRemise().format(DATE_FORMATTER) : java.time.LocalDate.now().format(DATE_FORMATTER));
+        params.put("dateRemise", bordereau.getDateRemise() != null ? bordereau.getDateRemise().format(DATE_FORMATTER)
+                : java.time.LocalDate.now().format(DATE_FORMATTER));
         params.put("nomBanqueDepot", bordereau.getNomBanque() != null ? bordereau.getNomBanque() : "-");
         params.put("compteBancaire", bordereau.getCompteBancaire() != null ? bordereau.getCompteBancaire() : "-");
         params.put("nombreCheques", bordereau.getNombreValeurs() != null ? bordereau.getNombreValeurs() : 0);
@@ -437,7 +462,8 @@ public class ImpressionService {
     // 9. Impression Relevé de Compte Client
     // ==========================================
     public byte[] genererReleveClientPdf(Long clientId, java.time.LocalDate dateDebut, java.time.LocalDate dateFin) {
-        com.gestion.persistent.dto.ReleveClientDTO releve = tresorerieService.genererReleveClient(clientId, dateDebut, dateFin);
+        com.gestion.persistent.dto.ReleveClientDTO releve = tresorerieService.genererReleveClient(clientId, dateDebut,
+                dateFin);
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("clientNom", releve.getClientNom() != null ? releve.getClientNom() : "Client");
@@ -480,20 +506,24 @@ public class ImpressionService {
         Map<String, Object> params = new HashMap<>();
         EntrepriseProfile profile = entrepriseProfileService.getProfileEntityByCurrentTenant();
 
-        params.put("nomEntreprise", profile.getNomEntreprise() != null ? profile.getNomEntreprise() : "ENTREPRISE SAAS");
+        params.put("nomEntreprise",
+                profile.getNomEntreprise() != null ? profile.getNomEntreprise() : "ENTREPRISE SAAS");
         params.put("activiteEntreprise", profile.getActivite() != null ? profile.getActivite() : "");
-        params.put("adresseEntreprise", (profile.getAdresse() != null ? profile.getAdresse() : "") + 
+        params.put("adresseEntreprise", (profile.getAdresse() != null ? profile.getAdresse() : "") +
                 (profile.getVille() != null ? " - " + profile.getVille() : ""));
         params.put("telephoneEntreprise", profile.getTelephone() != null ? profile.getTelephone() : "-");
         params.put("emailEntreprise", profile.getEmail() != null ? profile.getEmail() : "");
         params.put("rcEntreprise", profile.getRegistreCommerce() != null ? profile.getRegistreCommerce() : "-");
-        params.put("nifEntreprise", profile.getNumeroIdentificationFiscale() != null ? profile.getNumeroIdentificationFiscale() : "-");
-        params.put("nisEntreprise", profile.getNumeroIdentificationStatistique() != null ? profile.getNumeroIdentificationStatistique() : "-");
+        params.put("nifEntreprise",
+                profile.getNumeroIdentificationFiscale() != null ? profile.getNumeroIdentificationFiscale() : "-");
+        params.put("nisEntreprise",
+                profile.getNumeroIdentificationStatistique() != null ? profile.getNumeroIdentificationStatistique()
+                        : "-");
         params.put("aiEntreprise", profile.getArticleImposition() != null ? profile.getArticleImposition() : "-");
         params.put("ribEntreprise", profile.getCompteBancaireRib() != null ? profile.getCompteBancaireRib() : "-");
         params.put("banqueEntreprise", profile.getNomBanque() != null ? profile.getNomBanque() : "-");
         params.put("piedPage", profile.getPiedPage() != null ? profile.getPiedPage() : "");
-        params.put("devise", profile.getDevise() != null ? profile.getDevise() : "DZD");
+        params.put("devise", profile.getDevise() != null ? profile.getDevise() : "MAD");
 
         // Injection du Logo en java.awt.Image
         if (profile.hasLogo()) {
@@ -501,7 +531,8 @@ public class ImpressionService {
                 Image logo = ImageIO.read(new ByteArrayInputStream(profile.getLogoData()));
                 params.put("logoImage", logo);
             } catch (Exception e) {
-                log.warn("Impossible de lire l'image du logo pour le tenant {}: {}", profile.getPointDeVenteId(), e.getMessage());
+                log.warn("Impossible de lire l'image du logo pour le tenant {}: {}", profile.getPointDeVenteId(),
+                        e.getMessage());
                 params.put("logoImage", null);
             }
         } else {
@@ -514,8 +545,8 @@ public class ImpressionService {
     private byte[] exportToPdf(String reportName, Map<String, Object> params, List<Map<String, Object>> dataList) {
         try {
             JasperReport report = getCompiledReport(reportName);
-            JRDataSource dataSource = (dataList != null && !dataList.isEmpty()) 
-                    ? new JRBeanCollectionDataSource(dataList) 
+            JRDataSource dataSource = (dataList != null && !dataList.isEmpty())
+                    ? new JRBeanCollectionDataSource(dataList)
                     : new JREmptyDataSource();
             JasperPrint jasperPrint = JasperFillManager.fillReport(report, params, dataSource);
             return JasperExportManager.exportReportToPdf(jasperPrint);
@@ -535,7 +566,8 @@ public class ImpressionService {
                 log.info("Compilation du template Jasper: {}", path);
                 return JasperCompileManager.compileReport(is);
             } catch (Exception e) {
-                throw new RuntimeException("Échec de la compilation du rapport Jasper " + path + ": " + e.getMessage(), e);
+                throw new RuntimeException("Échec de la compilation du rapport Jasper " + path + ": " + e.getMessage(),
+                        e);
             }
         });
     }

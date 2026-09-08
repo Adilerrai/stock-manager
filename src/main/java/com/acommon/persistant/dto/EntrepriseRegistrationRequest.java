@@ -19,7 +19,7 @@ public class EntrepriseRegistrationRequest {
     private String telephone;
     private String email;
     private String siteWeb;
-    private String devise = "DZD";
+    private String devise = "MAD";
 
     // Informations légales & fiscales
     private String registreCommerce;
@@ -46,7 +46,8 @@ public class EntrepriseRegistrationRequest {
 
     private String adminTelephone;
 
-    public EntrepriseRegistrationRequest() {}
+    public EntrepriseRegistrationRequest() {
+    }
 
     // Getters and Setters
 
