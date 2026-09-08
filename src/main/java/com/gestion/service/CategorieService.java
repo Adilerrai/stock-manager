@@ -131,6 +131,19 @@ public class CategorieService {
         if (categorie.getActif() == null) {
             categorie.setActif(true);
         }
+
+        // Attacher le parent si parentId ou parent est renseigné
+        Long parentIdToAttach = categorie.getParentId();
+        if (parentIdToAttach == null && categorie.getParent() != null) {
+            parentIdToAttach = categorie.getParent().getId();
+        }
+        if (parentIdToAttach != null && parentIdToAttach > 0) {
+            Categorie parent = getCategorieById(parentIdToAttach);
+            categorie.setParent(parent);
+        } else {
+            categorie.setParent(null);
+        }
+
         categorie.setDateCreation(LocalDateTime.now());
         return categorieRepository.save(categorie);
     }
@@ -154,11 +167,20 @@ public class CategorieService {
         if (updated.getActif() != null) existing.setActif(updated.getActif());
 
         // Modification éventuelle du parent (en évitant la boucle cyclique)
-        if (updated.getParent() != null) {
-            if (!updated.getParent().getId().equals(existing.getId())) {
-                existing.setParent(updated.getParent());
-            }
+        Long newParentId = updated.getParentId();
+        if (newParentId == null && updated.getParent() != null) {
+            newParentId = updated.getParent().getId();
         }
+
+        if (newParentId != null && newParentId > 0) {
+            if (!newParentId.equals(existing.getId())) {
+                Categorie parent = getCategorieById(newParentId);
+                existing.setParent(parent);
+            }
+        } else if (newParentId != null && newParentId == 0) {
+            existing.setParent(null);
+        }
+
         return categorieRepository.save(existing);
     }
 
