@@ -6,6 +6,9 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
 @Repository
 public interface CategorieRepository extends JpaRepository<Categorie, Long> {
 
@@ -20,7 +23,9 @@ public interface CategorieRepository extends JpaRepository<Categorie, Long> {
 
     List<Categorie> findByParentIsNullAndPointDeVenteIdOrderByNomAsc(Long pointDeVenteId);
 
-    List<Categorie> findByParentIdOrderByNomAsc(Long parentId);
+    @Query("SELECT c FROM Categorie c WHERE c.parent.id = :parentId ORDER BY c.nom ASC")
+    List<Categorie> findByParentIdOrderByNomAsc(@Param("parentId") Long parentId);
 
-    List<Categorie> findByParentIdAndPointDeVenteIdOrderByNomAsc(Long parentId, Long pointDeVenteId);
+    @Query("SELECT c FROM Categorie c WHERE c.parent.id = :parentId AND c.pointDeVenteId = :pointDeVenteId ORDER BY c.nom ASC")
+    List<Categorie> findByParentIdAndPointDeVenteIdOrderByNomAsc(@Param("parentId") Long parentId, @Param("pointDeVenteId") Long pointDeVenteId);
 }
