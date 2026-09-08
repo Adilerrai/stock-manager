@@ -22,10 +22,14 @@ public class CommandeClientDTO {
     private BigDecimal montantTTC;
     private BigDecimal tauxTVA;
     private String observations;
+    private Long pointDeVenteId;
     private List<LigneCommandeClientDTO> lignesCommande;
 
     // Constructors
     public CommandeClientDTO() {}
+
+    public Long getPointDeVenteId() { return pointDeVenteId; }
+    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 
     // Getters and setters
     public Long getId() { return id; }

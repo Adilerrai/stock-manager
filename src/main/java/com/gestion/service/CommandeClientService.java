@@ -42,11 +42,17 @@ public class CommandeClientService {
         this.commandeClientMapper = commandeClientMapper;
     }
 
+    private Long getTenantId() {
+        Long tenant = TenantContext.getCurrentTenant();
+        return tenant != null ? tenant : 1L;
+    }
+
     @Transactional
     public CommandeClient createCommandeClient(CommandeClientDTO commandeDTO) {
 
         CommandeClient commande = new CommandeClient();
         commande.setNumeroCommande(generateNumeroCommandeClient());
+        commande.setPointDeVenteId(getTenantId());
         if (commandeDTO.getClientId() != null) {
             clientRepository.findById(commandeDTO.getClientId()).ifPresent(commande::setClient);
         }
@@ -91,7 +97,8 @@ public class CommandeClientService {
     }
 
     public List<CommandeClient> getAllCommandesClient() {
-        return commandeClientRepository.findAll();
+        Long tenantId = getTenantId();
+        return commandeClientRepository.findByPointDeVenteId(tenantId);
     }
 
     public CommandeClient getCommandeClientById(Long commandeId) {
@@ -106,11 +113,13 @@ public class CommandeClientService {
     }
 
     public List<CommandeClient> getCommandesByStatut(StatutCommandeClient statut) {
-        return commandeClientRepository.findByStatut(statut);
+        Long tenantId = getTenantId();
+        return commandeClientRepository.findByStatutAndPointDeVenteId(statut, tenantId);
     }
 
     private CommandeClient getCommandeClientEntityById(Long commandeId) {
-        return commandeClientRepository.findById(commandeId)
+        Long tenantId = getTenantId();
+        return commandeClientRepository.findByIdAndPointDeVenteId(commandeId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("CommandeClient", "id", commandeId));
     }
 
