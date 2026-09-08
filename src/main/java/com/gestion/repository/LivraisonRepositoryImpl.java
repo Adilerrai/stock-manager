@@ -1,5 +1,6 @@
 package com.gestion.repository;
 
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.LivraisonSearchCriteria;
 import com.gestion.persistent.model.Livraison;
 import com.gestion.persistent.model.Commande;
@@ -27,6 +28,11 @@ public class LivraisonRepositoryImpl implements LivraisonRepositoryCustom {
         Join<Livraison, Commande> commandeJoin = root.join("commande", JoinType.INNER);
         
         List<Predicate> predicates = new ArrayList<>();
+
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
+        }
 
         
         // Numéro de livraison

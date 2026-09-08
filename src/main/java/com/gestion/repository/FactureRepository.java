@@ -18,6 +18,8 @@ public interface FactureRepository extends JpaRepository<Facture, Long>, Facture
 
     Optional<Facture> findByNumeroFacture(String numeroFacture);
 
+    Optional<Facture> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
+
     List<Facture> findByPointDeVenteIdOrderByDateFactureDesc(Long pointDeVenteId);
 
     List<Facture> findByClientIdAndPointDeVenteId(Long clientId, Long pointDeVenteId);

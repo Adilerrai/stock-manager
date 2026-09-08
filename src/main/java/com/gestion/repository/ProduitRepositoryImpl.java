@@ -1,5 +1,6 @@
 package com.gestion.repository;
 
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.ProduitSearchCriteria;
 import com.gestion.persistent.model.Produit;
 import jakarta.persistence.EntityManager;
@@ -52,6 +53,15 @@ public class ProduitRepositoryImpl implements ProduitRepositoryCustom {
     private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Produit> root, 
                                            ProduitSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
+        
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
+        }
+
+        if (criteria == null) {
+            return predicates;
+        }
         
 
         // Nom (utiliser 'description' au lieu de 'designation')

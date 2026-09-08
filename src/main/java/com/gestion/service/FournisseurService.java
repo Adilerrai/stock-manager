@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.persistant.model.TenantContext;
 import com.acommon.exception.ResourceNotFoundException;
 import com.gestion.persistent.dto.FournisseurDTO;
 import com.gestion.persistent.dto.FournisseurSearchCriteria;
@@ -21,10 +22,15 @@ public class FournisseurService {
         this.fournisseurRepository = fournisseurRepository;
     }
 
+    private Long getTenantId() {
+        Long tenant = TenantContext.getCurrentTenant();
+        return tenant != null ? tenant : 1L;
+    }
+
     @Transactional
     public Fournisseur createFournisseur(FournisseurDTO fournisseurDTO) {
-
-        if (fournisseurRepository.existsByRaisonSociale((fournisseurDTO.getRaisonSociale())) ){
+        Long tenantId = getTenantId();
+        if (fournisseurRepository.existsByRaisonSocialeAndPointDeVenteId(fournisseurDTO.getRaisonSociale(), tenantId)) {
             throw new IllegalArgumentException("Un fournisseur avec ce nom existe déjà");
         }
 
@@ -35,16 +41,19 @@ public class FournisseurService {
         fournisseur.setEmail(fournisseurDTO.getEmail());
         fournisseur.setContact(fournisseurDTO.getContact());
         fournisseur.setActif(true);
+        fournisseur.setPointDeVenteId(tenantId);
 
         return fournisseurRepository.save(fournisseur);
     }
 
     public List<Fournisseur> getAllFournisseursActifs() {
-        return fournisseurRepository.findActiveOrderByNom();
+        Long tenantId = getTenantId();
+        return fournisseurRepository.findActiveByPointDeVenteIdOrderByNom(tenantId);
     }
 
     public Fournisseur getFournisseurById(Long fournisseurId) {
-        return fournisseurRepository.findById(fournisseurId)
+        Long tenantId = getTenantId();
+        return fournisseurRepository.findByIdAndPointDeVenteId(fournisseurId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", fournisseurId));
     }
 

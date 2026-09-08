@@ -127,7 +127,8 @@ public class StockService {
     }
 
     public List<Stock> getAllStocksWithQualities() {
-        return stockRepository.findWithQualities();
+        Long tenantId = TenantContext.getCurrentTenant();
+        return stockRepository.findWithQualitiesByPointDeVenteId(tenantId != null ? tenantId : 1L);
     }
 
     public List<StockQualite> getStocksByQualite(QualiteProduit qualite) {
@@ -143,7 +144,8 @@ public class StockService {
 
 
     public List<Stock> getAllStocks() {
-        return stockRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        return stockRepository.findWithQualitiesByPointDeVenteId(tenantId != null ? tenantId : 1L);
     }
 
     private Stock getStockByProduit(Long produitId) {

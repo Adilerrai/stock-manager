@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ProduitService {
@@ -53,36 +54,28 @@ public class ProduitService {
 
     @Transactional(readOnly = true)
     public List<Produit> getAllProduits() {
-
-        List<Produit> produits = produitRepository.findWithImages();
-        
-        // Debug: vérifier les données d'image
-        for (Produit produit : produits) {
-            if (produit.getImage() != null) {
-                System.out.println("Produit " + produit.getId() + " - Image ID: " + produit.getImage().getId());
-                System.out.println("  - Image data length: " + (produit.getImage().getImageData() != null ? produit.getImage().getImageData().length : "NULL"));
-                System.out.println("  - Content type: " + produit.getImage().getContentType());
-            }
-        }
-        
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Produit> produits = produitRepository.findWithImagesByPointDeVenteId(tenantId != null ? tenantId : 1L);
         return produits;
     }
 
-     public List<Produit> getAllProduitsWithoutImages() {
-
-
-        return produitRepository.findAll();
+    public List<Produit> getAllProduitsWithoutImages() {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenant = tenantId != null ? tenantId : 1L;
+        return produitRepository.findAll().stream()
+                .filter(p -> p.getPointDeVenteId() != null && p.getPointDeVenteId().equals(effectiveTenant))
+                .collect(Collectors.toList());
     }
 
-     public Produit getProduitById(Long produitId) {
-
-        return produitRepository.findById(produitId )
+    public Produit getProduitById(Long produitId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        return produitRepository.findByIdAndPointDeVenteId(produitId, tenantId != null ? tenantId : 1L)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
     }
 
     public Produit getProduitWithImageById(Long produitId) {
-
-        return produitRepository.findById(produitId)
+        Long tenantId = TenantContext.getCurrentTenant();
+        return produitRepository.findByIdAndPointDeVenteId(produitId, tenantId != null ? tenantId : 1L)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
     }
 

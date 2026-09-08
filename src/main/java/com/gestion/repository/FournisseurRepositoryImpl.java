@@ -1,5 +1,6 @@
 package com.gestion.repository;
 
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.FournisseurSearchCriteria;
 import com.gestion.persistent.model.Fournisseur;
 import jakarta.persistence.EntityManager;
@@ -26,6 +27,11 @@ public class FournisseurRepositoryImpl implements FournisseurRepositoryCustom {
         Root<Fournisseur> root = query.from(Fournisseur.class);
 
         List<Predicate> predicates = new ArrayList<>();
+
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
+        }
 
         // Point de vente obligatoire - géré via l'annotation @MultitenantSearchMethod
         // qui filtre automatiquement par tenant/point de vente

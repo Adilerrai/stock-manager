@@ -1,6 +1,6 @@
 package com.gestion.service;
 
-import com.acommon.annotation.MultitenantSearchMethod;
+import com.acommon.persistant.model.TenantContext;
 import com.acommon.exception.ResourceNotFoundException;
 import com.gestion.persistent.dto.DepotDTO;
 import com.gestion.persistent.model.Depot;
@@ -19,10 +19,15 @@ public class DepotService {
         this.depotRepository = depotRepository;
     }
 
+    private Long getTenantId() {
+        Long tenant = TenantContext.getCurrentTenant();
+        return tenant != null ? tenant : 1L;
+    }
+
     @Transactional
     public Depot createDepot(DepotDTO depotDTO) {
-
-        if (depotRepository.existsByNom(depotDTO.getNom())) {
+        Long tenantId = getTenantId();
+        if (depotRepository.existsByNomAndPointDeVenteId(depotDTO.getNom(), tenantId)) {
             throw new IllegalArgumentException("Un dépôt avec ce nom existe déjà");
         }
 
@@ -31,17 +36,19 @@ public class DepotService {
         depot.setDescription(depotDTO.getDescription());
         depot.setAdresse(depotDTO.getAdresse());
         depot.setActif(true);
+        depot.setPointDeVenteId(tenantId);
 
         return depotRepository.save(depot);
     }
 
     public List<Depot> getAllDepotsActifs() {
-        return depotRepository.findByActifTrue();
+        Long tenantId = getTenantId();
+        return depotRepository.findByPointDeVenteIdAndActifTrue(tenantId);
     }
 
     public Depot getDepotById(Long depotId) {
-
-        return depotRepository.findById(depotId)
+        Long tenantId = getTenantId();
+        return depotRepository.findByIdAndPointDeVenteId(depotId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Depot", "id", depotId));
     }
 

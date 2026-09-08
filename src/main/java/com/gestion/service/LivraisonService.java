@@ -72,6 +72,8 @@ public class LivraisonService {
         livraison.setStatut(StatutLivraison.EN_ATTENTE);
         livraison.setDateLivraison(livraisonDTO.getDateLivraison() != null ? 
                 livraisonDTO.getDateLivraison() : LocalDateTime.now());
+        Long tenantId = TenantContext.getCurrentTenant();
+        livraison.setPointDeVenteId(tenantId != null ? tenantId : 1L);
 
         livraison = livraisonRepository.save(livraison);
 
@@ -194,7 +196,7 @@ public class LivraisonService {
     public Livraison getLivraisonById(Long livraisonId) {
         Long tenantId = TenantContext.getCurrentTenant();
         
-        return livraisonRepository.findById(livraisonId)
+        return livraisonRepository.findByIdAndPointDeVenteId(livraisonId, tenantId != null ? tenantId : 1L)
                 .orElseThrow(() -> new ResourceNotFoundException("Livraison", "id", livraisonId));
     }
 
@@ -211,8 +213,8 @@ public class LivraisonService {
     }
 
     public List<Livraison> getLivraisonsByStatut(StatutLivraison statut) {
-        
-        return livraisonRepository.findByStatut(statut);
+        Long tenantId = TenantContext.getCurrentTenant();
+        return livraisonRepository.findByStatutAndPointDeVenteId(statut, tenantId != null ? tenantId : 1L);
     }
 
     public Livraison getLivraisonWithDetails(Long livraisonId) {
@@ -226,8 +228,8 @@ public class LivraisonService {
     }
 
     public List<Livraison> getAllLivraisons() {
-
-        return livraisonRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        return livraisonRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
     }
 
     @Transactional
@@ -410,6 +412,8 @@ public class LivraisonService {
         livraison.setStatut(StatutLivraison.EN_ATTENTE);
         livraison.setDateLivraison(LocalDateTime.now());
         livraison.setObservations("Généré depuis la commande " + commande.getNumeroCommande());
+        Long tenantId = TenantContext.getCurrentTenant();
+        livraison.setPointDeVenteId(tenantId != null ? tenantId : (commande.getPointDeVenteId() != null ? commande.getPointDeVenteId() : 1L));
         
         // Enregistrer la livraison d'abord pour avoir son ID
         livraison = livraisonRepository.save(livraison);

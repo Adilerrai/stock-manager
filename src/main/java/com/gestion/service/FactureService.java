@@ -153,6 +153,7 @@ public class FactureService {
         if (facture.getNotes() == null || facture.getNotes().isBlank()) {
             facture.setNotes("Facturation des BLs: " + String.join(", ", blNumeros));
         }
+        facture.setPointDeVenteId(tenantId);
 
         // Sauvegarder la facture
         Facture savedFacture = factureRepository.save(facture);
@@ -192,31 +193,36 @@ public class FactureService {
     }
 
     public List<FactureDTO> getAllFactures() {
-        return factureRepository.findAll().stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureRepository.findByPointDeVenteIdOrderByDateFactureDesc(tenantId != null ? tenantId : 1L).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public FactureDTO getFactureById(Long id) {
-        Facture facture = factureRepository.findById(id)
+        Long tenantId = TenantContext.getCurrentTenant();
+        Facture facture = factureRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
                 .orElseThrow(() -> new RuntimeException("Facture non trouvée avec l'id: " + id));
         return factureMapper.toDto(facture);
     }
 
     public List<FactureDTO> getFacturesByClient(Long clientId) {
-        return factureRepository.findByClientId(clientId).stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureRepository.findByClientIdAndPointDeVenteId(clientId, tenantId != null ? tenantId : 1L).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public List<FactureDTO> getFacturesImpayees() {
-        return factureRepository.findFacturesImpayees().stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureRepository.findFacturesImpayeesByPointDeVenteId(tenantId != null ? tenantId : 1L).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public List<FactureDTO> getFacturesEchues() {
-        return factureRepository.findFacturesEchues(LocalDate.now()).stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureRepository.findFacturesEchuesByPointDeVenteId(LocalDate.now(), tenantId != null ? tenantId : 1L).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -290,6 +296,8 @@ public class FactureService {
 
         facture.setDateCreation(LocalDateTime.now());
         facture.setStatut(StatutFacture.EN_ATTENTE);
+        Long tenantId = TenantContext.getCurrentTenant();
+        facture.setPointDeVenteId(tenantId != null ? tenantId : 1L);
         facture.calculerMontants();
 
         return factureMapper.toDto(factureRepository.save(facture));

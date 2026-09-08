@@ -19,6 +19,12 @@ public interface ProduitRepository extends JpaRepository<Produit, Long>, Produit
     @Transactional(readOnly = true)
     List<Produit> findWithImages();
 
+    @Query("SELECT p FROM Produit p LEFT JOIN FETCH p.image WHERE p.pointDeVenteId = :pointDeVenteId")
+    @Transactional(readOnly = true)
+    List<Produit> findWithImagesByPointDeVenteId(@Param("pointDeVenteId") Long pointDeVenteId);
+
+    Optional<Produit> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
+
     List<Produit> findByCategorieId(Long categorieId);
 
     List<Produit> findByCategorieIdIn(List<Long> categorieIds);

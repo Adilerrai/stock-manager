@@ -17,6 +17,9 @@ public interface StockRepository extends JpaRepository<Stock, Long> {
     @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.stocksQualite ")
     List<Stock> findWithQualities();
 
+    @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.stocksQualite WHERE s.produit.pointDeVenteId = :pointDeVenteId")
+    List<Stock> findWithQualitiesByPointDeVenteId(@Param("pointDeVenteId") Long pointDeVenteId);
+
     @Query("SELECT s FROM Stock s LEFT JOIN FETCH s.stocksQualite WHERE s.produit.id = :produitId")
     Optional<Stock> findByProduitWithQualities(@Param("produitId") Long produitId);
 
