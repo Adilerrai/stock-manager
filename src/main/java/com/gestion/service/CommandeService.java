@@ -49,6 +49,11 @@ public class CommandeService {
         this.produitRepository = produitRepository;
     }
 
+    private Long getTenantId() {
+        Long tenant = TenantContext.getCurrentTenant();
+        return tenant != null ? tenant : 1L;
+    }
+
     @Transactional
     public Commande createCommande(CommandeDTO commandeDTO) {
 
@@ -62,6 +67,7 @@ public class CommandeService {
         commande.setStatut(StatutCommande.BROUILLON);
         commande.setDateLivraisonPrevue(commandeDTO.getDateLivraisonPrevue());
         commande.setObservations(commandeDTO.getObservations());
+        commande.setPointDeVenteId(getTenantId());
 
         commande = commandeRepository.save(commande);
 
@@ -92,20 +98,24 @@ public class CommandeService {
     }
 
     public List<Commande> getAllCommandes() {
-        return commandeRepository.findAll();
+        Long tenantId = getTenantId();
+        return commandeRepository.findByPointDeVenteId(tenantId);
     }
 
     public Commande getCommandeById(Long commandeId) {
-        return commandeRepository.findById(commandeId)
+        Long tenantId = getTenantId();
+        return commandeRepository.findByIdAndPointDeVenteId(commandeId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commande", "id", commandeId));
     }
 
     public List<Commande> getCommandesByStatut(StatutCommande statut) {
-        return commandeRepository.findByStatut(statut);
+        Long tenantId = getTenantId();
+        return commandeRepository.findByStatutAndPointDeVenteId(statut, tenantId);
     }
 
     public List<Commande> getCommandesByFournisseur(Long fournisseurId) {
-        return commandeRepository.findByFournisseurId(fournisseurId);
+        Long tenantId = getTenantId();
+        return commandeRepository.findByFournisseurIdAndPointDeVenteId(fournisseurId, tenantId);
     }
 
     @Transactional
@@ -139,8 +149,6 @@ public class CommandeService {
     }
 
     public List<Commande> searchCommandes(CommandeSearchCriteria criteria) {
-        Long tenantId = TenantContext.getCurrentTenant();
-
         return commandeRepository.findByCriteria(criteria);
     }
 
