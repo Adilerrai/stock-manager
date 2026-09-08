@@ -71,6 +71,9 @@ public class EntrepriseProfile {
     @Column(name = "devise")
     private String devise = "MAD";
 
+    @Column(name = "vente_stock_negatif")
+    private Boolean venteStockNegatif = false;
+
     @Column(name = "date_mise_a_jour")
     private LocalDateTime dateMiseAJour = LocalDateTime.now();
 
@@ -251,6 +254,14 @@ public class EntrepriseProfile {
 
     public void setDevise(String devise) {
         this.devise = devise;
+    }
+
+    public Boolean getVenteStockNegatif() {
+        return venteStockNegatif != null && venteStockNegatif;
+    }
+
+    public void setVenteStockNegatif(Boolean venteStockNegatif) {
+        this.venteStockNegatif = venteStockNegatif;
     }
 
     public LocalDateTime getDateMiseAJour() {

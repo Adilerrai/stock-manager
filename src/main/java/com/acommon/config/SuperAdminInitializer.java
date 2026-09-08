@@ -57,6 +57,7 @@ public class SuperAdminInitializer implements CommandLineRunner {
             jdbcTemplate.execute("ALTER TABLE commandes_client ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;");
             jdbcTemplate.execute("ALTER TABLE mouvements_stock ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT;");
             jdbcTemplate.execute("ALTER TABLE livraisons ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;");
+            jdbcTemplate.execute("ALTER TABLE entreprise_profiles ADD COLUMN IF NOT EXISTS vente_stock_negatif BOOLEAN DEFAULT FALSE;");
             log.info("🛡️ Colonnes multi-tenant vérifiées/créées en base avec succès.");
         } catch (Exception e) {
             log.warn("Vérification colonnes multi-tenant : {}", e.getMessage());

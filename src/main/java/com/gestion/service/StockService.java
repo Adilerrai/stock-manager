@@ -23,11 +23,16 @@ public class StockService {
     private final StockRepository stockRepository;
     private final StockQualiteRepository stockQualiteRepository;
     private final ProduitRepository produitRepository;
+    private final EntrepriseProfileService entrepriseProfileService;
 
-    public StockService(StockRepository stockRepository, StockQualiteRepository stockQualiteRepository, ProduitRepository produitRepository) {
+    public StockService(StockRepository stockRepository,
+                        StockQualiteRepository stockQualiteRepository,
+                        ProduitRepository produitRepository,
+                        EntrepriseProfileService entrepriseProfileService) {
         this.stockRepository = stockRepository;
         this.stockQualiteRepository = stockQualiteRepository;
         this.produitRepository = produitRepository;
+        this.entrepriseProfileService = entrepriseProfileService;
     }
 
     @Transactional
@@ -91,38 +96,87 @@ public class StockService {
 
     @Transactional
     public Stock retirerStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite) {
+        boolean allowNegative = entrepriseProfileService.isVenteStockNegatifAutorisee();
 
-        Stock stock = getStockByProduit(produitId);
+        Stock stock = stockRepository.findByProduitId(produitId).orElse(null);
+        if (stock == null) {
+            if (!allowNegative) {
+                throw new ResourceNotFoundException("Stock", "produitId", produitId);
+            }
+            Produit produit = produitRepository.findById(produitId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
+            stock = new Stock();
+            stock.setProduit(produit);
+        }
 
         StockQualite stockQualite = stock.getStockByQualite(qualite);
         if (stockQualite == null) {
-            throw new IllegalArgumentException("Stock qualité non trouvé");
+            if (!allowNegative) {
+                throw new IllegalArgumentException("Stock qualité non trouvé");
+            }
+            stockQualite = new StockQualite();
+            stockQualite.setStock(stock);
+            stockQualite.setProduit(stock.getProduit());
+            stockQualite.setQualite(qualite);
+            stockQualite.setQuantiteDisponible(BigDecimal.ZERO.subtract(quantite));
+            stock.ajouterStockQualite(stockQualite);
+        } else {
+            if (!allowNegative && stockQualite.getQuantiteDisponible().compareTo(quantite) < 0) {
+                throw new IllegalArgumentException("Stock insuffisant pour la qualité " + qualite);
+            }
+            stockQualite.setQuantiteDisponible(stockQualite.getQuantiteDisponible().subtract(quantite));
         }
-        
-        if (stockQualite.getQuantiteDisponible().compareTo(quantite) < 0) {
-            throw new IllegalArgumentException("Stock insuffisant pour la qualité " + qualite);
-        }
-        
-        stockQualite.setQuantiteDisponible(stockQualite.getQuantiteDisponible().subtract(quantite));
-        
+
         return stockRepository.save(stock);
     }
 
     @Transactional
     public boolean reserverStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite) {
+        boolean allowNegative = entrepriseProfileService.isVenteStockNegatifAutorisee();
 
-        Stock stock = getStockByProduit(produitId);
+        Stock stock = stockRepository.findByProduitId(produitId).orElse(null);
+        if (stock == null) {
+            if (!allowNegative) {
+                return false;
+            }
+            Produit produit = produitRepository.findById(produitId).orElse(null);
+            if (produit == null) {
+                return false;
+            }
+            stock = new Stock();
+            stock.setProduit(produit);
+        }
 
         StockQualite stockQualite = stock.getStockByQualite(qualite);
         if (stockQualite == null) {
-            return false;
+            if (!allowNegative) {
+                return false;
+            }
+            stockQualite = new StockQualite();
+            stockQualite.setStock(stock);
+            stockQualite.setProduit(stock.getProduit());
+            stockQualite.setQualite(qualite);
+            stockQualite.setQuantiteDisponible(BigDecimal.ZERO.subtract(quantite));
+            stockQualite.setQuantiteReservee(quantite);
+            stock.ajouterStockQualite(stockQualite);
+            stockRepository.save(stock);
+            return true;
         }
-        
+
+        if (allowNegative && stockQualite.getQuantiteDisponible().compareTo(quantite) < 0) {
+            stockQualite.setQuantiteDisponible(stockQualite.getQuantiteDisponible().subtract(quantite));
+            stockQualite.setQuantiteReservee(
+                    (stockQualite.getQuantiteReservee() != null ? stockQualite.getQuantiteReservee() : BigDecimal.ZERO).add(quantite)
+            );
+            stockRepository.save(stock);
+            return true;
+        }
+
         boolean success = stockQualite.reserverStock(quantite);
         if (success) {
             stockRepository.save(stock);
         }
-        
+
         return success;
     }
 

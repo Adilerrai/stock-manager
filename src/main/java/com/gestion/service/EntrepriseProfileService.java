@@ -76,10 +76,23 @@ public class EntrepriseProfileService {
         if (dto.getDevise() != null && !dto.getDevise().isBlank()) {
             profile.setDevise(dto.getDevise());
         }
+        if (dto.getVenteStockNegatif() != null) {
+            profile.setVenteStockNegatif(dto.getVenteStockNegatif());
+        }
         profile.setDateMiseAJour(LocalDateTime.now());
 
         EntrepriseProfile saved = entrepriseProfileRepository.save(profile);
         return entrepriseProfileMapper.toDto(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isVenteStockNegatifAutorisee() {
+        try {
+            EntrepriseProfile profile = getProfileEntityByCurrentTenant();
+            return Boolean.TRUE.equals(profile.getVenteStockNegatif());
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @Transactional
@@ -157,6 +170,7 @@ public class EntrepriseProfileService {
         defaultProfile.setPiedPage(
                 "Garantie légale selon réglementation en vigueur. Marchandise livrée sous réserve de propriété. Merci pour votre confiance !");
         defaultProfile.setDevise("MAD");
+        defaultProfile.setVenteStockNegatif(false);
         defaultProfile.setDateMiseAJour(LocalDateTime.now());
         return defaultProfile;
     }
