@@ -37,35 +37,35 @@
             <textField>
                 <reportElement x="10" y="5" width="80" height="15"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font fontName="Arial" size="9"/>
+                    <font fontName="SansSerif" size="9"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{produitReference}]]></textFieldExpression>
             </textField>
             <textField>
                 <reportElement x="100" y="5" width="200" height="15"/>
                 <textElement verticalAlignment="Middle">
-                    <font fontName="Arial" size="9"/>
+                    <font fontName="SansSerif" size="9"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{produitDescription}]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00">
                 <reportElement x="310" y="5" width="60" height="15"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font fontName="Arial" size="9"/>
+                    <font fontName="SansSerif" size="9"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{quantiteCommandee}]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00">
                 <reportElement x="380" y="5" width="80" height="15"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font fontName="Arial" size="9"/>
+                    <font fontName="SansSerif" size="9"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{prixUnitaire} + " DH"]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00">
                 <reportElement x="470" y="5" width="80" height="15"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font fontName="Arial" size="9" isBold="true"/>
+                    <font fontName="SansSerif" size="9" isBold="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{montantLigne} + " DH"]]></textFieldExpression>
             </textField>

@@ -27,6 +27,36 @@ public class ImpressionService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    static {
+        System.setProperty("net.sf.jasperreports.awt.ignore.missing.font", "true");
+        System.setProperty("net.sf.jasperreports.default.font.name", "SansSerif");
+    }
+
+    private static final int MIN_LIGNES_PAR_DEFAUT = 8;
+
+    private void completerLignesVides(List<Map<String, Object>> lignes, int minLignes) {
+        if (lignes == null) return;
+        int act = lignes.size();
+        for (int i = act; i < minLignes; i++) {
+            Map<String, Object> emptyRow = new HashMap<>();
+            emptyRow.put("reference", "");
+            emptyRow.put("designation", "");
+            emptyRow.put("produitReference", "");
+            emptyRow.put("produitDesignation", "");
+            emptyRow.put("depotNom", "");
+            emptyRow.put("quantite", null);
+            emptyRow.put("quantiteLivree", null);
+            emptyRow.put("prixUnitaire", null);
+            emptyRow.put("prixUnitaireHT", null);
+            emptyRow.put("prixVente", null);
+            emptyRow.put("tauxTVA", null);
+            emptyRow.put("montantHT", null);
+            emptyRow.put("montantTTC", null);
+            emptyRow.put("montantTotal", null);
+            lignes.add(emptyRow);
+        }
+    }
+
     private final Map<String, JasperReport> reportCache = new ConcurrentHashMap<>();
 
     private final EntrepriseProfileService entrepriseProfileService;
