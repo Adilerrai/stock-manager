@@ -1,6 +1,7 @@
 package com.gestion.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.MouvementStockSearchCriteria;
 import com.gestion.persistent.model.*;
 import com.gestion.persistent.enums.TypeMouvement;
@@ -61,8 +62,9 @@ public class MouvementStockService {
             depot = depotRepository.findById(depotId).orElse(null);
         }
 
+        Long tenantId = TenantContext.getCurrentTenant();
         if (depot == null) {
-            List<Depot> all = depotRepository.findAll();
+            List<Depot> all = (tenantId != null) ? depotRepository.findByPointDeVenteIdAndActifTrue(tenantId) : depotRepository.findAll();
             for (Depot d : all) {
                 if (d.getActif() != null && d.getActif()) { depot = d; break; }
             }
@@ -83,6 +85,7 @@ public class MouvementStockService {
         mouvement.setUtilisateur(getCurrentUser());
         mouvement.setQualiteProduit(qualite);
         mouvement.setDepot(depot);
+        mouvement.setPointDeVenteId(tenantId != null ? tenantId : produit.getPointDeVenteId());
         return mouvementStockRepository.save(mouvement);
     }
 
@@ -134,6 +137,10 @@ public class MouvementStockService {
     }
     
     public List<MouvementStock> getHistoriqueProduit(Long produitId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return mouvementStockRepository.findByProduitIdAndTenantIdOrderByDateMouvementDesc(produitId, tenantId);
+        }
         return mouvementStockRepository.findByProduitIdOrderByDateMouvementDesc(produitId);
     }
 }

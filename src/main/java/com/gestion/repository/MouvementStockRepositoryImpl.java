@@ -70,7 +70,10 @@ public class MouvementStockRepositoryImpl implements MouvementStockRepositoryCus
 
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId != null) {
-            predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
+            predicates.add(cb.or(
+                    cb.equal(root.get("pointDeVenteId"), tenantId),
+                    cb.and(cb.isNull(root.get("pointDeVenteId")), cb.equal(root.get("produit").get("pointDeVenteId"), tenantId))
+            ));
         }
 
         if (criteria == null) {

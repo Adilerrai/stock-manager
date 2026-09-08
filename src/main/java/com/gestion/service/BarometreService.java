@@ -219,9 +219,9 @@ public class BarometreService {
         // -------------------------------------------------------------
         // 5. PILIER SANTÉ DU STOCK & DISPONIBILITÉ (Poids 15%)
         // -------------------------------------------------------------
-        Long ruptures = stockQualiteRepository.countEnRupture();
+        Long ruptures = (tenantId != null) ? stockQualiteRepository.countEnRuptureByTenant(tenantId) : stockQualiteRepository.countEnRupture();
         if (ruptures == null) ruptures = 0L;
-        long totalProduits = produitRepository.count();
+        long totalProduits = (tenantId != null) ? produitRepository.countByPointDeVenteId(tenantId) : produitRepository.count();
 
         int scoreStock = 85;
         String valStock = ruptures + " ruptures";

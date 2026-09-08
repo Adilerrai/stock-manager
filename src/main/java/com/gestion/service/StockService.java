@@ -128,24 +128,34 @@ public class StockService {
 
     public List<Stock> getAllStocksWithQualities() {
         Long tenantId = TenantContext.getCurrentTenant();
-        return stockRepository.findWithQualitiesByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        if (tenantId == null) {
+            return List.of();
+        }
+        return stockRepository.findWithQualitiesByPointDeVenteId(tenantId);
     }
 
     public List<StockQualite> getStocksByQualite(QualiteProduit qualite) {
-
-        return stockQualiteRepository.findByQualite( qualite);
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return stockQualiteRepository.findByQualiteAndTenant(qualite, tenantId);
+        }
+        return List.of();
     }
 
     public List<StockQualite> getStocksQualiteEnAlerte() {
-
-        return stockQualiteRepository.findStocksEnAlerte();
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return stockQualiteRepository.findStocksEnAlerteByTenant(tenantId);
+        }
+        return List.of();
     }
-
-
 
     public List<Stock> getAllStocks() {
         Long tenantId = TenantContext.getCurrentTenant();
-        return stockRepository.findWithQualitiesByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        if (tenantId == null) {
+            return List.of();
+        }
+        return stockRepository.findWithQualitiesByPointDeVenteId(tenantId);
     }
 
     private Stock getStockByProduit(Long produitId) {

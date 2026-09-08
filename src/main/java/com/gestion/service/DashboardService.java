@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.DashboardDTO;
 import com.gestion.persistent.dto.DashboardDTO.TopClientDTO;
 import com.gestion.persistent.dto.DashboardDTO.TopProduitDTO;
@@ -133,10 +134,11 @@ public class DashboardService {
         dashboard.setTotalDettesFournisseurs(dettesFrs != null ? dettesFrs : BigDecimal.ZERO);
 
         // 4. Stocks & Alertes
-        Long ruptures = stockQualiteRepository.countEnRupture();
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long ruptures = tenantId != null ? stockQualiteRepository.countEnRuptureByTenant(tenantId) : stockQualiteRepository.countEnRupture();
         dashboard.setNombreProduitsEnRupture(ruptures != null ? ruptures : 0L);
 
-        Long stockBas = stockQualiteRepository.countStockBas();
+        Long stockBas = tenantId != null ? stockQualiteRepository.countStockBasByTenant(tenantId) : stockQualiteRepository.countStockBas();
         dashboard.setNombreProduitsStockBas(stockBas != null ? stockBas : 0L);
 
         // 5. Marges & Résultat Net du mois en cours

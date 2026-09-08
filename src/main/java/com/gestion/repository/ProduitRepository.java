@@ -30,5 +30,9 @@ public interface ProduitRepository extends JpaRepository<Produit, Long>, Produit
     List<Produit> findByCategorieIdIn(List<Long> categorieIds);
 
     long countByCategorieId(Long categorieId);
+
+    long countByPointDeVenteId(Long pointDeVenteId);
+
+    List<Produit> findByPointDeVenteId(Long pointDeVenteId);
 }
 

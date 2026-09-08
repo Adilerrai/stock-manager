@@ -21,6 +21,7 @@ public class MouvementStockDTO {
     private QualiteProduit qualiteProduit;
     private Long depotId;
     private String depotNom;
+    private Long pointDeVenteId;
 
     public MouvementStockDTO() {}
 
@@ -68,5 +69,8 @@ public class MouvementStockDTO {
 
     public String getDepotNom() { return depotNom; }
     public void setDepotNom(String depotNom) { this.depotNom = depotNom; }
+
+    public Long getPointDeVenteId() { return pointDeVenteId; }
+    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 }
 

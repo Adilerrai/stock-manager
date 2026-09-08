@@ -42,7 +42,10 @@ public class MouvementStockController {
     @GetMapping
     public ResponseEntity<List<MouvementStockDTO>> getAllMouvements() {
         Long tenantId = TenantContext.getCurrentTenant();
-        List<MouvementStock> mouvements = mouvementStockRepository.findOrderByDateMouvementDesc(tenantId != null ? tenantId : 1L);
+        if (tenantId == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        List<MouvementStock> mouvements = mouvementStockRepository.findOrderByDateMouvementDesc(tenantId);
         List<MouvementStockDTO> dtos = mouvements.stream()
                 .map(mouvementStockMapper::toDto)
                 .collect(Collectors.toList());
