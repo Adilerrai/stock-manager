@@ -199,16 +199,26 @@ public class PaiementService {
     }
 
     public List<Paiement> getPaiementsByPeriode(LocalDateTime dateDebut, LocalDateTime dateFin) {
-        return paiementRepository.findPaiementsByPeriode( dateDebut, dateFin);
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            return paiementRepository.findPaiementsByPeriodeAndTenant(dateDebut, dateFin, tenantId);
+        }
+        return paiementRepository.findPaiementsByPeriode(dateDebut, dateFin);
     }
 
     public BigDecimal getTotalPaiementsByPeriode(LocalDateTime dateDebut, LocalDateTime dateFin) {
-        BigDecimal total = paiementRepository.sumMontantByPeriode( dateDebut, dateFin);
+        Long tenantId = TenantContext.getCurrentTenant();
+        BigDecimal total = tenantId != null
+                ? paiementRepository.sumMontantByPeriodeAndTenant(dateDebut, dateFin, tenantId)
+                : paiementRepository.sumMontantByPeriode(dateDebut, dateFin);
         return total != null ? total : BigDecimal.ZERO;
     }
 
     public BigDecimal getTotalPaiementsByModePaiement(ModePaiement modePaiement, LocalDateTime dateDebut, LocalDateTime dateFin) {
-        BigDecimal total = paiementRepository.sumMontantByModePaiement(modePaiement, dateDebut, dateFin);
+        Long tenantId = TenantContext.getCurrentTenant();
+        BigDecimal total = tenantId != null
+                ? paiementRepository.sumMontantByModePaiementAndTenant(modePaiement, dateDebut, dateFin, tenantId)
+                : paiementRepository.sumMontantByModePaiement(modePaiement, dateDebut, dateFin);
         return total != null ? total : BigDecimal.ZERO;
     }
 

@@ -42,8 +42,28 @@ public class Livraison {
     @Column(name = "numero_suivi")
     private String numeroSuivi;
 
+    @Column(name = "point_de_vente_id", nullable = false)
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenant != null) {
+                this.pointDeVenteId = tenant;
+            } else if (this.commande != null && this.commande.getPointDeVenteId() != null) {
+                this.pointDeVenteId = this.commande.getPointDeVenteId();
+            } else {
+                this.pointDeVenteId = 1L;
+            }
+        }
+    }
+
     // Constructors, getters, setters
     public Livraison() {}
+
+    public Long getPointDeVenteId() { return pointDeVenteId; }
+    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

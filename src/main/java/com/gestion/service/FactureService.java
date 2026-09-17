@@ -1,8 +1,10 @@
 package com.gestion.service;
 
+import com.acommon.exception.CommonException;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import com.gestion.mapper.BonLivraisonClientMapper;
 import com.gestion.mapper.FactureMapper;
 import com.gestion.persistent.dto.BonLivraisonClientDTO;
@@ -117,6 +119,10 @@ public class FactureService {
                 throw new IllegalStateException("Le bon de livraison " + bl.getNumeroBl() + " est déjà rattaché à la facture " + bl.getFacture().getNumeroFacture());
             }
 
+            if (bl.getStatut() != com.gestion.persistent.enums.StatutLivraison.LIVREE) {
+                throw new IllegalStateException("Le bon de livraison " + bl.getNumeroBl() + " n'a pas le statut Livrée (seuls les BL livrés peuvent être facturés)");
+            }
+
             if (!bl.getClient().getId().equals(client.getId())) {
                 throw new IllegalArgumentException("Le bon de livraison " + bl.getNumeroBl() + " n'appartient pas au client " + client.getNomComplet());
             }
@@ -153,6 +159,7 @@ public class FactureService {
         if (facture.getNotes() == null || facture.getNotes().isBlank()) {
             facture.setNotes("Facturation des BLs: " + String.join(", ", blNumeros));
         }
+        facture.setPointDeVenteId(tenantId);
 
         // Sauvegarder la facture
         Facture savedFacture = factureRepository.save(facture);
@@ -175,6 +182,7 @@ public class FactureService {
         if (tenantId == null) tenantId = 1L;
         List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByClientIdAndFactureIsNullAndPointDeVenteId(clientId, tenantId);
         return bls.stream()
+                .filter(b -> b.getStatut() == com.gestion.persistent.enums.StatutLivraison.LIVREE)
                 .map(bonLivraisonClientMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -187,36 +195,42 @@ public class FactureService {
         if (tenantId == null) tenantId = 1L;
         List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByFactureIsNullAndPointDeVenteId(tenantId);
         return bls.stream()
+                .filter(b -> b.getStatut() == com.gestion.persistent.enums.StatutLivraison.LIVREE)
                 .map(bonLivraisonClientMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public List<FactureDTO> getAllFactures() {
-        return factureRepository.findAll().stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureRepository.findByPointDeVenteIdOrderByDateFactureDesc(tenantId != null ? tenantId : 1L).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public FactureDTO getFactureById(Long id) {
-        Facture facture = factureRepository.findById(id)
+        Long tenantId = TenantContext.getCurrentTenant();
+        Facture facture = factureRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
                 .orElseThrow(() -> new RuntimeException("Facture non trouvée avec l'id: " + id));
         return factureMapper.toDto(facture);
     }
 
     public List<FactureDTO> getFacturesByClient(Long clientId) {
-        return factureRepository.findByClientId(clientId).stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureRepository.findByClientIdAndPointDeVenteId(clientId, tenantId != null ? tenantId : 1L).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public List<FactureDTO> getFacturesImpayees() {
-        return factureRepository.findFacturesImpayees().stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureRepository.findFacturesImpayeesByPointDeVenteId(tenantId != null ? tenantId : 1L).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     public List<FactureDTO> getFacturesEchues() {
-        return factureRepository.findFacturesEchues(LocalDate.now()).stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        return factureRepository.findFacturesEchuesByPointDeVenteId(LocalDate.now(), tenantId != null ? tenantId : 1L).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -241,18 +255,35 @@ public class FactureService {
 
     public FactureDTO annulerFacture(Long factureId, String motif, Long userId) {
         Facture facture = factureRepository.findById(factureId)
-                .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
+                .orElseThrow(() -> new CommonException("Facture non trouvée avec l'id: " + factureId, HttpStatus.NOT_FOUND));
 
-        if (facture.getAnnulee()) {
-            throw new RuntimeException("Cette facture est déjà annulée");
+        if (Boolean.TRUE.equals(facture.getAnnulee()) || facture.getStatut() == StatutFacture.ANNULEE) {
+            throw new CommonException("Cette facture est déjà annulée.", HttpStatus.BAD_REQUEST);
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        // RÈGLE : Impossible d'annuler une facture encaissée totalement ou partiellement
+        boolean hasMontantPaye = facture.getMontantPaye() != null && facture.getMontantPaye().compareTo(BigDecimal.ZERO) > 0;
+        boolean isStatutPayee = facture.getStatut() == StatutFacture.PAYEE_PARTIELLEMENT || facture.getStatut() == StatutFacture.PAYEE_TOTALEMENT;
+        boolean hasPaiements = facture.getPaiements() != null && facture.getPaiements().stream()
+                .anyMatch(p -> !Boolean.TRUE.equals(p.getAnnule()));
+
+        if (hasMontantPaye || isStatutPayee || hasPaiements) {
+            BigDecimal montant = facture.getMontantPaye() != null ? facture.getMontantPaye() : BigDecimal.ZERO;
+            throw new CommonException("Impossible d'annuler une facture déjà encaissée totalement ou partiellement (" + 
+                    montant + " MAD déjà encaissés). Veuillez d'abord annuler ou supprimer les règlements associés.", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = null;
+        if (userId != null) {
+            user = userRepository.findById(userId).orElse(null);
+        }
+        if (user == null) {
+            user = userRepository.findAll().stream().findFirst().orElse(null);
+        }
 
         facture.setAnnulee(true);
         facture.setDateAnnulation(LocalDateTime.now());
-        facture.setMotifAnnulation(motif);
+        facture.setMotifAnnulation(motif != null ? motif : "Annulation");
         facture.setAnnuleePar(user);
         facture.setStatut(StatutFacture.ANNULEE);
 
@@ -290,6 +321,8 @@ public class FactureService {
 
         facture.setDateCreation(LocalDateTime.now());
         facture.setStatut(StatutFacture.EN_ATTENTE);
+        Long tenantId = TenantContext.getCurrentTenant();
+        facture.setPointDeVenteId(tenantId != null ? tenantId : 1L);
         facture.calculerMontants();
 
         return factureMapper.toDto(factureRepository.save(facture));

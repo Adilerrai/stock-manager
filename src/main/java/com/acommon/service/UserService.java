@@ -176,7 +176,10 @@ public class UserService {
             if (pointDeVenteIdFilter != null) {
                 users = userRepository.findByTenantIdAndPointDeVenteId(currentTenant, pointDeVenteIdFilter);
             } else {
-                users = userRepository.findByTenantId(currentTenant);
+                users = userRepository.findByTenantOrPointDeVenteTenant(currentTenant);
+                if (users.isEmpty()) {
+                    users = userRepository.findByTenantId(currentTenant);
+                }
                 if (users.isEmpty()) {
                     users = userRepository.findByPointDeVenteId(currentTenant);
                 }

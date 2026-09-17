@@ -57,8 +57,26 @@ public class CommandeClient {
     @OneToMany(mappedBy = "commandeClient", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LigneCommandeClient> lignesCommande = new ArrayList<>();
 
+    @Column(name = "point_de_vente_id", nullable = false)
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenant != null) {
+                this.pointDeVenteId = tenant;
+            } else {
+                this.pointDeVenteId = 1L;
+            }
+        }
+    }
+
     // Constructors
     public CommandeClient() {}
+
+    public Long getPointDeVenteId() { return pointDeVenteId; }
+    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
 
     // Getters and setters
     public Long getId() { return id; }

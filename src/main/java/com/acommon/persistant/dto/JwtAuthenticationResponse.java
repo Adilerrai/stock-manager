@@ -9,6 +9,7 @@ public class JwtAuthenticationResponse {
     private String telephone;
     private Genre genre;
     private String role;
+    private java.util.List<String> habilitations;
     private String username;
     private Long id;
     private String tokenType;
@@ -27,6 +28,7 @@ public class JwtAuthenticationResponse {
         this.telephone = builder.telephone;
         this.genre = builder.genre;
         this.role = builder.role;
+        this.habilitations = builder.habilitations;
         this.username = builder.username;
         this.id = builder.id;
         this.tokenType = builder.tokenType;
@@ -48,6 +50,7 @@ public class JwtAuthenticationResponse {
         private String telephone;
         private Genre genre;
         private String role;
+        private java.util.List<String> habilitations;
         private String username;
         private Long id;
         private String tokenType;
@@ -84,6 +87,12 @@ public class JwtAuthenticationResponse {
             this.role = role;
             return this;
         }
+
+        public Builder habilitations(java.util.List<String> habilitations) {
+            this.habilitations = habilitations;
+            return this;
+        }
+
         public Builder username(String username) {
             this.username = username;
             return this;
@@ -190,6 +199,14 @@ public class JwtAuthenticationResponse {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public java.util.List<String> getHabilitations() {
+        return habilitations;
+    }
+
+    public void setHabilitations(java.util.List<String> habilitations) {
+        this.habilitations = habilitations;
     }
 
     public Long getId() {

@@ -124,8 +124,8 @@ public class FactureController {
     @PostMapping("/{factureId}/annuler")
     @PreAuthorize("hasAnyAuthority('FACTURE_ANNULER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE')")
     public ResponseEntity<FactureDTO> annulerFacture(@PathVariable Long factureId,
-                                                   @RequestParam String motif,
-                                                   @RequestParam Long userId) {
+                                                   @RequestParam(required = false, defaultValue = "Annulation") String motif,
+                                                   @RequestParam(required = false) Long userId) {
         FactureDTO facture = factureService.annulerFacture(factureId, motif, userId);
         return ResponseEntity.ok(facture);
     }

@@ -44,14 +44,30 @@ public interface ClientRepository extends JpaRepository<Client, Long>, ClientRep
     @Query("SELECT c FROM Client c WHERE c.creditUtilise > c.creditAutorise")
     List<Client> findClientsAvecDepassementCredit();
 
-    List<Client> findByCommercialId(Long commercialId);
+    Optional<Client> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
 
-    Long countByCommercialId(Long commercialId);
+    @Query("SELECT c FROM Client c WHERE c.commercial.id = :commercialId")
+    List<Client> findByCommercialId(@Param("commercialId") Long commercialId);
+
+    @Query("SELECT c FROM Client c WHERE c.commercial.id = :commercialId AND c.pointDeVenteId = :pointDeVenteId")
+    List<Client> findByCommercialIdAndPointDeVenteId(@Param("commercialId") Long commercialId, @Param("pointDeVenteId") Long pointDeVenteId);
+
+    @Query("SELECT COUNT(c) FROM Client c WHERE c.commercial.id = :commercialId")
+    Long countByCommercialId(@Param("commercialId") Long commercialId);
+
+    @Query("SELECT COUNT(c) FROM Client c WHERE c.commercial.id = :commercialId AND c.pointDeVenteId = :pointDeVenteId")
+    Long countByCommercialIdAndPointDeVenteId(@Param("commercialId") Long commercialId, @Param("pointDeVenteId") Long pointDeVenteId);
 
     @Query("SELECT COUNT(c) FROM Client c WHERE c.commercial.id = :commercialId AND c.dateCreation BETWEEN :debut AND :fin")
     Long countNouveauxClientsByCommercial(@Param("commercialId") Long commercialId,
                                           @Param("debut") java.time.LocalDateTime debut,
                                           @Param("fin") java.time.LocalDateTime fin);
+
+    @Query("SELECT COUNT(c) FROM Client c WHERE c.commercial.id = :commercialId AND c.pointDeVenteId = :pointDeVenteId AND c.dateCreation BETWEEN :debut AND :fin")
+    Long countNouveauxClientsByCommercialAndPointDeVenteId(@Param("commercialId") Long commercialId,
+                                                           @Param("debut") java.time.LocalDateTime debut,
+                                                           @Param("fin") java.time.LocalDateTime fin,
+                                                           @Param("pointDeVenteId") Long pointDeVenteId);
 }
 
 

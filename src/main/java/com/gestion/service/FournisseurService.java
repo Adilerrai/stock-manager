@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.persistant.model.TenantContext;
 import com.acommon.exception.ResourceNotFoundException;
 import com.gestion.persistent.dto.FournisseurDTO;
 import com.gestion.persistent.dto.FournisseurSearchCriteria;
@@ -21,10 +22,18 @@ public class FournisseurService {
         this.fournisseurRepository = fournisseurRepository;
     }
 
+    private Long getTenantId() {
+        Long tenant = TenantContext.getCurrentTenant();
+        if (tenant == null) {
+            throw new org.springframework.security.access.AccessDeniedException("Impossible d'identifier l'entreprise (tenant) courante");
+        }
+        return tenant;
+    }
+
     @Transactional
     public Fournisseur createFournisseur(FournisseurDTO fournisseurDTO) {
-
-        if (fournisseurRepository.existsByRaisonSociale((fournisseurDTO.getRaisonSociale())) ){
+        Long tenantId = getTenantId();
+        if (fournisseurRepository.existsByRaisonSocialeAndPointDeVenteId(fournisseurDTO.getRaisonSociale(), tenantId)) {
             throw new IllegalArgumentException("Un fournisseur avec ce nom existe déjà");
         }
 
@@ -35,16 +44,22 @@ public class FournisseurService {
         fournisseur.setEmail(fournisseurDTO.getEmail());
         fournisseur.setContact(fournisseurDTO.getContact());
         fournisseur.setActif(true);
+        fournisseur.setPointDeVenteId(tenantId);
 
         return fournisseurRepository.save(fournisseur);
     }
 
     public List<Fournisseur> getAllFournisseursActifs() {
-        return fournisseurRepository.findActiveOrderByNom();
+        Long tenant = TenantContext.getCurrentTenant();
+        if (tenant == null) {
+            return List.of();
+        }
+        return fournisseurRepository.findActiveByPointDeVenteIdOrderByNom(tenant);
     }
 
     public Fournisseur getFournisseurById(Long fournisseurId) {
-        return fournisseurRepository.findById(fournisseurId)
+        Long tenantId = getTenantId();
+        return fournisseurRepository.findByIdAndPointDeVenteId(fournisseurId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", fournisseurId));
     }
 

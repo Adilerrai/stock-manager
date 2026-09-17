@@ -74,6 +74,8 @@ public class ClientRepositoryImpl implements ClientRepositoryCustom {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId != null) {
             predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
+        } else {
+            predicates.add(cb.equal(root.get("pointDeVenteId"), -1L));
         }
 
         if (criteria == null) {

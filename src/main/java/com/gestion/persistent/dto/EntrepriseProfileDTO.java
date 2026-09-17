@@ -24,6 +24,7 @@ public class EntrepriseProfileDTO {
     private String logoFileName;
     private String piedPage;
     private String devise;
+    private Boolean venteStockNegatif = false;
     private LocalDateTime dateMiseAJour;
 
     public EntrepriseProfileDTO() {}
@@ -90,6 +91,9 @@ public class EntrepriseProfileDTO {
 
     public String getDevise() { return devise; }
     public void setDevise(String devise) { this.devise = devise; }
+
+    public Boolean getVenteStockNegatif() { return venteStockNegatif != null && venteStockNegatif; }
+    public void setVenteStockNegatif(Boolean venteStockNegatif) { this.venteStockNegatif = venteStockNegatif; }
 
     public LocalDateTime getDateMiseAJour() { return dateMiseAJour; }
     public void setDateMiseAJour(LocalDateTime dateMiseAJour) { this.dateMiseAJour = dateMiseAJour; }

@@ -105,6 +105,14 @@ public class AuthService {
                 .genre(authenticatedUser.getGenre())
                 .username(authenticatedUser.getUsername())
                 .role(authenticatedUser.getRole() != null ? authenticatedUser.getRole().getNom() : null)
+                .habilitations(
+                        authenticatedUser.getRole() != null && authenticatedUser.getRole().getHabilitations() != null
+                                ? authenticatedUser.getRole().getHabilitations().stream()
+                                        .map(com.acommon.persistant.model.Habilitation::getNom)
+                                        .sorted()
+                                        .collect(java.util.stream.Collectors.toList())
+                                : java.util.List.of()
+                )
                 .tenantId(tenantId)
                 .pointDeVenteId(authenticatedUser.getPointDeVenteId())
                 .nomPointDeVente(nomPdv)

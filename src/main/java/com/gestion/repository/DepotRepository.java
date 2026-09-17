@@ -12,6 +12,14 @@ public interface DepotRepository extends JpaRepository<Depot, Long> {
 
     List<Depot> findByActifTrue();
 
+    List<Depot> findByPointDeVenteIdAndActifTrue(Long pointDeVenteId);
+
+    List<Depot> findByPointDeVenteId(Long pointDeVenteId);
+
+    Optional<Depot> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
+
     boolean existsByNom(String nom);
+
+    boolean existsByNomAndPointDeVenteId(String nom, Long pointDeVenteId);
 }
 

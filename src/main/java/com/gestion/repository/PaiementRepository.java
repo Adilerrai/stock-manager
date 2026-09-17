@@ -31,11 +31,28 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long>, Paiem
     List<Paiement> findPaiementsByPeriode(@Param("dateDebut") LocalDateTime dateDebut,
                                            @Param("dateFin") LocalDateTime dateFin);
 
+    @Query("SELECT p FROM Paiement p WHERE " +
+           " p.datePaiement BETWEEN :dateDebut AND :dateFin " +
+           "AND p.annule = false " +
+           "AND p.pointDeVenteId = :tenantId " +
+           "ORDER BY p.datePaiement DESC")
+    List<Paiement> findPaiementsByPeriodeAndTenant(@Param("dateDebut") LocalDateTime dateDebut,
+                                                    @Param("dateFin") LocalDateTime dateFin,
+                                                    @Param("tenantId") Long tenantId);
+
     @Query("SELECT SUM(p.montant) FROM Paiement p WHERE  " +
            " p.datePaiement BETWEEN :dateDebut AND :dateFin " +
            "AND p.annule = false")
     BigDecimal sumMontantByPeriode(@Param("dateDebut") LocalDateTime dateDebut,
                                     @Param("dateFin") LocalDateTime dateFin);
+
+    @Query("SELECT SUM(p.montant) FROM Paiement p WHERE  " +
+           " p.datePaiement BETWEEN :dateDebut AND :dateFin " +
+           "AND p.annule = false " +
+           "AND p.pointDeVenteId = :tenantId")
+    BigDecimal sumMontantByPeriodeAndTenant(@Param("dateDebut") LocalDateTime dateDebut,
+                                             @Param("dateFin") LocalDateTime dateFin,
+                                             @Param("tenantId") Long tenantId);
 
     @Query("SELECT SUM(p.montant) FROM Paiement p WHERE  " +
            " p.modePaiement = :modePaiement " +
@@ -44,6 +61,16 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long>, Paiem
     BigDecimal sumMontantByModePaiement(@Param("modePaiement") ModePaiement modePaiement,
                                          @Param("dateDebut") LocalDateTime dateDebut,
                                          @Param("dateFin") LocalDateTime dateFin);
+
+    @Query("SELECT SUM(p.montant) FROM Paiement p WHERE  " +
+           " p.modePaiement = :modePaiement " +
+           "AND p.datePaiement BETWEEN :dateDebut AND :dateFin " +
+           "AND p.annule = false " +
+           "AND p.pointDeVenteId = :tenantId")
+    BigDecimal sumMontantByModePaiementAndTenant(@Param("modePaiement") ModePaiement modePaiement,
+                                                  @Param("dateDebut") LocalDateTime dateDebut,
+                                                  @Param("dateFin") LocalDateTime dateFin,
+                                                  @Param("tenantId") Long tenantId);
 }
 
 

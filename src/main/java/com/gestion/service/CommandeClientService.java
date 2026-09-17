@@ -1,25 +1,31 @@
 package com.gestion.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
+import com.acommon.exception.CommonException;
 import com.acommon.exception.ResourceNotFoundException;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.mapper.CommandeClientMapper;
 import com.gestion.persistent.dto.CommandeClientDTO;
 import com.gestion.persistent.dto.LigneCommandeClientDTO;
 import com.gestion.persistent.enums.StatutCommandeClient;
+import com.gestion.persistent.enums.StatutLivraison;
+import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.persistent.model.CommandeClient;
 import com.gestion.persistent.model.LigneCommandeClient;
 import com.gestion.persistent.model.Produit;
+import com.gestion.repository.BonLivraisonClientRepository;
 import com.gestion.repository.ClientRepository;
 import com.gestion.repository.CommandeClientRepository;
 import com.gestion.repository.LigneCommandeClientRepository;
 import com.gestion.repository.ProduitRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CommandeClientService {
@@ -29,17 +35,25 @@ public class CommandeClientService {
     private final ProduitRepository produitRepository;
     private final ClientRepository clientRepository;
     private final CommandeClientMapper commandeClientMapper;
+    private final BonLivraisonClientRepository bonLivraisonClientRepository;
 
     public CommandeClientService(CommandeClientRepository commandeClientRepository,
                                 LigneCommandeClientRepository ligneCommandeClientRepository,
                                 ProduitRepository produitRepository,
                                 ClientRepository clientRepository,
-                                CommandeClientMapper commandeClientMapper) {
+                                CommandeClientMapper commandeClientMapper,
+                                BonLivraisonClientRepository bonLivraisonClientRepository) {
         this.commandeClientRepository = commandeClientRepository;
         this.ligneCommandeClientRepository = ligneCommandeClientRepository;
         this.produitRepository = produitRepository;
         this.clientRepository = clientRepository;
         this.commandeClientMapper = commandeClientMapper;
+        this.bonLivraisonClientRepository = bonLivraisonClientRepository;
+    }
+
+    private Long getTenantId() {
+        Long tenant = TenantContext.getCurrentTenant();
+        return tenant != null ? tenant : 1L;
     }
 
     @Transactional
@@ -47,6 +61,7 @@ public class CommandeClientService {
 
         CommandeClient commande = new CommandeClient();
         commande.setNumeroCommande(generateNumeroCommandeClient());
+        commande.setPointDeVenteId(getTenantId());
         if (commandeDTO.getClientId() != null) {
             clientRepository.findById(commandeDTO.getClientId()).ifPresent(commande::setClient);
         }
@@ -91,7 +106,8 @@ public class CommandeClientService {
     }
 
     public List<CommandeClient> getAllCommandesClient() {
-        return commandeClientRepository.findAll();
+        Long tenantId = getTenantId();
+        return commandeClientRepository.findByPointDeVenteId(tenantId);
     }
 
     public CommandeClient getCommandeClientById(Long commandeId) {
@@ -101,16 +117,47 @@ public class CommandeClientService {
     @Transactional
     public CommandeClient updateStatut(Long commandeId, StatutCommandeClient nouveauStatut) {
         CommandeClient commande = getCommandeClientEntityById(commandeId);
+
+        if (nouveauStatut == StatutCommandeClient.ANNULEE) {
+            if (commande.getStatut() == StatutCommandeClient.ANNULEE) {
+                throw new CommonException("Cette commande est déjà annulée.", HttpStatus.BAD_REQUEST);
+            }
+            if (commande.getStatut() == StatutCommandeClient.FACTUREE) {
+                throw new CommonException("Impossible d'annuler une commande déjà facturée.", HttpStatus.BAD_REQUEST);
+            }
+
+            // RÈGLE : Impossible d'annuler une commande liée à des bons de livraison actifs (non annulés)
+            Long tenantId = getTenantId();
+            List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByCommandeClientIdAndPointDeVenteId(commandeId, tenantId);
+            if (bls == null || bls.isEmpty()) {
+                bls = bonLivraisonClientRepository.findAll().stream()
+                        .filter(b -> b.getCommandeClient() != null && commandeId.equals(b.getCommandeClient().getId()))
+                        .collect(Collectors.toList());
+            }
+
+            boolean hasActiveBl = bls.stream().anyMatch(bl -> bl.getStatut() != StatutLivraison.ANNULEE);
+            if (hasActiveBl) {
+                String numerosBl = bls.stream()
+                        .filter(bl -> bl.getStatut() != StatutLivraison.ANNULEE)
+                        .map(b -> b.getNumeroBl() != null ? b.getNumeroBl() : ("#" + b.getId()))
+                        .collect(Collectors.joining(", "));
+                throw new CommonException("Impossible d'annuler cette commande car elle possède un ou plusieurs bons de livraison actifs (" + 
+                        numerosBl + "). Vous devez d'abord annuler ces bons de livraison.", HttpStatus.BAD_REQUEST);
+            }
+        }
+
         commande.setStatut(nouveauStatut);
         return commandeClientRepository.save(commande);
     }
 
     public List<CommandeClient> getCommandesByStatut(StatutCommandeClient statut) {
-        return commandeClientRepository.findByStatut(statut);
+        Long tenantId = getTenantId();
+        return commandeClientRepository.findByStatutAndPointDeVenteId(statut, tenantId);
     }
 
     private CommandeClient getCommandeClientEntityById(Long commandeId) {
-        return commandeClientRepository.findById(commandeId)
+        Long tenantId = getTenantId();
+        return commandeClientRepository.findByIdAndPointDeVenteId(commandeId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("CommandeClient", "id", commandeId));
     }
 

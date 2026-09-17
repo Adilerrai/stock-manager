@@ -64,6 +64,9 @@ public class Client {
     @JoinColumn(name = "commercial_user_id")
     private User commercial;
 
+    @Transient
+    private Long commercialId;
+
     @Column(name = "credit_autorise")
     private BigDecimal creditAutorise = BigDecimal.ZERO;
 
@@ -81,13 +84,11 @@ public class Client {
     @PrePersist
     @PreUpdate
     public void prePersist() {
-        if (this.pointDeVenteId == null) {
-            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
-            if (tenant != null) {
-                this.pointDeVenteId = tenant;
-            } else {
-                this.pointDeVenteId = 1L; // fallback uniquement si hors requête HTTP (ex: migrations)
-            }
+        Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (tenant != null) {
+            this.pointDeVenteId = tenant;
+        } else if (this.pointDeVenteId == null) {
+            this.pointDeVenteId = 1L; // fallback uniquement si hors requête HTTP (ex: migrations)
         }
         if (this.creditAutorise == null) {
             this.creditAutorise = BigDecimal.ZERO;
@@ -310,6 +311,14 @@ public class Client {
 
     public User getCommercial() { return commercial; }
     public void setCommercial(User commercial) { this.commercial = commercial; }
+
+    public Long getCommercialId() {
+        return commercial != null ? commercial.getId() : this.commercialId;
+    }
+
+    public void setCommercialId(Long commercialId) {
+        this.commercialId = commercialId;
+    }
 
     public Long getPointDeVenteId() {
         return pointDeVenteId;

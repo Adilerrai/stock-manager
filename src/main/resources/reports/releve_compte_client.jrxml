@@ -37,12 +37,12 @@
             </image>
             <textField isBlankWhenNull="true">
                 <reportElement x="130" y="0" width="230" height="18"/>
-                <textElement verticalAlignment="Middle"><font fontName="Arial" size="12" isBold="true"/></textElement>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="12" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{nomEntreprise}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
                 <reportElement x="130" y="18" width="230" height="14" forecolor="#555555"/>
-                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$P{adresseEntreprise} + " - Tél: " + $P{telephoneEntreprise}]]></textFieldExpression>
             </textField>
 
@@ -53,12 +53,12 @@
             </rectangle>
             <staticText>
                 <reportElement x="370" y="6" width="185" height="16" forecolor="#1E293B"/>
-                <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="Arial" size="10" isBold="true"/></textElement>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="SansSerif" size="10" isBold="true"/></textElement>
                 <text><![CDATA[RELEVÉ DE COMPTE CLIENT]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
                 <reportElement x="370" y="24" width="185" height="14" forecolor="#64748B"/>
-                <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$P{periode}]]></textFieldExpression>
             </textField>
 
@@ -69,34 +69,34 @@
             </rectangle>
             <staticText>
                 <reportElement x="15" y="80" width="60" height="15" forecolor="#475569"/>
-                <textElement><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Client :]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
                 <reportElement x="80" y="80" width="260" height="15" forecolor="#0F172A"/>
-                <textElement><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textElement><font fontName="SansSerif" size="9" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{clientNom}]]></textFieldExpression>
             </textField>
 
             <staticText>
                 <reportElement x="15" y="98" width="60" height="15" forecolor="#475569"/>
-                <textElement><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Adresse :]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
                 <reportElement x="80" y="98" width="260" height="15"/>
-                <textElement><font fontName="Arial" size="8"/></textElement>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$P{clientAdresse} + " - Tél: " + $P{clientTelephone}]]></textFieldExpression>
             </textField>
 
             <staticText>
                 <reportElement x="15" y="115" width="60" height="15" forecolor="#475569"/>
-                <textElement><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[ICE / IF :]]></text>
             </staticText>
             <textField isBlankWhenNull="true">
                 <reportElement x="80" y="115" width="260" height="15"/>
-                <textElement><font fontName="Arial" size="8"/></textElement>
+                <textElement><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$P{clientIce} != null ? $P{clientIce} : "-"]]></textFieldExpression>
             </textField>
 
@@ -107,12 +107,12 @@
             </rectangle>
             <staticText>
                 <reportElement x="380" y="86" width="155" height="14" forecolor="#64748B"/>
-                <textElement textAlignment="Center"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement textAlignment="Center"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[SOLDE NET DÛ (EXIGIBLE)]]></text>
             </staticText>
             <textField pattern="#,##0.00" isBlankWhenNull="true">
                 <reportElement x="380" y="102" width="155" height="20" forecolor="#DC2626"/>
-                <textElement textAlignment="Center"><font fontName="Arial" size="12" isBold="true"/></textElement>
+                <textElement textAlignment="Center"><font fontName="SansSerif" size="12" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{soldeFinal} + " " + $P{devise}]]></textFieldExpression>
             </textField>
         </band>
@@ -126,32 +126,32 @@
             </rectangle>
             <staticText>
                 <reportElement x="5" y="4" width="65" height="16"/>
-                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Date]]></text>
             </staticText>
             <staticText>
                 <reportElement x="75" y="4" width="85" height="16"/>
-                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[N° Pièce / Réf]]></text>
             </staticText>
             <staticText>
                 <reportElement x="165" y="4" width="150" height="16"/>
-                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Libellé de l'opération]]></text>
             </staticText>
             <staticText>
                 <reportElement x="320" y="4" width="75" height="16"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Débit (Facturé)]]></text>
             </staticText>
             <staticText>
                 <reportElement x="400" y="4" width="75" height="16"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Crédit (Réglé)]]></text>
             </staticText>
             <staticText>
                 <reportElement x="480" y="4" width="70" height="16"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <text><![CDATA[Solde dû]]></text>
             </staticText>
         </band>
@@ -164,32 +164,32 @@
             </line>
             <textField isBlankWhenNull="true">
                 <reportElement x="5" y="1" width="65" height="15"/>
-                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{datePiece}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
                 <reportElement x="75" y="1" width="85" height="15"/>
-                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$F{referencePiece}]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
                 <reportElement x="165" y="1" width="150" height="15"/>
-                <textElement verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{libelle}]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00" isBlankWhenNull="true">
                 <reportElement x="320" y="1" width="75" height="15"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{debit} != null && $F{debit}.compareTo(java.math.BigDecimal.ZERO) > 0 ? $F{debit} : "-"]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00" isBlankWhenNull="true">
                 <reportElement x="400" y="1" width="75" height="15" forecolor="#16A34A"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="8"/></textElement>
                 <textFieldExpression><![CDATA[$F{credit} != null && $F{credit}.compareTo(java.math.BigDecimal.ZERO) > 0 ? $F{credit} : "-"]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00" isBlankWhenNull="true">
                 <reportElement x="480" y="1" width="70" height="15"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="8" isBold="true"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$F{soldeProgressif}]]></textFieldExpression>
             </textField>
         </band>
@@ -202,22 +202,22 @@
             </line>
             <staticText>
                 <reportElement x="220" y="10" width="95" height="16"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="9" isBold="true"/></textElement>
                 <text><![CDATA[TOTAUX :]]></text>
             </staticText>
             <textField pattern="#,##0.00" isBlankWhenNull="true">
                 <reportElement x="320" y="10" width="75" height="16"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="9" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{totalDebit}]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00" isBlankWhenNull="true">
                 <reportElement x="400" y="10" width="75" height="16" forecolor="#16A34A"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="9" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{totalCredit}]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00" isBlankWhenNull="true">
                 <reportElement x="480" y="10" width="70" height="16" forecolor="#DC2626"/>
-                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="Arial" size="9" isBold="true"/></textElement>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="SansSerif" size="9" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{soldeFinal}]]></textFieldExpression>
             </textField>
         </band>

@@ -55,6 +55,16 @@ public class BonLivraisonClientController {
         return ResponseEntity.ok(bonLivraisonClientService.validerEtExpedierBL(id));
     }
 
+    @PostMapping("/{id}/annuler")
+    public ResponseEntity<BonLivraisonClientDTO> annulerBonLivraisonClient(@PathVariable Long id) {
+        return ResponseEntity.ok(bonLivraisonClientService.annulerBonLivraisonClient(id));
+    }
+
+    @PutMapping("/{id}/annuler")
+    public ResponseEntity<BonLivraisonClientDTO> annulerBonLivraisonClientPut(@PathVariable Long id) {
+        return ResponseEntity.ok(bonLivraisonClientService.annulerBonLivraisonClient(id));
+    }
+
     @GetMapping
     public ResponseEntity<List<BonLivraisonClientDTO>> getBonsLivraison() {
         return ResponseEntity.ok(bonLivraisonClientService.getBonsLivraison());

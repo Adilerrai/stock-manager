@@ -68,7 +68,7 @@ public class InventaireService {
             inv.setPointDeVenteId(tenantId);
         }
 
-        List<Produit> produits = produitRepository.findAll();
+        List<Produit> produits = (tenantId != null) ? produitRepository.findByPointDeVenteId(tenantId) : produitRepository.findAll();
         List<LigneInventaire> lignes = new ArrayList<>();
 
         for (Produit p : produits) {

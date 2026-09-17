@@ -8,10 +8,12 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", uses = {LigneCommandeClientMapper.class})
 public interface CommandeClientMapper {
 
+    @Mapping(target = "clientId", source = "client.id")
     @Mapping(target = "lignesCommande", source = "lignesCommande")
     CommandeClientDTO toDto(CommandeClient commandeClient);
 
     @Mapping(target = "dateCommande", ignore = true)
     @Mapping(target = "lignesCommande", ignore = true)
+    @Mapping(target = "client", ignore = true)
     CommandeClient toEntity(CommandeClientDTO commandeClientDTO);
 }

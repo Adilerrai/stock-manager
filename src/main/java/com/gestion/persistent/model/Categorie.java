@@ -123,12 +123,39 @@ public class Categorie {
         this.dateCreation = dateCreation;
     }
 
+    @Transient
+    private Long parentId;
+
     public Categorie getParent() {
         return parent;
     }
 
     public void setParent(Categorie parent) {
         this.parent = parent;
+        if (parent != null) {
+            this.parentId = parent.getId();
+        }
+    }
+
+    public Long getParentId() {
+        if (parentId != null) {
+            return parentId;
+        }
+        if (parent != null) {
+            return parent.getId();
+        }
+        return null;
+    }
+
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
+    }
+
+    public String getParentNom() {
+        if (parent != null) {
+            return parent.getNom();
+        }
+        return null;
     }
 
     public java.util.List<Categorie> getSousCategories() {

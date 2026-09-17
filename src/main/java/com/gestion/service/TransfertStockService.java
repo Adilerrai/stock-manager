@@ -142,6 +142,7 @@ public class TransfertStockService {
             mvt.setDateMouvement(LocalDateTime.now());
             mvt.setUtilisateur(user != null ? (user.getNomComplet() != null ? user.getNomComplet() : user.getUsername()) : "Système");
             mvt.setDepot(transfert.getDepotSource());
+            mvt.setPointDeVenteId(transfert.getPointDeVenteId());
 
             mouvementStockRepository.save(mvt);
         }
@@ -173,6 +174,7 @@ public class TransfertStockService {
             mvt.setDateMouvement(LocalDateTime.now());
             mvt.setUtilisateur(user != null ? (user.getNomComplet() != null ? user.getNomComplet() : user.getUsername()) : "Système");
             mvt.setDepot(transfert.getDepotDestination());
+            mvt.setPointDeVenteId(transfert.getPointDeVenteId());
 
             mouvementStockRepository.save(mvt);
         }
@@ -203,6 +205,7 @@ public class TransfertStockService {
                 mvt.setDateMouvement(LocalDateTime.now());
                 mvt.setUtilisateur(user != null ? (user.getNomComplet() != null ? user.getNomComplet() : user.getUsername()) : "Système");
                 mvt.setDepot(transfert.getDepotSource());
+                mvt.setPointDeVenteId(transfert.getPointDeVenteId());
 
                 mouvementStockRepository.save(mvt);
             }

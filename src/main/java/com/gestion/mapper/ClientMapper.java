@@ -17,6 +17,7 @@ public interface ClientMapper {
     @Mapping(target = "ventes", ignore = true)
     @Mapping(target = "factures", ignore = true)
     @Mapping(target = "commercial", ignore = true)
+    @Mapping(target = "commercialId", source = "commercialId")
     @Mapping(target = "dateCreation", ignore = true)
     @Mapping(target = "dateDerniereVisite", ignore = true)
     Client toEntity(ClientDTO dto);
@@ -24,6 +25,7 @@ public interface ClientMapper {
     @Mapping(target = "ventes", ignore = true)
     @Mapping(target = "factures", ignore = true)
     @Mapping(target = "commercial", ignore = true)
+    @Mapping(target = "commercialId", source = "commercialId")
     @Mapping(target = "dateCreation", ignore = true)
     @Mapping(target = "dateDerniereVisite", ignore = true)
     void updateEntityFromDto(ClientDTO dto, @MappingTarget Client client);

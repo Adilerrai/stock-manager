@@ -1,5 +1,6 @@
 package com.gestion.repository;
 
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.CommandeSearchCriteria;
 import com.gestion.persistent.model.Commande;
 import com.gestion.persistent.model.Fournisseur;
@@ -27,6 +28,11 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
         Join<Commande, Fournisseur> fournisseurJoin = root.join("fournisseur", JoinType.LEFT);
         
         List<Predicate> predicates = new ArrayList<>();
+
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
+        }
 
         
         // Numéro de commande

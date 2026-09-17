@@ -59,6 +59,29 @@ public class MouvementStock {
     @JoinColumn(name = "depot_id", nullable = false)
     private Depot depot;
 
+    @Column(name = "point_de_vente_id")
+    private Long pointDeVenteId;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenant != null) {
+                this.pointDeVenteId = tenant;
+            } else if (this.produit != null && this.produit.getPointDeVenteId() != null) {
+                this.pointDeVenteId = this.produit.getPointDeVenteId();
+            }
+        }
+    }
+
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
+    }
+
     // Getters et setters pour les nouveaux champs
     public Lot getLot() { return lot; }
     public void setLot(Lot lot) { this.lot = lot; }

@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comptes_financiers")
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
 public class CompteFinancier {
 
     @Id
@@ -30,7 +30,7 @@ public class CompteFinancier {
     private BigDecimal soldeActuel = BigDecimal.ZERO;
 
     @Column(length = 10, nullable = false)
-    private String devise = "DZD";
+    private String devise = "MAD";
 
     @Column(name = "numero_compte_rib")
     private String numeroCompteRib;
@@ -60,55 +60,129 @@ public class CompteFinancier {
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();
 
-    public CompteFinancier() {}
+    public CompteFinancier() {
+    }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getNom() { return nom; }
-    public void setNom(String nom) { this.nom = nom; }
+    public String getCode() {
+        return code;
+    }
 
-    public TypeCompteFinancier getType() { return type; }
-    public void setType(TypeCompteFinancier type) { this.type = type; }
+    public void setCode(String code) {
+        this.code = code;
+    }
 
-    public BigDecimal getSoldeActuel() { return soldeActuel; }
-    public void setSoldeActuel(BigDecimal soldeActuel) { this.soldeActuel = soldeActuel; }
+    public String getNom() {
+        return nom;
+    }
 
-    public String getDevise() { return devise; }
-    public void setDevise(String devise) { this.devise = devise; }
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
 
-    public String getNumeroCompteRib() { return numeroCompteRib; }
-    public void setNumeroCompteRib(String numeroCompteRib) { this.numeroCompteRib = numeroCompteRib; }
+    public TypeCompteFinancier getType() {
+        return type;
+    }
 
-    public String getNomBanque() { 
+    public void setType(TypeCompteFinancier type) {
+        this.type = type;
+    }
+
+    public BigDecimal getSoldeActuel() {
+        return soldeActuel;
+    }
+
+    public void setSoldeActuel(BigDecimal soldeActuel) {
+        this.soldeActuel = soldeActuel;
+    }
+
+    public String getDevise() {
+        return devise;
+    }
+
+    public void setDevise(String devise) {
+        this.devise = devise;
+    }
+
+    public String getNumeroCompteRib() {
+        return numeroCompteRib;
+    }
+
+    public void setNumeroCompteRib(String numeroCompteRib) {
+        this.numeroCompteRib = numeroCompteRib;
+    }
+
+    public String getNomBanque() {
         if (banque != null && banque.getNom() != null) {
             return banque.getNom();
         }
-        return nomBanque; 
+        return nomBanque;
     }
-    public void setNomBanque(String nomBanque) { this.nomBanque = nomBanque; }
 
-    public Banque getBanque() { return banque; }
-    public void setBanque(Banque banque) { this.banque = banque; }
+    public void setNomBanque(String nomBanque) {
+        this.nomBanque = nomBanque;
+    }
 
-    public String getAgence() { return agence; }
-    public void setAgence(String agence) { this.agence = agence; }
+    public Banque getBanque() {
+        return banque;
+    }
 
-    public String getCodeAgence() { return codeAgence; }
-    public void setCodeAgence(String codeAgence) { this.codeAgence = codeAgence; }
+    public void setBanque(Banque banque) {
+        this.banque = banque;
+    }
 
-    public String getTitulaire() { return titulaire; }
-    public void setTitulaire(String titulaire) { this.titulaire = titulaire; }
+    public String getAgence() {
+        return agence;
+    }
 
-    public Boolean getActif() { return actif; }
-    public void setActif(Boolean actif) { this.actif = actif; }
+    public void setAgence(String agence) {
+        this.agence = agence;
+    }
 
-    public Long getPointDeVenteId() { return pointDeVenteId; }
-    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
+    public String getCodeAgence() {
+        return codeAgence;
+    }
 
-    public LocalDateTime getDateCreation() { return dateCreation; }
-    public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
+    public void setCodeAgence(String codeAgence) {
+        this.codeAgence = codeAgence;
+    }
+
+    public String getTitulaire() {
+        return titulaire;
+    }
+
+    public void setTitulaire(String titulaire) {
+        this.titulaire = titulaire;
+    }
+
+    public Boolean getActif() {
+        return actif;
+    }
+
+    public void setActif(Boolean actif) {
+        this.actif = actif;
+    }
+
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
+    }
+
+    public LocalDateTime getDateCreation() {
+        return dateCreation;
+    }
+
+    public void setDateCreation(LocalDateTime dateCreation) {
+        this.dateCreation = dateCreation;
+    }
 }

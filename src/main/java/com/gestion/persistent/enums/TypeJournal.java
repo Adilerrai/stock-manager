@@ -5,7 +5,9 @@ public enum TypeJournal {
     ACHATS("Achats"),
     BANQUE("Banque"),
     CAISSE("Caisse"),
-    OPERATIONS_DIVERSES("Opérations Diverses");
+    OPERATIONS_DIVERSES("Opérations Diverses"),
+    A_NOUVEAUX("À-Nouveaux (Bilan d'ouverture)"),
+    PAIE("Paie & Salaires");
 
     private final String libelle;
 
