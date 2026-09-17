@@ -267,6 +267,7 @@ public class BonLivraisonClientService {
             bls = bonLivraisonClientRepository.findByFactureIsNullAndPointDeVenteId(tenantId);
         }
         return bls.stream()
+                .filter(b -> b.getStatut() == com.gestion.persistent.enums.StatutLivraison.LIVREE)
                 .map(bonLivraisonClientMapper::toDto)
                 .collect(Collectors.toList());
     }
