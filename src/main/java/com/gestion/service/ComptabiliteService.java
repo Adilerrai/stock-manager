@@ -179,13 +179,46 @@ public class ComptabiliteService {
             initJournauxParDefaut(tenantId);
             journaux = journalRepository.findByPointDeVenteIdOrderByCodeAsc(tenantId);
         }
-        return journaux.stream().map(this::toJournalDto).collect(Collectors.toList());
+
+        // Statistiques agrégées par journal en une seule requête SQL performante
+        List<Object[]> stats = ligneRepository.getStatsGroupesParJournal(tenantId);
+        Map<Long, Object[]> statsMap = new HashMap<>();
+        for (Object[] row : stats) {
+            if (row != null && row[0] != null) {
+                statsMap.put((Long) row[0], row);
+            }
+        }
+
+        return journaux.stream().map(j -> {
+            JournalComptableDTO dto = toJournalDto(j);
+            Object[] row = statsMap.get(j.getId());
+            if (row != null) {
+                dto.setNombreEcritures(row[1] != null ? ((Number) row[1]).longValue() : 0L);
+                dto.setTotalDebit(row[2] != null ? (BigDecimal) row[2] : BigDecimal.ZERO);
+                dto.setTotalCredit(row[3] != null ? (BigDecimal) row[3] : BigDecimal.ZERO);
+                if (row[4] != null) {
+                    dto.setDerniereEcritureDate((LocalDate) row[4]);
+                }
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public JournalComptableDTO getJournalById(Long id) {
+        Long tenantId = getTenantId();
+        JournalComptable journal = journalRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Journal introuvable ID: " + id));
+        if (!journal.getPointDeVenteId().equals(tenantId)) {
+            throw new SecurityException("Accès refusé");
+        }
+        return toJournalDto(journal);
     }
 
     public JournalComptableDTO creerJournal(JournalComptableDTO dto) {
         Long tenantId = getTenantId();
         if (dto.getCode() == null || dto.getCode().trim().isEmpty()) {
-            throw new IllegalArgumentException("Le code journal est obligatoire (ex: VT, AC, BQ)");
+            throw new IllegalArgumentException("Le code journal est obligatoire (ex: VT, AC, BQ, AN)");
         }
         String code = dto.getCode().trim().toUpperCase();
         if (journalRepository.findByCodeAndPointDeVenteId(code, tenantId).isPresent()) {
@@ -203,13 +236,67 @@ public class ComptabiliteService {
         return toJournalDto(journalRepository.save(journal));
     }
 
+    public JournalComptableDTO modifierJournal(Long id, JournalComptableDTO dto) {
+        Long tenantId = getTenantId();
+        JournalComptable journal = journalRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Journal introuvable ID: " + id));
+
+        if (!journal.getPointDeVenteId().equals(tenantId)) {
+            throw new SecurityException("Accès refusé");
+        }
+
+        if (dto.getLibelle() != null && !dto.getLibelle().trim().isEmpty()) {
+            journal.setLibelle(dto.getLibelle().trim());
+        }
+        if (dto.getActif() != null) {
+            journal.setActif(dto.getActif());
+        }
+        if (dto.getTypeJournal() != null) {
+            journal.setTypeJournal(dto.getTypeJournal());
+        }
+
+        return toJournalDto(journalRepository.save(journal));
+    }
+
+    public JournalComptableDTO toggleActifJournal(Long id) {
+        Long tenantId = getTenantId();
+        JournalComptable journal = journalRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Journal introuvable ID: " + id));
+
+        if (!journal.getPointDeVenteId().equals(tenantId)) {
+            throw new SecurityException("Accès refusé");
+        }
+
+        journal.setActif(!Boolean.TRUE.equals(journal.getActif()));
+        return toJournalDto(journalRepository.save(journal));
+    }
+
+    public void supprimerJournal(Long id) {
+        Long tenantId = getTenantId();
+        JournalComptable journal = journalRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Journal introuvable ID: " + id));
+
+        if (!journal.getPointDeVenteId().equals(tenantId)) {
+            throw new SecurityException("Accès refusé");
+        }
+
+        long count = ecritureRepository.countByPointDeVenteIdAndJournal(tenantId, journal);
+        if (count > 0) {
+            throw new IllegalStateException("Impossible de supprimer le journal '" + journal.getCode() +
+                "' car il contient " + count + " écriture(s). Conformément aux règles du PCGM (intangibilité des comptes), veuillez plutôt le désactiver.");
+        }
+
+        journalRepository.delete(journal);
+    }
+
     public void initJournauxParDefaut(Long tenantId) {
         List<JournalComptable> defauts = List.of(
             new JournalComptable("VT", "Journal des Ventes", TypeJournal.VENTES, tenantId),
             new JournalComptable("AC", "Journal des Achats", TypeJournal.ACHATS, tenantId),
             new JournalComptable("BQ", "Journal de Banque", TypeJournal.BANQUE, tenantId),
             new JournalComptable("CA", "Journal de Caisse", TypeJournal.CAISSE, tenantId),
-            new JournalComptable("OD", "Journal des Opérations Diverses", TypeJournal.OPERATIONS_DIVERSES, tenantId)
+            new JournalComptable("OD", "Journal des Opérations Diverses", TypeJournal.OPERATIONS_DIVERSES, tenantId),
+            new JournalComptable("AN", "Journal des À-Nouveaux (Bilan d'ouverture)", TypeJournal.A_NOUVEAUX, tenantId)
         );
 
         for (JournalComptable j : defauts) {
@@ -721,27 +808,80 @@ public class ComptabiliteService {
         List<LigneEcriture> lignes = ligneRepository.findAllByTenantAndPeriode(tenantId, dDebut, dFin);
 
         BigDecimal tvaCollectee = BigDecimal.ZERO;
-        BigDecimal tvaDeductible = BigDecimal.ZERO;
+        BigDecimal tvaDeductibleCharges = BigDecimal.ZERO;
+        BigDecimal tvaDeductibleImmo = BigDecimal.ZERO;
+        BigDecimal tvaDeductibleTotal = BigDecimal.ZERO;
+        BigDecimal totalVentesHT = BigDecimal.ZERO;
+        BigDecimal totalAchatsHT = BigDecimal.ZERO;
 
         for (LigneEcriture l : lignes) {
             if (l.getCompte() != null && l.getCompte().getNumeroCompte() != null) {
-                String num = l.getCompte().getNumeroCompte();
-                // TVA collectée / facturée : compte 4455 (Crédit - Débit)
-                if (num.startsWith("4455")) {
-                    BigDecimal cred = l.getCredit() != null ? l.getCredit() : BigDecimal.ZERO;
-                    BigDecimal deb = l.getDebit() != null ? l.getDebit() : BigDecimal.ZERO;
+                String num = l.getCompte().getNumeroCompte().trim();
+                BigDecimal deb = l.getDebit() != null ? l.getDebit() : BigDecimal.ZERO;
+                BigDecimal cred = l.getCredit() != null ? l.getCredit() : BigDecimal.ZERO;
+
+                // Ventes HT (Classe 7 : Produits d'exploitation 71xx) -> Solde Créditeur
+                if (num.startsWith("71") || (num.startsWith("7") && !num.startsWith("79"))) {
+                    totalVentesHT = totalVentesHT.add(cred.subtract(deb));
+                }
+                // Achats & Charges HT (Classe 6 : Charges d'exploitation 61xx) -> Solde Débiteur
+                else if (num.startsWith("61") || (num.startsWith("6") && !num.startsWith("69"))) {
+                    totalAchatsHT = totalAchatsHT.add(deb.subtract(cred));
+                }
+                // TVA facturée / collectée : compte 4455 (Crédit - Débit)
+                else if (num.startsWith("4455")) {
                     tvaCollectee = tvaCollectee.add(cred.subtract(deb));
                 }
-                // TVA récupérable / déductible : compte 3455 (Débit - Crédit)
+                // TVA déductible sur immobilisations : compte 34552 (Débit - Crédit)
+                else if (num.startsWith("34552")) {
+                    BigDecimal mnt = deb.subtract(cred);
+                    tvaDeductibleImmo = tvaDeductibleImmo.add(mnt);
+                    tvaDeductibleTotal = tvaDeductibleTotal.add(mnt);
+                }
+                // TVA déductible sur charges : compte 34551 ou compte général 3455 (Débit - Crédit)
                 else if (num.startsWith("3455")) {
-                    BigDecimal deb = l.getDebit() != null ? l.getDebit() : BigDecimal.ZERO;
-                    BigDecimal cred = l.getCredit() != null ? l.getCredit() : BigDecimal.ZERO;
-                    tvaDeductible = tvaDeductible.add(deb.subtract(cred));
+                    BigDecimal mnt = deb.subtract(cred);
+                    tvaDeductibleCharges = tvaDeductibleCharges.add(mnt);
+                    tvaDeductibleTotal = tvaDeductibleTotal.add(mnt);
                 }
             }
         }
 
-        return new DeclarationTvaDTO(dDebut, dFin, tvaCollectee, tvaDeductible);
+        if (totalVentesHT.compareTo(BigDecimal.ZERO) < 0) totalVentesHT = BigDecimal.ZERO;
+        if (totalAchatsHT.compareTo(BigDecimal.ZERO) < 0) totalAchatsHT = BigDecimal.ZERO;
+        if (tvaCollectee.compareTo(BigDecimal.ZERO) < 0) tvaCollectee = BigDecimal.ZERO;
+        if (tvaDeductibleTotal.compareTo(BigDecimal.ZERO) < 0) tvaDeductibleTotal = BigDecimal.ZERO;
+        if (tvaDeductibleCharges.compareTo(BigDecimal.ZERO) < 0) tvaDeductibleCharges = BigDecimal.ZERO;
+        if (tvaDeductibleImmo.compareTo(BigDecimal.ZERO) < 0) tvaDeductibleImmo = BigDecimal.ZERO;
+
+        DeclarationTvaDTO dto = new DeclarationTvaDTO();
+        dto.setDateDebut(dDebut);
+        dto.setDateFin(dFin);
+        dto.setTotalVentesHT(totalVentesHT);
+        dto.setTotalAchatsHT(totalAchatsHT);
+        dto.setTvaCollectee(tvaCollectee);
+        dto.setTvaDeductibleCharges(tvaDeductibleCharges);
+        dto.setTvaDeductibleImmo(tvaDeductibleImmo);
+        dto.setTvaDeductible(tvaDeductibleTotal);
+
+        BigDecimal diff = tvaCollectee.subtract(tvaDeductibleTotal);
+        if (diff.compareTo(BigDecimal.ZERO) >= 0) {
+            dto.setTvaAPayer(diff);
+            dto.setCreditTva(BigDecimal.ZERO);
+        } else {
+            dto.setTvaAPayer(BigDecimal.ZERO);
+            dto.setCreditTva(diff.abs());
+        }
+
+        // Ventilation par taux réglementaire PCGM (20%, 14%, 10%, 7%)
+        List<VentilationTvaDTO> ventilation = new ArrayList<>();
+        ventilation.add(new VentilationTvaDTO(20, totalVentesHT, tvaCollectee, "Taux normal (Marchandises, prestations générales, honoraires)"));
+        ventilation.add(new VentilationTvaDTO(14, BigDecimal.ZERO, BigDecimal.ZERO, "Taux intermédiaire (Transport, énergie, eau)"));
+        ventilation.add(new VentilationTvaDTO(10, BigDecimal.ZERO, BigDecimal.ZERO, "Taux réduit (Hôtellerie, restauration)"));
+        ventilation.add(new VentilationTvaDTO(7, BigDecimal.ZERO, BigDecimal.ZERO, "Taux super-réduit (Produits de 1ère nécessité, fournitures scolaires)"));
+
+        dto.setVentilationParTaux(ventilation);
+        return dto;
     }
 
     // =========================================================================

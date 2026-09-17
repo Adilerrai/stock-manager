@@ -27,4 +27,8 @@ public interface LigneEcritureRepository extends JpaRepository<LigneEcriture, Lo
             @Param("tenantId") Long tenantId,
             @Param("debut") LocalDate debut,
             @Param("fin") LocalDate fin);
+
+    @Query("SELECT l.ecriture.journal.id, COUNT(DISTINCT l.ecriture.id), COALESCE(SUM(l.debit), 0), COALESCE(SUM(l.credit), 0), MAX(l.ecriture.dateEcriture) " +
+           "FROM LigneEcriture l WHERE l.pointDeVenteId = :tenantId AND l.ecriture.journal IS NOT NULL GROUP BY l.ecriture.journal.id")
+    List<Object[]> getStatsGroupesParJournal(@Param("tenantId") Long tenantId);
 }

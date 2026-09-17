@@ -27,4 +27,6 @@ public interface EcritureComptableRepository extends JpaRepository<EcritureCompt
 
     @Query("SELECT COUNT(e) FROM EcritureComptable e WHERE e.pointDeVenteId = :tenantId AND e.numeroPiece LIKE :prefix%")
     Long countByPrefixAndTenant(@Param("prefix") String prefix, @Param("tenantId") Long tenantId);
+
+    long countByPointDeVenteIdAndJournal(Long pointDeVenteId, JournalComptable journal);
 }

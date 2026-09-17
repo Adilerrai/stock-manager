@@ -48,10 +48,35 @@ public class ComptabiliteController {
         return ResponseEntity.ok(comptabiliteService.getJournaux());
     }
 
+    @GetMapping("/journaux/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<JournalComptableDTO> getJournalById(@PathVariable Long id) {
+        return ResponseEntity.ok(comptabiliteService.getJournalById(id));
+    }
+
     @PostMapping("/journaux")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
     public ResponseEntity<JournalComptableDTO> creerJournal(@RequestBody JournalComptableDTO dto) {
         return new ResponseEntity<>(comptabiliteService.creerJournal(dto), HttpStatus.CREATED);
+    }
+
+    @PutMapping("/journaux/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    public ResponseEntity<JournalComptableDTO> modifierJournal(@PathVariable Long id, @RequestBody JournalComptableDTO dto) {
+        return ResponseEntity.ok(comptabiliteService.modifierJournal(id, dto));
+    }
+
+    @PatchMapping("/journaux/{id}/toggle-actif")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    public ResponseEntity<JournalComptableDTO> toggleActifJournal(@PathVariable Long id) {
+        return ResponseEntity.ok(comptabiliteService.toggleActifJournal(id));
+    }
+
+    @DeleteMapping("/journaux/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    public ResponseEntity<Void> supprimerJournal(@PathVariable Long id) {
+        comptabiliteService.supprimerJournal(id);
+        return ResponseEntity.noContent().build();
     }
 
     // =========================================================================
