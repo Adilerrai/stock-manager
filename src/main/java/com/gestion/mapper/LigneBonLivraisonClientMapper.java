@@ -10,7 +10,7 @@ public interface LigneBonLivraisonClientMapper {
 
     @Mapping(target = "produitId", source = "produit.id")
     @Mapping(target = "produitReference", source = "produit.reference")
-    @Mapping(target = "produitDesignation", source = "produit.nom")
+    @Mapping(target = "produitDesignation", source = "produit.designation")
     @Mapping(target = "depotId", source = "depot.id")
     @Mapping(target = "depotNom", source = "depot.nom")
     @Mapping(target = "lotId", source = "lot.id")

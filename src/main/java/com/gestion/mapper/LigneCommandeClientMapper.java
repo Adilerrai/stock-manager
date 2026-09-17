@@ -9,6 +9,7 @@ import org.mapstruct.Mapping;
 public interface LigneCommandeClientMapper {
 
     @Mapping(target = "produitId", source = "produit.id")
+    @Mapping(target = "produitNom", source = "produit.designation")
     @Mapping(target = "produitReference", source = "produit.reference")
     LigneCommandeClientDTO toDto(LigneCommandeClient ligneCommandeClient);
 

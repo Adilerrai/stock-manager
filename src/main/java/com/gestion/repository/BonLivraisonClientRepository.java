@@ -18,5 +18,6 @@ public interface BonLivraisonClientRepository extends JpaRepository<BonLivraison
     List<BonLivraisonClient> findByClientIdAndFactureIsNullAndPointDeVenteId(Long clientId, Long pointDeVenteId);
     List<BonLivraisonClient> findByFactureIsNullAndPointDeVenteId(Long pointDeVenteId);
     List<BonLivraisonClient> findByFactureId(Long factureId);
+    boolean existsByNumeroBl(String numeroBl);
 }
 
