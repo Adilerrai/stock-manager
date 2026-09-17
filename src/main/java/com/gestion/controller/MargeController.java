@@ -9,7 +9,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 @RestController
@@ -37,9 +36,7 @@ public class MargeController {
     public ResponseEntity<List<LigneMargeDTO>> getMargesParProduit(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
-        if (dateDebut == null) dateDebut = LocalDate.now().withDayOfMonth(1);
-        if (dateFin == null) dateFin = LocalDate.now();
-        List<LigneMargeDTO> list = margeService.calculerMargeParProduit(dateDebut.atStartOfDay(), dateFin.atTime(LocalTime.MAX));
+        List<LigneMargeDTO> list = margeService.calculerMargeParProduit(dateDebut, dateFin);
         return ResponseEntity.ok(list);
     }
 
@@ -48,9 +45,7 @@ public class MargeController {
     public ResponseEntity<List<LigneMargeDTO>> getMargesParCategorie(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
-        if (dateDebut == null) dateDebut = LocalDate.now().withDayOfMonth(1);
-        if (dateFin == null) dateFin = LocalDate.now();
-        List<LigneMargeDTO> list = margeService.calculerMargeParCategorie(dateDebut.atStartOfDay(), dateFin.atTime(LocalTime.MAX));
+        List<LigneMargeDTO> list = margeService.calculerMargeParCategorie(dateDebut, dateFin);
         return ResponseEntity.ok(list);
     }
 
@@ -59,9 +54,7 @@ public class MargeController {
     public ResponseEntity<List<LigneMargeDTO>> getMargesParClient(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
-        if (dateDebut == null) dateDebut = LocalDate.now().withDayOfMonth(1);
-        if (dateFin == null) dateFin = LocalDate.now();
-        List<LigneMargeDTO> list = margeService.calculerMargeParClient(dateDebut.atStartOfDay(), dateFin.atTime(LocalTime.MAX));
+        List<LigneMargeDTO> list = margeService.calculerMargeParClient(dateDebut, dateFin);
         return ResponseEntity.ok(list);
     }
 }

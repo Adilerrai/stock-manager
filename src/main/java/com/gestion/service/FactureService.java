@@ -1,8 +1,10 @@
 package com.gestion.service;
 
+import com.acommon.exception.CommonException;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import com.gestion.mapper.BonLivraisonClientMapper;
 import com.gestion.mapper.FactureMapper;
 import com.gestion.persistent.dto.BonLivraisonClientDTO;
@@ -253,18 +255,35 @@ public class FactureService {
 
     public FactureDTO annulerFacture(Long factureId, String motif, Long userId) {
         Facture facture = factureRepository.findById(factureId)
-                .orElseThrow(() -> new RuntimeException("Facture non trouvée"));
+                .orElseThrow(() -> new CommonException("Facture non trouvée avec l'id: " + factureId, HttpStatus.NOT_FOUND));
 
-        if (facture.getAnnulee()) {
-            throw new RuntimeException("Cette facture est déjà annulée");
+        if (Boolean.TRUE.equals(facture.getAnnulee()) || facture.getStatut() == StatutFacture.ANNULEE) {
+            throw new CommonException("Cette facture est déjà annulée.", HttpStatus.BAD_REQUEST);
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        // RÈGLE : Impossible d'annuler une facture encaissée totalement ou partiellement
+        boolean hasMontantPaye = facture.getMontantPaye() != null && facture.getMontantPaye().compareTo(BigDecimal.ZERO) > 0;
+        boolean isStatutPayee = facture.getStatut() == StatutFacture.PAYEE_PARTIELLEMENT || facture.getStatut() == StatutFacture.PAYEE_TOTALEMENT;
+        boolean hasPaiements = facture.getPaiements() != null && facture.getPaiements().stream()
+                .anyMatch(p -> !Boolean.TRUE.equals(p.getAnnule()));
+
+        if (hasMontantPaye || isStatutPayee || hasPaiements) {
+            BigDecimal montant = facture.getMontantPaye() != null ? facture.getMontantPaye() : BigDecimal.ZERO;
+            throw new CommonException("Impossible d'annuler une facture déjà encaissée totalement ou partiellement (" + 
+                    montant + " MAD déjà encaissés). Veuillez d'abord annuler ou supprimer les règlements associés.", HttpStatus.BAD_REQUEST);
+        }
+
+        User user = null;
+        if (userId != null) {
+            user = userRepository.findById(userId).orElse(null);
+        }
+        if (user == null) {
+            user = userRepository.findAll().stream().findFirst().orElse(null);
+        }
 
         facture.setAnnulee(true);
         facture.setDateAnnulation(LocalDateTime.now());
-        facture.setMotifAnnulation(motif);
+        facture.setMotifAnnulation(motif != null ? motif : "Annulation");
         facture.setAnnuleePar(user);
         facture.setStatut(StatutFacture.ANNULEE);
 

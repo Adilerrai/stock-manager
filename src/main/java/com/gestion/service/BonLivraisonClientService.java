@@ -199,9 +199,11 @@ public class BonLivraisonClientService {
             throw new CommonException("Ce bon de livraison est déjà annulé", HttpStatus.BAD_REQUEST);
         }
 
-        if (bl.getFacture() != null) {
-            throw new CommonException("Impossible d'annuler un bon de livraison déjà facturé (Facture N° " + 
-                    bl.getFacture().getNumeroFacture() + ")", HttpStatus.BAD_REQUEST);
+        if (bl.getFacture() != null || Boolean.TRUE.equals(bl.isFacture())) {
+            String numFacture = bl.getFacture() != null && bl.getFacture().getNumeroFacture() != null
+                    ? " (Facture N° " + bl.getFacture().getNumeroFacture() + ")"
+                    : "";
+            throw new CommonException("Impossible d'annuler un bon de livraison déjà facturé" + numFacture + ". Vous devez d'abord annuler la facture correspondante.", HttpStatus.BAD_REQUEST);
         }
 
         // Si le bon était déjà expédié / validé, on réintègre la marchandise dans le stock
