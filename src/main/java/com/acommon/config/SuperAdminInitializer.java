@@ -49,11 +49,8 @@ public class SuperAdminInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-<<<<<<< HEAD
         cleanupConstraints();
-=======
         ensureMultiTenantColumnsExist();
->>>>>>> 50a542f6e224bb41d7b80024f982a5c49acd044f
         syncSequences();
         initRoles();
         initHabilitations();
@@ -63,14 +60,15 @@ public class SuperAdminInitializer implements CommandLineRunner {
         initBanques();
     }
 
-<<<<<<< HEAD
     private void cleanupConstraints() {
         try {
             jdbcTemplate.execute("ALTER TABLE IF EXISTS lignes_livraison DROP CONSTRAINT IF EXISTS uk_bgip3ymlrc9lga65p5dy9jfbr");
             log.info("Nettoyage contrainte uk_bgip3ymlrc9lga65p5dy9jfbr sur lignes_livraison reussi.");
         } catch (Exception e) {
             log.warn("Erreur nettoyage contrainte lignes_livraison: {}", e.getMessage());
-=======
+        }
+    }
+
     private void ensureMultiTenantColumnsExist() {
         try {
             jdbcTemplate.execute("ALTER TABLE commandes_client ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;");
@@ -80,7 +78,6 @@ public class SuperAdminInitializer implements CommandLineRunner {
             log.info("🛡️ Colonnes multi-tenant vérifiées/créées en base avec succès.");
         } catch (Exception e) {
             log.warn("Vérification colonnes multi-tenant : {}", e.getMessage());
->>>>>>> 50a542f6e224bb41d7b80024f982a5c49acd044f
         }
     }
 
