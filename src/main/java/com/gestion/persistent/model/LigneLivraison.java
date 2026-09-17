@@ -22,7 +22,8 @@ public class LigneLivraison {
 
     private Long quantiteLivree;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "produit_id", nullable = false)
     private Produit produit;
 
     private BigDecimal prixProduit;
