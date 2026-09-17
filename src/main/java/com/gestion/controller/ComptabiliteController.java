@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/comptabilite")
@@ -151,5 +152,56 @@ public class ComptabiliteController {
                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/csv; charset=UTF-8")
                 .body(csvBytes);
+    }
+
+    // =========================================================================
+    // LETTRAGE COMPTABLE
+    // =========================================================================
+
+    @GetMapping("/lettrage/lignes-ouvertes")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<List<LigneLettrageDTO>> getLignesNonLettrees(
+            @RequestParam(required = false, defaultValue = "3421") String prefixCompte,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
+        return ResponseEntity.ok(comptabiliteService.getLignesNonLettrees(prefixCompte, dateDebut, dateFin));
+    }
+
+    @GetMapping("/lettrage/lignes-lettrees")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<List<LigneLettrageDTO>> getLignesLettrees(
+            @RequestParam(required = false, defaultValue = "3421") String prefixCompte) {
+        return ResponseEntity.ok(comptabiliteService.getLignesLettrees(prefixCompte));
+    }
+
+    @PostMapping("/lettrage/valider")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    public ResponseEntity<Map<String, String>> validerLettrage(@RequestBody LettrageValidationRequest request) {
+        String code = comptabiliteService.validerLettrage(request.getLigneIds());
+        return ResponseEntity.ok(Map.of("codeLettrage", code, "message", "Lettrage effectué avec succès"));
+    }
+
+    @PostMapping("/lettrage/annuler")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    public ResponseEntity<Map<String, String>> annulerLettrage(@RequestParam String codeLettrage) {
+        comptabiliteService.annulerLettrage(codeLettrage);
+        return ResponseEntity.ok(Map.of("message", "Lettrage " + codeLettrage + " annulé"));
+    }
+
+    @PostMapping("/lettrage/auto")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    public ResponseEntity<Map<String, Object>> autoLettrage(@RequestParam(required = false, defaultValue = "3421") String prefixCompte) {
+        return ResponseEntity.ok(comptabiliteService.autoLettrage(prefixCompte));
+    }
+
+    // =========================================================================
+    // BILAN OFFICIEL PCGM (ACTIF / PASSIF)
+    // =========================================================================
+
+    @GetMapping("/bilan-officiel")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<BilanOfficielDTO> getBilanOfficiel(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateArrete) {
+        return ResponseEntity.ok(comptabiliteService.getBilanOfficiel(dateArrete));
     }
 }

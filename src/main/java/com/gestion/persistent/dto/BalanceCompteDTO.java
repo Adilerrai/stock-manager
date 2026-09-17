@@ -51,4 +51,10 @@ public class BalanceCompteDTO {
 
     public BigDecimal getSoldeCrediteur() { return soldeCrediteur; }
     public void setSoldeCrediteur(BigDecimal soldeCrediteur) { this.soldeCrediteur = soldeCrediteur; }
+
+    public BigDecimal getCumulDebit() { return totalDebit; }
+    public void setCumulDebit(BigDecimal cumulDebit) { this.totalDebit = cumulDebit; }
+
+    public BigDecimal getCumulCredit() { return totalCredit; }
+    public void setCumulCredit(BigDecimal cumulCredit) { this.totalCredit = cumulCredit; }
 }

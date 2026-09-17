@@ -22,4 +22,10 @@ public interface MouvementTresorerieRepository extends JpaRepository<MouvementTr
     List<MouvementTresorerie> findByCompteAndPeriode(@Param("compteId") Long compteId,
                                                      @Param("debut") LocalDateTime debut,
                                                      @Param("fin") LocalDateTime fin);
+
+    @Query("SELECT m FROM MouvementTresorerie m WHERE (m.compteSource.id = :compteId OR m.compteDestination.id = :compteId) " +
+           "AND m.pointDeVenteId = :pointDeVenteId ORDER BY m.dateMouvement DESC")
+    List<MouvementTresorerie> findByCompteIdAndPointDeVenteIdOrderByDateMouvementDesc(
+            @Param("compteId") Long compteId,
+            @Param("pointDeVenteId") Long pointDeVenteId);
 }

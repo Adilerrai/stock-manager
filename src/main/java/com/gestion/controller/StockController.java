@@ -99,6 +99,48 @@ public class StockController {
 
 
 
+    // =========================================================================
+    // ENDPOINTS GESTION DU STOCK DIRECT (SANS QUALITÉ)
+    // =========================================================================
+
+    @PostMapping("/ajouter")
+    public ResponseEntity<StockDTO> ajouterStock(
+            @RequestParam Long produitId,
+            @RequestParam BigDecimal quantite) {
+        Stock stock = stockService.ajouterStock(produitId, quantite);
+        return ResponseEntity.ok(stockMapper.toDto(stock));
+    }
+
+    @PostMapping("/retirer")
+    public ResponseEntity<StockDTO> retirerStock(
+            @RequestParam Long produitId,
+            @RequestParam BigDecimal quantite) {
+        Stock stock = stockService.retirerStock(produitId, quantite);
+        return ResponseEntity.ok(stockMapper.toDto(stock));
+    }
+
+    @PostMapping("/reserver")
+    public ResponseEntity<Boolean> reserverStock(
+            @RequestParam Long produitId,
+            @RequestParam BigDecimal quantite) {
+        boolean success = stockService.reserverStock(produitId, quantite);
+        return ResponseEntity.ok(success);
+    }
+
+    @PostMapping("/liberer")
+    public ResponseEntity<Boolean> libererStock(
+            @RequestParam Long produitId,
+            @RequestParam BigDecimal quantite) {
+        boolean success = stockService.libererStock(produitId, quantite);
+        return ResponseEntity.ok(success);
+    }
+
+    @GetMapping("/produit/{produitId}")
+    public ResponseEntity<StockDTO> getStockByProduit(@PathVariable Long produitId) {
+        Stock stock = stockService.getStockByProduit(produitId);
+        return ResponseEntity.ok(stockMapper.toDto(stock));
+    }
+
     @GetMapping
     public ResponseEntity<List<StockDTO>> getAllStocks() {
         List<Stock> stocks = stockService.getAllStocks();

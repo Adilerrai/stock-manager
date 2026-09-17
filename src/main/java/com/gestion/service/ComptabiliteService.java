@@ -8,6 +8,7 @@ import com.gestion.persistent.enums.TypeJournal;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.CompteComptableRepository;
 import com.gestion.repository.EcritureComptableRepository;
+import com.gestion.repository.ExerciceComptableRepository;
 import com.gestion.repository.JournalComptableRepository;
 import com.gestion.repository.LigneEcritureRepository;
 import org.springframework.stereotype.Service;
@@ -28,15 +29,18 @@ public class ComptabiliteService {
     private final JournalComptableRepository journalRepository;
     private final EcritureComptableRepository ecritureRepository;
     private final LigneEcritureRepository ligneRepository;
+    private final ExerciceComptableRepository exerciceRepository;
 
     public ComptabiliteService(CompteComptableRepository compteRepository,
                                JournalComptableRepository journalRepository,
                                EcritureComptableRepository ecritureRepository,
-                               LigneEcritureRepository ligneRepository) {
+                               LigneEcritureRepository ligneRepository,
+                               ExerciceComptableRepository exerciceRepository) {
         this.compteRepository = compteRepository;
         this.journalRepository = journalRepository;
         this.ecritureRepository = ecritureRepository;
         this.ligneRepository = ligneRepository;
+        this.exerciceRepository = exerciceRepository;
     }
 
     private Long getTenantId() {
@@ -351,10 +355,15 @@ public class ComptabiliteService {
                 .orElseThrow(() -> new IllegalArgumentException("Journal introuvable code: " + dto.getJournalCode()));
         }
 
+        LocalDate dateEcr = dto.getDateEcriture() != null ? dto.getDateEcriture() : LocalDate.now();
+        if (exerciceRepository.isDateInExerciceCloture(dateEcr, tenantId)) {
+            throw new IllegalStateException("Impossible d'enregistrer l'écriture : l'exercice comptable pour le " + dateEcr + " est définitivement clôturé.");
+        }
+
         EcritureComptable ecriture = new EcritureComptable();
         ecriture.setJournal(journal);
-        ecriture.setDateEcriture(dto.getDateEcriture() != null ? dto.getDateEcriture() : LocalDate.now());
-        ecriture.setLibelle(dto.getLibelle() != null ? dto.getLibelle() : "Écriture du " + ecriture.getDateEcriture());
+        ecriture.setDateEcriture(dateEcr);
+        ecriture.setLibelle(dto.getLibelle() != null ? dto.getLibelle() : "Écriture du " + dateEcr);
         ecriture.setReferencePiece(dto.getReferencePiece());
         ecriture.setPointDeVenteId(tenantId);
         ecriture.setValidee(Boolean.TRUE.equals(dto.getValidee()));
@@ -978,5 +987,348 @@ public class ComptabiliteService {
             }
         }
         return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    // =========================================================================
+    // LETTRAGE DES ÉCRITURES COMPTABLES
+    // =========================================================================
+
+    @Transactional(readOnly = true)
+    public List<LigneLettrageDTO> getLignesNonLettrees(String prefixCompte, LocalDate debut, LocalDate fin) {
+        Long tenantId = getTenantId();
+        String prefix = (prefixCompte != null && !prefixCompte.trim().isEmpty()) ? prefixCompte.trim() : "3421";
+        LocalDate dDebut = debut != null ? debut : LocalDate.of(2000, 1, 1);
+        LocalDate dFin = fin != null ? fin : LocalDate.now().plusYears(1);
+
+        List<LigneEcriture> lignes = ligneRepository.findLignesNonLettrees(tenantId, prefix, dDebut, dFin);
+        return lignes.stream().map(this::toLigneLettrageDto).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<LigneLettrageDTO> getLignesLettrees(String prefixCompte) {
+        Long tenantId = getTenantId();
+        String prefix = (prefixCompte != null && !prefixCompte.trim().isEmpty()) ? prefixCompte.trim() : "3421";
+        List<LigneEcriture> lignes = ligneRepository.findLignesLettrees(tenantId, prefix);
+        return lignes.stream().map(this::toLigneLettrageDto).collect(Collectors.toList());
+    }
+
+    public String validerLettrage(List<Long> ligneIds) {
+        Long tenantId = getTenantId();
+        if (ligneIds == null || ligneIds.size() < 2) {
+            throw new IllegalArgumentException("Le lettrage requiert au moins 2 lignes d'écritures (une facture et un règlement/avoir).");
+        }
+
+        List<LigneEcriture> lignes = ligneRepository.findAllById(ligneIds);
+        if (lignes.size() != ligneIds.size()) {
+            throw new IllegalArgumentException("Certaines lignes d'écritures sont introuvables.");
+        }
+
+        BigDecimal sumDebit = BigDecimal.ZERO;
+        BigDecimal sumCredit = BigDecimal.ZERO;
+
+        for (LigneEcriture l : lignes) {
+            if (!tenantId.equals(l.getPointDeVenteId())) {
+                throw new IllegalStateException("Ligne non autorisée pour ce tenant : " + l.getId());
+            }
+            if (l.getLettrage() != null && !l.getLettrage().trim().isEmpty()) {
+                throw new IllegalStateException("La ligne #" + l.getId() + " est déjà lettrée avec le code : " + l.getLettrage());
+            }
+            sumDebit = sumDebit.add(l.getDebit() != null ? l.getDebit() : BigDecimal.ZERO);
+            sumCredit = sumCredit.add(l.getCredit() != null ? l.getCredit() : BigDecimal.ZERO);
+        }
+
+        if (sumDebit.subtract(sumCredit).abs().compareTo(new BigDecimal("0.05")) > 0) {
+            throw new IllegalStateException(String.format(
+                "Déséquilibre de lettrage ! Total Débit = %s, Total Crédit = %s (Écart = %s MAD). Les montants doivent s'équilibrer exactement.",
+                sumDebit, sumCredit, sumDebit.subtract(sumCredit)
+            ));
+        }
+
+        String nouveauCode = genererCodeLettrageSuivant(tenantId);
+        for (LigneEcriture l : lignes) {
+            l.setLettrage(nouveauCode);
+        }
+        ligneRepository.saveAll(lignes);
+        return nouveauCode;
+    }
+
+    public void annulerLettrage(String codeLettrage) {
+        Long tenantId = getTenantId();
+        if (codeLettrage == null || codeLettrage.trim().isEmpty()) {
+            throw new IllegalArgumentException("Code de lettrage manquant");
+        }
+        List<LigneEcriture> lignes = ligneRepository.findByLettrageAndPointDeVenteId(codeLettrage.trim().toUpperCase(), tenantId);
+        for (LigneEcriture l : lignes) {
+            l.setLettrage(null);
+        }
+        ligneRepository.saveAll(lignes);
+    }
+
+    public Map<String, Object> autoLettrage(String prefixCompte) {
+        Long tenantId = getTenantId();
+        String prefix = (prefixCompte != null && !prefixCompte.trim().isEmpty()) ? prefixCompte.trim() : "3421";
+        List<LigneEcriture> nonLettrees = ligneRepository.findLignesNonLettrees(tenantId, prefix, LocalDate.of(2000, 1, 1), LocalDate.now().plusYears(1));
+
+        List<LigneEcriture> debits = nonLettrees.stream().filter(l -> l.getDebit().compareTo(BigDecimal.ZERO) > 0).collect(Collectors.toList());
+        List<LigneEcriture> credits = nonLettrees.stream().filter(l -> l.getCredit().compareTo(BigDecimal.ZERO) > 0).collect(Collectors.toList());
+
+        int countLettrees = 0;
+        Set<Long> creditsUtilises = new HashSet<>();
+
+        for (LigneEcriture deb : debits) {
+            for (LigneEcriture cred : credits) {
+                if (creditsUtilises.contains(cred.getId())) continue;
+
+                if (deb.getDebit().compareTo(cred.getCredit()) == 0) {
+                    boolean samePiece = deb.getReferenceLigne() != null && cred.getReferenceLigne() != null &&
+                            deb.getReferenceLigne().equalsIgnoreCase(cred.getReferenceLigne());
+                    boolean sameCompte = deb.getCompte() != null && cred.getCompte() != null &&
+                            deb.getCompte().getId().equals(cred.getCompte().getId());
+
+                    if (sameCompte || samePiece) {
+                        String code = genererCodeLettrageSuivant(tenantId);
+                        deb.setLettrage(code);
+                        cred.setLettrage(code);
+                        ligneRepository.save(deb);
+                        ligneRepository.save(cred);
+                        creditsUtilises.add(cred.getId());
+                        countLettrees += 2;
+                        break;
+                    }
+                }
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("lignesLettrees", countLettrees);
+        result.put("codesAttribues", countLettrees / 2);
+        return result;
+    }
+
+    private String genererCodeLettrageSuivant(Long tenantId) {
+        String dernier = ligneRepository.findDernierLettrage(tenantId);
+        if (dernier == null || dernier.trim().isEmpty() || !dernier.matches("^[A-Z]+$")) {
+            return "AA";
+        }
+        dernier = dernier.trim();
+        char[] chars = dernier.toCharArray();
+        int i = chars.length - 1;
+        while (i >= 0) {
+            if (chars[i] < 'Z') {
+                chars[i]++;
+                return new String(chars);
+            } else {
+                chars[i] = 'A';
+                i--;
+            }
+        }
+        return "A" + new String(chars);
+    }
+
+    private LigneLettrageDTO toLigneLettrageDto(LigneEcriture l) {
+        LigneLettrageDTO dto = new LigneLettrageDTO();
+        dto.setId(l.getId());
+        if (l.getEcriture() != null) {
+            dto.setEcritureId(l.getEcriture().getId());
+            dto.setNumeroPiece(l.getEcriture().getNumeroPiece());
+            dto.setDateEcriture(l.getEcriture().getDateEcriture());
+            if (l.getEcriture().getJournal() != null) {
+                dto.setJournalCode(l.getEcriture().getJournal().getCode());
+            }
+        }
+        if (l.getCompte() != null) {
+            dto.setNumeroCompte(l.getCompte().getNumeroCompte());
+            dto.setLibelleCompte(l.getCompte().getLibelle());
+        }
+        dto.setLibelleLigne(l.getLibelleLigne());
+        dto.setDebit(l.getDebit());
+        dto.setCredit(l.getCredit());
+        dto.setLettrage(l.getLettrage());
+        return dto;
+    }
+
+    // =========================================================================
+    // BILAN OFFICIEL PCGM (ACTIF / PASSIF)
+    // =========================================================================
+
+    @Transactional(readOnly = true)
+    public BilanOfficielDTO getBilanOfficiel(LocalDate dateArrete) {
+        Long tenantId = getTenantId();
+        LocalDate date = (dateArrete != null) ? dateArrete : LocalDate.now();
+
+        List<BalanceCompteDTO> balance = getBalance(LocalDate.of(1900, 1, 1), date);
+
+        BilanOfficielDTO dto = new BilanOfficielDTO();
+        dto.setDateArrete(date);
+        dto.setTenantId(tenantId);
+
+        java.util.function.Function<String, BigDecimal> soldeDebiteur = prefix -> balance.stream()
+                .filter(b -> b.getNumeroCompte().startsWith(prefix))
+                .map(b -> {
+                    BigDecimal d = b.getCumulDebit() != null ? b.getCumulDebit() : BigDecimal.ZERO;
+                    BigDecimal c = b.getCumulCredit() != null ? b.getCumulCredit() : BigDecimal.ZERO;
+                    return d.subtract(c);
+                })
+                .filter(s -> s.compareTo(BigDecimal.ZERO) > 0)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        java.util.function.Function<String, BigDecimal> soldeCrediteur = prefix -> balance.stream()
+                .filter(b -> b.getNumeroCompte().startsWith(prefix))
+                .map(b -> {
+                    BigDecimal d = b.getCumulDebit() != null ? b.getCumulDebit() : BigDecimal.ZERO;
+                    BigDecimal c = b.getCumulCredit() != null ? b.getCumulCredit() : BigDecimal.ZERO;
+                    return c.subtract(d);
+                })
+                .filter(s -> s.compareTo(BigDecimal.ZERO) > 0)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // I. ACTIF IMMOBILISÉ
+        BigDecimal brutNonVal = soldeDebiteur.apply("21");
+        BigDecimal amortNonVal = soldeCrediteur.apply("281");
+        dto.getActifImmobilise().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("21", "Immobilisation en non-valeurs", brutNonVal, amortNonVal, brutNonVal.subtract(amortNonVal)));
+
+        BigDecimal brutIncorp = soldeDebiteur.apply("22");
+        BigDecimal amortIncorp = soldeCrediteur.apply("282");
+        dto.getActifImmobilise().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("22", "Immobilisations incorporelles", brutIncorp, amortIncorp, brutIncorp.subtract(amortIncorp)));
+
+        BigDecimal brutCorp = soldeDebiteur.apply("23");
+        BigDecimal amortCorp = soldeCrediteur.apply("283");
+        dto.getActifImmobilise().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("23", "Immobilisations corporelles", brutCorp, amortCorp, brutCorp.subtract(amortCorp)));
+
+        BigDecimal brutFin = soldeDebiteur.apply("24").add(soldeDebiteur.apply("25"));
+        BigDecimal provFin = soldeCrediteur.apply("294").add(soldeCrediteur.apply("295"));
+        dto.getActifImmobilise().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("24/25", "Immobilisations financières", brutFin, provFin, brutFin.subtract(provFin)));
+
+        BigDecimal ecartActifImmo = soldeDebiteur.apply("27");
+        dto.getActifImmobilise().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("27", "Écarts de conversion - Actif (durables)", ecartActifImmo, BigDecimal.ZERO, ecartActifImmo));
+
+        BigDecimal totalActifImmoBrut = brutNonVal.add(brutIncorp).add(brutCorp).add(brutFin).add(ecartActifImmo);
+        BigDecimal totalActifImmoAmort = amortNonVal.add(amortIncorp).add(amortCorp).add(provFin);
+        dto.getActifImmobilise().setTotalBrut(totalActifImmoBrut);
+        dto.getActifImmobilise().setTotalAmortissements(totalActifImmoAmort);
+        dto.getActifImmobilise().setTotalNet(totalActifImmoBrut.subtract(totalActifImmoAmort));
+
+        // II. ACTIF CIRCULANT (HORS TRÉSORERIE)
+        BigDecimal brutStocks = soldeDebiteur.apply("31");
+        BigDecimal provStocks = soldeCrediteur.apply("391");
+        dto.getActifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("31", "Stocks (Marchandises, matières, PF)", brutStocks, provStocks, brutStocks.subtract(provStocks)));
+
+        BigDecimal brutCreances = soldeDebiteur.apply("34");
+        BigDecimal provCreances = soldeCrediteur.apply("394");
+        dto.getActifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("34", "Créances de l'actif circulant (Clients, État débiteur)", brutCreances, provCreances, brutCreances.subtract(provCreances)));
+
+        BigDecimal brutTvp = soldeDebiteur.apply("35");
+        BigDecimal provTvp = soldeCrediteur.apply("395");
+        dto.getActifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("35", "Titres et valeurs de placement", brutTvp, provTvp, brutTvp.subtract(provTvp)));
+
+        BigDecimal ecartActifCirc = soldeDebiteur.apply("37");
+        dto.getActifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("37", "Écarts de conversion - Actif (circulants)", ecartActifCirc, BigDecimal.ZERO, ecartActifCirc));
+
+        BigDecimal totalActifCircBrut = brutStocks.add(brutCreances).add(brutTvp).add(ecartActifCirc);
+        BigDecimal totalActifCircAmort = provStocks.add(provCreances).add(provTvp);
+        dto.getActifCirculant().setTotalBrut(totalActifCircBrut);
+        dto.getActifCirculant().setTotalAmortissements(totalActifCircAmort);
+        dto.getActifCirculant().setTotalNet(totalActifCircBrut.subtract(totalActifCircAmort));
+
+        // III. TRÉSORERIE - ACTIF
+        BigDecimal cheques = soldeDebiteur.apply("511");
+        dto.getTresorerieActif().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("511", "Chèques et valeurs à encaisser", cheques, BigDecimal.ZERO, cheques));
+
+        BigDecimal banques = soldeDebiteur.apply("514");
+        dto.getTresorerieActif().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("514", "Banques, TG et CCP", banques, BigDecimal.ZERO, banques));
+
+        BigDecimal caisses = soldeDebiteur.apply("516");
+        dto.getTresorerieActif().getLignes().add(new BilanOfficielDTO.LigneBilanActifDTO("516", "Caisses, régies d'avances", caisses, BigDecimal.ZERO, caisses));
+
+        BigDecimal totalTresActifBrut = cheques.add(banques).add(caisses);
+        dto.getTresorerieActif().setTotalBrut(totalTresActifBrut);
+        dto.getTresorerieActif().setTotalAmortissements(BigDecimal.ZERO);
+        dto.getTresorerieActif().setTotalNet(totalTresActifBrut);
+
+        // TOTAUX ACTIF
+        dto.setTotalActifBrut(totalActifImmoBrut.add(totalActifCircBrut).add(totalTresActifBrut));
+        dto.setTotalActifAmortissements(totalActifImmoAmort.add(totalActifCircAmort));
+        dto.setTotalActifNet(dto.getActifImmobilise().getTotalNet().add(dto.getActifCirculant().getTotalNet()).add(dto.getTresorerieActif().getTotalNet()));
+
+        // ==========================================
+        // PASSIF
+        // ==========================================
+        BigDecimal capital = soldeCrediteur.apply("111");
+        dto.getFinancementPermanent().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("111", "Capital social ou personnel", capital));
+
+        BigDecimal reserves = soldeCrediteur.apply("114").add(soldeCrediteur.apply("115"));
+        dto.getFinancementPermanent().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("114/115", "Réserves (Légale, statutaires)", reserves));
+
+        BigDecimal reportANouveau = soldeCrediteur.apply("116").subtract(soldeDebiteur.apply("1169"));
+        dto.getFinancementPermanent().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("116", "Report à nouveau", reportANouveau));
+
+        BigDecimal produits = BigDecimal.ZERO;
+        BigDecimal charges = BigDecimal.ZERO;
+        for (BalanceCompteDTO b : balance) {
+            BigDecimal deb = b.getCumulDebit() != null ? b.getCumulDebit() : BigDecimal.ZERO;
+            BigDecimal cred = b.getCumulCredit() != null ? b.getCumulCredit() : BigDecimal.ZERO;
+            if (b.getNumeroCompte().startsWith("7")) {
+                produits = produits.add(cred.subtract(deb));
+            } else if (b.getNumeroCompte().startsWith("6")) {
+                charges = charges.add(deb.subtract(cred));
+            }
+        }
+        BigDecimal resultatNet = produits.subtract(charges);
+        dto.setResultatNetExercice(resultatNet);
+        dto.getFinancementPermanent().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("119", "Résultat net de l'exercice", resultatNet));
+
+        BigDecimal dettesFin = soldeCrediteur.apply("14");
+        dto.getFinancementPermanent().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("14", "Dettes de financement", dettesFin));
+
+        BigDecimal provDurables = soldeCrediteur.apply("15");
+        dto.getFinancementPermanent().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("15", "Provisions durables pour risques et charges", provDurables));
+
+        BigDecimal totalFinPerm = capital.add(reserves).add(reportANouveau).add(resultatNet).add(dettesFin).add(provDurables);
+        dto.getFinancementPermanent().setTotal(totalFinPerm);
+
+        // II. PASSIF CIRCULANT
+        BigDecimal fournisseurs = soldeCrediteur.apply("441");
+        dto.getPassifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("441", "Fournisseurs et comptes rattachés", fournisseurs));
+
+        BigDecimal clientsCred = soldeCrediteur.apply("442");
+        dto.getPassifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("442", "Clients créditeurs, avances et acomptes", clientsCred));
+
+        BigDecimal personnelDettes = soldeCrediteur.apply("443");
+        dto.getPassifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("443", "Personnel - rémunérations dues", personnelDettes));
+
+        BigDecimal organismesSoc = soldeCrediteur.apply("444");
+        dto.getPassifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("444", "Organismes sociaux", organismesSoc));
+
+        BigDecimal etatDettes = soldeCrediteur.apply("445");
+        dto.getPassifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("445", "État - créditeur (TVA due, IS, taxes)", etatDettes));
+
+        BigDecimal autresDettes = soldeCrediteur.apply("448");
+        dto.getPassifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("448", "Autres créanciers", autresDettes));
+
+        BigDecimal provCirc = soldeCrediteur.apply("45");
+        dto.getPassifCirculant().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("45", "Provisions pour risques et charges (circulant)", provCirc));
+
+        BigDecimal totalPassifCirc = fournisseurs.add(clientsCred).add(personnelDettes).add(organismesSoc).add(etatDettes).add(autresDettes).add(provCirc);
+        dto.getPassifCirculant().setTotal(totalPassifCirc);
+
+        // III. TRÉSORERIE - PASSIF
+        BigDecimal escomptes = soldeCrediteur.apply("552");
+        dto.getTresoreriePassif().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("552", "Crédits d'escompte", escomptes));
+
+        BigDecimal decouvert = soldeCrediteur.apply("554");
+        dto.getTresoreriePassif().getLignes().add(new BilanOfficielDTO.LigneBilanPassifDTO("554", "Crédits de trésorerie / Découverts", decouvert));
+
+        BigDecimal totalTresPassif = escomptes.add(decouvert);
+        dto.getTresoreriePassif().setTotal(totalTresPassif);
+
+        // TOTAL PASSIF
+        BigDecimal totalPassif = totalFinPerm.add(totalPassifCirc).add(totalTresPassif);
+        dto.setTotalPassif(totalPassif);
+
+        BigDecimal diff = dto.getTotalActifNet().subtract(totalPassif).abs();
+        dto.setEcartEquilibre(diff);
+        dto.setEquilibre(diff.compareTo(new BigDecimal("0.05")) <= 0);
+
+        return dto;
     }
 }
