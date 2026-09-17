@@ -1,7 +1,9 @@
 package com.acommon.config;
 
+import com.acommon.persistant.model.Habilitation;
 import com.acommon.persistant.model.Role;
 import com.acommon.persistant.model.User;
+import com.acommon.repository.HabilitationRepository;
 import com.acommon.repository.RoleRepository;
 import com.acommon.repository.UserRepository;
 import org.slf4j.Logger;
@@ -13,8 +15,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @Order(1)
@@ -26,6 +28,7 @@ public class SuperAdminInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
+    private final HabilitationRepository habilitationRepository;
     private final com.gestion.service.BanqueService banqueService;
 
     public SuperAdminInitializer(
@@ -33,11 +36,13 @@ public class SuperAdminInitializer implements CommandLineRunner {
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JdbcTemplate jdbcTemplate,
+            HabilitationRepository habilitationRepository,
             com.gestion.service.BanqueService banqueService) {
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jdbcTemplate = jdbcTemplate;
+        this.habilitationRepository = habilitationRepository;
         this.banqueService = banqueService;
     }
 
@@ -47,6 +52,8 @@ public class SuperAdminInitializer implements CommandLineRunner {
         ensureMultiTenantColumnsExist();
         syncSequences();
         initRoles();
+        initHabilitations();
+        assignHabilitationsToRoles();
         syncSequences();
         initSuperAdmin();
         initBanques();
@@ -147,5 +154,120 @@ public class SuperAdminInitializer implements CommandLineRunner {
         } else {
             log.info("✅ Compte SUPERADMIN déjà présent et prêt.");
         }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // INITIALISATION DES HABILITATIONS METIER
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private Habilitation ensureHabilitation(String nom) {
+        return habilitationRepository.findByNom(nom).orElseGet(() -> {
+            Habilitation h = new Habilitation();
+            h.setNom(nom);
+            return habilitationRepository.save(h);
+        });
+    }
+
+    private void initHabilitations() {
+        List<String> allHabilitations = Arrays.asList(
+            "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE", "PRODUIT_DELETE",
+            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
+            "VENTE_READ", "VENTE_CREATE", "VENTE_DELETE",
+            "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
+            "FACTURE_READ", "FACTURE_CREATE", "FACTURE_VALIDER", "FACTURE_ANNULER",
+            "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE", "CLIENT_DELETE",
+            "FOURNISSEUR_READ", "FOURNISSEUR_CREATE", "FOURNISSEUR_UPDATE",
+            "PAIEMENT_READ", "PAIEMENT_CREATE",
+            "COMPTA_READ", "COMPTA_ECRITURE", "COMPTA_CLOTURE",
+            "TRESORERIE_READ", "TRESORERIE_MOUVEMENT",
+            "RAPPORT_READ", "RAPPORT_EXPORT",
+            "USER_READ", "USER_CREATE", "USER_UPDATE", "USER_DELETE",
+            "ADMIN_ENTREPRISE", "ADMIN_ROLES", "ADMIN_HABILITATIONS"
+        );
+        for (String nom : allHabilitations) {
+            ensureHabilitation(nom);
+        }
+        log.info("🔑 {} habilitations metier initialisees.", allHabilitations.size());
+    }
+
+    private void assignHabilitationsToRoles() {
+        Map<String, List<String>> roleHabilitations = new LinkedHashMap<>();
+
+        roleHabilitations.put("ROLE_ADMIN", Arrays.asList(
+            "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE", "PRODUIT_DELETE",
+            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
+            "VENTE_READ", "VENTE_CREATE", "VENTE_DELETE",
+            "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
+            "FACTURE_READ", "FACTURE_CREATE", "FACTURE_VALIDER", "FACTURE_ANNULER",
+            "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE", "CLIENT_DELETE",
+            "FOURNISSEUR_READ", "FOURNISSEUR_CREATE", "FOURNISSEUR_UPDATE",
+            "PAIEMENT_READ", "PAIEMENT_CREATE",
+            "COMPTA_READ", "COMPTA_ECRITURE",
+            "TRESORERIE_READ", "TRESORERIE_MOUVEMENT",
+            "RAPPORT_READ", "RAPPORT_EXPORT",
+            "USER_READ", "USER_CREATE", "USER_UPDATE", "USER_DELETE",
+            "ADMIN_ENTREPRISE", "ADMIN_ROLES", "ADMIN_HABILITATIONS"
+        ));
+        roleHabilitations.put("ROLE_POINT_DE_VENTE_MANAGER", Arrays.asList(
+            "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE",
+            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
+            "VENTE_READ", "VENTE_CREATE",
+            "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
+            "FACTURE_READ", "FACTURE_CREATE", "FACTURE_VALIDER",
+            "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE",
+            "FOURNISSEUR_READ", "PAIEMENT_READ", "PAIEMENT_CREATE",
+            "TRESORERIE_READ", "RAPPORT_READ",
+            "USER_READ", "USER_CREATE", "USER_UPDATE"
+        ));
+        roleHabilitations.put("ROLE_COMMERCIAL", Arrays.asList(
+            "VENTE_READ", "VENTE_CREATE",
+            "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
+            "FACTURE_READ", "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE",
+            "PRODUIT_READ", "RAPPORT_READ"
+        ));
+        roleHabilitations.put("ROLE_RESPONSABLE_COMMERCIAL", Arrays.asList(
+            "VENTE_READ", "VENTE_CREATE", "VENTE_DELETE",
+            "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
+            "FACTURE_READ", "FACTURE_CREATE",
+            "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE", "CLIENT_DELETE",
+            "PRODUIT_READ", "PAIEMENT_READ", "RAPPORT_READ", "RAPPORT_EXPORT"
+        ));
+        roleHabilitations.put("ROLE_COMPTABLE", Arrays.asList(
+            "COMPTA_READ", "COMPTA_ECRITURE", "COMPTA_CLOTURE",
+            "TRESORERIE_READ", "TRESORERIE_MOUVEMENT",
+            "FACTURE_READ", "FACTURE_CREATE", "FACTURE_VALIDER", "FACTURE_ANNULER",
+            "PAIEMENT_READ", "PAIEMENT_CREATE", "RAPPORT_READ", "RAPPORT_EXPORT"
+        ));
+        roleHabilitations.put("ROLE_CAISSIER", Arrays.asList(
+            "VENTE_CREATE", "PAIEMENT_READ", "PAIEMENT_CREATE",
+            "CLIENT_READ", "FACTURE_READ"
+        ));
+        roleHabilitations.put("ROLE_VENDEUR", Arrays.asList(
+            "VENTE_READ", "VENTE_CREATE", "CLIENT_READ", "PRODUIT_READ", "FACTURE_READ"
+        ));
+        roleHabilitations.put("ROLE_MAGASINIER", Arrays.asList(
+            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
+            "PRODUIT_READ", "COMMANDE_READ", "FOURNISSEUR_READ"
+        ));
+        roleHabilitations.put("ROLE_GESTIONNAIRE", Arrays.asList(
+            "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE", "PRODUIT_DELETE",
+            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
+            "FOURNISSEUR_READ", "FOURNISSEUR_CREATE", "FOURNISSEUR_UPDATE",
+            "COMMANDE_READ", "COMMANDE_CREATE", "RAPPORT_READ"
+        ));
+
+        for (Map.Entry<String, List<String>> entry : roleHabilitations.entrySet()) {
+            roleRepository.findByNom(entry.getKey()).ifPresent(role -> {
+                if (role.getHabilitations() == null || role.getHabilitations().isEmpty()) {
+                    Set<Habilitation> habs = entry.getValue().stream()
+                            .map(this::ensureHabilitation)
+                            .collect(Collectors.toSet());
+                    role.setHabilitations(habs);
+                    roleRepository.save(role);
+                    log.info("   🛡️ {} habilitations -> {}", habs.size(), entry.getKey());
+                }
+            });
+        }
+        log.info("🛡️ Assignation des habilitations terminée.");
     }
 }

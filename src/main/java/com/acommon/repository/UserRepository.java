@@ -37,6 +37,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByRoleNom(String roleNom);
 
+    long countByRoleNom(String roleNom);
+
     default List<User> findByPointDeVenteId(Long pointDeVenteId) {
         return findByPointDeVente_Id(pointDeVenteId);
     }
