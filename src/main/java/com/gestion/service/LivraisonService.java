@@ -166,12 +166,6 @@ public class LivraisonService {
                 ligne.getPrixProduit()
             );
             
-            // FIX appel stockService
-            stockService.ajouterStockParQualite(
-                ligne.getProduit().getId(),
-                ligne.getQualiteProduit(),
-                BigDecimal.valueOf(ligne.getQuantiteLivree())
-            );
             
             // FIX appel mouvementStockService (sans depotId)
             mouvementStockService.creerMouvement(
