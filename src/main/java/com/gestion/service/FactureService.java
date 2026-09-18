@@ -245,11 +245,7 @@ public class FactureService {
 
         facture.setStatut(StatutFacture.VALIDEE);
         Facture saved = factureRepository.save(facture);
-        try {
-            comptabiliteService.genererEcritureVente(saved);
-        } catch (Exception e) {
-            // Loguer sans bloquer la validation de la facture
-        }
+        // La comptabilisation est désormais gérée manuellement via la Passerelle Comptable (découplage commercial / compta)
         return factureMapper.toDto(saved);
     }
 

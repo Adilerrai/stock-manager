@@ -104,12 +104,6 @@ public class PaiementService {
             clientService.augmenterCreditUtilise(vente.getClient().getId(), paiement.getMontant());
         }
 
-        try {
-            comptabiliteService.genererEcriturePaiementClient(paiement);
-        } catch (Exception e) {
-            // Ne pas bloquer l'encaissement en cas d'erreur de journal
-        }
-
         return paiement;
     }
 
@@ -138,12 +132,6 @@ public class PaiementService {
         // Diminuer le crédit utilisé du client
         if (facture.getClient() != null) {
             clientService.diminuerCreditUtilise(facture.getClient().getId(), paiement.getMontant());
-        }
-
-        try {
-            comptabiliteService.genererEcriturePaiementClient(paiement);
-        } catch (Exception e) {
-            // Ne pas bloquer l'encaissement en cas d'erreur de journal
         }
 
         return paiement;
@@ -344,13 +332,6 @@ public class PaiementService {
             cheque.setPointDeVenteId(tenantId);
             cheque.setDateCreation(LocalDateTime.now());
             chequeEffetRepository.save(cheque);
-        }
-
-        // 5. Génération de l'écriture comptable
-        try {
-            comptabiliteService.genererEcriturePaiementClient(paiement);
-        } catch (Exception e) {
-            // Ignorer si la compta n'est pas encore activée
         }
 
         return paiement;

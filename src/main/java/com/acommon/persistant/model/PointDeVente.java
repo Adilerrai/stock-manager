@@ -38,6 +38,15 @@ public class PointDeVente {
     @Column(name = "actif")
     private Boolean actif = true;
 
+    @Column(name = "module_commercial_actif")
+    private Boolean moduleCommercialActif = true;
+
+    @Column(name = "module_comptabilite_actif")
+    private Boolean moduleComptabiliteActif = true;
+
+    @Column(name = "module_fiscalite_actif")
+    private Boolean moduleFiscaliteActif = true;
+
     public PointDeVente() {
     }
 
@@ -139,5 +148,29 @@ public class PointDeVente {
 
     public void setActif(Boolean actif) {
         this.actif = actif;
+    }
+
+    public Boolean getModuleCommercialActif() {
+        return moduleCommercialActif != null ? moduleCommercialActif : true;
+    }
+
+    public void setModuleCommercialActif(Boolean moduleCommercialActif) {
+        this.moduleCommercialActif = moduleCommercialActif;
+    }
+
+    public Boolean getModuleComptabiliteActif() {
+        return moduleComptabiliteActif != null ? moduleComptabiliteActif : true;
+    }
+
+    public void setModuleComptabiliteActif(Boolean moduleComptabiliteActif) {
+        this.moduleComptabiliteActif = moduleComptabiliteActif;
+    }
+
+    public Boolean getModuleFiscaliteActif() {
+        return moduleFiscaliteActif != null ? moduleFiscaliteActif : true;
+    }
+
+    public void setModuleFiscaliteActif(Boolean moduleFiscaliteActif) {
+        this.moduleFiscaliteActif = moduleFiscaliteActif;
     }
 }

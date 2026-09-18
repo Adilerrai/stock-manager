@@ -76,14 +76,6 @@ public class ReglementFournisseurService {
             cheque.setDateCreation(LocalDateTime.now());
             chequeEffetRepository.save(cheque);
         }
-
-        // Génération écriture comptable
-        try {
-            comptabiliteService.genererEcritureReglementFournisseur(savedReglement);
-        } catch (Exception e) {
-            // Ne pas bloquer l'enregistrement
-        }
-
         return savedReglement;
     }
 
