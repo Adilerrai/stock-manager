@@ -43,6 +43,17 @@ public class FournisseurService {
         fournisseur.setTelephone(fournisseurDTO.getTelephone());
         fournisseur.setEmail(fournisseurDTO.getEmail());
         fournisseur.setContact(fournisseurDTO.getContact());
+        fournisseur.setIce(fournisseurDTO.getIce());
+        fournisseur.setNumeroRegistreCommerce(fournisseurDTO.getNumeroRegistreCommerce());
+        fournisseur.setNumeroIdentificationFiscale(fournisseurDTO.getNumeroIdentificationFiscale());
+        fournisseur.setPatente(fournisseurDTO.getPatente());
+        fournisseur.setRibBancaire(fournisseurDTO.getRibBancaire());
+        fournisseur.setBanqueNom(fournisseurDTO.getBanqueNom());
+        fournisseur.setDelaiPaiementJours(fournisseurDTO.getDelaiPaiementJours() != null ? fournisseurDTO.getDelaiPaiementJours() : 30);
+        fournisseur.setVille(fournisseurDTO.getVille());
+        fournisseur.setCodePostal(fournisseurDTO.getCodePostal());
+        fournisseur.setPays(fournisseurDTO.getPays() != null ? fournisseurDTO.getPays() : "Maroc");
+        fournisseur.setConditionsPaiement(fournisseurDTO.getConditionsPaiement());
         fournisseur.setActif(true);
         fournisseur.setPointDeVenteId(tenantId);
 
@@ -82,6 +93,39 @@ public class FournisseurService {
         }
         if (fournisseurDTO.getContact() != null) {
             fournisseur.setContact(fournisseurDTO.getContact());
+        }
+        if (fournisseurDTO.getIce() != null) {
+            fournisseur.setIce(fournisseurDTO.getIce());
+        }
+        if (fournisseurDTO.getNumeroRegistreCommerce() != null) {
+            fournisseur.setNumeroRegistreCommerce(fournisseurDTO.getNumeroRegistreCommerce());
+        }
+        if (fournisseurDTO.getNumeroIdentificationFiscale() != null) {
+            fournisseur.setNumeroIdentificationFiscale(fournisseurDTO.getNumeroIdentificationFiscale());
+        }
+        if (fournisseurDTO.getPatente() != null) {
+            fournisseur.setPatente(fournisseurDTO.getPatente());
+        }
+        if (fournisseurDTO.getRibBancaire() != null) {
+            fournisseur.setRibBancaire(fournisseurDTO.getRibBancaire());
+        }
+        if (fournisseurDTO.getBanqueNom() != null) {
+            fournisseur.setBanqueNom(fournisseurDTO.getBanqueNom());
+        }
+        if (fournisseurDTO.getDelaiPaiementJours() != null) {
+            fournisseur.setDelaiPaiementJours(fournisseurDTO.getDelaiPaiementJours());
+        }
+        if (fournisseurDTO.getVille() != null) {
+            fournisseur.setVille(fournisseurDTO.getVille());
+        }
+        if (fournisseurDTO.getCodePostal() != null) {
+            fournisseur.setCodePostal(fournisseurDTO.getCodePostal());
+        }
+        if (fournisseurDTO.getPays() != null) {
+            fournisseur.setPays(fournisseurDTO.getPays());
+        }
+        if (fournisseurDTO.getConditionsPaiement() != null) {
+            fournisseur.setConditionsPaiement(fournisseurDTO.getConditionsPaiement());
         }
         if (fournisseurDTO.getActif() != null) {
             fournisseur.setActif(fournisseurDTO.getActif());

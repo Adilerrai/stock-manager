@@ -19,5 +19,10 @@ public interface FactureAchatRepository extends JpaRepository<FactureAchat, Long
 
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(f.montantTtc), 0) FROM FactureAchat f WHERE f.statut != 'PAYEE_TOTALEMENT' AND f.statut != 'ANNULEE'")
     java.math.BigDecimal sumTotalDettesFournisseurs();
+
+    @org.springframework.data.jpa.repository.Query("SELECT f FROM FactureAchat f WHERE f.pointDeVenteId = :pointDeVenteId AND f.dateFacture BETWEEN :dateDebut AND :dateFin ORDER BY f.dateFacture DESC")
+    List<FactureAchat> findByPeriodeAndPointDeVenteId(@org.springframework.data.repository.query.Param("dateDebut") java.time.LocalDateTime dateDebut,
+                                                      @org.springframework.data.repository.query.Param("dateFin") java.time.LocalDateTime dateFin,
+                                                      @org.springframework.data.repository.query.Param("pointDeVenteId") Long pointDeVenteId);
 }
 

@@ -20,6 +20,39 @@ public class Fournisseur {
     private String email;
     private String contact;
 
+    @Column(name = "ice")
+    private String ice;
+
+    @Column(name = "numero_registre_commerce")
+    private String numeroRegistreCommerce;
+
+    @Column(name = "numero_identification_fiscale")
+    private String numeroIdentificationFiscale;
+
+    @Column(name = "patente")
+    private String patente;
+
+    @Column(name = "rib_bancaire")
+    private String ribBancaire;
+
+    @Column(name = "banque_nom")
+    private String banqueNom;
+
+    @Column(name = "delai_paiement_jours")
+    private Integer delaiPaiementJours = 30;
+
+    @Column(name = "ville")
+    private String ville;
+
+    @Column(name = "code_postal")
+    private String codePostal;
+
+    @Column(name = "pays")
+    private String pays = "Maroc";
+
+    @Column(name = "conditions_paiement")
+    private String conditionsPaiement;
+
     @Column(name = "actif")
     private Boolean actif = true;
 
@@ -72,6 +105,39 @@ public class Fournisseur {
 
     public String getContact() { return contact; }
     public void setContact(String contact) { this.contact = contact; }
+
+    public String getIce() { return ice; }
+    public void setIce(String ice) { this.ice = ice; }
+
+    public String getNumeroRegistreCommerce() { return numeroRegistreCommerce; }
+    public void setNumeroRegistreCommerce(String numeroRegistreCommerce) { this.numeroRegistreCommerce = numeroRegistreCommerce; }
+
+    public String getNumeroIdentificationFiscale() { return numeroIdentificationFiscale; }
+    public void setNumeroIdentificationFiscale(String numeroIdentificationFiscale) { this.numeroIdentificationFiscale = numeroIdentificationFiscale; }
+
+    public String getPatente() { return patente; }
+    public void setPatente(String patente) { this.patente = patente; }
+
+    public String getRibBancaire() { return ribBancaire; }
+    public void setRibBancaire(String ribBancaire) { this.ribBancaire = ribBancaire; }
+
+    public String getBanqueNom() { return banqueNom; }
+    public void setBanqueNom(String banqueNom) { this.banqueNom = banqueNom; }
+
+    public Integer getDelaiPaiementJours() { return delaiPaiementJours; }
+    public void setDelaiPaiementJours(Integer delaiPaiementJours) { this.delaiPaiementJours = delaiPaiementJours; }
+
+    public String getVille() { return ville; }
+    public void setVille(String ville) { this.ville = ville; }
+
+    public String getCodePostal() { return codePostal; }
+    public void setCodePostal(String codePostal) { this.codePostal = codePostal; }
+
+    public String getPays() { return pays; }
+    public void setPays(String pays) { this.pays = pays; }
+
+    public String getConditionsPaiement() { return conditionsPaiement; }
+    public void setConditionsPaiement(String conditionsPaiement) { this.conditionsPaiement = conditionsPaiement; }
 
     public LocalDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }

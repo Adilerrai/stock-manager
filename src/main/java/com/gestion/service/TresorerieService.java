@@ -6,6 +6,7 @@ import com.gestion.persistent.dto.EcheancierDTO;
 import com.gestion.persistent.dto.ReleveClientDTO;
 import com.gestion.persistent.enums.ModePaiement;
 import com.gestion.persistent.enums.StatutAvoir;
+import com.gestion.persistent.enums.StatutFacture;
 import com.gestion.persistent.enums.StatutRemise;
 import com.gestion.persistent.enums.TypeAvoir;
 import com.gestion.persistent.model.*;
@@ -20,6 +21,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import com.gestion.persistent.dto.ReleveFournisseurDTO;
+
 @Service
 @Transactional
 public class TresorerieService {
@@ -29,6 +32,7 @@ public class TresorerieService {
     private final FactureRepository factureRepository;
     private final FactureAchatRepository factureAchatRepository;
     private final PaiementRepository paiementRepository;
+    private final ReglementFournisseurRepository reglementFournisseurRepository;
     private final AvoirRepository avoirRepository;
     private final BordereauRemiseRepository bordereauRemiseRepository;
 
@@ -37,6 +41,7 @@ public class TresorerieService {
                              FactureRepository factureRepository,
                              FactureAchatRepository factureAchatRepository,
                              PaiementRepository paiementRepository,
+                             ReglementFournisseurRepository reglementFournisseurRepository,
                              AvoirRepository avoirRepository,
                              BordereauRemiseRepository bordereauRemiseRepository) {
         this.clientRepository = clientRepository;
@@ -44,8 +49,89 @@ public class TresorerieService {
         this.factureRepository = factureRepository;
         this.factureAchatRepository = factureAchatRepository;
         this.paiementRepository = paiementRepository;
+        this.reglementFournisseurRepository = reglementFournisseurRepository;
         this.avoirRepository = avoirRepository;
         this.bordereauRemiseRepository = bordereauRemiseRepository;
+    }
+
+    public ReleveFournisseurDTO genererReleveFournisseur(Long fournisseurId, LocalDate dateDebut, LocalDate dateFin) {
+        Fournisseur fournisseur = fournisseurRepository.findById(fournisseurId)
+                .orElseThrow(() -> new RuntimeException("Fournisseur non trouvé: " + fournisseurId));
+
+        ReleveFournisseurDTO releve = new ReleveFournisseurDTO();
+        releve.setFournisseurId(fournisseur.getId());
+        releve.setFournisseurNom(fournisseur.getRaisonSociale() != null ? fournisseur.getRaisonSociale() : fournisseur.getNom());
+        releve.setTelephone(fournisseur.getTelephone());
+        releve.setEmail(fournisseur.getEmail());
+        releve.setIce(fournisseur.getIce());
+        releve.setNumeroRegistreCommerce(fournisseur.getNumeroRegistreCommerce());
+        releve.setNumeroIdentificationFiscale(fournisseur.getNumeroIdentificationFiscale());
+        releve.setPatente(fournisseur.getPatente());
+        releve.setRibBancaire(fournisseur.getRibBancaire());
+        releve.setBanqueNom(fournisseur.getBanqueNom());
+        releve.setDelaiPaiementJours(fournisseur.getDelaiPaiementJours());
+
+        List<FactureAchat> factures = factureAchatRepository.findByFournisseurId(fournisseurId);
+        Long tenantId = (fournisseur.getPointDeVenteId() != null) ? fournisseur.getPointDeVenteId() : 1L;
+        List<ReglementFournisseur> reglements = reglementFournisseurRepository.findByFournisseurIdAndPointDeVenteId(fournisseurId, tenantId);
+
+        List<ReleveFournisseurDTO.LigneReleveDTO> lignes = new ArrayList<>();
+
+        for (FactureAchat f : factures) {
+            if (f.getStatut() != StatutFacture.ANNULEE) {
+                LocalDate d = f.getDateFacture() != null ? f.getDateFacture().toLocalDate() : LocalDate.now();
+                if ((dateDebut == null || !d.isBefore(dateDebut)) && (dateFin == null || !d.isAfter(dateFin))) {
+                    BigDecimal montant = f.getMontantTtc() != null ? f.getMontantTtc() : BigDecimal.ZERO;
+                    lignes.add(new ReleveFournisseurDTO.LigneReleveDTO(
+                            d,
+                            "FACTURE_ACHAT",
+                            f.getNumeroFacture(),
+                            "Facture d'achat N° " + f.getNumeroFacture(),
+                            BigDecimal.ZERO,
+                            montant,
+                            BigDecimal.ZERO
+                    ));
+                }
+            }
+        }
+
+        for (ReglementFournisseur r : reglements) {
+            LocalDate d = r.getDateReglement() != null ? r.getDateReglement().toLocalDate() : LocalDate.now();
+            if ((dateDebut == null || !d.isBefore(dateDebut)) && (dateFin == null || !d.isAfter(dateFin))) {
+                String lib = "Règlement " + r.getModePaiement();
+                if (r.getNumeroCheque() != null) lib += " Chq N° " + r.getNumeroCheque();
+                lignes.add(new ReleveFournisseurDTO.LigneReleveDTO(
+                        d,
+                        "REGLEMENT",
+                        r.getNumeroReglement(),
+                        lib,
+                        r.getMontant(),
+                        BigDecimal.ZERO,
+                        BigDecimal.ZERO
+                ));
+            }
+        }
+
+        // Trier par date chronologique
+        lignes.sort(Comparator.comparing(ReleveFournisseurDTO.LigneReleveDTO::getDate));
+
+        BigDecimal totalAchats = BigDecimal.ZERO;
+        BigDecimal totalReglements = BigDecimal.ZERO;
+        BigDecimal soldeProg = BigDecimal.ZERO;
+
+        for (ReleveFournisseurDTO.LigneReleveDTO l : lignes) {
+            totalAchats = totalAchats.add(l.getCredit());
+            totalReglements = totalReglements.add(l.getDebit());
+            soldeProg = soldeProg.add(l.getCredit()).subtract(l.getDebit());
+            l.setSoldeProgressif(soldeProg);
+        }
+
+        releve.setTotalAchats(totalAchats);
+        releve.setTotalReglements(totalReglements);
+        releve.setSoldeActuel(soldeProg);
+        releve.setOperations(lignes);
+
+        return releve;
     }
 
     public ReleveClientDTO genererReleveClient(Long clientId, LocalDate dateDebut, LocalDate dateFin) {

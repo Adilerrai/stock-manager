@@ -27,17 +27,23 @@ public class ImmobilisationService {
     private final CompteComptableRepository compteRepository;
     private final JournalComptableRepository journalRepository;
     private final EcritureComptableRepository ecritureRepository;
+    private final ExerciceComptableRepository exerciceRepository;
+    private final AuditService auditService;
 
     public ImmobilisationService(ImmobilisationRepository immobilisationRepository,
                                  LignePlanAmortissementRepository lignePlanRepository,
                                  CompteComptableRepository compteRepository,
                                  JournalComptableRepository journalRepository,
-                                 EcritureComptableRepository ecritureRepository) {
+                                 EcritureComptableRepository ecritureRepository,
+                                 ExerciceComptableRepository exerciceRepository,
+                                 AuditService auditService) {
         this.immobilisationRepository = immobilisationRepository;
         this.lignePlanRepository = lignePlanRepository;
         this.compteRepository = compteRepository;
         this.journalRepository = journalRepository;
         this.ecritureRepository = ecritureRepository;
+        this.exerciceRepository = exerciceRepository;
+        this.auditService = auditService;
     }
 
     private Long getTenantId() {
@@ -104,6 +110,101 @@ public class ImmobilisationService {
         }
 
         Immobilisation saved = immobilisationRepository.save(immo);
+        auditService.logCreation("IMMOBILISATION", saved.getId(), "Création immobilisation " + saved.getCode() + " - " + saved.getDesignation());
+        return toImmobilisationDto(saved);
+    }
+
+    public ImmobilisationDTO modifierImmobilisation(Long id, ImmobilisationDTO dto) {
+        Long tenantId = getTenantId();
+        Immobilisation immo = immobilisationRepository.findByIdAndPointDeVenteId(id, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Immobilisation introuvable ID: " + id));
+
+        if (immo.getStatut() == StatutImmobilisation.CEDE || immo.getStatut() == StatutImmobilisation.MIS_AU_REBUT) {
+            throw new IllegalStateException("Impossible de modifier une immobilisation cédée ou mise au rebut.");
+        }
+
+        boolean hasComptabilisee = immo.getLignesPlanAmortissement().stream().anyMatch(LignePlanAmortissement::getComptabilisee);
+
+        if (dto.getDesignation() != null) immo.setDesignation(dto.getDesignation());
+        if (dto.getNumeroFacture() != null) immo.setNumeroFacture(dto.getNumeroFacture());
+        if (dto.getFournisseurNom() != null) immo.setFournisseurNom(dto.getFournisseurNom());
+
+        boolean calculNecessaire = false;
+
+        if (dto.getValeurAcquisition() != null && dto.getValeurAcquisition().compareTo(immo.getValeurAcquisition()) != 0) {
+            if (hasComptabilisee) {
+                throw new IllegalStateException("Impossible de modifier la valeur d'acquisition : des dotations ont déjà été comptabilisées.");
+            }
+            immo.setValeurAcquisition(dto.getValeurAcquisition());
+            calculNecessaire = true;
+        }
+
+        if (dto.getTvaDeductible() != null) {
+            immo.setTvaDeductible(dto.getTvaDeductible());
+        }
+
+        if (dto.getValeurResiduelle() != null && dto.getValeurResiduelle().compareTo(immo.getValeurResiduelle()) != 0) {
+            if (hasComptabilisee) {
+                throw new IllegalStateException("Impossible de modifier la valeur résiduelle : des dotations ont déjà été comptabilisées.");
+            }
+            immo.setValeurResiduelle(dto.getValeurResiduelle());
+            calculNecessaire = true;
+        }
+
+        if (dto.getDureeAnnees() != null && !dto.getDureeAnnees().equals(immo.getDureeAnnees())) {
+            if (hasComptabilisee) {
+                throw new IllegalStateException("Impossible de modifier la durée : des dotations ont déjà été comptabilisées.");
+            }
+            immo.setDureeAnnees(dto.getDureeAnnees());
+            calculNecessaire = true;
+        }
+
+        if (dto.getTypeAmortissement() != null && dto.getTypeAmortissement() != immo.getTypeAmortissement()) {
+            if (hasComptabilisee) {
+                throw new IllegalStateException("Impossible de modifier le mode d'amortissement : des dotations ont déjà été comptabilisées.");
+            }
+            immo.setTypeAmortissement(dto.getTypeAmortissement());
+            calculNecessaire = true;
+        }
+
+        if (dto.getDateMiseEnService() != null && !dto.getDateMiseEnService().equals(immo.getDateMiseEnService())) {
+            if (hasComptabilisee) {
+                throw new IllegalStateException("Impossible de modifier la date de mise en service : des dotations ont déjà été comptabilisées.");
+            }
+            immo.setDateMiseEnService(dto.getDateMiseEnService());
+            calculNecessaire = true;
+        }
+
+        if (dto.getDateAcquisition() != null) {
+            immo.setDateAcquisition(dto.getDateAcquisition());
+        }
+
+        // Comptes comptables si modifiés
+        if (dto.getCompteImmobilisationId() != null || dto.getCompteImmobilisationNumero() != null) {
+            immo.setCompteImmobilisation(resoudreCompte(dto.getCompteImmobilisationId(), dto.getCompteImmobilisationNumero(), "23320000", "Matériel et outillage", 2, SensCompte.DEBIT, tenantId));
+        }
+        if (dto.getCompteAmortissementId() != null || dto.getCompteAmortissementNumero() != null) {
+            immo.setCompteAmortissement(resoudreCompte(dto.getCompteAmortissementId(), dto.getCompteAmortissementNumero(), "28332000", "Amortissements du matériel et outillage", 2, SensCompte.CREDIT, tenantId));
+        }
+        if (dto.getCompteDotationId() != null || dto.getCompteDotationNumero() != null) {
+            immo.setCompteDotation(resoudreCompte(dto.getCompteDotationId(), dto.getCompteDotationNumero(), "61933000", "D.E.A. du matériel et outillage", 6, SensCompte.DEBIT, tenantId));
+        }
+
+        if (calculNecessaire) {
+            configurerTauxEtCoefficients(immo);
+            immo.setCumulAmortissements(BigDecimal.ZERO);
+            immo.setValeurNetteComptable(immo.getValeurAcquisition());
+
+            List<LignePlanAmortissement> plan = calculerPlanAmortissement(immo);
+            immo.getLignesPlanAmortissement().clear();
+            for (LignePlanAmortissement ligne : plan) {
+                immo.getLignesPlanAmortissement().add(ligne);
+                ligne.setImmobilisation(immo);
+            }
+        }
+
+        Immobilisation saved = immobilisationRepository.save(immo);
+        auditService.logModification("IMMOBILISATION", saved.getId(), "TOUT", "", "", "Modification immobilisation " + saved.getCode());
         return toImmobilisationDto(saved);
     }
 
@@ -133,6 +234,7 @@ public class ImmobilisationService {
             throw new IllegalStateException("Impossible de supprimer une immobilisation dont les dotations ont déjà été comptabilisées.");
         }
         immobilisationRepository.delete(immo);
+        auditService.logSuppression("IMMOBILISATION", id, "Suppression immobilisation " + immo.getCode() + " - " + immo.getDesignation());
     }
 
     // =========================================================================
@@ -321,6 +423,11 @@ public class ImmobilisationService {
             throw new IllegalStateException("Aucune dotation non comptabilisée à générer pour l'exercice " + annee);
         }
 
+        LocalDate dateDotation = LocalDate.of(annee, 12, 31);
+        if (exerciceRepository.isDateInExerciceCloture(dateDotation, tenantId)) {
+            throw new IllegalStateException("L'exercice comptable contenant le " + dateDotation + " est clôturé. Impossible de générer les dotations.");
+        }
+
         // Trouver ou créer le journal OD (Opérations Diverses)
         JournalComptable journalOd = journalRepository.findByCodeAndPointDeVenteId("OD", tenantId)
                 .orElseGet(() -> {
@@ -330,7 +437,7 @@ public class ImmobilisationService {
 
         EcritureComptable ecriture = new EcritureComptable();
         ecriture.setJournal(journalOd);
-        ecriture.setDateEcriture(LocalDate.of(annee, 12, 31));
+        ecriture.setDateEcriture(dateDotation);
         ecriture.setLibelle("Dotations d'inventaire aux amortissements exercice " + annee);
         ecriture.setReferencePiece("DOT-" + annee);
         ecriture.setPointDeVenteId(tenantId);
@@ -393,6 +500,7 @@ public class ImmobilisationService {
         }
 
         EcritureComptable ecritureSaved = ecritureRepository.save(ecriture);
+        auditService.logCreation("ECRITURE", ecritureSaved.getId(), "Génération auto dotations amortissements " + annee + " (Pièce " + ecritureSaved.getNumeroPiece() + ")");
 
         // Mettre à jour le statut des lignes et des immobilisations
         for (LignePlanAmortissement ligne : lignes) {
@@ -423,6 +531,10 @@ public class ImmobilisationService {
                 .orElseThrow(() -> new IllegalArgumentException("Immobilisation introuvable ID: " + id));
 
         LocalDate dCess = dateCession != null ? dateCession : LocalDate.now();
+        if (exerciceRepository.isDateInExerciceCloture(dCess, tenantId)) {
+            throw new IllegalStateException("L'exercice comptable contenant le " + dCess + " est clôturé. Impossible d'enregistrer la cession.");
+        }
+
         immo.setDateCession(dCess);
         immo.setPrixCession(prixCession != null ? prixCession : BigDecimal.ZERO);
         immo.setStatut(StatutImmobilisation.CEDE);
@@ -483,11 +595,13 @@ public class ImmobilisationService {
         ));
 
         if (ecriture.isEquilibree()) {
-            ecritureRepository.save(ecriture);
+            EcritureComptable ecritureSaved = ecritureRepository.save(ecriture);
+            auditService.logCreation("ECRITURE", ecritureSaved.getId(), "Sortie d'actif cession " + immo.getCode() + " (Pièce " + ecritureSaved.getNumeroPiece() + ")");
         }
 
         immo.setValeurNetteComptable(BigDecimal.ZERO);
         Immobilisation saved = immobilisationRepository.save(immo);
+        auditService.logModification("IMMOBILISATION", saved.getId(), "STATUT", "EN_SERVICE", "CEDE", "Cession immobilisation " + saved.getCode() + " pour " + saved.getPrixCession() + " DH");
         return toImmobilisationDto(saved);
     }
 

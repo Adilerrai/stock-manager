@@ -11,7 +11,10 @@ public class PointDeVente {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "tenant_id", nullable = false, unique = true)
+    @Column(name = "mere_id")
+    private Long mereId; // ID de la Mère (Cabinet / Holding)
+
+    @Column(name = "tenant_id", nullable = false)
     private Long tenantId;
 
     @Column(name = "nom_point_de_vente", nullable = false, unique = true)
@@ -76,6 +79,17 @@ public class PointDeVente {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Long getMereId() {
+        return mereId != null ? mereId : tenantId;
+    }
+
+    public void setMereId(Long mereId) {
+        this.mereId = mereId;
+        if (this.tenantId == null) {
+            this.tenantId = mereId;
+        }
     }
 
     public Long getTenantId() {

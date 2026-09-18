@@ -35,6 +35,12 @@ public class ImmobilisationController {
         return ResponseEntity.ok(immobilisationService.getImmobilisation(id));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ImmobilisationDTO> modifierImmobilisation(
+            @PathVariable Long id, @RequestBody ImmobilisationDTO dto) {
+        return ResponseEntity.ok(immobilisationService.modifierImmobilisation(id, dto));
+    }
+
     @GetMapping
     public ResponseEntity<List<ImmobilisationDTO>> getToutesImmobilisations() {
         return ResponseEntity.ok(immobilisationService.getToutesImmobilisations());

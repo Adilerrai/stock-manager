@@ -2,6 +2,7 @@ package com.gestion.service;
 
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.*;
+import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.persistent.enums.ModePaiement;
 import com.gestion.persistent.enums.SensCompte;
 import com.gestion.persistent.enums.TypeJournal;
@@ -30,17 +31,20 @@ public class ComptabiliteService {
     private final EcritureComptableRepository ecritureRepository;
     private final LigneEcritureRepository ligneRepository;
     private final ExerciceComptableRepository exerciceRepository;
+    private final AuditService auditService;
 
     public ComptabiliteService(CompteComptableRepository compteRepository,
                                JournalComptableRepository journalRepository,
                                EcritureComptableRepository ecritureRepository,
                                LigneEcritureRepository ligneRepository,
-                               ExerciceComptableRepository exerciceRepository) {
+                               ExerciceComptableRepository exerciceRepository,
+                               AuditService auditService) {
         this.compteRepository = compteRepository;
         this.journalRepository = journalRepository;
         this.ecritureRepository = ecritureRepository;
         this.ligneRepository = ligneRepository;
         this.exerciceRepository = exerciceRepository;
+        this.auditService = auditService;
     }
 
     private Long getTenantId() {
@@ -402,6 +406,12 @@ public class ComptabiliteService {
         }
 
         EcritureComptable saved = ecritureRepository.save(ecriture);
+
+        // Audit Trail
+        auditService.logCreation("EcritureComptable", saved.getId(),
+                "Création écriture " + saved.getNumeroPiece() + " — " + saved.getLibelle() +
+                " (Débit=" + saved.getTotalDebit() + ", Crédit=" + saved.getTotalCredit() + ")");
+
         return toEcritureDto(saved);
     }
 
@@ -414,7 +424,13 @@ public class ComptabiliteService {
         }
 
         ecriture.setValidee(true);
-        return toEcritureDto(ecritureRepository.save(ecriture));
+        EcritureComptable saved = ecritureRepository.save(ecriture);
+
+        // Audit Trail
+        auditService.logValidation("EcritureComptable", saved.getId(),
+                "Validation définitive de l'écriture " + saved.getNumeroPiece());
+
+        return toEcritureDto(saved);
     }
 
     private String genererNumeroPiece(JournalComptable journal, LocalDate date, Long tenantId) {
@@ -478,6 +494,11 @@ public class ComptabiliteService {
         EcritureComptable ecriture = new EcritureComptable();
         ecriture.setJournal(journalVentes);
         ecriture.setDateEcriture(facture.getDateFacture() != null ? facture.getDateFacture() : LocalDate.now());
+
+        if (exerciceRepository.isDateInExerciceCloture(ecriture.getDateEcriture(), tenantId)) {
+            throw new IllegalStateException("L'exercice comptable contenant le " + ecriture.getDateEcriture() + " est clôturé. Impossible d'enregistrer l'écriture.");
+        }
+
         String clientNom = facture.getClient() != null ? facture.getClient().getNom() : "Client";
         ecriture.setLibelle("Facture Vente N° " + facture.getNumeroFacture() + " - " + clientNom);
         ecriture.setReferencePiece(facture.getNumeroFacture());
@@ -494,7 +515,9 @@ public class ComptabiliteService {
             ecriture.addLigne(new LigneEcriture(compteTva, BigDecimal.ZERO, montantTVA, "TVA collectée Facture " + facture.getNumeroFacture(), tenantId));
         }
 
-        return toEcritureDto(ecritureRepository.save(ecriture));
+        EcritureComptable saved = ecritureRepository.save(ecriture);
+        auditService.logCreation("ECRITURE", saved.getId(), "Génération auto écriture vente N° " + saved.getNumeroPiece() + " (Facture " + facture.getNumeroFacture() + ")");
+        return toEcritureDto(saved);
     }
 
     public EcritureComptableDTO genererEcritureAchat(FactureAchat factureAchat) {
@@ -534,6 +557,11 @@ public class ComptabiliteService {
         ecriture.setJournal(journalAchats);
         LocalDate date = factureAchat.getDateFacture() != null ? factureAchat.getDateFacture().toLocalDate() : LocalDate.now();
         ecriture.setDateEcriture(date);
+
+        if (exerciceRepository.isDateInExerciceCloture(ecriture.getDateEcriture(), tenantId)) {
+            throw new IllegalStateException("L'exercice comptable contenant le " + ecriture.getDateEcriture() + " est clôturé. Impossible d'enregistrer l'écriture.");
+        }
+
         String fNom = factureAchat.getFournisseur() != null ? factureAchat.getFournisseur().getNom() : "Fournisseur";
         ecriture.setLibelle("Facture Achat N° " + factureAchat.getNumeroFacture() + " - " + fNom);
         ecriture.setReferencePiece(factureAchat.getNumeroFacture());
@@ -550,7 +578,9 @@ public class ComptabiliteService {
         // Crédit Fournisseur (TTC)
         ecriture.addLigne(new LigneEcriture(compteFournisseur, BigDecimal.ZERO, montantTTC, "Dette Fournisseur " + fNom, tenantId));
 
-        return toEcritureDto(ecritureRepository.save(ecriture));
+        EcritureComptable saved = ecritureRepository.save(ecriture);
+        auditService.logCreation("ECRITURE", saved.getId(), "Génération auto écriture achat N° " + saved.getNumeroPiece() + " (Facture " + factureAchat.getNumeroFacture() + ")");
+        return toEcritureDto(saved);
     }
 
     public EcritureComptableDTO genererEcriturePaiementClient(Paiement paiement) {
@@ -585,6 +615,11 @@ public class ComptabiliteService {
         ecriture.setJournal(journal);
         LocalDate date = paiement.getDatePaiement() != null ? paiement.getDatePaiement().toLocalDate() : LocalDate.now();
         ecriture.setDateEcriture(date);
+
+        if (exerciceRepository.isDateInExerciceCloture(ecriture.getDateEcriture(), tenantId)) {
+            throw new IllegalStateException("L'exercice comptable contenant le " + ecriture.getDateEcriture() + " est clôturé. Impossible d'enregistrer l'écriture.");
+        }
+
         String clientNom = paiement.getClient() != null ? paiement.getClient().getNom() : "Client";
         ecriture.setLibelle("Encaissement " + paiement.getModePaiement() + " - " + clientNom + " (" + ref + ")");
         ecriture.setReferencePiece(ref);
@@ -597,7 +632,9 @@ public class ComptabiliteService {
         // Crédit Compte Client
         ecriture.addLigne(new LigneEcriture(compteClient, BigDecimal.ZERO, paiement.getMontant(), "Règlement reçu - " + ref, tenantId));
 
-        return toEcritureDto(ecritureRepository.save(ecriture));
+        EcritureComptable saved = ecritureRepository.save(ecriture);
+        auditService.logCreation("ECRITURE", saved.getId(), "Génération auto encaissement N° " + saved.getNumeroPiece() + " (" + ref + ")");
+        return toEcritureDto(saved);
     }
 
     public EcritureComptableDTO genererEcritureReglementFournisseur(ReglementFournisseur reglement) {
@@ -632,6 +669,11 @@ public class ComptabiliteService {
         ecriture.setJournal(journal);
         LocalDate date = reglement.getDateReglement() != null ? reglement.getDateReglement().toLocalDate() : LocalDate.now();
         ecriture.setDateEcriture(date);
+
+        if (exerciceRepository.isDateInExerciceCloture(ecriture.getDateEcriture(), tenantId)) {
+            throw new IllegalStateException("L'exercice comptable contenant le " + ecriture.getDateEcriture() + " est clôturé. Impossible d'enregistrer l'écriture.");
+        }
+
         ecriture.setLibelle("Décaissement Fournisseur " + reglement.getModePaiement() + " (" + ref + ")");
         ecriture.setReferencePiece(ref);
         ecriture.setPointDeVenteId(tenantId);
@@ -643,7 +685,9 @@ public class ComptabiliteService {
         // Crédit Banque ou Caisse
         ecriture.addLigne(new LigneEcriture(compteTresorerie, BigDecimal.ZERO, reglement.getMontant(), "Décaissement trésorerie " + ref, tenantId));
 
-        return toEcritureDto(ecritureRepository.save(ecriture));
+        EcritureComptable saved = ecritureRepository.save(ecriture);
+        auditService.logCreation("ECRITURE", saved.getId(), "Génération auto décaissement N° " + saved.getNumeroPiece() + " (" + ref + ")");
+        return toEcritureDto(saved);
     }
 
     private CompteComptable findOrCreateCompte(String numero, String libelle, int classe, SensCompte sens, Long tenantId) {
@@ -1049,6 +1093,11 @@ public class ComptabiliteService {
             l.setLettrage(nouveauCode);
         }
         ligneRepository.saveAll(lignes);
+
+        // Audit Trail
+        auditService.logAction(ActionAudit.LETTRAGE, "LigneEcriture", ligneIds.get(0),
+                "Lettrage " + nouveauCode + " appliqué sur " + ligneIds.size() + " lignes : " + ligneIds);
+
         return nouveauCode;
     }
 
@@ -1058,10 +1107,16 @@ public class ComptabiliteService {
             throw new IllegalArgumentException("Code de lettrage manquant");
         }
         List<LigneEcriture> lignes = ligneRepository.findByLettrageAndPointDeVenteId(codeLettrage.trim().toUpperCase(), tenantId);
+        List<Long> ligneIds = lignes.stream().map(LigneEcriture::getId).collect(Collectors.toList());
         for (LigneEcriture l : lignes) {
             l.setLettrage(null);
         }
         ligneRepository.saveAll(lignes);
+
+        // Audit Trail
+        auditService.logAction(ActionAudit.ANNULATION_LETTRAGE, "LigneEcriture",
+                ligneIds.isEmpty() ? 0L : ligneIds.get(0),
+                "Annulation du lettrage " + codeLettrage + " sur " + ligneIds.size() + " lignes : " + ligneIds);
     }
 
     public Map<String, Object> autoLettrage(String prefixCompte) {

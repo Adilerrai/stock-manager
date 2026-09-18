@@ -45,8 +45,11 @@ public class User implements UserDetails {
 
     private Genre genre; // "HOMME" ou "FEMME"
 
+    @Column(name = "mere_id")
+    private Long mereId; // Le cabinet / la holding mère
+
     @Column(name = "tenant_id", nullable = false)
-    private Long tenantId;
+    private Long tenantId; // La société active courante
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "point_de_vente_id", nullable = true)
@@ -57,6 +60,9 @@ public class User implements UserDetails {
         if (this.tenantId == null) {
             Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
             this.tenantId = (tenant != null) ? tenant : 1L;
+        }
+        if (this.mereId == null) {
+            this.mereId = this.tenantId;
         }
     }
 
@@ -167,6 +173,14 @@ public class User implements UserDetails {
     public void setPassword(String password) { this.password = password; }
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+
+    public Long getMereId() {
+        return mereId != null ? mereId : tenantId;
+    }
+
+    public void setMereId(Long mereId) {
+        this.mereId = mereId;
+    }
 
     public Long getTenantId() {
         return tenantId;

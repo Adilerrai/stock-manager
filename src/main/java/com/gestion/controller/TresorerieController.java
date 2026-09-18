@@ -3,6 +3,7 @@ package com.gestion.controller;
 import com.gestion.persistent.dto.BalanceAgeeDTO;
 import com.gestion.persistent.dto.EcheancierDTO;
 import com.gestion.persistent.dto.ReleveClientDTO;
+import com.gestion.persistent.dto.ReleveFournisseurDTO;
 import com.gestion.persistent.enums.StatutRemise;
 import com.gestion.persistent.model.BordereauRemise;
 import com.gestion.service.TresorerieService;
@@ -31,6 +32,14 @@ public class TresorerieController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
         return ResponseEntity.ok(tresorerieService.genererReleveClient(clientId, dateDebut, dateFin));
+    }
+
+    @GetMapping("/releve-fournisseur/{fournisseurId}")
+    public ResponseEntity<ReleveFournisseurDTO> getReleveFournisseur(
+            @PathVariable Long fournisseurId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
+        return ResponseEntity.ok(tresorerieService.genererReleveFournisseur(fournisseurId, dateDebut, dateFin));
     }
 
     @GetMapping("/balance-agee-clients")
