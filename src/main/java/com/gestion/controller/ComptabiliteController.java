@@ -204,4 +204,34 @@ public class ComptabiliteController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateArrete) {
         return ResponseEntity.ok(comptabiliteService.getBilanOfficiel(dateArrete));
     }
+
+    // =========================================================================
+    // CPC OFFICIEL PCGM (COMPTE DE PRODUITS ET CHARGES)
+    // =========================================================================
+
+    @GetMapping("/cpc-officiel")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<CpcOfficielDTO> getCpcOfficiel(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
+        return ResponseEntity.ok(comptabiliteService.getCpcOfficiel(dateDebut, dateFin));
+    }
+
+    // =========================================================================
+    // EXPORT FEC DGI (18 COLONNES NORMALISÉES)
+    // =========================================================================
+
+    @GetMapping(value = "/export/fec-dgi", produces = "text/plain; charset=UTF-8")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<byte[]> exporterFecDgi(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+            @RequestParam(required = false, defaultValue = "\t") String separateur) {
+        byte[] fecBytes = comptabiliteService.exporterFecDgi(dateDebut, dateFin, separateur);
+        String filename = "FEC_DGI_" + (dateFin != null ? dateFin : LocalDate.now()) + ".txt";
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
+                .body(fecBytes);
+    }
 }

@@ -1331,4 +1331,303 @@ public class ComptabiliteService {
 
         return dto;
     }
+
+    // =========================================================================
+    // COMPTE DE PRODUITS ET CHARGES (CPC OFFICIEL PCGM)
+    // =========================================================================
+
+    @Transactional(readOnly = true)
+    public CpcOfficielDTO getCpcOfficiel(LocalDate dateDebut, LocalDate dateFin) {
+        Long tenantId = getTenantId();
+        LocalDate dDebut = (dateDebut != null) ? dateDebut : LocalDate.of(LocalDate.now().getYear(), 1, 1);
+        LocalDate dFin = (dateFin != null) ? dateFin : LocalDate.now();
+
+        List<BalanceCompteDTO> balance = getBalance(dDebut, dFin);
+
+        CpcOfficielDTO dto = new CpcOfficielDTO();
+        dto.setDateDebut(dDebut);
+        dto.setDateFin(dFin);
+        dto.setTenantId(tenantId);
+
+        // Fonctions de calcul par préfixe de compte
+        // Pour les produits (Classe 7) : Solde créditeur net = Crédit - Débit
+        java.util.function.Function<String, BigDecimal> soldeProduit = prefix -> balance.stream()
+                .filter(b -> b.getNumeroCompte().startsWith(prefix))
+                .map(b -> {
+                    BigDecimal deb = b.getCumulDebit() != null ? b.getCumulDebit() : BigDecimal.ZERO;
+                    BigDecimal cred = b.getCumulCredit() != null ? b.getCumulCredit() : BigDecimal.ZERO;
+                    return cred.subtract(deb);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // Pour les charges (Classe 6) : Solde débiteur net = Débit - Crédit
+        java.util.function.Function<String, BigDecimal> soldeCharge = prefix -> balance.stream()
+                .filter(b -> b.getNumeroCompte().startsWith(prefix))
+                .map(b -> {
+                    BigDecimal deb = b.getCumulDebit() != null ? b.getCumulDebit() : BigDecimal.ZERO;
+                    BigDecimal cred = b.getCumulCredit() != null ? b.getCumulCredit() : BigDecimal.ZERO;
+                    return deb.subtract(cred);
+                })
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        // ---------------------------------------------------------------------
+        // I. PRODUITS D'EXPLOITATION (Rubrique 71)
+        // ---------------------------------------------------------------------
+        BigDecimal vntMarchandises = soldeProduit.apply("711");
+        dto.getProduitsExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("711", "Ventes de marchandises (en l'état)", vntMarchandises));
+
+        BigDecimal vntBiensServices = soldeProduit.apply("712");
+        dto.getProduitsExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("712", "Ventes de biens et services produits", vntBiensServices));
+
+        BigDecimal ca = vntMarchandises.add(vntBiensServices);
+        dto.setChiffreAffaires(ca);
+
+        BigDecimal varStock = soldeProduit.apply("713");
+        dto.getProduitsExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("713", "Variation des stocks de produits (±)", varStock));
+
+        BigDecimal immoProduite = soldeProduit.apply("714");
+        dto.getProduitsExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("714", "Immobilisations produites par l'Ese pour elle-même", immoProduite));
+
+        BigDecimal subventionsExpl = soldeProduit.apply("716");
+        dto.getProduitsExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("716", "Subventions d'exploitation", subventionsExpl));
+
+        BigDecimal autresProdExpl = soldeProduit.apply("718");
+        dto.getProduitsExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("718", "Autres produits d'exploitation", autresProdExpl));
+
+        BigDecimal reprisesExpl = soldeProduit.apply("719");
+        dto.getProduitsExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("719", "Reprises d'exploitation ; transferts de charges", reprisesExpl));
+
+        BigDecimal totalI = vntMarchandises.add(vntBiensServices).add(varStock).add(immoProduite).add(subventionsExpl).add(autresProdExpl).add(reprisesExpl);
+        dto.getProduitsExploitation().setTotal(totalI);
+
+        // ---------------------------------------------------------------------
+        // II. CHARGES D'EXPLOITATION (Rubrique 61)
+        // ---------------------------------------------------------------------
+        BigDecimal achatsMarchandises = soldeCharge.apply("611");
+        dto.getChargesExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("611", "Achats revendus de marchandises", achatsMarchandises));
+
+        BigDecimal matPremieres = soldeCharge.apply("612");
+        dto.getChargesExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("612", "Achats consommés de matières et de fournitures", matPremieres));
+
+        BigDecimal autresChargesExt = soldeCharge.apply("613").add(soldeCharge.apply("614"));
+        dto.getChargesExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("613/614", "Autres charges externes", autresChargesExt));
+
+        BigDecimal impotsTaxes = soldeCharge.apply("616");
+        dto.getChargesExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("616", "Impôts et taxes", impotsTaxes));
+
+        BigDecimal chargesPersonnel = soldeCharge.apply("617");
+        dto.getChargesExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("617", "Charges de personnel", chargesPersonnel));
+
+        BigDecimal autresChargesExpl = soldeCharge.apply("618");
+        dto.getChargesExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("618", "Autres charges d'exploitation", autresChargesExpl));
+
+        BigDecimal dotationsExpl = soldeCharge.apply("619");
+        dto.getChargesExploitation().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("619", "Dotations d'exploitation", dotationsExpl));
+
+        BigDecimal totalII = achatsMarchandises.add(matPremieres).add(autresChargesExt).add(impotsTaxes).add(chargesPersonnel).add(autresChargesExpl).add(dotationsExpl);
+        dto.getChargesExploitation().setTotal(totalII);
+
+        // III. RÉSULTAT D'EXPLOITATION (I - II)
+        BigDecimal resultatExploitation = totalI.subtract(totalII);
+        dto.setResultatExploitation(resultatExploitation);
+
+        // ---------------------------------------------------------------------
+        // IV. PRODUITS FINANCIERS (Rubrique 73)
+        // ---------------------------------------------------------------------
+        BigDecimal titresImmo = soldeProduit.apply("732");
+        dto.getProduitsFinanciers().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("732", "Produits des titres de participation et autres t. immo", titresImmo));
+
+        BigDecimal gainsChange = soldeProduit.apply("733");
+        dto.getProduitsFinanciers().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("733", "Gains de change", gainsChange));
+
+        BigDecimal interetsProd = soldeProduit.apply("738");
+        dto.getProduitsFinanciers().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("738", "Intérêts et autres produits financiers", interetsProd));
+
+        BigDecimal reprisesFin = soldeProduit.apply("739");
+        dto.getProduitsFinanciers().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("739", "Reprises financières ; transferts de charges", reprisesFin));
+
+        BigDecimal totalIV = titresImmo.add(gainsChange).add(interetsProd).add(reprisesFin);
+        dto.getProduitsFinanciers().setTotal(totalIV);
+
+        // ---------------------------------------------------------------------
+        // V. CHARGES FINANCIÈRES (Rubrique 63)
+        // ---------------------------------------------------------------------
+        BigDecimal chargesInterets = soldeCharge.apply("631");
+        dto.getChargesFinancieres().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("631", "Charges d'intérêts", chargesInterets));
+
+        BigDecimal pertesChange = soldeCharge.apply("633");
+        dto.getChargesFinancieres().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("633", "Pertes de change", pertesChange));
+
+        BigDecimal autresChargesFin = soldeCharge.apply("638");
+        dto.getChargesFinancieres().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("638", "Autres charges financières", autresChargesFin));
+
+        BigDecimal dotationsFin = soldeCharge.apply("639");
+        dto.getChargesFinancieres().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("639", "Dotations financières", dotationsFin));
+
+        BigDecimal totalV = chargesInterets.add(pertesChange).add(autresChargesFin).add(dotationsFin);
+        dto.getChargesFinancieres().setTotal(totalV);
+
+        // VI. RÉSULTAT FINANCIER (IV - V)
+        BigDecimal resultatFinancier = totalIV.subtract(totalV);
+        dto.setResultatFinancier(resultatFinancier);
+
+        // VII. RÉSULTAT COURANT (III + VI)
+        BigDecimal resultatCourant = resultatExploitation.add(resultatFinancier);
+        dto.setResultatCourant(resultatCourant);
+
+        // ---------------------------------------------------------------------
+        // VIII. PRODUITS NON COURANTS (Rubrique 75)
+        // ---------------------------------------------------------------------
+        BigDecimal prodCessions = soldeProduit.apply("751");
+        dto.getProduitsNonCourants().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("751", "Produits des cessions d'immobilisations", prodCessions));
+
+        BigDecimal subEquilibre = soldeProduit.apply("756");
+        dto.getProduitsNonCourants().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("756", "Subventions d'équilibre", subEquilibre));
+
+        BigDecimal reprisesSubv = soldeProduit.apply("757");
+        dto.getProduitsNonCourants().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("757", "Reprises sur subventions d'investissement", reprisesSubv));
+
+        BigDecimal autresProdNonCour = soldeProduit.apply("758");
+        dto.getProduitsNonCourants().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("758", "Autres produits non courants", autresProdNonCour));
+
+        BigDecimal reprisesNonCour = soldeProduit.apply("759");
+        dto.getProduitsNonCourants().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("759", "Reprises non courantes ; transferts de charges", reprisesNonCour));
+
+        BigDecimal totalVIII = prodCessions.add(subEquilibre).add(reprisesSubv).add(autresProdNonCour).add(reprisesNonCour);
+        dto.getProduitsNonCourants().setTotal(totalVIII);
+
+        // ---------------------------------------------------------------------
+        // IX. CHARGES NON COURANTES (Rubrique 65)
+        // ---------------------------------------------------------------------
+        BigDecimal vnaImmo = soldeCharge.apply("651");
+        dto.getChargesNonCourantes().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("651", "Valeurs nettes d'amort. des immo. cédées (VNA)", vnaImmo));
+
+        BigDecimal subAccordees = soldeCharge.apply("656");
+        dto.getChargesNonCourantes().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("656", "Subventions accordées", subAccordees));
+
+        BigDecimal autresChargesNonCour = soldeCharge.apply("658");
+        dto.getChargesNonCourantes().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("658", "Autres charges non courantes", autresChargesNonCour));
+
+        BigDecimal dotationsNonCour = soldeCharge.apply("659");
+        dto.getChargesNonCourantes().getLignes().add(new CpcOfficielDTO.LigneCpcDTO("659", "Dotations non courantes aux amort. et provisions", dotationsNonCour));
+
+        BigDecimal totalIX = vnaImmo.add(subAccordees).add(autresChargesNonCour).add(dotationsNonCour);
+        dto.getChargesNonCourantes().setTotal(totalIX);
+
+        // X. RÉSULTAT NON COURANT (VIII - IX)
+        BigDecimal resultatNonCourant = totalVIII.subtract(totalIX);
+        dto.setResultatNonCourant(resultatNonCourant);
+
+        // XI. RÉSULTAT AVANT IMPÔTS (VII + X)
+        BigDecimal resultatAvantImpots = resultatCourant.add(resultatNonCourant);
+        dto.setResultatAvantImpots(resultatAvantImpots);
+
+        // XII. IMPÔT SUR LES RÉSULTATS (Rubrique 67)
+        BigDecimal impotResultat = soldeCharge.apply("67");
+        dto.setImpotSurResultats(impotResultat);
+
+        // XIII. RÉSULTAT NET (XI - XII)
+        BigDecimal resultatNet = resultatAvantImpots.subtract(impotResultat);
+        dto.setResultatNet(resultatNet);
+
+        // Totaux de synthèse
+        BigDecimal totalProduits = totalI.add(totalIV).add(totalVIII);
+        BigDecimal totalCharges = totalII.add(totalV).add(totalIX).add(impotResultat);
+        dto.setTotalProduits(totalProduits);
+        dto.setTotalCharges(totalCharges);
+
+        return dto;
+    }
+
+    // =========================================================================
+    // EXPORT FEC (FICHIER DES ÉCRITURES COMPTABLES) NORMALISÉ DGI 18 COLONNES
+    // =========================================================================
+
+    @Transactional(readOnly = true)
+    public byte[] exporterFecDgi(LocalDate dateDebut, LocalDate dateFin, String separateurParam) {
+        Long tenantId = getTenantId();
+        LocalDate dDebut = (dateDebut != null) ? dateDebut : LocalDate.of(LocalDate.now().getYear(), 1, 1);
+        LocalDate dFin = (dateFin != null) ? dateFin : LocalDate.now();
+
+        String sep = (separateurParam != null && !separateurParam.isEmpty()) ? separateurParam : "\t";
+
+        List<EcritureComptable> ecritures = ecritureRepository.findByPointDeVenteIdAndDateEcritureBetweenOrderByDateEcritureAsc(
+                tenantId, dDebut, dFin);
+
+        DateTimeFormatter dgiDateFmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        StringBuilder sb = new StringBuilder();
+        // BOM UTF-8
+        sb.append("\uFEFF");
+
+        // 18 colonnes légales DGI
+        String[] headers = {
+            "JournalCode", "JournalLib", "EcritureNum", "EcritureDate",
+            "CompteNum", "CompteLib", "CompAuxNum", "CompAuxLib",
+            "PieceRef", "PieceDate", "EcritureLib", "Debit", "Credit",
+            "EcritureLet", "DateLet", "ValidDate", "Montantdevise", "Idevise"
+        };
+        sb.append(String.join(sep, headers)).append("\r\n");
+
+        for (EcritureComptable e : ecritures) {
+            String journalCode = (e.getJournal() != null && e.getJournal().getCode() != null) ? e.getJournal().getCode() : "OD";
+            String journalLib = (e.getJournal() != null && e.getJournal().getLibelle() != null) ? e.getJournal().getLibelle().replace(sep, " ") : "Opérations Diverses";
+            String ecritureNum = e.getNumeroPiece() != null ? e.getNumeroPiece() : "ECR-" + e.getId();
+            String ecritureDate = e.getDateEcriture() != null ? e.getDateEcriture().format(dgiDateFmt) : LocalDate.now().format(dgiDateFmt);
+            String pieceRef = e.getReferencePiece() != null ? e.getReferencePiece() : ecritureNum;
+            String pieceDate = ecritureDate;
+            String validDate = (e.getDateCreation() != null) ? e.getDateCreation().toLocalDate().format(dgiDateFmt) : ecritureDate;
+            String ecritureLib = e.getLibelle() != null ? e.getLibelle().replace(sep, " ") : "";
+
+            if (e.getLignes() != null) {
+                for (LigneEcriture l : e.getLignes()) {
+                    String compteNum = (l.getCompte() != null && l.getCompte().getNumeroCompte() != null) ? l.getCompte().getNumeroCompte() : "";
+                    String compteLib = (l.getCompte() != null && l.getCompte().getLibelle() != null) ? l.getCompte().getLibelle().replace(sep, " ") : "";
+
+                    // Auxiliaire Tiers (Clients 3421, Fournisseurs 4411)
+                    String compAuxNum = "";
+                    String compAuxLib = "";
+                    if (compteNum.startsWith("3421") || compteNum.startsWith("4411")) {
+                        compAuxNum = (l.getReferenceLigne() != null && !l.getReferenceLigne().isEmpty()) ? l.getReferenceLigne() : pieceRef;
+                        compAuxLib = (l.getLibelleLigne() != null && !l.getLibelleLigne().isEmpty()) ? l.getLibelleLigne().replace(sep, " ") : ecritureLib;
+                    }
+
+                    String ligneLib = (l.getLibelleLigne() != null && !l.getLibelleLigne().isEmpty())
+                            ? l.getLibelleLigne().replace(sep, " ") : ecritureLib;
+
+                    BigDecimal deb = (l.getDebit() != null) ? l.getDebit() : BigDecimal.ZERO;
+                    BigDecimal cred = (l.getCredit() != null) ? l.getCredit() : BigDecimal.ZERO;
+
+                    String debitStr = deb.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString();
+                    String creditStr = cred.setScale(2, java.math.RoundingMode.HALF_UP).toPlainString();
+
+                    String lettrage = (l.getLettrage() != null) ? l.getLettrage() : "";
+                    String dateLet = (l.getLettrage() != null && !l.getLettrage().isEmpty()) ? validDate : "";
+
+                    String montantDevise = "";
+                    String iDevise = "MAD";
+
+                    sb.append(journalCode).append(sep)
+                      .append(journalLib).append(sep)
+                      .append(ecritureNum).append(sep)
+                      .append(ecritureDate).append(sep)
+                      .append(compteNum).append(sep)
+                      .append(compteLib).append(sep)
+                      .append(compAuxNum).append(sep)
+                      .append(compAuxLib).append(sep)
+                      .append(pieceRef).append(sep)
+                      .append(pieceDate).append(sep)
+                      .append(ligneLib).append(sep)
+                      .append(debitStr).append(sep)
+                      .append(creditStr).append(sep)
+                      .append(lettrage).append(sep)
+                      .append(dateLet).append(sep)
+                      .append(validDate).append(sep)
+                      .append(montantDevise).append(sep)
+                      .append(iDevise).append("\r\n");
+                }
+            }
+        }
+
+        return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
 }
