@@ -49,6 +49,7 @@ public class SuperAdminInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        cleanupConstraints();
         ensureMultiTenantColumnsExist();
         syncSequences();
         initRoles();
@@ -57,6 +58,15 @@ public class SuperAdminInitializer implements CommandLineRunner {
         syncSequences();
         initSuperAdmin();
         initBanques();
+    }
+
+    private void cleanupConstraints() {
+        try {
+            jdbcTemplate.execute("ALTER TABLE IF EXISTS lignes_livraison DROP CONSTRAINT IF EXISTS uk_bgip3ymlrc9lga65p5dy9jfbr");
+            log.info("Nettoyage contrainte uk_bgip3ymlrc9lga65p5dy9jfbr sur lignes_livraison reussi.");
+        } catch (Exception e) {
+            log.warn("Erreur nettoyage contrainte lignes_livraison: {}", e.getMessage());
+        }
     }
 
     private void ensureMultiTenantColumnsExist() {
