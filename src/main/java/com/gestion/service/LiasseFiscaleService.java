@@ -16,7 +16,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional(readOnly = true)
+@Transactional
 public class LiasseFiscaleService {
 
     private final ComptabiliteService comptabiliteService;

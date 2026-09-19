@@ -43,6 +43,7 @@ public class User implements UserDetails {
 
     private String telephone;
 
+    @Enumerated(EnumType.STRING)
     private Genre genre; // "HOMME" ou "FEMME"
 
     @Column(name = "mere_id")

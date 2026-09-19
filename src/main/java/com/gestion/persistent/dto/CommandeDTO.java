@@ -1,6 +1,7 @@
 package com.gestion.persistent.dto;
 
 import com.gestion.persistent.enums.StatutCommande;
+import com.gestion.persistent.enums.StatutLivraison;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ public class CommandeDTO {
     private Long fournisseurId;
     private String fournisseurNom;
     private StatutCommande statut;
+    private StatutLivraison statutLivraison;
     @JsonFormat(pattern = "yyyy-MM-dd['T'HH:mm[:ss][.SSS]]", timezone = "UTC+1")
     private LocalDateTime dateCommande;
     @JsonFormat(pattern = "yyyy-MM-dd['T'HH:mm[:ss][.SSS]]", timezone = "UTC")
@@ -40,6 +42,9 @@ public class CommandeDTO {
 
     public StatutCommande getStatut() { return statut; }
     public void setStatut(StatutCommande statut) { this.statut = statut; }
+
+    public StatutLivraison getStatutLivraison() { return statutLivraison; }
+    public void setStatutLivraison(StatutLivraison statutLivraison) { this.statutLivraison = statutLivraison; }
 
     public LocalDateTime getDateCommande() { return dateCommande; }
     public void setDateCommande(LocalDateTime dateCommande) { this.dateCommande = dateCommande; }

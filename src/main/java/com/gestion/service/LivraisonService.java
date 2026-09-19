@@ -7,6 +7,7 @@ import com.gestion.persistent.dto.LivraisonDTO;
 import com.gestion.persistent.dto.LigneLivraisonDTO;
 import com.gestion.persistent.dto.LivraisonSearchCriteria;
 import com.gestion.persistent.enums.QualiteProduit;
+import com.gestion.persistent.enums.StatutCommande;
 import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.enums.TypeMouvement;
 import com.gestion.persistent.model.*;
@@ -331,11 +332,7 @@ public class LivraisonService {
         return ligneLivraisonRepository.save(ligneEntity);
     }
 
-    private void mettreAJourStatutLivraisonCommande(Commande commande) {
-        if (commande.getStatutLivraison() == StatutLivraison.LIVREE) {
-            return;
-        }
-        
+    public void mettreAJourStatutLivraisonCommande(Commande commande) {
         List<LigneCommande> lignesCommande = ligneCommandeRepository.findByCommande_Id(commande.getId());
         List<Livraison> livraisons = livraisonRepository.findByCommande_IdAndStatut(commande.getId(), StatutLivraison.LIVREE);
         
@@ -347,7 +344,7 @@ public class LivraisonService {
             }
         }
         
-        boolean toutLivre = true;
+        boolean toutLivre = !lignesCommande.isEmpty();
         boolean partiellementLivre = false;
         
         for (LigneCommande ligneCommande : lignesCommande) {
@@ -355,6 +352,9 @@ public class LivraisonService {
             BigDecimal quantiteCommandee = BigDecimal.valueOf(ligneCommande.getQuantiteCommandee());
             double quantiteLivree = quantitesLivrees.getOrDefault(produitId, 0.0);
             
+            ligneCommande.setQuantiteLivree((int) quantiteLivree);
+            ligneCommandeRepository.save(ligneCommande);
+
             if (quantiteLivree < quantiteCommandee.doubleValue()) {
                 toutLivre = false;
             }
@@ -364,9 +364,14 @@ public class LivraisonService {
         }
         
         if (toutLivre) {
+            commande.setStatut(StatutCommande.LIVREE);
             commande.setStatutLivraison(StatutLivraison.LIVREE);
+            if (commande.getDateLivraisonReelle() == null) {
+                commande.setDateLivraisonReelle(LocalDateTime.now());
+            }
         } else if (partiellementLivre) {
-            commande.setStatutLivraison(StatutLivraison.EN_LIVRAISON);
+            commande.setStatut(StatutCommande.PARTIELLE);
+            commande.setStatutLivraison(StatutLivraison.PARTIELLE);
         } else {
             commande.setStatutLivraison(StatutLivraison.EN_ATTENTE);
         }

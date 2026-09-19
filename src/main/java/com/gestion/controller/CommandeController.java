@@ -173,5 +173,13 @@ public class CommandeController {
             return ResponseEntity.badRequest().build();
         }
     }
+
+    @PostMapping("/{id}/reception")
+    public ResponseEntity<CommandeDTO> receptionnerCommande(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) com.gestion.persistent.dto.ReceptionCommandeDTO receptionDTO) {
+        Commande commande = commandeService.receptionnerCommande(id, receptionDTO);
+        return ResponseEntity.ok(commandeMapper.toDto(commande));
+    }
 }
 

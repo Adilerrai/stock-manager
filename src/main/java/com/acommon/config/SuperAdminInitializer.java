@@ -18,8 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Component
-@Order(1)
+// @Component désactivé : toute l'initialisation des données et DDL est déléguée à db.sql
 public class SuperAdminInitializer implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(SuperAdminInitializer.class);
@@ -47,17 +46,9 @@ public class SuperAdminInitializer implements CommandLineRunner {
     }
 
     @Override
-    @Transactional
     public void run(String... args) {
-        cleanupConstraints();
-        ensureMultiTenantColumnsExist();
-        syncSequences();
-        initRoles();
-        initHabilitations();
-        assignHabilitationsToRoles();
-        syncSequences();
-        initSuperAdmin();
-        initBanques();
+        // Désactivé : toutes les données sont gérées par db.sql pour éviter tout verrouillage ou conflit au boot.
+        log.info("ℹ️ Initialisation applicative au démarrage gérée intégralement via db.sql.");
     }
 
     private void cleanupConstraints() {

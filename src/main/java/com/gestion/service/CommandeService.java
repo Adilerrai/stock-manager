@@ -3,23 +3,20 @@ package com.gestion.service;
 import com.acommon.annotation.MultitenantSearchMethod;
 import com.acommon.exception.ResourceNotFoundException;
 import com.acommon.persistant.model.TenantContext;
-import com.gestion.persistent.dto.CommandeDTO;
-import com.gestion.persistent.dto.CommandeSearchCriteria;
-import com.gestion.persistent.dto.LigneCommandeDTO;
+import com.gestion.persistent.dto.*;
+import com.gestion.persistent.enums.QualiteProduit;
 import com.gestion.persistent.enums.StatutCommande;
-import com.gestion.persistent.model.Commande;
-import com.gestion.persistent.model.Fournisseur;
-import com.gestion.persistent.model.LigneCommande;
-import com.gestion.persistent.model.Produit;
-import com.gestion.repository.CommandeRepository;
-import com.gestion.repository.FournisseurRepository;
-import com.gestion.repository.LigneCommandeRepository;
-import com.gestion.repository.ProduitRepository;
+import com.gestion.persistent.enums.StatutLivraison;
+import com.gestion.persistent.model.*;
+import com.gestion.repository.*;
+import com.gestion.mapper.LivraisonMapper;
+import com.gestion.mapper.ProduitMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -38,15 +35,27 @@ public class CommandeService {
     private final LigneCommandeRepository ligneCommandeRepository;
     private final FournisseurRepository fournisseurRepository;
     private final ProduitRepository produitRepository;
+    private final LivraisonService livraisonService;
+    private final LivraisonRepository livraisonRepository;
+    private final LivraisonMapper livraisonMapper;
+    private final ProduitMapper produitMapper;
 
     public CommandeService(CommandeRepository commandeRepository,
                           LigneCommandeRepository ligneCommandeRepository,
                           FournisseurRepository fournisseurRepository,
-                          ProduitRepository produitRepository) {
+                          ProduitRepository produitRepository,
+                          LivraisonService livraisonService,
+                          LivraisonRepository livraisonRepository,
+                          LivraisonMapper livraisonMapper,
+                          ProduitMapper produitMapper) {
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.produitRepository = produitRepository;
+        this.livraisonService = livraisonService;
+        this.livraisonRepository = livraisonRepository;
+        this.livraisonMapper = livraisonMapper;
+        this.produitMapper = produitMapper;
     }
 
     private Long getTenantId() {
@@ -140,6 +149,130 @@ public class CommandeService {
         
         commande.setStatut(StatutCommande.ANNULEE);
         return commandeRepository.save(commande);
+    }
+
+    @Transactional
+    public Commande receptionnerCommande(Long commandeId, ReceptionCommandeDTO receptionDTO) {
+        Commande commande = getCommandeById(commandeId);
+
+        if (commande.getStatut() == StatutCommande.LIVREE || commande.getStatutLivraison() == StatutLivraison.LIVREE) {
+            throw new IllegalStateException("Cette commande a déjà été entièrement réceptionnée");
+        }
+        if (commande.getStatut() == StatutCommande.ANNULEE) {
+            throw new IllegalStateException("Impossible de réceptionner une commande annulée");
+        }
+
+        List<LigneCommande> lignesCommande = commande.getLignesCommande();
+        if (lignesCommande == null || lignesCommande.isEmpty()) {
+            throw new IllegalStateException("La commande ne contient aucune ligne à réceptionner");
+        }
+
+        // Calcul des quantités déjà livrées pour chaque produit de la commande
+        Map<Long, Double> qteDejaLivreeParProduit = new HashMap<>();
+        List<Livraison> livraisonsExistantes = livraisonRepository.findByCommande_IdAndStatut(commandeId, StatutLivraison.LIVREE);
+        for (Livraison liv : livraisonsExistantes) {
+            for (LigneLivraison ll : liv.getLignesLivraison()) {
+                Long produitId = ll.getProduit().getId();
+                qteDejaLivreeParProduit.merge(produitId, (double) ll.getQuantiteLivree(), Double::sum);
+            }
+        }
+
+        List<LigneLivraisonDTO> lignesLivraisonDTO = new ArrayList<>();
+
+        if (receptionDTO == null || receptionDTO.getLignes() == null || receptionDTO.getLignes().isEmpty()) {
+            // CAS 1 : RÉCEPTION TOTALE (TOUTE LA COMMANDE OU TOUT LE RELIQUAT RESTANT)
+            for (LigneCommande lc : lignesCommande) {
+                double dejaLivre = qteDejaLivreeParProduit.getOrDefault(lc.getProduit().getId(), 0.0);
+                double restant = lc.getQuantiteCommandee() - dejaLivre;
+                if (restant > 0) {
+                    LigneLivraisonDTO lldto = new LigneLivraisonDTO();
+                    lldto.setProduit(produitMapper.toDto(lc.getProduit()));
+                    lldto.setQuantiteLivree((long) restant);
+                    lldto.setPrixProduit(lc.getPrixUnitaire());
+                    lldto.setQualiteProduit(lc.getQualiteProduit() != null ? lc.getQualiteProduit() : QualiteProduit.PREMIERE_QUALITE);
+
+                    if (receptionDTO != null && receptionDTO.getDepotId() != null) {
+                        DepotDTO dd = new DepotDTO();
+                        dd.setId(receptionDTO.getDepotId());
+                        lldto.setDepot(dd);
+                    }
+                    lignesLivraisonDTO.add(lldto);
+                }
+            }
+        } else {
+            // CAS 2 : RÉCEPTION PARTIELLE (QUANTITÉS REÇUES SPÉCIFIÉES)
+            for (LigneReceptionDTO item : receptionDTO.getLignes()) {
+                if (item.getQuantiteRecue() == null || item.getQuantiteRecue() <= 0) {
+                    continue;
+                }
+
+                LigneCommande lc = null;
+                if (item.getLigneCommandeId() != null) {
+                    lc = lignesCommande.stream()
+                            .filter(l -> l.getId().equals(item.getLigneCommandeId()))
+                            .findFirst()
+                            .orElse(null);
+                }
+                if (lc == null && item.getProduitId() != null) {
+                    lc = lignesCommande.stream()
+                            .filter(l -> l.getProduit().getId().equals(item.getProduitId()))
+                            .findFirst()
+                            .orElse(null);
+                }
+                if (lc == null) {
+                    throw new ResourceNotFoundException("LigneCommande", "id/produitId",
+                            item.getLigneCommandeId() != null ? item.getLigneCommandeId() : item.getProduitId());
+                }
+
+                double dejaLivre = qteDejaLivreeParProduit.getOrDefault(lc.getProduit().getId(), 0.0);
+                double restant = lc.getQuantiteCommandee() - dejaLivre;
+                if (item.getQuantiteRecue() > restant) {
+                    throw new IllegalArgumentException(String.format(
+                            "La quantité reçue (%d) dépasse la quantité restante (%d) pour le produit %s",
+                            item.getQuantiteRecue(), (int) restant, lc.getProduit().getNom()));
+                }
+
+                LigneLivraisonDTO lldto = new LigneLivraisonDTO();
+                lldto.setProduit(produitMapper.toDto(lc.getProduit()));
+                lldto.setQuantiteLivree(item.getQuantiteRecue().longValue());
+                lldto.setPrixProduit(item.getPrixUnitaire() != null ? item.getPrixUnitaire() : lc.getPrixUnitaire());
+                lldto.setQualiteProduit(item.getQualiteProduit() != null ? item.getQualiteProduit()
+                        : (lc.getQualiteProduit() != null ? lc.getQualiteProduit() : QualiteProduit.PREMIERE_QUALITE));
+
+                Long depotId = item.getDepotId() != null ? item.getDepotId()
+                        : (receptionDTO.getDepotId() != null ? receptionDTO.getDepotId() : null);
+                if (depotId != null) {
+                    DepotDTO dd = new DepotDTO();
+                    dd.setId(depotId);
+                    lldto.setDepot(dd);
+                }
+                lignesLivraisonDTO.add(lldto);
+            }
+        }
+
+        if (lignesLivraisonDTO.isEmpty()) {
+            throw new IllegalStateException("Aucun article restant à réceptionner pour cette commande");
+        }
+
+        // Création de la livraison pour la commande
+        LivraisonDTO livraisonDTO = new LivraisonDTO();
+        livraisonDTO.setCommandeId(commande.getId());
+        livraisonDTO.setDateLivraison(receptionDTO != null && receptionDTO.getDateLivraison() != null
+                ? receptionDTO.getDateLivraison() : LocalDateTime.now());
+        livraisonDTO.setTransporteur(receptionDTO != null ? receptionDTO.getTransporteur() : null);
+        livraisonDTO.setNumeroSuivi(receptionDTO != null ? receptionDTO.getNumeroSuivi() : null);
+        livraisonDTO.setObservations(receptionDTO != null && receptionDTO.getObservations() != null
+                ? receptionDTO.getObservations() : "Réception pour commande " + commande.getNumeroCommande());
+        livraisonDTO.setLignesLivraison(lignesLivraisonDTO);
+
+        Livraison livraison = livraisonMapper.toEntity(livraisonDTO);
+        Livraison livraisonSaved = livraisonService.creerLivraison(livraison);
+
+        // Valider la livraison pour enregistrer automatiquement le stock, le lot et les mouvements de stock
+        livraisonService.validerLivraison(livraisonSaved.getId());
+
+        // Recharger la commande avec les statuts et lignes à jour
+        return getCommandeById(commandeId);
     }
 
     private String generateNumeroCommande() {

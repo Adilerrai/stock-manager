@@ -40,20 +40,22 @@ public class FiscalEngineService {
     public RegleFiscaleIS getOrCreateRegleFiscale(int anneeFiscale) {
         Long tenantId = getTenantId();
         return regleFiscaleISRepository.findByAnneeFiscaleAndPointDeVenteId(anneeFiscale, tenantId)
-                .orElseGet(() -> {
-                    // Initialisation selon barème progressif officiel de la Loi de Finances marocaine
-                    RegleFiscaleIS regle = new RegleFiscaleIS(anneeFiscale, tenantId);
-                    regle.setSeuilTranche1(new BigDecimal("300000.00"));
-                    regle.setTauxTranche1(new BigDecimal("0.1000")); // 10%
-                    regle.setSeuilTranche2(new BigDecimal("1000000.00"));
-                    regle.setTauxTranche2(new BigDecimal("0.2000")); // 20%
-                    regle.setTauxTranche3(new BigDecimal("0.3100")); // 31%
-                    regle.setTauxCotisationMinimale(new BigDecimal("0.0050")); // 0.50%
-                    regle.setPlancherCotisationMinimale(new BigDecimal("3000.00")); // Plancher légal 3000 MAD
-                    return regleFiscaleISRepository.save(regle);
-                });
+                .orElseGet(() -> creerRegleParDefaut(anneeFiscale, tenantId));
     }
 
+    public RegleFiscaleIS creerRegleParDefaut(int anneeFiscale, Long tenantId) {
+        RegleFiscaleIS regle = new RegleFiscaleIS(anneeFiscale, tenantId);
+        regle.setSeuilTranche1(new BigDecimal("300000.00"));
+        regle.setTauxTranche1(new BigDecimal("0.1000")); // 10%
+        regle.setSeuilTranche2(new BigDecimal("1000000.00"));
+        regle.setTauxTranche2(new BigDecimal("0.2000")); // 20%
+        regle.setTauxTranche3(new BigDecimal("0.3100")); // 31%
+        regle.setTauxCotisationMinimale(new BigDecimal("0.0050")); // 0.50%
+        regle.setPlancherCotisationMinimale(new BigDecimal("3000.00")); // Plancher légal 3000 MAD
+        return regle;
+    }
+
+    @Transactional
     public RegleFiscaleIS modifierRegleFiscale(int anneeFiscale, RegleFiscaleIS dto) {
         RegleFiscaleIS regle = getOrCreateRegleFiscale(anneeFiscale);
         if (dto.getSeuilTranche1() != null) regle.setSeuilTranche1(dto.getSeuilTranche1());
@@ -71,7 +73,7 @@ public class FiscalEngineService {
     // CALCUL RÉEL DE L'IS & COTISATION MINIMALE (DONNÉES COMPTABLES RÉELLES)
     // =========================================================================
 
-    @Transactional(readOnly = true)
+    @Transactional
     public CalculIsDTO calculerIs(int anneeFiscale, BigDecimal reintegrations, BigDecimal deductions) {
         Long tenantId = getTenantId();
         RegleFiscaleIS regle = getOrCreateRegleFiscale(anneeFiscale);
