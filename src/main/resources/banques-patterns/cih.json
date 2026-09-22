@@ -1,0 +1,79 @@
+{
+  "code": "CIH",
+  "nom": "CIH Bank",
+  "identifiants": [
+    "CIH BANK",
+    "CIH",
+    "230 780",
+    "CIHMOBILEBILLING",
+    "CIH EXPRESS"
+  ],
+  "detectionRegex": "(?i)(CIH\\s*BANK|\\bCIH\\b|230\\s*780|CIHMOBILEBILLING)",
+  "anneeRegex": "\\b(202[0-9])\\b",
+  "ligneTransactionRegex": "^(?<dateOp>\\d{2}[/.-]\\d{2})\\s+(?<dateVal>\\d{2}[/.-]\\d{2})\\s+(?<libelle>.+?)\\s+(?<montant>[+-]?(?:\\d{1,3}(?:[\\s ]\\d{3})+|\\d+)[.,]\\d{2})$",
+  "colonnes": [
+    "dateOperation",
+    "dateValeur",
+    "libelle",
+    "montant"
+  ],
+  "reglesSens": {
+    "priorite": "CREDIT_FIRST",
+    "motsClesCredit": [
+      "RECU",
+      "REÇU",
+      "VIREMENT RECU",
+      "VIREMENT INSTANTANE RECU",
+      "VIR RECU",
+      "VIR CLIENT",
+      "VERSEMENT",
+      "REMISE",
+      "ENCAISSEMENT",
+      "AVOIR",
+      "CREDIT",
+      "DEPOT",
+      "INTERETS CREDITEURS"
+    ],
+    "motsClesDebit": [
+      "VIREMENT EMIS",
+      "VIR EMIS",
+      "VIR FOURNISSEUR",
+      "PAIEMENT",
+      "FACTURE",
+      "RETRAIT",
+      "COMMISSION",
+      "COTISATION",
+      "PRELEVEMENT",
+      "PRLV",
+      "RECHARGE",
+      "CARTE",
+      "DAB",
+      "GAB",
+      "AGIOS",
+      "TAXE",
+      "CIHMOBILEBILLING",
+      "EMISSION CIH EXPRESS"
+    ]
+  },
+  "lignesIgnorees": [
+    "SOLDE DEPART",
+    "SOLDE PRECEDENT",
+    "ANCIEN SOLDE",
+    "NOUVEAU SOLDE",
+    "DATES OPERATION",
+    "OPER VALEUR",
+    "PAGE N",
+    "RELEVE DE COMPTE",
+    "RELEVE D'IDENTITE BANCAIRE",
+    "Nous avons l'honneur",
+    "Sauf erreur ou omission",
+    "Centre Relation Client",
+    "Médiateur",
+    "ICE ",
+    "Capital de",
+    "TOTAL DES MOUVEMENTS",
+    "VOTRE CONSEILLER",
+    "DEVISE DIRHAM",
+    "AGENCE CASA"
+  ]
+}

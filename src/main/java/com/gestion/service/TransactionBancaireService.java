@@ -15,12 +15,18 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.gestion.service.pattern.BanquePatternConfig;
+import com.gestion.service.pattern.BanquePatternRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
+
 @Service
 public class TransactionBancaireService {
 
     private static final Logger log = LoggerFactory.getLogger(TransactionBancaireService.class);
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
+    @Autowired(required = false)
+    private BanquePatternRegistry patternRegistry;
 
     // Regex pour détecter les dates (format dd/MM/yyyy ou dd/MM sans année)
     private static final Pattern PATTERN_DATE = Pattern.compile("(?<!\\d)(\\d{2}[/.-]\\d{2}(?:[/.-]\\d{2,4})?)(?!\\d)");
@@ -49,11 +55,25 @@ public class TransactionBancaireService {
             return Collections.emptyList();
         }
 
-        int defaultYear = detecterAnneeReleve(rawText);
+        // 1. Détection du modèle bancaire (ex: CIH Bank)
+        BanquePatternConfig pattern = (patternRegistry != null) ? patternRegistry.trouverPattern(rawText) : null;
+        if (pattern != null) {
+            log.info("★ Modèle bancaire appliqué pour l'extraction : {} [{}]", pattern.getNom(), pattern.getCode());
+        } else {
+            log.info("Moteur générique appliqué pour l'extraction (aucun pattern spécifique reconnu)");
+        }
+
+        int defaultYear = (pattern != null && pattern.getAnneeRegex() != null) 
+                ? detecterAnneeAvecRegex(rawText, pattern.getAnneeRegex()) 
+                : detecterAnneeReleve(rawText);
         log.info("Année de référence détectée pour le relevé : {}", defaultYear);
 
         List<LigneReleveBancaireDTO> transactions = new ArrayList<>();
         String[] lines = rawText.split("\\r?\\n");
+
+        Pattern ligneRegexPattern = (pattern != null && pattern.getLigneTransactionRegex() != null) 
+                ? Pattern.compile(pattern.getLigneTransactionRegex()) 
+                : null;
 
         LocalDate derniereDateTrouvee = null;
 
@@ -61,8 +81,57 @@ public class TransactionBancaireService {
             String trimmed = line.trim();
             if (trimmed.isEmpty()) continue;
 
-            // Ignorer les lignes d'en-tête génériques, soldes ou pieds de page
-            if (isHeaderOrFooter(trimmed)) continue;
+            // Ignorer les lignes exclues par le modèle de la banque ou par le filtre générique
+            if (isIgnoredByPattern(trimmed, pattern) || isHeaderOrFooter(trimmed)) continue;
+
+            // Tentative 1 : Extraction directe et précise via le Regex dédié du modèle (ex: CIH)
+            if (ligneRegexPattern != null) {
+                Matcher mSpecific = ligneRegexPattern.matcher(trimmed);
+                if (mSpecific.matches()) {
+                    try {
+                        String dateOpStr = mSpecific.group("dateOp");
+                        String dateValStr = mSpecific.group("dateVal");
+                        String libelleSpec = mSpecific.group("libelle").trim();
+                        String montantStr = mSpecific.group("montant");
+
+                        LocalDate dateOp = parseDate(dateOpStr, defaultYear);
+                        LocalDate dateVal = parseDate(dateValStr, defaultYear);
+                        BigDecimal montant = parseMontant(montantStr).abs();
+
+                        if (dateOp != null && montant.compareTo(BigDecimal.ZERO) > 0) {
+                            BigDecimal debit = BigDecimal.ZERO;
+                            BigDecimal credit = BigDecimal.ZERO;
+
+                            if (estCreditSelonPattern(libelleSpec, pattern)) {
+                                credit = montant;
+                            } else {
+                                debit = montant;
+                            }
+
+                            String reference = extraireReference(libelleSpec);
+                            if (reference != null && reference.length() > 90) {
+                                reference = reference.substring(0, 90);
+                            }
+                            if (libelleSpec.length() > 490) {
+                                libelleSpec = libelleSpec.substring(0, 490);
+                            }
+
+                            LigneReleveBancaireDTO dto = new LigneReleveBancaireDTO();
+                            dto.setDateOperation(dateOp);
+                            dto.setDateValeur(dateVal != null ? dateVal : dateOp);
+                            dto.setLibelle(libelleSpec);
+                            dto.setReference(reference);
+                            dto.setDebit(debit);
+                            dto.setCredit(credit);
+                            dto.setStatut(StatutRapprochement.NON_RAPPROCHE);
+                            transactions.add(dto);
+                            continue; // Traitement réussi par le pattern spécifique
+                        }
+                    } catch (Exception e) {
+                        log.debug("Fallback sur extraction générique pour la ligne : {}", trimmed);
+                    }
+                }
+            }
 
             Matcher dateMatcher = PATTERN_DATE.matcher(trimmed);
             List<String> dates = new ArrayList<>();
@@ -187,6 +256,46 @@ public class TransactionBancaireService {
             log.warn("Impossible de sérialiser les transactions en JSON: {}", e.getMessage());
         }
         return transactions;
+    }
+
+    private boolean isIgnoredByPattern(String line, BanquePatternConfig pattern) {
+        if (pattern == null || pattern.getLignesIgnorees() == null) return false;
+        String upper = line.toUpperCase();
+        for (String ign : pattern.getLignesIgnorees()) {
+            if (upper.contains(ign.toUpperCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean estCreditSelonPattern(String libelle, BanquePatternConfig pattern) {
+        if (pattern != null && pattern.getReglesSens() != null && pattern.getReglesSens().getMotsClesCredit() != null) {
+            String upper = libelle.toUpperCase();
+            for (String mot : pattern.getReglesSens().getMotsClesCredit()) {
+                if (upper.contains(mot.toUpperCase())) {
+                    return true;
+                }
+            }
+            if (pattern.getReglesSens().getMotsClesDebit() != null) {
+                for (String mot : pattern.getReglesSens().getMotsClesDebit()) {
+                    if (upper.contains(mot.toUpperCase())) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return isProbableCredit(libelle);
+    }
+
+    private int detecterAnneeAvecRegex(String rawText, String anneeRegex) {
+        try {
+            Matcher m = Pattern.compile(anneeRegex).matcher(rawText);
+            if (m.find()) {
+                return Integer.parseInt(m.group(1));
+            }
+        } catch (Exception ignored) {}
+        return detecterAnneeReleve(rawText);
     }
 
     private int detecterAnneeReleve(String rawText) {
