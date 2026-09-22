@@ -48,8 +48,11 @@ public class RapprochementBancaireController {
     @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<RapprochementComparatif5141DTO> getComparatif5141(
             @PathVariable Long compteId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateArrete) {
-        return ResponseEntity.ok(rapprochementService.getComparatif5141(compteId, dateArrete));
+        LocalDate fin = (dateFin != null) ? dateFin : dateArrete;
+        return ResponseEntity.ok(rapprochementService.getComparatif5141(compteId, dateDebut, fin));
     }
 
     @PostMapping("/creer-ecriture")

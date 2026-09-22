@@ -125,8 +125,12 @@ public class RapprochementBancaireService {
         return toReleveDto(saved, true);
     }
 
+    public RapprochementComparatif5141DTO getComparatif5141(Long compteId, LocalDate dateDebut, LocalDate dateFin) {
+        return rapprochementService.getComparatif5141(compteId, dateDebut, dateFin);
+    }
+
     public RapprochementComparatif5141DTO getComparatif5141(Long compteId, LocalDate dateArrete) {
-        return rapprochementService.getComparatif5141(compteId, dateArrete);
+        return rapprochementService.getComparatif5141(compteId, null, dateArrete);
     }
 
     public ItemComparatifRapprochementDTO creerEcriturePourLigne(CreerEcritureReleveRequest req) {
