@@ -125,4 +125,42 @@ public class LigneReleveBancaireDTO {
     public void setDateRapprochement(LocalDateTime dateRapprochement) {
         this.dateRapprochement = dateRapprochement;
     }
+
+    private String suggestionContrepartieCode;
+    private String suggestionContrepartieLibelle;
+    private String ecritureNumeroPiece;
+    private String ecritureLibelle;
+
+    public String getSuggestionContrepartieCode() {
+        return suggestionContrepartieCode;
+    }
+
+    public void setSuggestionContrepartieCode(String suggestionContrepartieCode) {
+        this.suggestionContrepartieCode = suggestionContrepartieCode;
+    }
+
+    public String getSuggestionContrepartieLibelle() {
+        return suggestionContrepartieLibelle;
+    }
+
+    public void setSuggestionContrepartieLibelle(String suggestionContrepartieLibelle) {
+        this.suggestionContrepartieLibelle = suggestionContrepartieLibelle;
+    }
+
+    public String getEcritureNumeroPiece() {
+        return ecritureNumeroPiece;
+    }
+
+    public void setEcritureNumeroPiece(String ecritureNumeroPiece) {
+        this.ecritureNumeroPiece = ecritureNumeroPiece;
+    }
+
+    public String getEcritureLibelle() {
+        return ecritureLibelle;
+    }
+
+    public void setEcritureLibelle(String ecritureLibelle) {
+        this.ecritureLibelle = ecritureLibelle;
+    }
 }
+

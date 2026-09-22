@@ -25,8 +25,48 @@ public class RapprochementBancaireController {
         this.rapprochementService = rapprochementService;
     }
 
+    @PostMapping("/import-ocr/{compteId}")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
+    public ResponseEntity<ReleveBancaireDTO> importerReleveOcr(
+            @PathVariable Long compteId,
+            @RequestParam("file") MultipartFile file) throws IOException {
+        ReleveBancaireDTO dto = rapprochementService.importerReleveOcr(
+                compteId, file.getOriginalFilename(), file.getContentType(), file.getBytes());
+        return new ResponseEntity<>(dto, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/preview-ocr")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
+    public ResponseEntity<List<LigneReleveBancaireDTO>> previewOcr(
+            @RequestParam("file") MultipartFile file) throws IOException {
+        List<LigneReleveBancaireDTO> list = rapprochementService.previewOcr(
+                file.getBytes(), file.getOriginalFilename(), file.getContentType());
+        return ResponseEntity.ok(list);
+    }
+
+    @GetMapping("/comparatif-5141/{compteId}")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
+    public ResponseEntity<RapprochementComparatif5141DTO> getComparatif5141(
+            @PathVariable Long compteId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateArrete) {
+        return ResponseEntity.ok(rapprochementService.getComparatif5141(compteId, dateArrete));
+    }
+
+    @PostMapping("/creer-ecriture")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
+    public ResponseEntity<ItemComparatifRapprochementDTO> creerEcriturePourLigne(
+            @RequestBody CreerEcritureReleveRequest request) {
+        return ResponseEntity.ok(rapprochementService.creerEcriturePourLigne(request));
+    }
+
+    @PostMapping("/auto-5141/{releveId}")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
+    public ResponseEntity<Map<String, Object>> autoRapprocher5141(@PathVariable Long releveId) {
+        return ResponseEntity.ok(rapprochementService.autoRapprocher5141(releveId));
+    }
+
     @PostMapping("/import/{compteId}")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<ReleveBancaireDTO> importerReleve(
             @PathVariable Long compteId,
             @RequestParam("file") MultipartFile file) throws IOException {
@@ -34,20 +74,21 @@ public class RapprochementBancaireController {
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
+
     @GetMapping("/releves")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<List<ReleveBancaireDTO>> getReleves(@RequestParam(required = false) Long compteId) {
         return ResponseEntity.ok(rapprochementService.getReleves(compteId));
     }
 
     @GetMapping("/releves/{id}")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<ReleveBancaireDTO> getReleveDetail(@PathVariable Long id) {
         return ResponseEntity.ok(rapprochementService.getReleveDetail(id));
     }
 
     @GetMapping("/etat/{compteId}")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<RapprochementEtatDTO> getRapprochementEtat(
             @PathVariable Long compteId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateArrete) {
@@ -55,25 +96,25 @@ public class RapprochementBancaireController {
     }
 
     @PostMapping("/pointer")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<LigneReleveBancaireDTO> rapprocher(@RequestBody RapprochementPointageRequest request) {
         return ResponseEntity.ok(rapprochementService.rapprocher(request));
     }
 
     @PostMapping("/depointer/{ligneId}")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<LigneReleveBancaireDTO> derapprocher(@PathVariable Long ligneId) {
         return ResponseEntity.ok(rapprochementService.derapprocher(ligneId));
     }
 
     @PostMapping("/auto/{releveId}")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<Map<String, Object>> autoRapprochement(@PathVariable Long releveId) {
         return ResponseEntity.ok(rapprochementService.autoRapprochement(releveId));
     }
 
     @DeleteMapping("/releves/{id}")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_USER')")
     public ResponseEntity<Void> supprimerReleve(@PathVariable Long id) {
         rapprochementService.supprimerReleve(id);
         return ResponseEntity.noContent().build();

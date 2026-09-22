@@ -29,21 +29,114 @@ public class RapprochementBancaireService {
     private final LigneReleveBancaireRepository ligneReleveRepository;
     private final CompteFinancierRepository compteFinancierRepository;
     private final MouvementTresorerieRepository mouvementTresorerieRepository;
+    private final OpenOcrService openOcrService;
+    private final TransactionBancaireService transactionBancaireService;
+    private final RapprochementService rapprochementService;
 
     public RapprochementBancaireService(ReleveBancaireRepository releveRepository,
                                         LigneReleveBancaireRepository ligneReleveRepository,
                                         CompteFinancierRepository compteFinancierRepository,
-                                        MouvementTresorerieRepository mouvementTresorerieRepository) {
+                                        MouvementTresorerieRepository mouvementTresorerieRepository,
+                                        OpenOcrService openOcrService,
+                                        TransactionBancaireService transactionBancaireService,
+                                        RapprochementService rapprochementService) {
         this.releveRepository = releveRepository;
         this.ligneReleveRepository = ligneReleveRepository;
         this.compteFinancierRepository = compteFinancierRepository;
         this.mouvementTresorerieRepository = mouvementTresorerieRepository;
+        this.openOcrService = openOcrService;
+        this.transactionBancaireService = transactionBancaireService;
+        this.rapprochementService = rapprochementService;
     }
 
     private Long getTenantId() {
         Long t = TenantContext.getCurrentTenant();
         return t != null ? t : 1L;
     }
+
+    // =========================================================================
+    // IMPORT RELEVÉ BANCAIRE PAR OCR (PDF / JPG / PNG)
+    // =========================================================================
+
+    public List<LigneReleveBancaireDTO> previewOcr(byte[] content, String fileName, String contentType) {
+        String extractedText = openOcrService.extraireTexte(content, fileName, contentType);
+        return transactionBancaireService.extraireTransactions(extractedText);
+    }
+
+    public ReleveBancaireDTO importerReleveOcr(Long compteId, String fileName, String contentType, byte[] content) {
+        Long tenantId = getTenantId();
+        CompteFinancier compte = compteFinancierRepository.findById(compteId)
+                .orElseThrow(() -> new IllegalArgumentException("Compte financier introuvable : " + compteId));
+
+        String extractedText = openOcrService.extraireTexte(content, fileName, contentType);
+        List<LigneReleveBancaireDTO> dtos = transactionBancaireService.extraireTransactions(extractedText);
+
+        if (dtos.isEmpty()) {
+            throw new IllegalArgumentException("Aucune opération bancaire n'a pu être extraite du document par l'OCR. Veuillez vérifier le fichier.");
+        }
+
+        ReleveBancaire releve = new ReleveBancaire();
+        releve.setCompteFinancier(compte);
+        releve.setPointDeVenteId(tenantId);
+        releve.setDateImport(LocalDateTime.now());
+        releve.setStatut("EN_COURS");
+        releve.setReferenceReleve("OCR-" + (compte.getCode() != null ? compte.getCode() : "BQ") + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")) + "-" + (System.currentTimeMillis() % 1000));
+
+        LocalDate minDate = null;
+        LocalDate maxDate = null;
+        BigDecimal cumulDebit = BigDecimal.ZERO;
+        BigDecimal cumulCredit = BigDecimal.ZERO;
+
+        for (LigneReleveBancaireDTO dto : dtos) {
+            LigneReleveBancaire ligne = new LigneReleveBancaire();
+            ligne.setDateOperation(dto.getDateOperation() != null ? dto.getDateOperation() : LocalDate.now());
+            ligne.setDateValeur(dto.getDateValeur() != null ? dto.getDateValeur() : ligne.getDateOperation());
+            
+            String libelle = dto.getLibelle() != null && !dto.getLibelle().isBlank() ? dto.getLibelle().trim() : "Opération bancaire";
+            if (libelle.length() > 490) libelle = libelle.substring(0, 490);
+            ligne.setLibelle(libelle);
+
+            String ref = dto.getReference() != null ? dto.getReference().trim() : null;
+            if (ref != null && ref.length() > 90) ref = ref.substring(0, 90);
+            ligne.setReference(ref);
+
+            ligne.setDebit(dto.getDebit() != null ? dto.getDebit() : BigDecimal.ZERO);
+            ligne.setCredit(dto.getCredit() != null ? dto.getCredit() : BigDecimal.ZERO);
+            ligne.setStatut(StatutRapprochement.NON_RAPPROCHE);
+            ligne.setPointDeVenteId(tenantId);
+
+            releve.addLigne(ligne);
+
+            cumulDebit = cumulDebit.add(ligne.getDebit());
+            cumulCredit = cumulCredit.add(ligne.getCredit());
+
+            if (minDate == null || ligne.getDateOperation().isBefore(minDate)) minDate = ligne.getDateOperation();
+            if (maxDate == null || ligne.getDateOperation().isAfter(maxDate)) maxDate = ligne.getDateOperation();
+        }
+
+        releve.setDateDebut(minDate != null ? minDate : LocalDate.now());
+        releve.setDateFin(maxDate != null ? maxDate : LocalDate.now());
+
+        BigDecimal soldeInit = compte.getSoldeActuel() != null ? compte.getSoldeActuel() : BigDecimal.ZERO;
+        releve.setSoldeInitial(soldeInit);
+        releve.setSoldeFinal(soldeInit.add(cumulCredit).subtract(cumulDebit));
+
+        ReleveBancaire saved = releveRepository.save(releve);
+        return toReleveDto(saved, true);
+    }
+
+    public RapprochementComparatif5141DTO getComparatif5141(Long compteId, LocalDate dateArrete) {
+        return rapprochementService.getComparatif5141(compteId, dateArrete);
+    }
+
+    public ItemComparatifRapprochementDTO creerEcriturePourLigne(CreerEcritureReleveRequest req) {
+        return rapprochementService.creerEcriturePourLigne(req);
+    }
+
+    public Map<String, Object> autoRapprocher5141(Long releveId) {
+        return rapprochementService.autoRapprocher5141(releveId);
+    }
+
 
     // =========================================================================
     // IMPORT RELEVÉ BANCAIRE (CSV)
