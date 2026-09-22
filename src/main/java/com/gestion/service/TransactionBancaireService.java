@@ -22,8 +22,8 @@ public class TransactionBancaireService {
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
 
-    // Regex pour détecter les dates
-    private static final Pattern PATTERN_DATE = Pattern.compile("(?<!\\d)(\\d{2}[/.-]\\d{2}[/.-]\\d{2,4})(?!\\d)");
+    // Regex pour détecter les dates (format dd/MM/yyyy ou dd/MM sans année)
+    private static final Pattern PATTERN_DATE = Pattern.compile("(?<!\\d)(\\d{2}[/.-]\\d{2}(?:[/.-]\\d{2,4})?)(?!\\d)");
     
     // Regex pour détecter les montants (ex: 25 000.00, 25.000,00, 25000,00, -8 000,50, +150.00)
     private static final Pattern PATTERN_MONTANT = Pattern.compile("(?<!\\w)([+-]?\\s*\\d{1,3}(?:[\\s. ]\\d{3})*(?:[.,]\\d{2})|[+-]?\\s*\\d+(?:[.,]\\d{2}))(?![\\w%])");
@@ -31,13 +31,14 @@ public class TransactionBancaireService {
     // Mots-clés typiques de sorties de fonds (Débit banque)
     private static final Set<String> MOTS_CLES_DEBIT = Set.of(
             "FRAIS", "COMMISSION", "COTISATION", "RETRAIT", "PAIEMENT", "PRELEVEMENT", "PRLV",
-            "CHQ", "CHEQUE", "VIREMENT EMIS", "VIR FOURNISSEUR", "AGIOS", "TAXE", "CARTE", "DAB", "GAB", "DEBIT"
+            "CHQ", "CHEQUE", "VIREMENT EMIS", "VIR EMIS", "VIR FOURNISSEUR", "AGIOS", "TAXE",
+            "CARTE", "DAB", "GAB", "DEBIT", "RECHARGE", "ACHAT", "BILLING PAY"
     );
 
     // Mots-clés typiques d'entrées de fonds (Crédit banque)
     private static final Set<String> MOTS_CLES_CREDIT = Set.of(
-            "VIREMENT RECU", "VIR RECU", "VIR CLIENT", "REMISE", "ENCAISSEMENT", "VERSEMENT",
-            "AVOIR", "CREDIT", "DEPOT", "INTERETS CREDITEURS"
+            "RECU", "REÇU", "VIREMENT RECU", "VIR RECU", "VIR CLIENT", "REMISE", "ENCAISSEMENT",
+            "VERSEMENT", "AVOIR", "CREDIT", "DEPOT", "INTERETS CREDITEURS", "SALAIRE"
     );
 
     /**
@@ -48,6 +49,9 @@ public class TransactionBancaireService {
             return Collections.emptyList();
         }
 
+        int defaultYear = detecterAnneeReleve(rawText);
+        log.info("Année de référence détectée pour le relevé : {}", defaultYear);
+
         List<LigneReleveBancaireDTO> transactions = new ArrayList<>();
         String[] lines = rawText.split("\\r?\\n");
 
@@ -57,7 +61,7 @@ public class TransactionBancaireService {
             String trimmed = line.trim();
             if (trimmed.isEmpty()) continue;
 
-            // Ignorer les lignes d'en-tête génériques ou de pieds de page
+            // Ignorer les lignes d'en-tête génériques, soldes ou pieds de page
             if (isHeaderOrFooter(trimmed)) continue;
 
             Matcher dateMatcher = PATTERN_DATE.matcher(trimmed);
@@ -66,14 +70,13 @@ public class TransactionBancaireService {
                 dates.add(dateMatcher.group(1));
             }
 
-            // Si aucune date sur la ligne mais qu'on a déjà vu une date et qu'il y a un montant
             LocalDate dateOp = null;
             LocalDate dateVal = null;
 
             if (!dates.isEmpty()) {
-                dateOp = parseDate(dates.get(0));
+                dateOp = parseDate(dates.get(0), defaultYear);
                 if (dates.size() > 1) {
-                    dateVal = parseDate(dates.get(1));
+                    dateVal = parseDate(dates.get(1), defaultYear);
                 } else {
                     dateVal = dateOp;
                 }
@@ -81,7 +84,6 @@ public class TransactionBancaireService {
                     derniereDateTrouvee = dateOp;
                 }
             } else if (derniereDateTrouvee != null) {
-                // Peut être une ligne de suite
                 dateOp = derniereDateTrouvee;
                 dateVal = derniereDateTrouvee;
             }
@@ -129,14 +131,14 @@ public class TransactionBancaireService {
             BigDecimal credit = BigDecimal.ZERO;
 
             if (montants.size() >= 2) {
-                // Si deux montants distincts sont détectés : souvent Colonne Débit puis Colonne Crédit
                 BigDecimal premier = montants.get(montants.size() - 2);
                 BigDecimal second = montants.get(montants.size() - 1);
-                // Si l'un est zéro ou si format classique
-                if (isProbableDebit(libelle)) {
+                if (isProbableCredit(libelle)) {
+                    credit = second.abs();
+                } else if (isProbableDebit(libelle)) {
                     debit = premier.abs();
                 } else {
-                    credit = second.abs();
+                    debit = premier.abs();
                 }
             } else {
                 BigDecimal uniqueMontant = montants.get(montants.size() - 1);
@@ -146,12 +148,11 @@ public class TransactionBancaireService {
                     debit = uniqueMontant.abs();
                 } else if (raw.contains("+")) {
                     credit = uniqueMontant.abs();
-                } else if (isProbableDebit(libelle)) {
-                    debit = uniqueMontant.abs();
                 } else if (isProbableCredit(libelle)) {
                     credit = uniqueMontant.abs();
+                } else if (isProbableDebit(libelle)) {
+                    debit = uniqueMontant.abs();
                 } else {
-                    // Par défaut si pas d'autre indice, selon le sens le plus commun ou libellé
                     debit = uniqueMontant.abs();
                 }
             }
@@ -160,7 +161,7 @@ public class TransactionBancaireService {
                 libelle = libelle.substring(0, 490);
             }
 
-            // Référence extraite (ex: VIR-12345, CHQ 987654)
+            // Référence extraite (doit contenir au moins un chiffre, ex: VIR-12345, CHQ-987654)
             String reference = extraireReference(libelle);
             if (reference != null && reference.length() > 90) {
                 reference = reference.substring(0, 90);
@@ -188,6 +189,31 @@ public class TransactionBancaireService {
         return transactions;
     }
 
+    private int detecterAnneeReleve(String rawText) {
+        if (rawText != null) {
+            // Chercher des années 4 chiffres (ex: 2024, 2025, 2026)
+            Matcher m = Pattern.compile("\\b(202[0-9])\\b").matcher(rawText);
+            if (m.find()) {
+                try {
+                    return Integer.parseInt(m.group(1));
+                } catch (Exception ignored) {}
+            }
+        }
+        return LocalDate.now().getYear();
+    }
+
+    private boolean isProbableCredit(String text) {
+        String upper = text.toUpperCase();
+        // Si le libellé contient explicitement "RECU", "REÇU", "VERSEMENT", "REMISE", "CREDIT"
+        if (upper.contains("RECU") || upper.contains("REÇU") || upper.contains("VERSEMENT") || upper.contains("AVOIR")) {
+            return true;
+        }
+        for (String mot : MOTS_CLES_CREDIT) {
+            if (upper.contains(mot)) return true;
+        }
+        return false;
+    }
+
     private boolean isProbableDebit(String text) {
         String upper = text.toUpperCase();
         for (String mot : MOTS_CLES_DEBIT) {
@@ -196,19 +222,15 @@ public class TransactionBancaireService {
         return false;
     }
 
-    private boolean isProbableCredit(String text) {
-        String upper = text.toUpperCase();
-        for (String mot : MOTS_CLES_CREDIT) {
-            if (upper.contains(mot)) return true;
-        }
-        return false;
-    }
-
     private String extraireReference(String libelle) {
-        Pattern refPattern = Pattern.compile("(?i)(?:REF|VIR|CHQ|FACTURE|PIECE|N°|AVIS)[:\\s]*([A-Z0-9_-]{4,20})");
+        // Exiger que la référence commence par un mot-clé ET contienne au moins un chiffre
+        Pattern refPattern = Pattern.compile("(?i)\\b(?:REF|REFERENCE|CHQ|CHEQUE|AVIS|FACTURE|PIECE|N°)[ :#-]+([A-Z0-9_-]*\\d[A-Z0-9_-]*)");
         Matcher m = refPattern.matcher(libelle);
         if (m.find()) {
-            return m.group(1).trim();
+            String ref = m.group(1).trim();
+            if (ref.length() >= 3 && ref.length() <= 50) {
+                return ref;
+            }
         }
         return null;
     }
@@ -226,24 +248,32 @@ public class TransactionBancaireService {
         String l = line.toUpperCase();
         return l.contains("PAGE ") || l.contains("IBAN") || l.contains("BIC") ||
                l.contains("RELEVE D'IDENTITE") || l.contains("TELEPHONE") ||
+               l.contains("SOLDE PRECEDENT") || l.contains("ANCIEN SOLDE") ||
+               l.contains("NOUVEAU SOLDE") || l.contains("TOTAL DES MOUVEMENTS") ||
                (l.contains("DATE") && l.contains("LIBELLE") && l.contains("DEBIT"));
     }
 
-    private LocalDate parseDate(String val) {
+    private LocalDate parseDate(String val, int defaultYear) {
         if (val == null) return null;
         val = val.trim().replace(".", "/").replace("-", "/");
         String[] parts = val.split("/");
-        if (parts.length != 3) return null;
 
         try {
-            int jour = Integer.parseInt(parts[0]);
-            int mois = Integer.parseInt(parts[1]);
-            int annee = Integer.parseInt(parts[2]);
-            if (annee < 100) annee += 2000;
-            return LocalDate.of(annee, mois, jour);
+            if (parts.length == 2) {
+                int jour = Integer.parseInt(parts[0]);
+                int mois = Integer.parseInt(parts[1]);
+                return LocalDate.of(defaultYear, mois, jour);
+            } else if (parts.length == 3) {
+                int jour = Integer.parseInt(parts[0]);
+                int mois = Integer.parseInt(parts[1]);
+                int annee = Integer.parseInt(parts[2]);
+                if (annee < 100) annee += 2000;
+                return LocalDate.of(annee, mois, jour);
+            }
         } catch (Exception e) {
             return null;
         }
+        return null;
     }
 
     private BigDecimal parseMontant(String val) {
