@@ -56,7 +56,7 @@ public class ComptabiliteService {
     // PLAN COMPTABLE
     // =========================================================================
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<CompteComptableDTO> getPlanComptable() {
         Long tenantId = getTenantId();
         List<CompteComptable> comptes = compteRepository.findByPointDeVenteIdOrderByNumeroCompteAsc(tenantId);
@@ -98,6 +98,7 @@ public class ComptabiliteService {
         return 1;
     }
 
+    @Transactional
     public void initPlanComptableParDefaut(Long tenantId) {
         // Plan comptable général marocain / maghrébin standard (PCGM)
         List<Object[]> standardAccounts = List.of(
@@ -179,7 +180,7 @@ public class ComptabiliteService {
     // JOURNAUX COMPTABLES
     // =========================================================================
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<JournalComptableDTO> getJournaux() {
         Long tenantId = getTenantId();
         List<JournalComptable> journaux = journalRepository.findByPointDeVenteIdOrderByCodeAsc(tenantId);
@@ -297,6 +298,7 @@ public class ComptabiliteService {
         journalRepository.delete(journal);
     }
 
+    @Transactional
     public void initJournauxParDefaut(Long tenantId) {
         List<JournalComptable> defauts = List.of(
             new JournalComptable("VT", "Journal des Ventes", TypeJournal.VENTES, tenantId),
