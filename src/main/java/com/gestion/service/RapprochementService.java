@@ -63,18 +63,31 @@ public class RapprochementService {
 
     @Transactional(readOnly = true)
     public RapprochementComparatif5141DTO getComparatif5141(Long compteId, LocalDate dateArrete) {
+        return getComparatif5141(compteId, null, dateArrete);
+    }
+
+    @Transactional(readOnly = true)
+    public RapprochementComparatif5141DTO getComparatif5141(Long compteId, LocalDate dateDebut, LocalDate dateFin) {
         Long tenantId = getTenantId();
         CompteFinancier compte = compteFinancierRepository.findById(compteId)
                 .orElseThrow(() -> new IllegalArgumentException("Compte financier introuvable : " + compteId));
 
-        LocalDate dateLimite = dateArrete != null ? dateArrete : LocalDate.now();
+        LocalDate dFin = dateFin != null ? dateFin : LocalDate.now();
+        LocalDate dDebut = dateDebut != null ? dateDebut : dFin.withDayOfMonth(1);
+        if (dDebut.isAfter(dFin)) {
+            LocalDate tmp = dDebut;
+            dDebut = dFin;
+            dFin = tmp;
+        }
 
         RapprochementComparatif5141DTO dto = new RapprochementComparatif5141DTO();
         dto.setCompteId(compte.getId());
         dto.setCompteNom(compte.getNom());
         dto.setNumeroRib(compte.getNumeroCompteRib());
         dto.setNomBanque(compte.getNomBanque() != null ? compte.getNomBanque() : "Banque");
-        dto.setDateArrete(dateLimite);
+        dto.setDateDebut(dDebut);
+        dto.setDateFin(dFin);
+        dto.setDateArrete(dFin);
 
         // Compte comptable 5141
         CompteComptable compte5141 = findCompte5141(tenantId);
@@ -84,7 +97,7 @@ public class RapprochementService {
         BigDecimal soldeComptable = compte.getSoldeActuel() != null ? compte.getSoldeActuel() : BigDecimal.ZERO;
         dto.setSoldeComptable(soldeComptable);
 
-        // Dernier relevé bancaire
+        // Dernier relevé bancaire pour référence solde
         Optional<ReleveBancaire> dernierReleve = releveRepository
                 .findFirstByCompteFinancierIdAndPointDeVenteIdOrderByDateFinDesc(compteId, tenantId);
 
@@ -92,19 +105,20 @@ public class RapprochementService {
         dto.setSoldeReleve(soldeReleve);
         dto.setEcart(soldeReleve.subtract(soldeComptable));
 
-        // Lignes du relevé bancaire
-        List<LigneReleveBancaire> lignesReleve;
-        if (dernierReleve.isPresent()) {
-            lignesReleve = dernierReleve.get().getLignes();
-        } else {
-            lignesReleve = ligneReleveRepository.findNonRapprocheesAvantDate(compteId, dateLimite, tenantId);
+        // Lignes du relevé bancaire filtrées sur la période [dDebut, dFin]
+        List<LigneReleveBancaire> lignesReleve = ligneReleveRepository.findByCompteAndPeriode(compteId, dDebut, dFin, tenantId);
+        if (lignesReleve.isEmpty()) {
+            if (dernierReleve.isPresent()) {
+                lignesReleve = dernierReleve.get().getLignes();
+            } else {
+                lignesReleve = ligneReleveRepository.findNonRapprocheesAvantDate(compteId, dFin, tenantId);
+            }
         }
 
         dto.setTotalLignesReleve(lignesReleve.size());
 
-        // Récupérer les écritures du compte 5141
-        LocalDate debutPeriode = dernierReleve.map(ReleveBancaire::getDateDebut).orElse(dateLimite.minusMonths(1));
-        List<LigneEcriture> ecritures5141 = ligneEcritureRepository.findAllByTenantAndPeriode(tenantId, debutPeriode.minusDays(15), dateLimite.plusDays(5))
+        // Récupérer les écritures du compte 5141 sur la période [dDebut, dFin]
+        List<LigneEcriture> ecritures5141 = ligneEcritureRepository.findAllByTenantAndPeriode(tenantId, dDebut, dFin)
                 .stream()
                 .filter(l -> l.getCompte() != null && l.getCompte().getNumeroCompte() != null && l.getCompte().getNumeroCompte().startsWith("5141"))
                 .collect(Collectors.toList());

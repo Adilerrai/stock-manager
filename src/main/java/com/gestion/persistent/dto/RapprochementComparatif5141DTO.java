@@ -11,6 +11,8 @@ public class RapprochementComparatif5141DTO {
     private String numeroRib;
     private String nomBanque;
     private String numeroCompteComptable = "5141";
+    private LocalDate dateDebut;
+    private LocalDate dateFin;
     private LocalDate dateArrete;
 
     private BigDecimal soldeReleve = BigDecimal.ZERO;
@@ -67,12 +69,31 @@ public class RapprochementComparatif5141DTO {
         this.numeroCompteComptable = numeroCompteComptable;
     }
 
+    public LocalDate getDateDebut() {
+        return dateDebut;
+    }
+
+    public void setDateDebut(LocalDate dateDebut) {
+        this.dateDebut = dateDebut;
+    }
+
+    public LocalDate getDateFin() {
+        return dateFin;
+    }
+
+    public void setDateFin(LocalDate dateFin) {
+        this.dateFin = dateFin;
+    }
+
     public LocalDate getDateArrete() {
-        return dateArrete;
+        return dateArrete != null ? dateArrete : dateFin;
     }
 
     public void setDateArrete(LocalDate dateArrete) {
         this.dateArrete = dateArrete;
+        if (this.dateFin == null) {
+            this.dateFin = dateArrete;
+        }
     }
 
     public BigDecimal getSoldeReleve() {
