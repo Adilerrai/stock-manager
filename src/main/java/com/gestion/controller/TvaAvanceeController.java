@@ -53,4 +53,25 @@ public class TvaAvanceeController {
     public ResponseEntity<ControleTvaDTO> getControleReconciliation(@RequestParam String periode) {
         return ResponseEntity.ok(tvaAvanceeService.controleReconciliation(periode));
     }
+
+    @GetMapping("/releve-deduction")
+    public ResponseEntity<com.gestion.persistent.dto.ReleveDeductionTvaDTO> getReleveDeduction(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateDebut,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateFin,
+            @RequestParam(required = false, defaultValue = "false") Boolean seulementRapproches) {
+        return ResponseEntity.ok(tvaAvanceeService.getReleveDeduction(dateDebut, dateFin, seulementRapproches));
+    }
+
+    @GetMapping("/releve-deduction/export-xlsx")
+    public ResponseEntity<byte[]> exporterReleveDeductionXlsx(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateDebut,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateFin,
+            @RequestParam(required = false, defaultValue = "false") Boolean seulementRapproches) {
+        byte[] xlsxBytes = tvaAvanceeService.exporterReleveDeductionXlsx(dateDebut, dateFin, seulementRapproches);
+        String filename = "releve_deduction_tva_art112_" + java.time.LocalDate.now() + ".xlsx";
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .body(xlsxBytes);
+    }
 }

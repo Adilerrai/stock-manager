@@ -46,5 +46,13 @@ public interface LigneReleveBancaireRepository extends JpaRepository<LigneReleve
             @Param("dateFin") LocalDate dateFin,
             @Param("pointDeVenteId") Long pointDeVenteId);
 
+    @Query("SELECT l FROM LigneReleveBancaire l WHERE l.pointDeVenteId = :pointDeVenteId " +
+           "AND ((l.dateOperation BETWEEN :dateDebut AND :dateFin) OR (l.dateValeur BETWEEN :dateDebut AND :dateFin)) " +
+           "ORDER BY l.dateOperation ASC")
+    List<LigneReleveBancaire> findByTenantAndDates(
+            @Param("dateDebut") LocalDate dateDebut,
+            @Param("dateFin") LocalDate dateFin,
+            @Param("pointDeVenteId") Long pointDeVenteId);
+
     long countByReleveBancaireIdAndStatut(Long releveBancaireId, StatutRapprochement statut);
 }

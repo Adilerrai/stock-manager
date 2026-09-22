@@ -18,9 +18,11 @@ import java.util.Map;
 public class ComptabiliteController {
 
     private final ComptabiliteService comptabiliteService;
+    private final com.gestion.service.TvaAvanceeService tvaAvanceeService;
 
-    public ComptabiliteController(ComptabiliteService comptabiliteService) {
+    public ComptabiliteController(ComptabiliteService comptabiliteService, com.gestion.service.TvaAvanceeService tvaAvanceeService) {
         this.comptabiliteService = comptabiliteService;
+        this.tvaAvanceeService = tvaAvanceeService;
     }
 
     // =========================================================================
@@ -138,6 +140,29 @@ public class ComptabiliteController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
         return ResponseEntity.ok(comptabiliteService.getDeclarationTva(dateDebut, dateFin));
+    }
+
+    @GetMapping("/tva/releve-deduction")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<com.gestion.persistent.dto.ReleveDeductionTvaDTO> getReleveDeduction(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+            @RequestParam(required = false, defaultValue = "false") Boolean seulementRapproches) {
+        return ResponseEntity.ok(tvaAvanceeService.getReleveDeduction(dateDebut, dateFin, seulementRapproches));
+    }
+
+    @GetMapping("/tva/releve-deduction/export-xlsx")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    public ResponseEntity<byte[]> exporterReleveDeductionXlsx(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+            @RequestParam(required = false, defaultValue = "false") Boolean seulementRapproches) {
+        byte[] xlsxBytes = tvaAvanceeService.exporterReleveDeductionXlsx(dateDebut, dateFin, seulementRapproches);
+        String filename = "releve_deduction_tva_art112_" + LocalDate.now() + ".xlsx";
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .body(xlsxBytes);
     }
 
     @GetMapping(value = "/export/csv", produces = "text/csv; charset=UTF-8")
