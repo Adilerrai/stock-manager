@@ -757,7 +757,7 @@ public class TvaAvanceeService {
             rapprocheStyle.setFillForegroundColor(new org.apache.poi.xssf.usermodel.XSSFColor(new byte[]{(byte) 198, (byte) 239, (byte) 206}, null));
             rapprocheStyle.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
             rapprocheStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
-            org.apache.poi.ss.usermodel.Font greenFont = wb.createFont();
+            org.apache.poi.xssf.usermodel.XSSFFont greenFont = (org.apache.poi.xssf.usermodel.XSSFFont) wb.createFont();
             greenFont.setColor(new org.apache.poi.xssf.usermodel.XSSFColor(new byte[]{(byte) 0, (byte) 97, (byte) 0}, null));
             rapprocheStyle.setFont(greenFont);
 
@@ -767,7 +767,7 @@ public class TvaAvanceeService {
             nonRapprocheStyle.setFillForegroundColor(new org.apache.poi.xssf.usermodel.XSSFColor(new byte[]{(byte) 255, (byte) 235, (byte) 156}, null));
             nonRapprocheStyle.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
             nonRapprocheStyle.setBorderBottom(org.apache.poi.ss.usermodel.BorderStyle.THIN);
-            org.apache.poi.ss.usermodel.Font orangeFont = wb.createFont();
+            org.apache.poi.xssf.usermodel.XSSFFont orangeFont = (org.apache.poi.xssf.usermodel.XSSFFont) wb.createFont();
             orangeFont.setColor(new org.apache.poi.xssf.usermodel.XSSFColor(new byte[]{(byte) 156, (byte) 87, (byte) 0}, null));
             nonRapprocheStyle.setFont(orangeFont);
 
