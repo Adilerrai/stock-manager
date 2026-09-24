@@ -49,7 +49,7 @@ public class NotificationController {
     }
 
     @PostMapping("/generer-alertes")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @PreAuthorize("hasAuthority('DASHBOARD_VOIR') or hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<Map<String, Object>> genererAlertes() {
         int count = notificationService.genererAlertesAutomatiques();
         return ResponseEntity.ok(Map.of("alertesGenerees", count));

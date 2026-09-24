@@ -78,11 +78,17 @@ public class User implements UserDetails {
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<>();
 
-        // 1. Ajouter le rôle principal (ex: "ROLE_AVOCAT")
         if (this.role != null && this.role.getNom() != null) {
-            authorities.add(new SimpleGrantedAuthority(this.role.getNom()));
+            String roleName = this.role.getNom();
+            authorities.add(new SimpleGrantedAuthority(roleName));
 
-            // 2. Ajouter toutes les habilitations associées à ce rôle
+            // PASS UNIVERSEL SUPERADMIN : Accès absolu à toutes les habilitations et tous les rôles
+            if ("ROLE_SUPERADMIN".equalsIgnoreCase(roleName)) {
+                authorities.addAll(com.acommon.config.SuperAdminHabilitations.ALL_AUTHORITIES);
+                return authorities;
+            }
+
+            // Pour les autres utilisateurs : uniquement les habilitations affectées à leur rôle en BDD
             if (this.role.getHabilitations() != null) {
                 authorities.addAll(this.role.getHabilitations().stream()
                         .map(habilitation -> new SimpleGrantedAuthority(habilitation.getNom()))

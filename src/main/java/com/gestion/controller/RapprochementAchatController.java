@@ -24,7 +24,7 @@ public class RapprochementAchatController {
      * (Commande <-> Réception Dépôt <-> Facture Achat)
      */
     @GetMapping("/{factureAchatId}")
-    @PreAuthorize("hasAnyAuthority('ACHAT_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('ACHAT_FACTURE_READ')")
     public ResponseEntity<RapprochementAchatDTO> rapprocherFacture(@PathVariable Long factureAchatId) {
         return ResponseEntity.ok(rapprochementService.rapprocherFactureAchat(factureAchatId));
     }
@@ -33,7 +33,7 @@ public class RapprochementAchatController {
      * Liste des factures d'achats avec litiges et paiements bloqués
      */
     @GetMapping("/litiges")
-    @PreAuthorize("hasAnyAuthority('ACHAT_VOIR', 'DASHBOARD_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('ACHAT_FACTURE_READ')")
     public ResponseEntity<List<RapprochementAchatDTO>> getLitiges() {
         return ResponseEntity.ok(rapprochementService.getRapprochementsLitigieux());
     }

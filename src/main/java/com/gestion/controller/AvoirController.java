@@ -88,7 +88,7 @@ public class AvoirController {
      * (Produit défectueux, erreur magasinier, erreur commande, etc.)
      */
     @GetMapping("/statistiques-motifs")
-    @PreAuthorize("hasAnyAuthority('DASHBOARD_VOIR', 'VENTE_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL')")
+    @PreAuthorize("hasAuthority('DASHBOARD_VOIR') or hasAuthority('VENTE_READ') or hasAuthority('RAPPORT_VOIR')")
     public ResponseEntity<List<StatistiqueMotifRetourDTO>> getStatistiquesMotifs(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {

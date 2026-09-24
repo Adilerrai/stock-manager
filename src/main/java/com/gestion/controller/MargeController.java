@@ -23,7 +23,7 @@ public class MargeController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('MARGES_VOIR', 'RAPPORT_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<MargeDTO> getMargeGlobale(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -32,7 +32,7 @@ public class MargeController {
     }
 
     @GetMapping("/produits")
-    @PreAuthorize("hasAnyAuthority('MARGES_VOIR', 'RAPPORT_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<LigneMargeDTO>> getMargesParProduit(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -41,7 +41,7 @@ public class MargeController {
     }
 
     @GetMapping("/categories")
-    @PreAuthorize("hasAnyAuthority('MARGES_VOIR', 'RAPPORT_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<LigneMargeDTO>> getMargesParCategorie(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -50,7 +50,7 @@ public class MargeController {
     }
 
     @GetMapping("/clients")
-    @PreAuthorize("hasAnyAuthority('MARGES_VOIR', 'RAPPORT_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<LigneMargeDTO>> getMargesParClient(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {

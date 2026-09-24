@@ -20,39 +20,39 @@ public class AnomalieController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ANOMALIES_VOIR', 'DASHBOARD_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('DASHBOARD_VOIR') or hasAuthority('RAPPORT_VOIR')")
     public ResponseEntity<List<AnomalieDTO>> getToutesLesAnomalies() {
         List<AnomalieDTO> list = anomalieService.detecterToutesLesAnomalies();
         return ResponseEntity.ok(list);
     }
 
     @GetMapping("/critiques")
-    @PreAuthorize("hasAnyAuthority('ANOMALIES_VOIR', 'DASHBOARD_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('DASHBOARD_VOIR') or hasAuthority('RAPPORT_VOIR')")
     public ResponseEntity<List<AnomalieDTO>> getAnomaliesCritiques() {
         List<AnomalieDTO> list = anomalieService.detecterParSeverite("CRITIQUE");
         return ResponseEntity.ok(list);
     }
 
     @GetMapping("/credits")
-    @PreAuthorize("hasAnyAuthority('ANOMALIES_VOIR', 'DASHBOARD_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL')")
+    @PreAuthorize("hasAuthority('VENTE_READ') or hasAuthority('CLIENT_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<List<AnomalieDTO>> getAnomaliesCredits() {
         return ResponseEntity.ok(anomalieService.detecterAnomaliesCredits());
     }
 
     @GetMapping("/factures")
-    @PreAuthorize("hasAnyAuthority('ANOMALIES_VOIR', 'DASHBOARD_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('VENTE_READ') or hasAuthority('ACHAT_FACTURE_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<List<AnomalieDTO>> getAnomaliesFactures() {
         return ResponseEntity.ok(anomalieService.detecterAnomaliesFactures());
     }
 
     @GetMapping("/stock")
-    @PreAuthorize("hasAnyAuthority('ANOMALIES_VOIR', 'STOCK_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<List<AnomalieDTO>> getAnomaliesStock() {
         return ResponseEntity.ok(anomalieService.detecterAnomaliesStock());
     }
 
     @GetMapping("/caisse")
-    @PreAuthorize("hasAnyAuthority('ANOMALIES_VOIR', 'TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<List<AnomalieDTO>> getAnomaliesCaisse() {
         return ResponseEntity.ok(anomalieService.detecterAnomaliesCaisse());
     }

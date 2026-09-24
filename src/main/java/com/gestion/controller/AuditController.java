@@ -27,7 +27,7 @@ public class AuditController {
      * Historique d'un objet précis (ex: toutes les actions sur l'écriture #42)
      */
     @GetMapping("/{entite}/{entiteId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<AuditLogDTO>> getHistoriqueEntite(
             @PathVariable String entite,
             @PathVariable Long entiteId) {
@@ -38,7 +38,7 @@ public class AuditController {
      * Les dernières actions (dashboard d'audit)
      */
     @GetMapping("/recents")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<Page<AuditLogDTO>> getActionsRecentes(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
@@ -49,7 +49,7 @@ public class AuditController {
      * Recherche multi-critères (par entité, action, utilisateur, dates)
      */
     @GetMapping("/recherche")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<Page<AuditLogDTO>> rechercher(
             @RequestParam(required = false) String entite,
             @RequestParam(required = false) ActionAudit action,

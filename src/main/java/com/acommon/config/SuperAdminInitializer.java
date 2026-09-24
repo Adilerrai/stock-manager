@@ -170,7 +170,8 @@ public class SuperAdminInitializer implements CommandLineRunner {
     }
 
     private void initHabilitations() {
-        List<String> allHabilitations = Arrays.asList(
+        Set<String> allHabilitations = new LinkedHashSet<>(SuperAdminHabilitations.BUSINESS_PERMISSIONS);
+        allHabilitations.addAll(Arrays.asList(
             "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE", "PRODUIT_DELETE",
             "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
             "VENTE_READ", "VENTE_CREATE", "VENTE_DELETE",
@@ -179,12 +180,12 @@ public class SuperAdminInitializer implements CommandLineRunner {
             "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE", "CLIENT_DELETE",
             "FOURNISSEUR_READ", "FOURNISSEUR_CREATE", "FOURNISSEUR_UPDATE",
             "PAIEMENT_READ", "PAIEMENT_CREATE",
-            "COMPTA_READ", "COMPTA_ECRITURE", "COMPTA_CLOTURE",
-            "TRESORERIE_READ", "TRESORERIE_MOUVEMENT",
-            "RAPPORT_READ", "RAPPORT_EXPORT",
+            "COMPTA_READ", "COMPTA_WRITE", "CLOTURE_EXERCICE", "COMPTA_ECRITURE", "COMPTA_CLOTURE",
+            "TRESORERIE_READ", "TRESORERIE_GESTION", "TRESORERIE_MOUVEMENT",
+            "RAPPORT_READ", "RAPPORT_EXPORT", "RAPPORT_VOIR", "DASHBOARD_VOIR",
             "USER_READ", "USER_CREATE", "USER_UPDATE", "USER_DELETE",
-            "ADMIN_ENTREPRISE", "ADMIN_ROLES", "ADMIN_HABILITATIONS"
-        );
+            "ADMIN_ENTREPRISE", "ADMIN_ROLES", "ADMIN_HABILITATIONS", "ADMIN_GESTION"
+        ));
         for (String nom : allHabilitations) {
             ensureHabilitation(nom);
         }
@@ -194,7 +195,8 @@ public class SuperAdminInitializer implements CommandLineRunner {
     private void assignHabilitationsToRoles() {
         Map<String, List<String>> roleHabilitations = new LinkedHashMap<>();
 
-        roleHabilitations.put("ROLE_ADMIN", Arrays.asList(
+        List<String> adminHabs = new ArrayList<>(SuperAdminHabilitations.BUSINESS_PERMISSIONS);
+        adminHabs.addAll(Arrays.asList(
             "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE", "PRODUIT_DELETE",
             "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
             "VENTE_READ", "VENTE_CREATE", "VENTE_DELETE",
@@ -209,6 +211,7 @@ public class SuperAdminInitializer implements CommandLineRunner {
             "USER_READ", "USER_CREATE", "USER_UPDATE", "USER_DELETE",
             "ADMIN_ENTREPRISE", "ADMIN_ROLES", "ADMIN_HABILITATIONS"
         ));
+        roleHabilitations.put("ROLE_ADMIN", adminHabs);
         roleHabilitations.put("ROLE_POINT_DE_VENTE_MANAGER", Arrays.asList(
             "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE",
             "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",

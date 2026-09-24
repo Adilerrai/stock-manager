@@ -22,20 +22,20 @@ public class TransfertStockController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('STOCK_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<List<TransfertStockDTO>> getAllTransferts(
             @RequestParam(required = false) StatutTransfert statut) {
         return ResponseEntity.ok(transfertService.getAllTransferts(statut));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('STOCK_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<TransfertStockDTO> getTransfertById(@PathVariable Long id) {
         return ResponseEntity.ok(transfertService.getTransfertById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('STOCK_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<TransfertStockDTO> creerTransfert(
             @RequestBody TransfertStockDTO dto,
             @RequestParam(required = false) Long userId) {
@@ -43,7 +43,7 @@ public class TransfertStockController {
     }
 
     @PostMapping("/{id}/expedier")
-    @PreAuthorize("hasAnyAuthority('STOCK_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<TransfertStockDTO> expedierTransfert(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {
@@ -51,7 +51,7 @@ public class TransfertStockController {
     }
 
     @PostMapping("/{id}/recevoir")
-    @PreAuthorize("hasAnyAuthority('STOCK_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<TransfertStockDTO> recevoirTransfert(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {
@@ -59,7 +59,7 @@ public class TransfertStockController {
     }
 
     @PostMapping("/{id}/annuler")
-    @PreAuthorize("hasAnyAuthority('STOCK_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE')")
+    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<TransfertStockDTO> annulerTransfert(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {

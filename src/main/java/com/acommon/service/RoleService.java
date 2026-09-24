@@ -107,8 +107,17 @@ public class RoleService {
         roleRepository.delete(role);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<String> getAllHabilitationNoms() {
+        // Garantit que le catalogue métier standard est toujours disponible en base et affiché dans l'UI AgenceWeb
+        for (String perm : com.acommon.config.SuperAdminHabilitations.BUSINESS_PERMISSIONS) {
+            if (habilitationRepository.findByNom(perm).isEmpty()) {
+                Habilitation h = new Habilitation();
+                h.setNom(perm);
+                habilitationRepository.save(h);
+            }
+        }
+
         return habilitationRepository.findAll()
                 .stream()
                 .map(Habilitation::getNom)

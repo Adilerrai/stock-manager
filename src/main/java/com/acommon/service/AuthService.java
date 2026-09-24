@@ -106,12 +106,18 @@ public class AuthService {
                 .username(authenticatedUser.getUsername())
                 .role(authenticatedUser.getRole() != null ? authenticatedUser.getRole().getNom() : null)
                 .habilitations(
-                        authenticatedUser.getRole() != null && authenticatedUser.getRole().getHabilitations() != null
-                                ? authenticatedUser.getRole().getHabilitations().stream()
-                                        .map(com.acommon.persistant.model.Habilitation::getNom)
+                        authenticatedUser.getRole() != null && "ROLE_SUPERADMIN".equalsIgnoreCase(authenticatedUser.getRole().getNom())
+                                ? com.acommon.config.SuperAdminHabilitations.ALL_AUTHORITIES.stream()
+                                        .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                                        .filter(auth -> !auth.startsWith("ROLE_"))
                                         .sorted()
                                         .collect(java.util.stream.Collectors.toList())
-                                : java.util.List.of()
+                                : (authenticatedUser.getRole() != null && authenticatedUser.getRole().getHabilitations() != null
+                                        ? authenticatedUser.getRole().getHabilitations().stream()
+                                                .map(com.acommon.persistant.model.Habilitation::getNom)
+                                                .sorted()
+                                                .collect(java.util.stream.Collectors.toList())
+                                        : java.util.List.of())
                 )
                 .tenantId(tenantId)
                 .pointDeVenteId(authenticatedUser.getPointDeVenteId())

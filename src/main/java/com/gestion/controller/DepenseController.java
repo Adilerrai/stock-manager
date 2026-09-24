@@ -26,7 +26,7 @@ public class DepenseController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<DepenseDTO> creerDepense(@RequestBody DepenseDTO dto,
                                                    @RequestParam(required = false) Long userId) {
         DepenseDTO cree = depenseService.creerDepense(dto, userId);
@@ -34,7 +34,7 @@ public class DepenseController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<List<DepenseDTO>> getDepenses(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -45,20 +45,20 @@ public class DepenseController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<DepenseDTO> getDepense(@PathVariable Long id) {
         return ResponseEntity.ok(depenseService.getDepenseById(id));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE')")
+    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Void> supprimerDepense(@PathVariable Long id) {
         depenseService.supprimerDepense(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/statistiques")
-    @PreAuthorize("hasAnyAuthority('TRESORERIE_GESTION', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION') or hasAuthority('RAPPORT_VOIR')")
     public ResponseEntity<Map<String, BigDecimal>> getStatistiques(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -70,7 +70,7 @@ public class DepenseController {
      * Résultat Net = Marge Commerciale Nette - Total Dépenses
      */
     @GetMapping("/resultat-net")
-    @PreAuthorize("hasAnyAuthority('MARGES_VOIR', 'DASHBOARD_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<ResultatEntrepriseDTO> getResultatNet(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {

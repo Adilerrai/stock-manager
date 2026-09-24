@@ -24,7 +24,7 @@ public class BonPreparationController {
     }
 
     @PostMapping("/depuis-commande/{commandeClientId}")
-    @PreAuthorize("hasAnyAuthority('LIVRAISON_VALIDER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<BonPreparationDTO> genererDepuisCommande(
             @PathVariable Long commandeClientId,
             @RequestParam(required = false) Long magasinierId) {
@@ -32,7 +32,7 @@ public class BonPreparationController {
     }
 
     @PostMapping("/{id}/valider")
-    @PreAuthorize("hasAnyAuthority('LIVRAISON_VALIDER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<BonPreparationDTO> validerPreparation(
             @PathVariable Long id,
             @RequestBody(required = false) Map<Long, BigDecimal> quantitesPreparees,
@@ -41,19 +41,19 @@ public class BonPreparationController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('LIVRAISON_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<List<BonPreparationDTO>> getTousLesBons() {
         return ResponseEntity.ok(bonPreparationService.getTousLesBons());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('LIVRAISON_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<BonPreparationDTO> getBonById(@PathVariable Long id) {
         return ResponseEntity.ok(bonPreparationService.getBonById(id));
     }
 
     @GetMapping("/statut/{statut}")
-    @PreAuthorize("hasAnyAuthority('LIVRAISON_VOIR', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_MAGASINIER')")
+    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<List<BonPreparationDTO>> getBonsParStatut(@PathVariable StatutPreparation statut) {
         return ResponseEntity.ok(bonPreparationService.getBonsParStatut(statut));
     }

@@ -27,7 +27,7 @@ public class PointDeVenteController {
      * Accessible par l'Admin d'entreprise, les managers ou le SuperAdmin.
      */
     @GetMapping("")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_VENDEUR', 'ROLE_CAISSIER', 'ROLE_MAGASINIER', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<PointDeVenteResponse>> getPointsDeVente() {
         return ResponseEntity.ok(pointDeVenteService.getPointsDeVenteByCurrentTenant());
     }
@@ -36,7 +36,7 @@ public class PointDeVenteController {
      * Détails d'un point de vente par ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_SUPERADMIN')")
     public ResponseEntity<PointDeVenteResponse> getPointDeVenteById(@PathVariable Long id) {
         return ResponseEntity.ok(pointDeVenteService.getPointDeVenteById(id));
     }
@@ -45,7 +45,7 @@ public class PointDeVenteController {
      * Création d'un nouveau point de vente rattaché à l'entreprise (tenant) connectée.
      */
     @PostMapping("")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_SUPERADMIN')")
     public ResponseEntity<PointDeVenteResponse> createPointDeVente(@Valid @RequestBody PointDeVenteRequest request) {
         PointDeVenteResponse response = pointDeVenteService.createPointDeVente(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -55,7 +55,7 @@ public class PointDeVenteController {
      * Modification d'un point de vente existant.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('ROLE_ADMIN') or hasAuthority('ROLE_SUPERADMIN')")
     public ResponseEntity<PointDeVenteResponse> updatePointDeVente(
             @PathVariable Long id,
             @Valid @RequestBody PointDeVenteRequest request) {

@@ -28,26 +28,28 @@ public class VenteController {
     }
 
     @PostMapping("/search")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VENTE_READ')")
     public ResponseEntity<Page<VenteDTO>> searchVentes(@RequestBody VenteSearchCriteria criteria, Pageable pageable) {
         Page<Vente> page = venteService.searchVentes(criteria, pageable);
         return ResponseEntity.ok(page.map(venteMapper::toDto));
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VENTE_VALIDER')")
     public ResponseEntity<VenteDTO> creerVente(@RequestBody VenteDTO dto, @RequestParam Long vendeurId) {
         VenteDTO nouvelleVente = venteService.creerVente(dto, vendeurId);
         return new ResponseEntity<>(nouvelleVente, HttpStatus.CREATED);
     }
 
     @PostMapping("/{venteId}/valider")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('VENTE_VALIDER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL', 'ROLE_VENDEUR')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VENTE_VALIDER')")
     public ResponseEntity<VenteDTO> validerVente(@PathVariable Long venteId) {
         VenteDTO vente = venteService.validerVente(venteId);
         return ResponseEntity.ok(vente);
     }
 
     @PostMapping("/{venteId}/annuler")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('VENTE_ANNULER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VENTE_VALIDER')")
     public ResponseEntity<VenteDTO> annulerVente(@PathVariable Long venteId,
                                                 @RequestParam String motif,
                                                 @RequestParam Long userId) {
@@ -56,7 +58,7 @@ public class VenteController {
     }
 
     @PatchMapping("/{venteId}/remise")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('REMISE_VALIDER', 'ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_POINT_DE_VENTE_MANAGER', 'ROLE_RESPONSABLE_COMMERCIAL')")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('VENTE_VALIDER')")
     public ResponseEntity<VenteDTO> appliquerRemise(@PathVariable Long venteId, @RequestParam BigDecimal remise) {
         VenteDTO vente = venteService.appliquerRemiseGlobale(venteId, remise);
         return ResponseEntity.ok(vente);

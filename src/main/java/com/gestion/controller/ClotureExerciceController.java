@@ -23,25 +23,25 @@ public class ClotureExerciceController {
     }
 
     @GetMapping("/exercices")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<ExerciceComptableDTO>> getExercices() {
         return ResponseEntity.ok(clotureService.getExercices());
     }
 
     @PostMapping("/exercices")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<ExerciceComptableDTO> creerExercice(@RequestBody ExerciceComptableDTO dto) {
         return new ResponseEntity<>(clotureService.creerExercice(dto), HttpStatus.CREATED);
     }
 
     @GetMapping("/cloture/preparer/{exerciceId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @PreAuthorize("hasAuthority('COMPTA_READ') or hasAuthority('CLOTURE_EXERCICE')")
     public ResponseEntity<CloturePreviewDTO> preparerCloture(@PathVariable Long exerciceId) {
         return ResponseEntity.ok(clotureService.preparerCloture(exerciceId));
     }
 
     @PostMapping("/cloture/executer/{exerciceId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('CLOTURE_EXERCICE')")
     public ResponseEntity<ExerciceComptableDTO> executerCloture(
             @PathVariable Long exerciceId,
             Principal principal) {

@@ -28,7 +28,7 @@ public class FiscalController {
     // =========================================================================
 
     @GetMapping("/is/calcul")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<CalculIsDTO> calculerIs(
             @RequestParam(required = false) Integer annee,
             @RequestParam(required = false, defaultValue = "0") BigDecimal reintegrations,
@@ -42,7 +42,7 @@ public class FiscalController {
     // =========================================================================
 
     @GetMapping("/is/echeancier-acomptes")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<EcheancierIsDTO> getEcheancierAcomptes(
             @RequestParam(required = false) Integer annee,
             @RequestParam(required = false) BigDecimal impotReference) {
@@ -55,7 +55,7 @@ public class FiscalController {
     // =========================================================================
 
     @GetMapping("/calendrier")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<CalendrierFiscalDTO> getCalendrierFiscal(
             @RequestParam(required = false) Integer annee) {
         int anneeFiscale = (annee != null) ? annee : LocalDate.now().getYear();
@@ -67,13 +67,13 @@ public class FiscalController {
     // =========================================================================
 
     @GetMapping("/regles/{annee}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE', 'ROLE_POINT_DE_VENTE_MANAGER')")
+    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<RegleFiscaleIS> getRegleFiscale(@PathVariable Integer annee) {
         return ResponseEntity.ok(fiscalEngineService.getOrCreateRegleFiscale(annee));
     }
 
     @PutMapping("/regles/{annee}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_COMPTABLE')")
+    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<RegleFiscaleIS> modifierRegleFiscale(
             @PathVariable Integer annee,
             @RequestBody RegleFiscaleIS dto) {
