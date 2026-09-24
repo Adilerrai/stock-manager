@@ -12,6 +12,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
@@ -21,6 +23,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping({"/api/v1/commandes", "/api/v1/commandes-fournisseur"})
 public class CommandeController {
+
+    private static final Logger log = LoggerFactory.getLogger(CommandeController.class);
 
     private final CommandeService commandeService;
     private final CommandeMapper commandeMapper;
@@ -169,7 +173,7 @@ public class CommandeController {
             Long receptionId = livraisonService.creerLivraisonDepuisCommande(id);
             return ResponseEntity.ok(receptionId);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Erreur lors de la conversion de la commande {} en réception : {}", id, e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }

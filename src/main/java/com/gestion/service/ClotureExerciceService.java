@@ -46,7 +46,6 @@ public class ClotureExerciceService {
         return t != null ? t : 1L;
     }
 
-    @Transactional(readOnly = true)
     public List<ExerciceComptableDTO> getExercices() {
         Long tenantId = getTenantId();
         List<ExerciceComptable> list = exerciceRepository.findByPointDeVenteIdOrderByDateDebutDesc(tenantId);

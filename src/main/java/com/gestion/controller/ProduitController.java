@@ -35,14 +35,8 @@ public class ProduitController {
 
     @GetMapping("/get/{id}")
     public ProduitDTO getProduitById(@PathVariable("id") Long id) {
-        try {
-            Produit produit = produitService.getProduitWithImageById(id);
-            ProduitDTO dto = produitMapper.toDto(produit);
-            return dto;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Produit produit = produitService.getProduitWithImageById(id);
+        return produitMapper.toDto(produit);
     }
 
     @PostMapping("/update")
@@ -57,29 +51,13 @@ public class ProduitController {
         produitService.deleteProduit(id);
         return ResponseEntity.noContent().build();
     }
+
     @GetMapping("/all")
     public List<ProduitDTO> getAllProduits() {
-        try {
-            List<Produit> produits = produitService.getAllProduits();
-
-            List<ProduitDTO> result = produits.stream()
-                    .map(produit -> {
-                        try {
-                            ProduitDTO dto = produitMapper.toDto(produit);
-                            return dto;
-                        } catch (Exception e) {
-                            throw new RuntimeException("Erreur mapping produit " + produit.getId(), e);
-                        }
-                    })
-                    .collect(Collectors.toList());
-                    
-            System.out.println("=== Fin getAllProduits ===");
-            return result;
-        } catch (Exception e) {
-            System.err.println("Erreur dans ProduitController.getAllProduits: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+        List<Produit> produits = produitService.getAllProduits();
+        return produits.stream()
+                .map(produitMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     @PostMapping("/search")

@@ -127,7 +127,6 @@ public class ProduitService {
                 }
             } catch (Exception e) {
                 System.err.println("Erreur lors du traitement de l'image: " + e.getMessage());
-                e.printStackTrace();
                 throw new RuntimeException("Erreur lors de la compression de l'image: " + e.getMessage());
             }
         }
