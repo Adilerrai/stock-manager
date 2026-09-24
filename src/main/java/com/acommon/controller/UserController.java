@@ -5,6 +5,7 @@ import com.acommon.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping({"/api/users", "/users", "/api/v1/users"})
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
 public class UserController {
 
     private final UserService userService;
@@ -86,6 +88,7 @@ public class UserController {
      * Changement de mot de passe personnel par l'utilisateur connecté.
      */
     @PostMapping("/change-password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, String>> changePassword(
             Authentication authentication,
             @Valid @RequestBody ChangePasswordRequest request) {

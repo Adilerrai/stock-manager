@@ -11,11 +11,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping({"/api/admin/entreprises", "/admin/entreprises", "/api/v1/admin/entreprises"})
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
 public class EntrepriseManagementController {
 
     private final EntrepriseManagementService entrepriseManagementService;
@@ -29,6 +31,7 @@ public class EntrepriseManagementController {
      * Accessible par le SUPERADMIN ou en inscription.
      */
     @PostMapping({"", "/register"})
+    @PreAuthorize("permitAll()")
     public ResponseEntity<EntrepriseResponse> creerEntreprise(
             @Valid @RequestBody EntrepriseRegistrationRequest request) {
         EntrepriseResponse response = entrepriseManagementService.creerEntreprise(request);
