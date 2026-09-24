@@ -6,7 +6,6 @@ import com.gestion.service.CommercialService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -25,13 +24,11 @@ public class CommercialController {
     }
 
     @GetMapping("")
-    @PreAuthorize("hasAuthority('VENTE_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<List<com.acommon.persistant.dto.UserResponse>> getCommerciaux() {
         return ResponseEntity.ok(commercialService.getCommerciaux());
     }
 
     @GetMapping("/performances")
-    @PreAuthorize("hasAuthority('VENTE_READ') or hasAuthority('DASHBOARD_VOIR') or hasAuthority('RAPPORT_VOIR')")
     public ResponseEntity<List<PerformanceCommercialDTO>> getPerformances(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -39,7 +36,6 @@ public class CommercialController {
     }
 
     @GetMapping("/{id}/performance")
-    @PreAuthorize("hasAuthority('VENTE_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<PerformanceCommercialDTO> getPerformance(
             @PathVariable Long id,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
@@ -48,7 +44,6 @@ public class CommercialController {
     }
 
     @PostMapping("/objectifs")
-    @PreAuthorize("hasAuthority('VENTE_VALIDER') or hasAuthority('ADMIN_GESTION')")
     public ResponseEntity<ObjectifCommercial> definirObjectif(
             @RequestParam Long commercialId,
             @RequestParam Integer annee,
@@ -61,7 +56,6 @@ public class CommercialController {
     }
 
     @GetMapping("/{id}/objectifs")
-    @PreAuthorize("hasAuthority('VENTE_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<List<ObjectifCommercial>> getObjectifs(@PathVariable Long id) {
         return ResponseEntity.ok(commercialService.getObjectifsByCommercial(id));
     }

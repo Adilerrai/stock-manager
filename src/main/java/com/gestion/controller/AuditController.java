@@ -6,7 +6,6 @@ import com.gestion.service.AuditService;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -27,7 +26,6 @@ public class AuditController {
      * Historique d'un objet précis (ex: toutes les actions sur l'écriture #42)
      */
     @GetMapping("/{entite}/{entiteId}")
-    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<AuditLogDTO>> getHistoriqueEntite(
             @PathVariable String entite,
             @PathVariable Long entiteId) {
@@ -38,7 +36,6 @@ public class AuditController {
      * Les dernières actions (dashboard d'audit)
      */
     @GetMapping("/recents")
-    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<Page<AuditLogDTO>> getActionsRecentes(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
@@ -49,7 +46,6 @@ public class AuditController {
      * Recherche multi-critères (par entité, action, utilisateur, dates)
      */
     @GetMapping("/recherche")
-    @PreAuthorize("hasAuthority('ADMIN_GESTION') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<Page<AuditLogDTO>> rechercher(
             @RequestParam(required = false) String entite,
             @RequestParam(required = false) ActionAudit action,

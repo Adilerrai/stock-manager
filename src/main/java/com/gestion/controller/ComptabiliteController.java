@@ -5,7 +5,6 @@ import com.gestion.service.ComptabiliteService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,13 +29,11 @@ public class ComptabiliteController {
     // =========================================================================
 
     @GetMapping("/plan-comptable")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<CompteComptableDTO>> getPlanComptable() {
         return ResponseEntity.ok(comptabiliteService.getPlanComptable());
     }
 
     @PostMapping("/plan-comptable")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<CompteComptableDTO> creerCompte(@RequestBody CompteComptableDTO dto) {
         return new ResponseEntity<>(comptabiliteService.creerCompte(dto), HttpStatus.CREATED);
     }
@@ -46,37 +43,31 @@ public class ComptabiliteController {
     // =========================================================================
 
     @GetMapping("/journaux")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<JournalComptableDTO>> getJournaux() {
         return ResponseEntity.ok(comptabiliteService.getJournaux());
     }
 
     @GetMapping("/journaux/{id}")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<JournalComptableDTO> getJournalById(@PathVariable Long id) {
         return ResponseEntity.ok(comptabiliteService.getJournalById(id));
     }
 
     @PostMapping("/journaux")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<JournalComptableDTO> creerJournal(@RequestBody JournalComptableDTO dto) {
         return new ResponseEntity<>(comptabiliteService.creerJournal(dto), HttpStatus.CREATED);
     }
 
     @PutMapping("/journaux/{id}")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<JournalComptableDTO> modifierJournal(@PathVariable Long id, @RequestBody JournalComptableDTO dto) {
         return ResponseEntity.ok(comptabiliteService.modifierJournal(id, dto));
     }
 
     @PatchMapping("/journaux/{id}/toggle-actif")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<JournalComptableDTO> toggleActifJournal(@PathVariable Long id) {
         return ResponseEntity.ok(comptabiliteService.toggleActifJournal(id));
     }
 
     @DeleteMapping("/journaux/{id}")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<Void> supprimerJournal(@PathVariable Long id) {
         comptabiliteService.supprimerJournal(id);
         return ResponseEntity.noContent().build();
@@ -87,7 +78,6 @@ public class ComptabiliteController {
     // =========================================================================
 
     @GetMapping("/ecritures")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<EcritureComptableDTO>> getEcritures(
             @RequestParam(required = false) Long journalId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
@@ -96,19 +86,16 @@ public class ComptabiliteController {
     }
 
     @GetMapping("/ecritures/{id}")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<EcritureComptableDTO> getEcritureById(@PathVariable Long id) {
         return ResponseEntity.ok(comptabiliteService.getEcritureById(id));
     }
 
     @PostMapping("/ecritures")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<EcritureComptableDTO> creerEcriture(@RequestBody EcritureComptableDTO dto) {
         return new ResponseEntity<>(comptabiliteService.creerEcriture(dto), HttpStatus.CREATED);
     }
 
     @PatchMapping("/ecritures/{id}/valider")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<EcritureComptableDTO> validerEcriture(@PathVariable Long id) {
         return ResponseEntity.ok(comptabiliteService.validerEcriture(id));
     }
@@ -118,7 +105,6 @@ public class ComptabiliteController {
     // =========================================================================
 
     @GetMapping("/grand-livre")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<GrandLivreDTO>> getGrandLivre(
             @RequestParam(required = false) String numeroCompte,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
@@ -127,7 +113,6 @@ public class ComptabiliteController {
     }
 
     @GetMapping("/balance")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<BalanceCompteDTO>> getBalance(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -135,7 +120,6 @@ public class ComptabiliteController {
     }
 
     @GetMapping("/tva")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<DeclarationTvaDTO> getDeclarationTva(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -143,7 +127,6 @@ public class ComptabiliteController {
     }
 
     @GetMapping("/tva/releve-deduction")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<com.gestion.persistent.dto.ReleveDeductionTvaDTO> getReleveDeduction(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
@@ -152,7 +135,6 @@ public class ComptabiliteController {
     }
 
     @GetMapping("/tva/releve-deduction/export-xlsx")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<byte[]> exporterReleveDeductionXlsx(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
@@ -166,7 +148,6 @@ public class ComptabiliteController {
     }
 
     @GetMapping(value = "/export/csv", produces = "text/csv; charset=UTF-8")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<byte[]> exporterEcrituresCsv(
             @RequestParam(required = false) Long journalId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
@@ -184,7 +165,6 @@ public class ComptabiliteController {
     // =========================================================================
 
     @GetMapping("/lettrage/lignes-ouvertes")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<LigneLettrageDTO>> getLignesNonLettrees(
             @RequestParam(required = false, defaultValue = "3421") String prefixCompte,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
@@ -193,28 +173,24 @@ public class ComptabiliteController {
     }
 
     @GetMapping("/lettrage/lignes-lettrees")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<LigneLettrageDTO>> getLignesLettrees(
             @RequestParam(required = false, defaultValue = "3421") String prefixCompte) {
         return ResponseEntity.ok(comptabiliteService.getLignesLettrees(prefixCompte));
     }
 
     @PostMapping("/lettrage/valider")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<Map<String, String>> validerLettrage(@RequestBody LettrageValidationRequest request) {
         String code = comptabiliteService.validerLettrage(request.getLigneIds());
         return ResponseEntity.ok(Map.of("codeLettrage", code, "message", "Lettrage effectué avec succès"));
     }
 
     @PostMapping("/lettrage/annuler")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<Map<String, String>> annulerLettrage(@RequestParam String codeLettrage) {
         comptabiliteService.annulerLettrage(codeLettrage);
         return ResponseEntity.ok(Map.of("message", "Lettrage " + codeLettrage + " annulé"));
     }
 
     @PostMapping("/lettrage/auto")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<Map<String, Object>> autoLettrage(@RequestParam(required = false, defaultValue = "3421") String prefixCompte) {
         return ResponseEntity.ok(comptabiliteService.autoLettrage(prefixCompte));
     }
@@ -224,7 +200,6 @@ public class ComptabiliteController {
     // =========================================================================
 
     @GetMapping("/bilan-officiel")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<BilanOfficielDTO> getBilanOfficiel(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateArrete) {
         return ResponseEntity.ok(comptabiliteService.getBilanOfficiel(dateArrete));
@@ -235,7 +210,6 @@ public class ComptabiliteController {
     // =========================================================================
 
     @GetMapping("/cpc-officiel")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<CpcOfficielDTO> getCpcOfficiel(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -247,7 +221,6 @@ public class ComptabiliteController {
     // =========================================================================
 
     @GetMapping(value = "/export/fec-dgi", produces = "text/plain; charset=UTF-8")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<byte[]> exporterFecDgi(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,

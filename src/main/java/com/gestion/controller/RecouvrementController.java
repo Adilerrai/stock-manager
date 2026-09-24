@@ -6,7 +6,6 @@ import com.gestion.persistent.enums.StatutPromesse;
 import com.gestion.service.RecouvrementService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +22,6 @@ public class RecouvrementController {
     }
 
     @PostMapping("/relances")
-    @PreAuthorize("hasAuthority('CLIENT_GESTION') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<RelanceClientDTO> enregistrerRelance(
             @RequestBody RelanceClientDTO dto,
             @RequestParam(required = false) Long userId) {
@@ -31,13 +29,11 @@ public class RecouvrementController {
     }
 
     @GetMapping("/relances/client/{clientId}")
-    @PreAuthorize("hasAuthority('CLIENT_READ') or hasAuthority('TRESORERIE_READ')")
     public ResponseEntity<List<RelanceClientDTO>> getRelancesClient(@PathVariable Long clientId) {
         return ResponseEntity.ok(recouvrementService.getRelancesParClient(clientId));
     }
 
     @PostMapping("/promesses")
-    @PreAuthorize("hasAuthority('CLIENT_GESTION') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<PromessePaiementDTO> enregistrerPromesse(
             @RequestBody PromessePaiementDTO dto,
             @RequestParam(required = false) Long userId) {
@@ -45,7 +41,6 @@ public class RecouvrementController {
     }
 
     @PatchMapping("/promesses/{id}/statut")
-    @PreAuthorize("hasAuthority('CLIENT_GESTION') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<PromessePaiementDTO> changerStatutPromesse(
             @PathVariable Long id,
             @RequestParam StatutPromesse statut) {
@@ -53,19 +48,16 @@ public class RecouvrementController {
     }
 
     @GetMapping("/promesses/en-cours")
-    @PreAuthorize("hasAuthority('CLIENT_READ') or hasAuthority('TRESORERIE_READ')")
     public ResponseEntity<List<PromessePaiementDTO>> getPromessesEnCours() {
         return ResponseEntity.ok(recouvrementService.getPromessesEnCours());
     }
 
     @GetMapping("/promesses/rompues")
-    @PreAuthorize("hasAuthority('CLIENT_READ') or hasAuthority('TRESORERIE_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<List<PromessePaiementDTO>> getPromessesRompues() {
         return ResponseEntity.ok(recouvrementService.getPromessesRompues());
     }
 
     @GetMapping("/promesses/client/{clientId}")
-    @PreAuthorize("hasAuthority('CLIENT_READ') or hasAuthority('TRESORERIE_READ')")
     public ResponseEntity<List<PromessePaiementDTO>> getPromessesClient(@PathVariable Long clientId) {
         return ResponseEntity.ok(recouvrementService.getPromessesParClient(clientId));
     }

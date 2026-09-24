@@ -7,7 +7,6 @@ import com.acommon.service.RoleService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,7 +28,6 @@ public class RoleController {
      * Accessible aux admins et superadmins.
      */
     @GetMapping("")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<List<RoleResponse>> getAllRoles() {
         return ResponseEntity.ok(roleService.getAllRoles());
     }
@@ -38,7 +36,6 @@ public class RoleController {
      * Détail d'un rôle.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<RoleResponse> getRoleById(@PathVariable Long id) {
         return ResponseEntity.ok(roleService.getRoleById(id));
     }
@@ -48,7 +45,6 @@ public class RoleController {
      * Accessible au SUPERADMIN et aux ADMIN tenant (pour leurs propres besoins).
      */
     @PostMapping("")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<RoleResponse> createRole(@Valid @RequestBody RoleCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(roleService.createRole(request));
     }
@@ -58,7 +54,6 @@ public class RoleController {
      * Accessible au SUPERADMIN et aux ADMIN tenant.
      */
     @PutMapping("/{id}/habilitations")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<RoleResponse> updateHabilitations(
             @PathVariable Long id,
             @RequestBody RoleUpdateHabilitationsRequest request) {
@@ -69,7 +64,6 @@ public class RoleController {
      * Supprimer un rôle (interdit si des utilisateurs y sont assignés ou si c'est un rôle système).
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, String>> deleteRole(@PathVariable Long id) {
         roleService.deleteRole(id);
         return ResponseEntity.ok(Map.of("message", "Rôle supprimé avec succès"));
@@ -79,7 +73,6 @@ public class RoleController {
      * Liste toutes les habilitations disponibles dans le système.
      */
     @GetMapping("/habilitations")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<List<String>> getAllHabilitations() {
         return ResponseEntity.ok(roleService.getAllHabilitationNoms());
     }

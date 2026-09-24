@@ -17,7 +17,6 @@ import com.gestion.persistent.dto.PaiementSearchCriteria;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/paiements")
@@ -31,14 +30,12 @@ public class PaiementController {
     }
 
     @PostMapping("/search")
-    @PreAuthorize("hasAuthority('VENTE_READ') or hasAuthority('TRESORERIE_READ')")
     public ResponseEntity<Page<Paiement>> searchPaiements(
             @RequestBody PaiementSearchCriteria criteria, Pageable pageable) {
         return ResponseEntity.ok(paiementService.searchPaiements(criteria, pageable));
     }
 
     @PostMapping("/vente/{venteId}")
-    @PreAuthorize("hasAuthority('VENTE_VALIDER') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Paiement> enregistrerPaiementVente(@PathVariable Long venteId,
                                                               @RequestBody Paiement paiement,
                                                               @RequestParam Long userId) {
@@ -47,7 +44,6 @@ public class PaiementController {
     }
 
     @PostMapping("/facture/{factureId}")
-    @PreAuthorize("hasAuthority('VENTE_VALIDER') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Paiement> enregistrerPaiementFacture(@PathVariable Long factureId,
                                                                 @RequestBody Paiement paiement,
                                                                 @RequestParam Long userId) {
@@ -56,13 +52,11 @@ public class PaiementController {
     }
 
     @GetMapping("/clients/{clientId}/factures-impayees")
-    @PreAuthorize("hasAuthority('VENTE_READ') or hasAuthority('TRESORERIE_READ')")
     public ResponseEntity<List<com.gestion.persistent.dto.FactureImpayeeDTO>> getFacturesImpayeesClient(@PathVariable Long clientId) {
         return ResponseEntity.ok(paiementService.getFacturesImpayeesClient(clientId));
     }
 
     @PostMapping("/reglement-client")
-    @PreAuthorize("hasAuthority('VENTE_VALIDER') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Paiement> enregistrerReglementClient(
             @RequestBody com.gestion.persistent.dto.ReglementClientRequest request,
             @RequestParam(required = false) Long userId) {
@@ -72,7 +66,6 @@ public class PaiementController {
     }
 
     @PostMapping("/{paiementId}/annuler")
-    @PreAuthorize("hasAuthority('VENTE_VALIDER') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Paiement> annulerPaiement(@PathVariable Long paiementId,
                                                      @RequestParam String motif,
                                                      @RequestParam Long userId) {

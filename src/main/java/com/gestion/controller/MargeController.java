@@ -5,7 +5,6 @@ import com.gestion.persistent.dto.MargeDTO.LigneMargeDTO;
 import com.gestion.service.MargeService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -23,7 +22,6 @@ public class MargeController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<MargeDTO> getMargeGlobale(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -32,7 +30,6 @@ public class MargeController {
     }
 
     @GetMapping("/produits")
-    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<LigneMargeDTO>> getMargesParProduit(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -41,7 +38,6 @@ public class MargeController {
     }
 
     @GetMapping("/categories")
-    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<LigneMargeDTO>> getMargesParCategorie(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -50,7 +46,6 @@ public class MargeController {
     }
 
     @GetMapping("/clients")
-    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ')")
     public ResponseEntity<List<LigneMargeDTO>> getMargesParClient(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {

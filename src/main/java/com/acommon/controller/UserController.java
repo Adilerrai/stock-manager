@@ -5,7 +5,6 @@ import com.acommon.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +26,6 @@ public class UserController {
      * Création d'un nouvel utilisateur dans l'entreprise courante (ou assigné par le SuperAdmin).
      */
     @PostMapping({"", "/create"})
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER')")
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserCreationRequest request) {
         UserResponse response = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -39,7 +37,6 @@ public class UserController {
      * Pour le SuperAdmin : liste tous les utilisateurs ou filtre par pointDeVenteId.
      */
     @GetMapping("")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER')")
     public ResponseEntity<List<UserResponse>> getUsers(
             @RequestParam(name = "pointDeVenteId", required = false) Long pointDeVenteId) {
         List<UserResponse> users = userService.getUsers(pointDeVenteId);
@@ -50,7 +47,6 @@ public class UserController {
      * Obtenir les informations d'un utilisateur par son ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER')")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userService.getUserById(id));
     }
@@ -59,7 +55,6 @@ public class UserController {
      * Modification d'un utilisateur existant.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER')")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
@@ -70,7 +65,6 @@ public class UserController {
      * Activer ou désactiver (bloquer) un utilisateur.
      */
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER')")
     public ResponseEntity<UserResponse> toggleStatus(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
@@ -81,7 +75,6 @@ public class UserController {
      * Réinitialisation de mot de passe d'un utilisateur par son administrateur ou le superadmin.
      */
     @PostMapping("/{id}/reset-password")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER')")
     public ResponseEntity<Map<String, String>> resetPassword(
             @PathVariable Long id,
             @Valid @RequestBody ResetPasswordRequest request) {
@@ -104,7 +97,6 @@ public class UserController {
      * Suppression d'un utilisateur.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
     public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok(Map.of("message", "Utilisateur supprimé avec succès"));

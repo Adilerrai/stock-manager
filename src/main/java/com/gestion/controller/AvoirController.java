@@ -7,7 +7,6 @@ import com.gestion.service.AvoirService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -88,7 +87,6 @@ public class AvoirController {
      * (Produit défectueux, erreur magasinier, erreur commande, etc.)
      */
     @GetMapping("/statistiques-motifs")
-    @PreAuthorize("hasAuthority('DASHBOARD_VOIR') or hasAuthority('VENTE_READ') or hasAuthority('RAPPORT_VOIR')")
     public ResponseEntity<List<StatistiqueMotifRetourDTO>> getStatistiquesMotifs(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {

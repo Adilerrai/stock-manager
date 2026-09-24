@@ -3,7 +3,6 @@ package com.gestion.controller;
 import com.gestion.persistent.dto.RapprochementAchatDTO;
 import com.gestion.service.RapprochementAchatService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,7 +23,6 @@ public class RapprochementAchatController {
      * (Commande <-> Réception Dépôt <-> Facture Achat)
      */
     @GetMapping("/{factureAchatId}")
-    @PreAuthorize("hasAuthority('ACHAT_FACTURE_READ')")
     public ResponseEntity<RapprochementAchatDTO> rapprocherFacture(@PathVariable Long factureAchatId) {
         return ResponseEntity.ok(rapprochementService.rapprocherFactureAchat(factureAchatId));
     }
@@ -33,7 +31,6 @@ public class RapprochementAchatController {
      * Liste des factures d'achats avec litiges et paiements bloqués
      */
     @GetMapping("/litiges")
-    @PreAuthorize("hasAuthority('ACHAT_FACTURE_READ')")
     public ResponseEntity<List<RapprochementAchatDTO>> getLitiges() {
         return ResponseEntity.ok(rapprochementService.getRapprochementsLitigieux());
     }

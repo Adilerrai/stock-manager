@@ -5,7 +5,6 @@ import com.gestion.service.RapprochementBancaireService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,7 +25,6 @@ public class RapprochementBancaireController {
     }
 
     @PostMapping("/import-ocr/{compteId}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<ReleveBancaireDTO> importerReleveOcr(
             @PathVariable Long compteId,
             @RequestParam("file") MultipartFile file) throws IOException {
@@ -36,7 +34,6 @@ public class RapprochementBancaireController {
     }
 
     @PostMapping("/preview-ocr")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<List<LigneReleveBancaireDTO>> previewOcr(
             @RequestParam("file") MultipartFile file) throws IOException {
         List<LigneReleveBancaireDTO> list = rapprochementService.previewOcr(
@@ -45,7 +42,6 @@ public class RapprochementBancaireController {
     }
 
     @GetMapping("/comparatif-5141/{compteId}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<RapprochementComparatif5141DTO> getComparatif5141(
             @PathVariable Long compteId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
@@ -56,20 +52,17 @@ public class RapprochementBancaireController {
     }
 
     @PostMapping("/creer-ecriture")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<ItemComparatifRapprochementDTO> creerEcriturePourLigne(
             @RequestBody CreerEcritureReleveRequest request) {
         return ResponseEntity.ok(rapprochementService.creerEcriturePourLigne(request));
     }
 
     @PostMapping("/auto-5141/{releveId}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Map<String, Object>> autoRapprocher5141(@PathVariable Long releveId) {
         return ResponseEntity.ok(rapprochementService.autoRapprocher5141(releveId));
     }
 
     @PostMapping("/import/{compteId}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<ReleveBancaireDTO> importerReleve(
             @PathVariable Long compteId,
             @RequestParam("file") MultipartFile file) throws IOException {
@@ -79,19 +72,16 @@ public class RapprochementBancaireController {
 
 
     @GetMapping("/releves")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<List<ReleveBancaireDTO>> getReleves(@RequestParam(required = false) Long compteId) {
         return ResponseEntity.ok(rapprochementService.getReleves(compteId));
     }
 
     @GetMapping("/releves/{id}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<ReleveBancaireDTO> getReleveDetail(@PathVariable Long id) {
         return ResponseEntity.ok(rapprochementService.getReleveDetail(id));
     }
 
     @GetMapping("/etat/{compteId}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<RapprochementEtatDTO> getRapprochementEtat(
             @PathVariable Long compteId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateArrete) {
@@ -99,25 +89,21 @@ public class RapprochementBancaireController {
     }
 
     @PostMapping("/pointer")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<LigneReleveBancaireDTO> rapprocher(@RequestBody RapprochementPointageRequest request) {
         return ResponseEntity.ok(rapprochementService.rapprocher(request));
     }
 
     @PostMapping("/depointer/{ligneId}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<LigneReleveBancaireDTO> derapprocher(@PathVariable Long ligneId) {
         return ResponseEntity.ok(rapprochementService.derapprocher(ligneId));
     }
 
     @PostMapping("/auto/{releveId}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Map<String, Object>> autoRapprochement(@PathVariable Long releveId) {
         return ResponseEntity.ok(rapprochementService.autoRapprochement(releveId));
     }
 
     @DeleteMapping("/releves/{id}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Void> supprimerReleve(@PathVariable Long id) {
         rapprochementService.supprimerReleve(id);
         return ResponseEntity.noContent().build();

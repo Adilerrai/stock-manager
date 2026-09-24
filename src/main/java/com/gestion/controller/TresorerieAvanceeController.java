@@ -7,7 +7,6 @@ import com.gestion.service.TresorerieAvanceeService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -29,19 +28,16 @@ public class TresorerieAvanceeController {
      * Synthèse complète des caisses physiques et des comptes bancaires
      */
     @GetMapping("/synthese")
-    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<SyntheseTresorerieDTO> getSynthese() {
         return ResponseEntity.ok(tresorerieService.getSynthese());
     }
 
     @GetMapping("/comptes")
-    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<List<CompteFinancierDTO>> getTousLesComptes() {
         return ResponseEntity.ok(tresorerieService.getTousLesComptes());
     }
 
     @PostMapping("/comptes")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<CompteFinancierDTO> creerCompte(@RequestBody CompteFinancierDTO dto) {
         return new ResponseEntity<>(tresorerieService.creerCompte(dto), HttpStatus.CREATED);
     }
@@ -51,7 +47,6 @@ public class TresorerieAvanceeController {
      * Retrait patron, versement caisse -> banque, apport de fonds, etc.
      */
     @PostMapping("/mouvements")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<MouvementTresorerieDTO> enregistrerMouvement(
             @RequestBody MouvementTresorerieDTO dto,
             @RequestParam(required = false) Long userId) {
@@ -59,7 +54,6 @@ public class TresorerieAvanceeController {
     }
 
     @GetMapping("/mouvements")
-    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<List<MouvementTresorerieDTO>> getHistorique(
             @RequestParam(required = false) Long compteId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,

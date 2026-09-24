@@ -3,7 +3,6 @@ package com.gestion.controller;
 import com.gestion.persistent.dto.NotificationDTO;
 import com.gestion.service.NotificationService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -49,7 +48,6 @@ public class NotificationController {
     }
 
     @PostMapping("/generer-alertes")
-    @PreAuthorize("hasAuthority('DASHBOARD_VOIR') or hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<Map<String, Object>> genererAlertes() {
         int count = notificationService.genererAlertesAutomatiques();
         return ResponseEntity.ok(Map.of("alertesGenerees", count));

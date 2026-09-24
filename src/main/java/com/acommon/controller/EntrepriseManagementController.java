@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -41,7 +40,6 @@ public class EntrepriseManagementController {
      * Réservé au SUPERADMIN.
      */
     @GetMapping("")
-    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ResponseEntity<Page<EntrepriseResponse>> listerEntreprises(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Boolean actif,
@@ -60,7 +58,6 @@ public class EntrepriseManagementController {
      * Détails d'une entreprise par son ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ResponseEntity<EntrepriseResponse> getEntrepriseById(@PathVariable Long id) {
         return ResponseEntity.ok(entrepriseManagementService.getEntrepriseById(id));
     }
@@ -69,7 +66,6 @@ public class EntrepriseManagementController {
      * Modification des coordonnées et profil de l'entreprise.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ResponseEntity<EntrepriseResponse> modifierEntreprise(
             @PathVariable Long id,
             @Valid @RequestBody EntrepriseUpdateRequest request) {
@@ -80,7 +76,6 @@ public class EntrepriseManagementController {
      * Activation / Suspension de l'accès de l'entreprise.
      */
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
     public ResponseEntity<EntrepriseResponse> toggleStatus(
             @PathVariable Long id,
             @RequestParam boolean actif) {

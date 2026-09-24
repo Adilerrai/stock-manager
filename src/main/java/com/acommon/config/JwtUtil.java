@@ -75,6 +75,19 @@ public class JwtUtil {
         if (pointDeVenteId != null) {
             claims.put("pointDeVenteId", pointDeVenteId);
         }
+        if (userDetails != null && userDetails.getAuthorities() != null) {
+            java.util.List<String> authorities = userDetails.getAuthorities().stream()
+                    .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                    .toList();
+            java.util.List<String> roles = authorities.stream()
+                    .filter(a -> a.startsWith("ROLE_"))
+                    .toList();
+            java.util.List<String> habilitations = authorities.stream()
+                    .filter(a -> !a.startsWith("ROLE_"))
+                    .toList();
+            claims.put("roles", roles);
+            claims.put("habilitations", habilitations);
+        }
         return createToken(claims, userDetails.getUsername());
     }
 

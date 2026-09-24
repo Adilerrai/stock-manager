@@ -5,7 +5,6 @@ import com.gestion.service.DocumentAiExtractionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,7 +23,6 @@ public class DocumentOcrAiController {
      * Upload d'un document (PDF, PNG, JPG) pour extraction OCR et matching automatique via Groq AI
      */
     @PostMapping(value = "/analyser", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasAuthority('ACHAT_FACTURE_CREATE') or hasAuthority('VENTE_VALIDER') or hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<DocumentOcrAnalysisResultDTO> analyserDocument(
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "typeDocument", required = false) String typeDocument) {
@@ -37,7 +35,6 @@ public class DocumentOcrAiController {
      * Enregistrement en base de données du document validé par l'utilisateur
      */
     @PostMapping("/enregistrer")
-    @PreAuthorize("hasAuthority('ACHAT_FACTURE_CREATE') or hasAuthority('VENTE_VALIDER') or hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<DocumentOcrAnalysisResultDTO> enregistrerDocument(
             @RequestBody DocumentOcrAnalysisResultDTO dto) {
 

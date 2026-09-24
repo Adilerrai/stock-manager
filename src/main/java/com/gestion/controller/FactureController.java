@@ -6,7 +6,6 @@ import com.gestion.persistent.dto.FactureDTO;
 import com.gestion.service.FactureService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,7 +52,6 @@ public class FactureController {
      * Crée une facture en regroupant manuellement les BLs sélectionnés par l'utilisateur
      */
     @PostMapping("/depuis-bl")
-    @PreAuthorize("hasAuthority('VENTE_VALIDER')")
     public ResponseEntity<FactureDTO> creerFactureDepuisBL(@RequestBody FacturationBLRequest request) {
         FactureDTO factureDTO = factureService.creerFactureDepuisBonsLivraison(request);
         return new ResponseEntity<>(factureDTO, HttpStatus.CREATED);
@@ -63,7 +61,6 @@ public class FactureController {
      * Retourne la liste des BLs non encore facturés pour un client donné (ex: pour la facturation mensuelle)
      */
     @GetMapping("/bl-non-factures/{clientId}")
-    @PreAuthorize("hasAuthority('VENTE_READ')")
     public ResponseEntity<List<BonLivraisonClientDTO>> getBonsLivraisonNonFacturesByClient(@PathVariable Long clientId) {
         List<BonLivraisonClientDTO> bls = factureService.getBonsLivraisonNonFacturesByClient(clientId);
         return ResponseEntity.ok(bls);
@@ -73,63 +70,54 @@ public class FactureController {
      * Retourne tous les BLs non encore facturés du point de vente
      */
     @GetMapping("/bl-non-factures")
-    @PreAuthorize("hasAuthority('VENTE_READ')")
     public ResponseEntity<List<BonLivraisonClientDTO>> getAllBonsLivraisonNonFactures() {
         List<BonLivraisonClientDTO> bls = factureService.getAllBonsLivraisonNonFactures();
         return ResponseEntity.ok(bls);
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('VENTE_VALIDER')")
     public ResponseEntity<FactureDTO> creerFacture(@RequestBody FactureDTO factureDTO, @RequestParam Long userId) {
         FactureDTO nouvelleFacture = factureService.creerFacture(factureDTO, userId);
         return new ResponseEntity<>(nouvelleFacture, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('VENTE_READ')")
     public ResponseEntity<FactureDTO> getFacture(@PathVariable Long id) {
         FactureDTO facture = factureService.getFactureById(id);
         return ResponseEntity.ok(facture);
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('VENTE_READ')")
     public ResponseEntity<List<FactureDTO>> getAllFactures() {
         List<FactureDTO> factures = factureService.getAllFactures();
         return ResponseEntity.ok(factures);
     }
 
     @GetMapping("/client/{clientId}")
-    @PreAuthorize("hasAuthority('VENTE_READ')")
     public ResponseEntity<List<FactureDTO>> getFacturesByClient(@PathVariable Long clientId) {
         List<FactureDTO> factures = factureService.getFacturesByClient(clientId);
         return ResponseEntity.ok(factures);
     }
 
     @GetMapping("/impayees")
-    @PreAuthorize("hasAuthority('VENTE_READ')")
     public ResponseEntity<List<FactureDTO>> getFacturesImpayees() {
         List<FactureDTO> factures = factureService.getFacturesImpayees();
         return ResponseEntity.ok(factures);
     }
 
     @GetMapping("/echues")
-    @PreAuthorize("hasAuthority('VENTE_READ')")
     public ResponseEntity<List<FactureDTO>> getFacturesEchues() {
         List<FactureDTO> factures = factureService.getFacturesEchues();
         return ResponseEntity.ok(factures);
     }
 
     @PostMapping("/{factureId}/valider")
-    @PreAuthorize("hasAuthority('VENTE_VALIDER')")
     public ResponseEntity<FactureDTO> validerFacture(@PathVariable Long factureId) {
         FactureDTO facture = factureService.validerFacture(factureId);
         return ResponseEntity.ok(facture);
     }
 
     @PostMapping("/{factureId}/annuler")
-    @PreAuthorize("hasAuthority('VENTE_VALIDER')")
     public ResponseEntity<FactureDTO> annulerFacture(@PathVariable Long factureId,
                                                    @RequestParam(required = false, defaultValue = "Annulation") String motif,
                                                    @RequestParam(required = false) Long userId) {

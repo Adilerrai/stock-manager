@@ -6,7 +6,6 @@ import com.gestion.service.DepenseService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -26,7 +25,6 @@ public class DepenseController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<DepenseDTO> creerDepense(@RequestBody DepenseDTO dto,
                                                    @RequestParam(required = false) Long userId) {
         DepenseDTO cree = depenseService.creerDepense(dto, userId);
@@ -34,7 +32,6 @@ public class DepenseController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<List<DepenseDTO>> getDepenses(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -45,20 +42,17 @@ public class DepenseController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<DepenseDTO> getDepense(@PathVariable Long id) {
         return ResponseEntity.ok(depenseService.getDepenseById(id));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('TRESORERIE_GESTION')")
     public ResponseEntity<Void> supprimerDepense(@PathVariable Long id) {
         depenseService.supprimerDepense(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/statistiques")
-    @PreAuthorize("hasAuthority('TRESORERIE_READ') or hasAuthority('TRESORERIE_GESTION') or hasAuthority('RAPPORT_VOIR')")
     public ResponseEntity<Map<String, BigDecimal>> getStatistiques(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
@@ -70,7 +64,6 @@ public class DepenseController {
      * Résultat Net = Marge Commerciale Nette - Total Dépenses
      */
     @GetMapping("/resultat-net")
-    @PreAuthorize("hasAuthority('RAPPORT_VOIR') or hasAuthority('COMPTA_READ') or hasAuthority('DASHBOARD_VOIR')")
     public ResponseEntity<ResultatEntrepriseDTO> getResultatNet(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {

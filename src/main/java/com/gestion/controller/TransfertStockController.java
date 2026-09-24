@@ -5,7 +5,6 @@ import com.gestion.persistent.enums.StatutTransfert;
 import com.gestion.service.TransfertStockService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,20 +21,17 @@ public class TransfertStockController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<List<TransfertStockDTO>> getAllTransferts(
             @RequestParam(required = false) StatutTransfert statut) {
         return ResponseEntity.ok(transfertService.getAllTransferts(statut));
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('STOCK_READ')")
     public ResponseEntity<TransfertStockDTO> getTransfertById(@PathVariable Long id) {
         return ResponseEntity.ok(transfertService.getTransfertById(id));
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<TransfertStockDTO> creerTransfert(
             @RequestBody TransfertStockDTO dto,
             @RequestParam(required = false) Long userId) {
@@ -43,7 +39,6 @@ public class TransfertStockController {
     }
 
     @PostMapping("/{id}/expedier")
-    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<TransfertStockDTO> expedierTransfert(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {
@@ -51,7 +46,6 @@ public class TransfertStockController {
     }
 
     @PostMapping("/{id}/recevoir")
-    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<TransfertStockDTO> recevoirTransfert(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {
@@ -59,7 +53,6 @@ public class TransfertStockController {
     }
 
     @PostMapping("/{id}/annuler")
-    @PreAuthorize("hasAuthority('STOCK_AJUSTER')")
     public ResponseEntity<TransfertStockDTO> annulerTransfert(
             @PathVariable Long id,
             @RequestParam(required = false) Long userId) {

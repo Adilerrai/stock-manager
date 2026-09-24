@@ -6,7 +6,6 @@ import com.gestion.persistent.dto.EcheancierIsDTO;
 import com.gestion.persistent.model.RegleFiscaleIS;
 import com.gestion.service.FiscalEngineService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -28,7 +27,6 @@ public class FiscalController {
     // =========================================================================
 
     @GetMapping("/is/calcul")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<CalculIsDTO> calculerIs(
             @RequestParam(required = false) Integer annee,
             @RequestParam(required = false, defaultValue = "0") BigDecimal reintegrations,
@@ -42,7 +40,6 @@ public class FiscalController {
     // =========================================================================
 
     @GetMapping("/is/echeancier-acomptes")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<EcheancierIsDTO> getEcheancierAcomptes(
             @RequestParam(required = false) Integer annee,
             @RequestParam(required = false) BigDecimal impotReference) {
@@ -55,7 +52,6 @@ public class FiscalController {
     // =========================================================================
 
     @GetMapping("/calendrier")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<CalendrierFiscalDTO> getCalendrierFiscal(
             @RequestParam(required = false) Integer annee) {
         int anneeFiscale = (annee != null) ? annee : LocalDate.now().getYear();
@@ -67,13 +63,11 @@ public class FiscalController {
     // =========================================================================
 
     @GetMapping("/regles/{annee}")
-    @PreAuthorize("hasAuthority('COMPTA_READ')")
     public ResponseEntity<RegleFiscaleIS> getRegleFiscale(@PathVariable Integer annee) {
         return ResponseEntity.ok(fiscalEngineService.getOrCreateRegleFiscale(annee));
     }
 
     @PutMapping("/regles/{annee}")
-    @PreAuthorize("hasAuthority('COMPTA_WRITE')")
     public ResponseEntity<RegleFiscaleIS> modifierRegleFiscale(
             @PathVariable Integer annee,
             @RequestBody RegleFiscaleIS dto) {
