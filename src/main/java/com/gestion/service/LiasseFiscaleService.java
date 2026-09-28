@@ -3,14 +3,20 @@ package com.gestion.service;
 import com.acommon.persistant.model.PointDeVente;
 import com.acommon.repository.PointDeVenteRepository;
 import com.acommon.persistant.model.TenantContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gestion.persistent.dto.*;
 import com.gestion.persistent.model.CompteComptable;
+import com.gestion.persistent.model.LiasseFiscaleDonnees;
 import com.gestion.repository.CompteComptableRepository;
+import com.gestion.repository.LiasseFiscaleDonneesRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -19,22 +25,30 @@ import java.util.stream.Collectors;
 @Transactional
 public class LiasseFiscaleService {
 
+    private static final Logger log = LoggerFactory.getLogger(LiasseFiscaleService.class);
+
     private final ComptabiliteService comptabiliteService;
     private final ImmobilisationService immobilisationService;
     private final FiscalEngineService fiscalEngineService;
     private final CompteComptableRepository compteRepository;
     private final PointDeVenteRepository pointDeVenteRepository;
+    private final LiasseFiscaleDonneesRepository liasseDonneesRepository;
+    private final ObjectMapper objectMapper;
 
     public LiasseFiscaleService(ComptabiliteService comptabiliteService,
                                 ImmobilisationService immobilisationService,
                                 FiscalEngineService fiscalEngineService,
                                 CompteComptableRepository compteRepository,
-                                PointDeVenteRepository pointDeVenteRepository) {
+                                PointDeVenteRepository pointDeVenteRepository,
+                                LiasseFiscaleDonneesRepository liasseDonneesRepository,
+                                ObjectMapper objectMapper) {
         this.comptabiliteService = comptabiliteService;
         this.immobilisationService = immobilisationService;
         this.fiscalEngineService = fiscalEngineService;
         this.compteRepository = compteRepository;
         this.pointDeVenteRepository = pointDeVenteRepository;
+        this.liasseDonneesRepository = liasseDonneesRepository;
+        this.objectMapper = objectMapper;
     }
 
     private Long getTenantId() {
@@ -48,6 +62,69 @@ public class LiasseFiscaleService {
 
     public LiasseFiscaleCompleteDTO getLiasseFiscaleComplete(int annee) {
         Long tenantId = getTenantId();
+
+        // 1. Vérifier si une liasse modifiée / ajustée par l'utilisateur a été enregistrée
+        Optional<LiasseFiscaleDonnees> existante = liasseDonneesRepository.findByAnneeAndPointDeVenteId(annee, tenantId);
+        if (existante.isPresent() && existante.get().getDonneesJson() != null && !existante.get().getDonneesJson().isBlank()) {
+            try {
+                LiasseFiscaleCompleteDTO saved = objectMapper.readValue(existante.get().getDonneesJson(), LiasseFiscaleCompleteDTO.class);
+                saved.setModifieParUtilisateur(true);
+                saved.setStatutLiasse(existante.get().getStatut());
+                if (existante.get().getDateModification() != null) {
+                    saved.setDateDerniereModification(existante.get().getDateModification().toString());
+                }
+                return saved;
+            } catch (Exception e) {
+                log.warn("Erreur désérialisation liasse personnalisée (annee={}) : {}", annee, e.getMessage());
+            }
+        }
+
+        // 2. Sinon, calcul automatique depuis le grand livre / balance comptable
+        return calculerLiasseDepuisComptabilite(annee, tenantId);
+    }
+
+    public LiasseFiscaleCompleteDTO sauvegarderLiasseFiscale(int annee, LiasseFiscaleCompleteDTO dto) {
+        Long tenantId = getTenantId();
+        dto.setAnneeFiscale(annee);
+        dto.setTenantId(tenantId);
+        dto.setModifieParUtilisateur(true);
+        dto.setDateDerniereModification(LocalDateTime.now().toString());
+        dto.setStatutLiasse("MODIFIE_USER");
+
+        try {
+            String json = objectMapper.writeValueAsString(dto);
+            LiasseFiscaleDonnees entity = liasseDonneesRepository.findByAnneeAndPointDeVenteId(annee, tenantId)
+                    .orElseGet(() -> {
+                        LiasseFiscaleDonnees n = new LiasseFiscaleDonnees();
+                        n.setAnnee(annee);
+                        n.setPointDeVenteId(tenantId);
+                        return n;
+                    });
+
+            entity.setDonneesJson(json);
+            entity.setDateModification(LocalDateTime.now());
+            entity.setStatut("MODIFIE_USER");
+
+            if (dto.getTableau16DeterminationResultatFiscal() != null) {
+                entity.setReintegrationsFiscales(dto.getTableau16DeterminationResultatFiscal().getTotalReintegrations());
+                entity.setDeductionsFiscales(dto.getTableau16DeterminationResultatFiscal().getTotalDeductions());
+            }
+
+            liasseDonneesRepository.save(entity);
+            return dto;
+        } catch (Exception e) {
+            log.error("Erreur lors de la sauvegarde de la liasse modifiée : {}", e.getMessage(), e);
+            throw new RuntimeException("Erreur de sauvegarde de la liasse fiscale : " + e.getMessage(), e);
+        }
+    }
+
+    public LiasseFiscaleCompleteDTO recalculerDepuisComptabilite(int annee) {
+        Long tenantId = getTenantId();
+        liasseDonneesRepository.findByAnneeAndPointDeVenteId(annee, tenantId).ifPresent(liasseDonneesRepository::delete);
+        return calculerLiasseDepuisComptabilite(annee, tenantId);
+    }
+
+    public LiasseFiscaleCompleteDTO calculerLiasseDepuisComptabilite(int annee, Long tenantId) {
         LocalDate debut = LocalDate.of(annee, 1, 1);
         LocalDate fin = LocalDate.of(annee, 12, 31);
 
@@ -56,6 +133,8 @@ public class LiasseFiscaleService {
         liasse.setDateDebutExercice(debut);
         liasse.setDateFinExercice(fin);
         liasse.setTenantId(tenantId);
+        liasse.setModifieParUtilisateur(false);
+        liasse.setStatutLiasse("CALCULE_COMPTA");
 
         // Informations juridiques du tenant / entreprise
         pointDeVenteRepository.findById(tenantId).ifPresent(pv -> {

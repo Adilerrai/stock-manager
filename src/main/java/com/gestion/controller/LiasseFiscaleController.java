@@ -33,6 +33,29 @@ public class LiasseFiscaleController {
     }
 
     /**
+     * SAUVEGARDE DES MODIFICATIONS UTILISATEUR DE LA LIASSE FISCALE
+     */
+    @PutMapping("/complete")
+    public ResponseEntity<LiasseFiscaleCompleteDTO> sauvegarderLiasseFiscale(
+            @RequestParam(required = false) Integer annee,
+            @RequestBody LiasseFiscaleCompleteDTO dto) {
+        return ResponseEntity.ok(
+                liasseFiscaleService.sauvegarderLiasseFiscale(anneeEffective(annee), dto)
+        );
+    }
+
+    /**
+     * RÉINITIALISATION / RECALCUL DEPUIS LA COMPTABILITÉ (EFFACE LES MODIFICATIONS UTILISATEUR)
+     */
+    @PostMapping("/recalculer")
+    public ResponseEntity<LiasseFiscaleCompleteDTO> recalculerDepuisComptabilite(
+            @RequestParam(required = false) Integer annee) {
+        return ResponseEntity.ok(
+                liasseFiscaleService.recalculerDepuisComptabilite(anneeEffective(annee))
+        );
+    }
+
+    /**
      * T1 - BILAN ACTIF
      */
     @GetMapping("/t1-bilan-actif")

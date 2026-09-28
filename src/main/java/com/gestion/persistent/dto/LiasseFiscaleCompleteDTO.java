@@ -15,6 +15,9 @@ public class LiasseFiscaleCompleteDTO {
     private String registreCommerce = "00000";
     private String numeroCnss = "0000000";
     private String activitePrincipale = "Commerce et Services";
+    private Boolean modifieParUtilisateur = false;
+    private String dateDerniereModification;
+    private String statutLiasse = "BROUILLON";
 
     // Les Tableaux Réglementaires DGI (Modèle Normal Marocain)
     private BilanOfficielDTO tableau1BilanActif;
@@ -147,4 +150,13 @@ public class LiasseFiscaleCompleteDTO {
     public LiasseTableauT18CreditBailDTO getTableau18() { return tableau18BiensCreditBail; }
     public LiasseTableauT19DerogationsDTO getTableau19() { return tableaux19Et20DerogationsEtMethodes; }
     public LiasseTableauT19DerogationsDTO getTableau20() { return tableaux19Et20DerogationsEtMethodes; }
+
+    public Boolean getModifieParUtilisateur() { return modifieParUtilisateur; }
+    public void setModifieParUtilisateur(Boolean modifieParUtilisateur) { this.modifieParUtilisateur = modifieParUtilisateur; }
+
+    public String getDateDerniereModification() { return dateDerniereModification; }
+    public void setDateDerniereModification(String dateDerniereModification) { this.dateDerniereModification = dateDerniereModification; }
+
+    public String getStatutLiasse() { return statutLiasse; }
+    public void setStatutLiasse(String statutLiasse) { this.statutLiasse = statutLiasse; }
 }

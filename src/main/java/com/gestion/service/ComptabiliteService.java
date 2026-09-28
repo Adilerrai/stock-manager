@@ -717,6 +717,10 @@ public class ComptabiliteService {
                 .orElse(Collections.emptyList());
         } else {
             comptes = compteRepository.findByPointDeVenteIdOrderByNumeroCompteAsc(tenantId);
+            if (comptes.isEmpty()) {
+                initPlanComptableParDefaut(tenantId);
+                comptes = compteRepository.findByPointDeVenteIdOrderByNumeroCompteAsc(tenantId);
+            }
         }
 
         List<GrandLivreDTO> resultat = new ArrayList<>();
@@ -771,6 +775,8 @@ public class ComptabiliteService {
                 soldeCourant = soldeCourant.add(deb).subtract(cred);
 
                 GrandLivreDTO.LigneGrandLivreItemDTO item = new GrandLivreDTO.LigneGrandLivreItemDTO();
+                item.setId(l.getId());
+                item.setLettrage(l.getLettrage());
                 if (l.getEcriture() != null) {
                     item.setDate(l.getEcriture().getDateEcriture());
                     item.setNumeroPiece(l.getEcriture().getNumeroPiece());
@@ -1066,7 +1072,9 @@ public class ComptabiliteService {
 
         List<LigneEcriture> lignes = ligneRepository.findAllById(ligneIds);
         if (lignes.size() != ligneIds.size()) {
-            throw new IllegalArgumentException("Certaines lignes d'écritures sont introuvables.");
+            Set<Long> trouves = lignes.stream().map(LigneEcriture::getId).collect(Collectors.toSet());
+            List<Long> introuvables = ligneIds.stream().filter(id -> !trouves.contains(id)).collect(Collectors.toList());
+            throw new IllegalArgumentException("Certaines lignes d'écritures sont introuvables en base de données : " + introuvables);
         }
 
         BigDecimal sumDebit = BigDecimal.ZERO;

@@ -20,6 +20,7 @@ public class GrandLivreDTO {
     public GrandLivreDTO() {}
 
     public static class LigneGrandLivreItemDTO {
+        private Long id;
         private LocalDate date;
         private String journalCode;
         private String numeroPiece;
@@ -27,8 +28,12 @@ public class GrandLivreDTO {
         private BigDecimal debit = BigDecimal.ZERO;
         private BigDecimal credit = BigDecimal.ZERO;
         private BigDecimal soldeProgressif = BigDecimal.ZERO;
+        private String lettrage;
 
         public LigneGrandLivreItemDTO() {}
+
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
 
         public LocalDate getDate() { return date; }
         public void setDate(LocalDate date) { this.date = date; }
@@ -50,6 +55,9 @@ public class GrandLivreDTO {
 
         public BigDecimal getSoldeProgressif() { return soldeProgressif; }
         public void setSoldeProgressif(BigDecimal soldeProgressif) { this.soldeProgressif = soldeProgressif; }
+
+        public String getLettrage() { return lettrage; }
+        public void setLettrage(String lettrage) { this.lettrage = lettrage; }
     }
 
     public String getNumeroCompte() { return numeroCompte; }

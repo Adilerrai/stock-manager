@@ -4,7 +4,9 @@ import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.CalculIsDTO;
 import com.gestion.persistent.model.DeclarationTva;
 import com.gestion.persistent.model.Societe;
+import com.gestion.persistent.model.LiasseFiscaleDonnees;
 import com.gestion.repository.DeclarationTvaRepository;
+import com.gestion.repository.LiasseFiscaleDonneesRepository;
 import com.gestion.repository.SocieteRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -20,13 +23,16 @@ public class EdiFiscalService {
     private final DeclarationTvaRepository declarationTvaRepository;
     private final SocieteRepository societeRepository;
     private final FiscalEngineService fiscalEngineService;
+    private final LiasseFiscaleDonneesRepository liasseDonneesRepository;
 
     public EdiFiscalService(DeclarationTvaRepository declarationTvaRepository,
                             SocieteRepository societeRepository,
-                            FiscalEngineService fiscalEngineService) {
+                            FiscalEngineService fiscalEngineService,
+                            LiasseFiscaleDonneesRepository liasseDonneesRepository) {
         this.declarationTvaRepository = declarationTvaRepository;
         this.societeRepository = societeRepository;
         this.fiscalEngineService = fiscalEngineService;
+        this.liasseDonneesRepository = liasseDonneesRepository;
     }
 
     private Long getTenantId() {
@@ -110,7 +116,21 @@ public class EdiFiscalService {
                 .orElseGet(() -> societeRepository.findByTenantIdAndIsParDefautTrue(tenantId)
                         .orElseGet(Societe::new));
 
-        CalculIsDTO isDto = fiscalEngineService.calculerIs(annee, reintegrations, deductions);
+        BigDecimal reint = reintegrations;
+        BigDecimal ded = deductions;
+        if (reint == null || ded == null) {
+            Optional<LiasseFiscaleDonnees> liasseOpt = liasseDonneesRepository.findByAnneeAndPointDeVenteId(annee, tenantId);
+            if (liasseOpt.isPresent()) {
+                if (reint == null && liasseOpt.get().getReintegrationsFiscales() != null) {
+                    reint = liasseOpt.get().getReintegrationsFiscales();
+                }
+                if (ded == null && liasseOpt.get().getDeductionsFiscales() != null) {
+                    ded = liasseOpt.get().getDeductionsFiscales();
+                }
+            }
+        }
+
+        CalculIsDTO isDto = fiscalEngineService.calculerIs(annee, reint, ded);
 
         String ifFiscal = societe.getIdentifiantFiscal() != null ? societe.getIdentifiantFiscal() : "";
         String ice = societe.getIce() != null ? societe.getIce() : "";
@@ -125,6 +145,7 @@ public class EdiFiscalService {
         xml.append("    <IdentifiantFiscal>").append(ifFiscal).append("</IdentifiantFiscal>\n");
         xml.append("    <ICE>").append(ice).append("</ICE>\n");
         xml.append("    <RaisonSociale>").append(raisonSociale).append("</RaisonSociale>\n");
+        xml.append("    <RegimeComptable>NORMAL</RegimeComptable>\n");
         xml.append("    <Exercice>").append(annee).append("</Exercice>\n");
         xml.append("    <DateDepotLegal>").append(annee + 1).append("-03-31</DateDepotLegal>\n");
         xml.append("    <DateGeneration>").append(LocalDate.now()).append("</DateGeneration>\n");

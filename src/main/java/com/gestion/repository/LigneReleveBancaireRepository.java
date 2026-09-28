@@ -55,4 +55,7 @@ public interface LigneReleveBancaireRepository extends JpaRepository<LigneReleve
             @Param("pointDeVenteId") Long pointDeVenteId);
 
     long countByReleveBancaireIdAndStatut(Long releveBancaireId, StatutRapprochement statut);
+
+    @Query("SELECT l.ligneEcritureId FROM LigneReleveBancaire l WHERE l.pointDeVenteId = :pointDeVenteId AND l.ligneEcritureId IS NOT NULL")
+    List<Long> findToutesLignesEcrituresPointees(@Param("pointDeVenteId") Long pointDeVenteId);
 }

@@ -15,14 +15,23 @@ public class RapprochementComparatif5141DTO {
     private LocalDate dateFin;
     private LocalDate dateArrete;
 
-    private BigDecimal soldeReleve = BigDecimal.ZERO;
-    private BigDecimal soldeComptable = BigDecimal.ZERO;
+    private BigDecimal soldeReleve = BigDecimal.ZERO; // (A)
+    private BigDecimal soldeComptable = BigDecimal.ZERO; // (G)
     private BigDecimal ecart = BigDecimal.ZERO;
+
+    // Totaux État de Rapprochement Bancaire (A, B, C, D, E, F, G, H)
+    private BigDecimal totalDebitReleveSuspens = BigDecimal.ZERO;   // (B)
+    private BigDecimal totalCreditReleveSuspens = BigDecimal.ZERO;  // (C)
+    private BigDecimal totalDebitComptaSuspens = BigDecimal.ZERO;   // (D)
+    private BigDecimal totalCreditComptaSuspens = BigDecimal.ZERO;  // (E)
+    private BigDecimal soldeTheoriqueComptable = BigDecimal.ZERO;   // (F)
+    private BigDecimal soldeReelComptable = BigDecimal.ZERO;        // (G)
+    private BigDecimal ecartConcordance = BigDecimal.ZERO;          // (H = G - F)
 
     private int totalLignesReleve = 0;
     private int totalRapprochees = 0;
-    private int totalNonComptabilisees = 0; // ⚠
-    private int totalEnAttenteBanque = 0;   // ⏳
+    private int totalNonComptabilisees = 0; // ⚠ Opérations relevé en suspens
+    private int totalEnAttenteBanque = 0;   // ⏳ Écritures compta en suspens
 
     private List<ItemComparatifRapprochementDTO> items = new ArrayList<>();
     private List<LigneEcritureSimpleDTO> ecrituresNonPointees = new ArrayList<>();
@@ -166,5 +175,61 @@ public class RapprochementComparatif5141DTO {
 
     public void setEcrituresNonPointees(List<LigneEcritureSimpleDTO> ecrituresNonPointees) {
         this.ecrituresNonPointees = ecrituresNonPointees;
+    }
+
+    public BigDecimal getTotalDebitReleveSuspens() {
+        return totalDebitReleveSuspens;
+    }
+
+    public void setTotalDebitReleveSuspens(BigDecimal totalDebitReleveSuspens) {
+        this.totalDebitReleveSuspens = totalDebitReleveSuspens;
+    }
+
+    public BigDecimal getTotalCreditReleveSuspens() {
+        return totalCreditReleveSuspens;
+    }
+
+    public void setTotalCreditReleveSuspens(BigDecimal totalCreditReleveSuspens) {
+        this.totalCreditReleveSuspens = totalCreditReleveSuspens;
+    }
+
+    public BigDecimal getTotalDebitComptaSuspens() {
+        return totalDebitComptaSuspens;
+    }
+
+    public void setTotalDebitComptaSuspens(BigDecimal totalDebitComptaSuspens) {
+        this.totalDebitComptaSuspens = totalDebitComptaSuspens;
+    }
+
+    public BigDecimal getTotalCreditComptaSuspens() {
+        return totalCreditComptaSuspens;
+    }
+
+    public void setTotalCreditComptaSuspens(BigDecimal totalCreditComptaSuspens) {
+        this.totalCreditComptaSuspens = totalCreditComptaSuspens;
+    }
+
+    public BigDecimal getSoldeTheoriqueComptable() {
+        return soldeTheoriqueComptable;
+    }
+
+    public void setSoldeTheoriqueComptable(BigDecimal soldeTheoriqueComptable) {
+        this.soldeTheoriqueComptable = soldeTheoriqueComptable;
+    }
+
+    public BigDecimal getSoldeReelComptable() {
+        return soldeReelComptable;
+    }
+
+    public void setSoldeReelComptable(BigDecimal soldeReelComptable) {
+        this.soldeReelComptable = soldeReelComptable;
+    }
+
+    public BigDecimal getEcartConcordance() {
+        return ecartConcordance;
+    }
+
+    public void setEcartConcordance(BigDecimal ecartConcordance) {
+        this.ecartConcordance = ecartConcordance;
     }
 }

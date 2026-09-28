@@ -71,6 +71,7 @@ public class Societe {
     @Column(name = "regime_tva")
     private RegimeTva regimeTva = RegimeTva.ENCAISSEMENT;
 
+
     @Column(name = "periodicite_tva", length = 20)
     private String periodiciteTva = "MENSUELLE"; // MENSUELLE ou TRIMESTRIELLE
 
@@ -163,6 +164,7 @@ public class Societe {
 
     public RegimeTva getRegimeTva() { return regimeTva; }
     public void setRegimeTva(RegimeTva regimeTva) { this.regimeTva = regimeTva; }
+
 
     public String getPeriodiciteTva() { return periodiciteTva; }
     public void setPeriodiciteTva(String periodiciteTva) { this.periodiciteTva = periodiciteTva; }

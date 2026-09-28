@@ -101,6 +101,7 @@ public class SocieteDTO {
     public RegimeTva getRegimeTva() { return regimeTva; }
     public void setRegimeTva(RegimeTva regimeTva) { this.regimeTva = regimeTva; }
 
+
     public String getPeriodiciteTva() { return periodiciteTva; }
     public void setPeriodiciteTva(String periodiciteTva) { this.periodiciteTva = periodiciteTva; }
 

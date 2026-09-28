@@ -24,9 +24,15 @@ public class ItemComparatifRapprochementDTO {
     private BigDecimal debitCompta = BigDecimal.ZERO;
     private BigDecimal creditCompta = BigDecimal.ZERO;
 
-    // Suggestion de contrepartie (pour génération écriture en 1 clic)
+    // Suggestion de contrepartie
     private String suggestionContrepartieCode;
     private String suggestionContrepartieLibelle;
+
+    // Suggestion de liaison avec écriture 5141 existante
+    private Long suggestionLigneEcritureId;
+    private String suggestionNumeroPiece;
+    private LocalDate suggestionDateCompta;
+    private String suggestionLibelleCompta;
 
     public ItemComparatifRapprochementDTO() {}
 
@@ -156,5 +162,37 @@ public class ItemComparatifRapprochementDTO {
 
     public void setSuggestionContrepartieLibelle(String suggestionContrepartieLibelle) {
         this.suggestionContrepartieLibelle = suggestionContrepartieLibelle;
+    }
+
+    public Long getSuggestionLigneEcritureId() {
+        return suggestionLigneEcritureId;
+    }
+
+    public void setSuggestionLigneEcritureId(Long suggestionLigneEcritureId) {
+        this.suggestionLigneEcritureId = suggestionLigneEcritureId;
+    }
+
+    public String getSuggestionNumeroPiece() {
+        return suggestionNumeroPiece;
+    }
+
+    public void setSuggestionNumeroPiece(String suggestionNumeroPiece) {
+        this.suggestionNumeroPiece = suggestionNumeroPiece;
+    }
+
+    public LocalDate getSuggestionDateCompta() {
+        return suggestionDateCompta;
+    }
+
+    public void setSuggestionDateCompta(LocalDate suggestionDateCompta) {
+        this.suggestionDateCompta = suggestionDateCompta;
+    }
+
+    public String getSuggestionLibelleCompta() {
+        return suggestionLibelleCompta;
+    }
+
+    public void setSuggestionLibelleCompta(String suggestionLibelleCompta) {
+        this.suggestionLibelleCompta = suggestionLibelleCompta;
     }
 }
