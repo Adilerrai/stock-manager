@@ -59,6 +59,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
                     Long effectiveTenantId = tenantId;
+                    String headerSociete = request.getHeader("X-Societe-Id");
+                    if (headerSociete == null || headerSociete.isBlank()) {
+                        headerSociete = request.getHeader("X-Tenant-Id");
+                    }
+                    if (headerSociete != null && !headerSociete.isBlank()) {
+                        try {
+                            effectiveTenantId = Long.parseLong(headerSociete.trim());
+                        } catch (NumberFormatException ignored) {}
+                    }
                     if (effectiveTenantId == null && userDetails instanceof com.acommon.persistant.model.User u) {
                         effectiveTenantId = u.getTenantId() != null ? u.getTenantId() : u.getPointDeVenteId();
                     }

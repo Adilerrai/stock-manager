@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.persistant.model.CurrentRequestContext;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.*;
 import com.gestion.persistent.enums.ActionAudit;
@@ -51,6 +52,25 @@ public class ComptabiliteService {
     private Long getTenantId() {
         Long tenant = TenantContext.getCurrentTenant();
         return tenant != null ? tenant : 1L;
+    }
+
+    private int getExerciceYearDefaut() {
+        Integer ctxYear = CurrentRequestContext.getYear();
+        return ctxYear != null ? ctxYear : LocalDate.now().getYear();
+    }
+
+    private LocalDate getDefautDateDebut(LocalDate debut) {
+        if (debut != null) return debut;
+        return LocalDate.of(getExerciceYearDefaut(), 1, 1);
+    }
+
+    private LocalDate getDefautDateFin(LocalDate fin, LocalDate debut) {
+        if (fin != null) return fin;
+        Integer ctxYear = CurrentRequestContext.getYear();
+        if (ctxYear != null && debut == null) {
+            return LocalDate.of(ctxYear, 12, 31);
+        }
+        return LocalDate.now();
     }
 
     // =========================================================================
@@ -325,13 +345,28 @@ public class ComptabiliteService {
     public List<EcritureComptableDTO> getEcritures(Long journalId, LocalDate debut, LocalDate fin) {
         Long tenantId = getTenantId();
         List<EcritureComptable> ecritures;
+        Integer ctxYear = CurrentRequestContext.getYear();
 
         if (journalId != null) {
             JournalComptable journal = journalRepository.findById(journalId)
                 .orElseThrow(() -> new IllegalArgumentException("Journal introuvable"));
-            ecritures = ecritureRepository.findByPointDeVenteIdAndJournalOrderByDateEcritureDesc(tenantId, journal);
+            if (debut != null && fin != null) {
+                ecritures = ecritureRepository.findByPointDeVenteIdAndJournalOrderByDateEcritureDesc(tenantId, journal)
+                        .stream().filter(e -> e.getDateEcriture() != null && !e.getDateEcriture().isBefore(debut) && !e.getDateEcriture().isAfter(fin))
+                        .collect(Collectors.toList());
+            } else if (ctxYear != null) {
+                ecritures = ecritureRepository.findByPointDeVenteIdAndJournalOrderByDateEcritureDesc(tenantId, journal)
+                        .stream().filter(e -> e.getDateEcriture() != null && e.getDateEcriture().getYear() == ctxYear)
+                        .collect(Collectors.toList());
+            } else {
+                ecritures = ecritureRepository.findByPointDeVenteIdAndJournalOrderByDateEcritureDesc(tenantId, journal);
+            }
         } else if (debut != null && fin != null) {
             ecritures = ecritureRepository.findByPointDeVenteIdAndDateEcritureBetweenOrderByDateEcritureAsc(tenantId, debut, fin);
+        } else if (ctxYear != null) {
+            LocalDate dDebut = LocalDate.of(ctxYear, 1, 1);
+            LocalDate dFin = LocalDate.of(ctxYear, 12, 31);
+            ecritures = ecritureRepository.findByPointDeVenteIdAndDateEcritureBetweenOrderByDateEcritureAsc(tenantId, dDebut, dFin);
         } else {
             ecritures = ecritureRepository.findByPointDeVenteIdOrderByDateEcritureDescIdDesc(tenantId);
         }
@@ -943,8 +978,8 @@ public class ComptabiliteService {
     @Transactional(readOnly = true)
     public List<GrandLivreDTO> getGrandLivre(String numeroCompte, LocalDate debut, LocalDate fin) {
         Long tenantId = getTenantId();
-        LocalDate dDebut = (debut != null) ? debut : LocalDate.of(LocalDate.now().getYear(), 1, 1);
-        LocalDate dFin = (fin != null) ? fin : LocalDate.now();
+        LocalDate dDebut = getDefautDateDebut(debut);
+        LocalDate dFin = getDefautDateFin(fin, debut);
 
         List<CompteComptable> comptes;
         if (numeroCompte != null && !numeroCompte.trim().isEmpty()) {
@@ -1054,8 +1089,8 @@ public class ComptabiliteService {
     @Transactional(readOnly = true)
     public List<BalanceCompteDTO> getBalance(LocalDate debut, LocalDate fin) {
         Long tenantId = getTenantId();
-        LocalDate dDebut = (debut != null) ? debut : LocalDate.of(LocalDate.now().getYear(), 1, 1);
-        LocalDate dFin = (fin != null) ? fin : LocalDate.now();
+        LocalDate dDebut = getDefautDateDebut(debut);
+        LocalDate dFin = getDefautDateFin(fin, debut);
 
         List<LigneEcriture> allLignes = ligneRepository.findAllByTenantAndPeriode(tenantId, dDebut, dFin);
 
@@ -1688,8 +1723,8 @@ public class ComptabiliteService {
     @Transactional(readOnly = true)
     public CpcOfficielDTO getCpcOfficiel(LocalDate dateDebut, LocalDate dateFin) {
         Long tenantId = getTenantId();
-        LocalDate dDebut = (dateDebut != null) ? dateDebut : LocalDate.of(LocalDate.now().getYear(), 1, 1);
-        LocalDate dFin = (dateFin != null) ? dateFin : LocalDate.now();
+        LocalDate dDebut = getDefautDateDebut(dateDebut);
+        LocalDate dFin = getDefautDateFin(dateFin, dateDebut);
 
         List<BalanceCompteDTO> balance = getBalance(dDebut, dFin);
 
@@ -1895,8 +1930,8 @@ public class ComptabiliteService {
     @Transactional(readOnly = true)
     public byte[] exporterFecDgi(LocalDate dateDebut, LocalDate dateFin, String separateurParam) {
         Long tenantId = getTenantId();
-        LocalDate dDebut = (dateDebut != null) ? dateDebut : LocalDate.of(LocalDate.now().getYear(), 1, 1);
-        LocalDate dFin = (dateFin != null) ? dateFin : LocalDate.now();
+        LocalDate dDebut = getDefautDateDebut(dateDebut);
+        LocalDate dFin = getDefautDateFin(dateFin, dateDebut);
 
         String sep = (separateurParam != null && !separateurParam.isEmpty()) ? separateurParam : "\t";
 
@@ -1987,8 +2022,8 @@ public class ComptabiliteService {
     @Transactional(readOnly = true)
     public AuditFecReportDTO auditerConformiteFec(LocalDate dateDebut, LocalDate dateFin) {
         Long tenantId = getTenantId();
-        LocalDate dDebut = (dateDebut != null) ? dateDebut : LocalDate.of(LocalDate.now().getYear(), 1, 1);
-        LocalDate dFin = (dateFin != null) ? dateFin : LocalDate.now();
+        LocalDate dDebut = getDefautDateDebut(dateDebut);
+        LocalDate dFin = getDefautDateFin(dateFin, dateDebut);
 
         List<EcritureComptable> ecritures = ecritureRepository.findByPointDeVenteIdAndDateEcritureBetweenOrderByDateEcritureAsc(
                 tenantId, dDebut, dFin);

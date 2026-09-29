@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.persistant.model.CurrentRequestContext;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.*;
 import com.gestion.persistent.enums.SensCompte;
@@ -54,6 +55,82 @@ public class ClotureExerciceService {
             list = exerciceRepository.findByPointDeVenteIdOrderByDateDebutDesc(tenantId);
         }
         return list.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    public ExerciceComptableDTO getExerciceActif() {
+        Long tenantId = getTenantId();
+
+        // 1. Priorité au contexte ThreadLocal injecté depuis les headers X-Exercice-*
+        Long ctxExerciceId = CurrentRequestContext.getExerciceId();
+        Integer ctxYear = CurrentRequestContext.getYear();
+
+        if (ctxExerciceId != null) {
+            Optional<ExerciceComptable> ex = exerciceRepository.findById(ctxExerciceId);
+            if (ex.isPresent() && Objects.equals(ex.get().getPointDeVenteId(), tenantId)) {
+                return toDto(ex.get());
+            }
+        }
+
+        if (ctxYear != null) {
+            LocalDate midYear = LocalDate.of(ctxYear, 6, 1);
+            Optional<ExerciceComptable> ex = exerciceRepository.findByDateInExercice(midYear, tenantId);
+            if (ex.isPresent()) {
+                return toDto(ex.get());
+            }
+        }
+
+        // 2. Exercice couvrant la date courante
+        LocalDate now = LocalDate.now();
+        Optional<ExerciceComptable> current = exerciceRepository.findByDateInExercice(now, tenantId);
+        if (current.isPresent()) {
+            return toDto(current.get());
+        }
+
+        // 3. Dernier exercice existant
+        List<ExerciceComptable> list = exerciceRepository.findByPointDeVenteIdOrderByDateDebutDesc(tenantId);
+        if (!list.isEmpty()) {
+            return toDto(list.get(0));
+        }
+
+        // 4. Initialisation par défaut
+        initExerciceParDefaut(tenantId);
+        return getExercices().get(0);
+    }
+
+    public ExerciceComptableDTO definirExerciceActif(Long exerciceId, Integer annee, String code) {
+        Long tenantId = getTenantId();
+        ExerciceComptable cible = null;
+
+        if (exerciceId != null) {
+            cible = exerciceRepository.findById(exerciceId)
+                    .filter(e -> Objects.equals(e.getPointDeVenteId(), tenantId))
+                    .orElse(null);
+        }
+
+        if (cible == null && code != null && !code.isBlank()) {
+            cible = exerciceRepository.findByCodeAndPointDeVenteId(code.trim(), tenantId).orElse(null);
+        }
+
+        if (cible == null && annee != null) {
+            LocalDate midYear = LocalDate.of(annee, 6, 1);
+            cible = exerciceRepository.findByDateInExercice(midYear, tenantId).orElse(null);
+
+            if (cible == null) {
+                ExerciceComptableDTO newEx = new ExerciceComptableDTO();
+                newEx.setCode("EX-" + annee);
+                newEx.setLibelle("Exercice " + annee);
+                newEx.setDateDebut(LocalDate.of(annee, 1, 1));
+                newEx.setDateFin(LocalDate.of(annee, 12, 31));
+                return creerExercice(newEx);
+            }
+        }
+
+        if (cible == null) {
+            return getExerciceActif();
+        }
+
+        CurrentRequestContext.setExercice(cible.getId(), cible.getDateDebut().getYear());
+        return toDto(cible);
     }
 
     public ExerciceComptableDTO creerExercice(ExerciceComptableDTO dto) {
