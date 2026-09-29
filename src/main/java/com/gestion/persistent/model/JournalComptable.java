@@ -36,6 +36,17 @@ public class JournalComptable {
 
     public JournalComptable() {}
 
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (tenant != null) {
+            this.pointDeVenteId = tenant;
+        } else if (this.pointDeVenteId == null) {
+            this.pointDeVenteId = 1L;
+        }
+    }
+
     public JournalComptable(String code, String libelle, TypeJournal typeJournal, Long pointDeVenteId) {
         this.code = code;
         this.libelle = libelle;

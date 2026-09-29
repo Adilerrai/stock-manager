@@ -47,6 +47,17 @@ public class ExerciceComptable {
 
     public ExerciceComptable() {}
 
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (tenant != null) {
+            this.pointDeVenteId = tenant;
+        } else if (this.pointDeVenteId == null) {
+            this.pointDeVenteId = 1L;
+        }
+    }
+
     public ExerciceComptable(String code, String libelle, LocalDate dateDebut, LocalDate dateFin, Long pointDeVenteId) {
         this.code = code;
         this.libelle = libelle;

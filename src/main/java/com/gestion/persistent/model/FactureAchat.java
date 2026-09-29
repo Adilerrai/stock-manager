@@ -54,6 +54,17 @@ public class FactureAchat {
 
     public FactureAchat() {}
 
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (tenant != null) {
+            this.pointDeVenteId = tenant;
+        } else if (this.pointDeVenteId == null) {
+            this.pointDeVenteId = 1L;
+        }
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

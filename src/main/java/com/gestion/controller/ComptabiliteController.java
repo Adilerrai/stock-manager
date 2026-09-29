@@ -101,27 +101,6 @@ public class ComptabiliteController {
         return ResponseEntity.ok(comptabiliteService.validerEcriture(id));
     }
 
-    // =========================================================================
-    // SAISIE KILOMÉTRIQUE ULTRA-RAPIDE (100% CLAVIER - STYLE SAGE 100)
-    // =========================================================================
-
-    @PostMapping("/saisie-kilometrique")
-    public ResponseEntity<EcritureComptableDTO> creerEcritureKilometrique(@RequestBody SaisieKilometriqueDTO dto) {
-        return new ResponseEntity<>(comptabiliteService.creerEcritureKilometrique(dto), HttpStatus.CREATED);
-    }
-
-    @PostMapping("/saisie-kilometrique/lot")
-    public ResponseEntity<List<EcritureComptableDTO>> creerEcrituresKilometriquesLot(@RequestBody List<SaisieKilometriqueDTO> batch) {
-        return new ResponseEntity<>(comptabiliteService.creerEcrituresKilometriquesLot(batch), HttpStatus.CREATED);
-    }
-
-    @GetMapping("/saisie-kilometrique/assistance")
-    public ResponseEntity<AssistanceSaisieKilometriqueDTO> assisterSaisieKilometrique(
-            @RequestParam String numeroCompte,
-            @RequestParam java.math.BigDecimal montant,
-            @RequestParam(required = false, defaultValue = "DEBIT") String sens) {
-        return ResponseEntity.ok(comptabiliteService.assisterSaisieKilometrique(numeroCompte, montant, sens));
-    }
 
     // =========================================================================
     // GRAND LIVRE & BALANCE & TVA

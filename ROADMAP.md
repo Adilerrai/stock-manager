@@ -29,6 +29,7 @@ Ce document formalise la trajectoire d'évolution du progiciel comptable et de g
 | **État 9421 & Télédéclaration SIMPL-IR** | ✅ **Réalisé (Barème IR, XML SIMPL, CSV)** | ✅ Via Sage Paie | ⚠️ Add-on | ✅ Intégré |
 | **BDS Damancom & OD de Paie** | ✅ **Réalisé (Format texte BDS, OD auto)** | ✅ Module Paie | ⚠️ Add-on | ✅ Intégré |
 | **Clôture Exercice & Journal À-Nouveaux** | ✅ **Réalisé (Solde 6/7 -> 119 et report AN)** | ✅ Standard | ⚠️ Partiel | ✅ Standard |
+| **Retenue à la Source (RAS TVA & Loyers - Art. 117 CGI)** | ✅ **Réalisé (Attestation officielle, calcul 75%/100%, Ligne 138 SIMPL)** | ⚠️ Configuration manuelle | ⚠️ Non natif | ⚠️ Partiel |
 | **Télé-Virements BAM / LCN / MT940 (Phase 4)** | ❌ **Non retenu (Exclu du scope)** | ✅ Standard BAM | ⚠️ SEPA / ISO | ⚠️ Partiel |
 
 ---
@@ -107,3 +108,19 @@ gantt
   - `ClotureExerciceService.java` : solde des comptes de gestion (classes 6 et 7) vers le compte de résultat (`1191` / `1199`) et génération automatique du journal des À-Nouveaux (`Journal AN / 00`) sur l'exercice $N+1$.
 * **5.2 Solution 100% Autonome & Indépendante** :
   - Zéro dépendance, zéro connecteur externe Sage. L'application constitue un progiciel complet, souverain et indépendant.
+
+---
+
+### ✅ Retenue à la Source (RAS) sur TVA, Loyers & Honoraires (Art. 117-VI & 157 CGI - 100% Backend Opérationnel)
+* **Moteur de Calcul Automatique conforme CGI** :
+  - `RasTvaService.java` & `RasTvaController.java` (`/api/fiscalite/ras-tva`).
+  - `BIENS_EQUIPEMENT_TRAVAUX` : 0% si attestation de régularité fiscale (ARF < 6 mois) valide, 100% de la TVA si absence d'ARF.
+  - `PRESTATIONS_SERVICES` : Retenue légale de 75% de la TVA avec ARF valide, 100% sans ARF.
+  - `PRESTATAIRES_NON_RESIDENTS` : 100% de la TVA retenue à la source.
+  - `LOYERS_COMMERCIAUX` : Retenue de 5% sur le montant brut.
+  - `HONORAIRES_LIBERAUX` : Retenue de 10% (personnes morales) ou 5% (personnes physiques).
+* **Attestations Légales & Télédéclaration** :
+  - Génération de l'**Attestation Officielle de Retenue à la Source** prête à imprimer au format HTML A4 (`/attestations/{id}/html`).
+  - Bordereau périodique pour la **Ligne 138 de la déclaration SIMPL-TVA** (`/declaration`).
+  - Export CSV normalisé du bordereau avec encodage UTF-8 BOM (`/declaration/export/csv`).
+  - Comptabilisation automatique équilibrée du règlement scindé : Débit `4411` (TTC) / Crédit `5141` (Net versé) / Crédit `4458` (RAS TVA).

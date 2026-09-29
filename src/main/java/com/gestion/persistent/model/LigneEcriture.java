@@ -44,6 +44,17 @@ public class LigneEcriture {
 
     public LigneEcriture() {}
 
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (tenant != null) {
+            this.pointDeVenteId = tenant;
+        } else if (this.pointDeVenteId == null) {
+            this.pointDeVenteId = 1L;
+        }
+    }
+
     public LigneEcriture(CompteComptable compte, BigDecimal debit, BigDecimal credit, String libelleLigne, Long pointDeVenteId) {
         this.compte = compte;
         this.debit = debit != null ? debit : BigDecimal.ZERO;

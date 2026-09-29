@@ -39,6 +39,17 @@ public class CompteComptable {
 
     public CompteComptable() {}
 
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        if (tenant != null) {
+            this.pointDeVenteId = tenant;
+        } else if (this.pointDeVenteId == null) {
+            this.pointDeVenteId = 1L;
+        }
+    }
+
     public CompteComptable(String numeroCompte, String libelle, Integer classe, SensCompte sensParDefaut, Long pointDeVenteId) {
         this.numeroCompte = numeroCompte;
         this.libelle = libelle;
