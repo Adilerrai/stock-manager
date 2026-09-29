@@ -24,15 +24,21 @@ public class EdiFiscalService {
     private final SocieteRepository societeRepository;
     private final FiscalEngineService fiscalEngineService;
     private final LiasseFiscaleDonneesRepository liasseDonneesRepository;
+    private final DelaisPaiementService delaisPaiementService;
+    private final SocialFiscalService socialFiscalService;
 
     public EdiFiscalService(DeclarationTvaRepository declarationTvaRepository,
                             SocieteRepository societeRepository,
                             FiscalEngineService fiscalEngineService,
-                            LiasseFiscaleDonneesRepository liasseDonneesRepository) {
+                            LiasseFiscaleDonneesRepository liasseDonneesRepository,
+                            DelaisPaiementService delaisPaiementService,
+                            SocialFiscalService socialFiscalService) {
         this.declarationTvaRepository = declarationTvaRepository;
         this.societeRepository = societeRepository;
         this.fiscalEngineService = fiscalEngineService;
         this.liasseDonneesRepository = liasseDonneesRepository;
+        this.delaisPaiementService = delaisPaiementService;
+        this.socialFiscalService = socialFiscalService;
     }
 
     private Long getTenantId() {
@@ -174,6 +180,22 @@ public class EdiFiscalService {
         xml.append("</DeclarationIS>\n");
 
         return xml.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    // =========================================================================
+    // EXPORT EDI XML SIMPL-DÉLAIS DE PAIEMENT (LOI 69-21)
+    // =========================================================================
+
+    public byte[] genererXmlSimplDelaisPaiement(int annee, int trimestre) {
+        return delaisPaiementService.genererXmlSimplDelaisPaiement(annee, trimestre);
+    }
+
+    // =========================================================================
+    // EXPORT EDI XML SIMPL-IR (SALAIRES DGI - ÉTAT 9421)
+    // =========================================================================
+
+    public byte[] genererXmlSimplIr(int annee) {
+        return socialFiscalService.genererXmlSimplIr(annee);
     }
 
     private String formaterMontant(BigDecimal m) {

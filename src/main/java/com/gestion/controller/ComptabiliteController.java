@@ -102,6 +102,28 @@ public class ComptabiliteController {
     }
 
     // =========================================================================
+    // SAISIE KILOMÉTRIQUE ULTRA-RAPIDE (100% CLAVIER - STYLE SAGE 100)
+    // =========================================================================
+
+    @PostMapping("/saisie-kilometrique")
+    public ResponseEntity<EcritureComptableDTO> creerEcritureKilometrique(@RequestBody SaisieKilometriqueDTO dto) {
+        return new ResponseEntity<>(comptabiliteService.creerEcritureKilometrique(dto), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/saisie-kilometrique/lot")
+    public ResponseEntity<List<EcritureComptableDTO>> creerEcrituresKilometriquesLot(@RequestBody List<SaisieKilometriqueDTO> batch) {
+        return new ResponseEntity<>(comptabiliteService.creerEcrituresKilometriquesLot(batch), HttpStatus.CREATED);
+    }
+
+    @GetMapping("/saisie-kilometrique/assistance")
+    public ResponseEntity<AssistanceSaisieKilometriqueDTO> assisterSaisieKilometrique(
+            @RequestParam String numeroCompte,
+            @RequestParam java.math.BigDecimal montant,
+            @RequestParam(required = false, defaultValue = "DEBIT") String sens) {
+        return ResponseEntity.ok(comptabiliteService.assisterSaisieKilometrique(numeroCompte, montant, sens));
+    }
+
+    // =========================================================================
     // GRAND LIVRE & BALANCE & TVA
     // =========================================================================
 
@@ -191,6 +213,12 @@ public class ComptabiliteController {
         return ResponseEntity.ok(Map.of("message", "Lettrage " + codeLettrage + " annulé"));
     }
 
+    @PostMapping("/lettrage/delettrer")
+    public ResponseEntity<Map<String, String>> delettrerLignes(@RequestBody List<Long> ligneIds) {
+        comptabiliteService.delettrerLignes(ligneIds);
+        return ResponseEntity.ok(Map.of("message", "Délettrage effectué avec succès"));
+    }
+
     @PostMapping("/lettrage/auto")
     public ResponseEntity<Map<String, Object>> autoLettrage(@RequestParam(required = false, defaultValue = "3421") String prefixCompte) {
         return ResponseEntity.ok(comptabiliteService.autoLettrage(prefixCompte));
@@ -232,5 +260,16 @@ public class ComptabiliteController {
                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8")
                 .body(fecBytes);
+    }
+
+    // =========================================================================
+    // AUDIT ET CONTRÔLE DE CONFORMITÉ FEC MAROCAIN (ART. 145 DU CGI)
+    // =========================================================================
+
+    @GetMapping("/audit-fec")
+    public ResponseEntity<AuditFecReportDTO> auditerConformiteFec(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
+        return ResponseEntity.ok(comptabiliteService.auditerConformiteFec(dateDebut, dateFin));
     }
 }

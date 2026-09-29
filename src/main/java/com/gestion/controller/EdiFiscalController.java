@@ -38,4 +38,23 @@ public class EdiFiscalController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"SIMPL_IS_" + annee + ".xml\"")
                 .body(xmlData);
     }
+
+    @GetMapping(value = "/simpl-delais-paiement/{annee}/{trimestre}/xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<byte[]> telechargerSimplDelaisPaiementXml(
+            @PathVariable int annee,
+            @PathVariable int trimestre) {
+
+        byte[] xmlData = ediService.genererXmlSimplDelaisPaiement(annee, trimestre);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"SIMPL_DELAIS_PAIEMENT_" + annee + "_T" + trimestre + ".xml\"")
+                .body(xmlData);
+    }
+
+    @GetMapping(value = "/simpl-ir/{annee}/xml", produces = MediaType.APPLICATION_XML_VALUE)
+    public ResponseEntity<byte[]> telechargerSimplIrXml(@PathVariable int annee) {
+        byte[] xmlData = ediService.genererXmlSimplIr(annee);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"SIMPL_IR_ETAT_9421_" + annee + ".xml\"")
+                .body(xmlData);
+    }
 }

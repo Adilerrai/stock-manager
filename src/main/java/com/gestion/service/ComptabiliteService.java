@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -447,11 +448,246 @@ public class ComptabiliteService {
             return compteRepository.findById(dto.getCompteId())
                 .orElseThrow(() -> new IllegalArgumentException("Compte introuvable ID: " + dto.getCompteId()));
         }
-        if (dto.getNumeroCompte() != null) {
-            return compteRepository.findByNumeroCompteAndPointDeVenteId(dto.getNumeroCompte().trim(), tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Compte introuvable numéro: " + dto.getNumeroCompte()));
+        if (dto.getNumeroCompte() != null && !dto.getNumeroCompte().trim().isEmpty()) {
+            return resoudreOuCreerCompte(dto.getNumeroCompte().trim(), dto.getLibelleCompte(), tenantId);
         }
         throw new IllegalArgumentException("Compte comptable non renseigné sur la ligne d'écriture");
+    }
+
+    public CompteComptable resoudreOuCreerCompte(String numeroCompte, String libelleOptionnel, Long tenantId) {
+        if (numeroCompte == null || numeroCompte.trim().isEmpty()) {
+            throw new IllegalArgumentException("Numéro de compte non renseigné");
+        }
+        String num = numeroCompte.trim();
+        return compteRepository.findByNumeroCompteAndPointDeVenteId(num, tenantId)
+                .orElseGet(() -> {
+                    int classe = Character.isDigit(num.charAt(0)) ? Character.getNumericValue(num.charAt(0)) : 1;
+                    String libelle = (libelleOptionnel != null && !libelleOptionnel.trim().isEmpty())
+                            ? libelleOptionnel.trim()
+                            : infererLibellePcgm(num);
+                    SensCompte sens = (classe == 1 || classe == 4 || classe == 7) ? SensCompte.CREDIT : SensCompte.DEBIT;
+                    CompteComptable c = new CompteComptable(num, libelle, classe, sens, tenantId);
+                    return compteRepository.save(c);
+                });
+    }
+
+    private String infererLibellePcgm(String numero) {
+        if (numero.startsWith("1111")) return "Capital social";
+        if (numero.startsWith("1191")) return "Résultat net de l'exercice (Solde créditeur)";
+        if (numero.startsWith("1199")) return "Résultat net de l'exercice (Solde débiteur)";
+        if (numero.startsWith("23")) return "Immobilisations corporelles";
+        if (numero.startsWith("28")) return "Amortissements des immobilisations";
+        if (numero.startsWith("31")) return "Stocks";
+        if (numero.startsWith("3421")) return "Clients";
+        if (numero.startsWith("3455")) return "État - TVA récupérable";
+        if (numero.startsWith("4411")) return "Fournisseurs";
+        if (numero.startsWith("4432")) return "Rémunérations dues au personnel";
+        if (numero.startsWith("4441")) return "C.N.S.S.";
+        if (numero.startsWith("4452")) return "État - Impôts et taxes";
+        if (numero.startsWith("4455")) return "État - TVA facturée";
+        if (numero.startsWith("5141")) return "Banques (soldes débiteurs)";
+        if (numero.startsWith("5161")) return "Caisses";
+        if (numero.startsWith("6111")) return "Achats de marchandises revendues";
+        if (numero.startsWith("6121")) return "Achats de matières premières";
+        if (numero.startsWith("6131")) return "Locations et charges locatives";
+        if (numero.startsWith("6132")) return "Redevances de crédit-bail";
+        if (numero.startsWith("6134")) return "Primes d'assurances";
+        if (numero.startsWith("6136")) return "Rémunérations d'intermédiaires et honoraires";
+        if (numero.startsWith("6145")) return "Frais de télécommunications";
+        if (numero.startsWith("6147")) return "Services bancaires";
+        if (numero.startsWith("6171")) return "Rémunération du personnel";
+        if (numero.startsWith("6174")) return "Charges sociales";
+        if (numero.startsWith("7111")) return "Ventes de marchandises au Maroc";
+        if (numero.startsWith("7121")) return "Ventes de biens et services produits";
+        return "Compte " + numero;
+    }
+
+    // =========================================================================
+    // SAISIE KILOMÉTRIQUE ULTRA-RAPIDE (100% CLAVIER - STYLE SAGE 100)
+    // =========================================================================
+
+    public EcritureComptableDTO creerEcritureKilometrique(SaisieKilometriqueDTO dto) {
+        Long tenantId = getTenantId();
+        if (dto.getJournalCode() == null && dto.getJournalId() == null) {
+            throw new IllegalArgumentException("Le journal comptable est obligatoire pour la saisie kilométrique.");
+        }
+
+        JournalComptable journal;
+        if (dto.getJournalId() != null) {
+            journal = journalRepository.findById(dto.getJournalId())
+                    .orElseThrow(() -> new IllegalArgumentException("Journal introuvable ID: " + dto.getJournalId()));
+        } else {
+            journal = journalRepository.findByCodeAndPointDeVenteId(dto.getJournalCode().toUpperCase(), tenantId)
+                    .orElseThrow(() -> new IllegalArgumentException("Journal introuvable code: " + dto.getJournalCode()));
+        }
+
+        LocalDate dateEcr = dto.getDateEcriture() != null ? dto.getDateEcriture() : LocalDate.now();
+        if (exerciceRepository.isDateInExerciceCloture(dateEcr, tenantId)) {
+            throw new IllegalStateException("Impossible d'enregistrer l'écriture : l'exercice pour le " + dateEcr + " est définitivement clôturé.");
+        }
+
+        EcritureComptable ecriture = new EcritureComptable();
+        ecriture.setJournal(journal);
+        ecriture.setDateEcriture(dateEcr);
+        ecriture.setLibelle(dto.getLibellePiece() != null ? dto.getLibellePiece() : "Saisie " + journal.getCode() + " du " + dateEcr);
+        ecriture.setReferencePiece(dto.getReferencePiece());
+        ecriture.setPointDeVenteId(tenantId);
+        ecriture.setValidee(Boolean.TRUE.equals(dto.getValidee()));
+
+        if (dto.getNumeroPiece() != null && !dto.getNumeroPiece().trim().isEmpty()) {
+            ecriture.setNumeroPiece(dto.getNumeroPiece().trim());
+        } else {
+            ecriture.setNumeroPiece(genererNumeroPiece(journal, ecriture.getDateEcriture(), tenantId));
+        }
+
+        List<LigneSaisieKilometriqueDTO> lignes = new ArrayList<>(dto.getLignes() != null ? dto.getLignes() : Collections.emptyList());
+
+        // Calcul des totaux
+        BigDecimal totalDeb = BigDecimal.ZERO;
+        BigDecimal totalCred = BigDecimal.ZERO;
+        for (LigneSaisieKilometriqueDTO l : lignes) {
+            totalDeb = totalDeb.add(l.getDebit() != null ? l.getDebit() : BigDecimal.ZERO);
+            totalCred = totalCred.add(l.getCredit() != null ? l.getCredit() : BigDecimal.ZERO);
+        }
+
+        // Auto-équilibrage si demandé
+        if (dto.isAutoEquilibrer() && totalDeb.compareTo(totalCred) != 0) {
+            BigDecimal ecart = totalDeb.subtract(totalCred).abs();
+            String compteContrepartie = dto.getCompteContrepartieAuto();
+            if (compteContrepartie == null || compteContrepartie.trim().isEmpty()) {
+                compteContrepartie = switch (journal.getCode().toUpperCase()) {
+                    case "AC" -> "44110000";
+                    case "VE" -> "34210000";
+                    case "BQ" -> "51410000";
+                    case "CA" -> "51610000";
+                    default -> "44110000";
+                };
+            }
+
+            LigneSaisieKilometriqueDTO lEq = new LigneSaisieKilometriqueDTO();
+            lEq.setNumeroCompte(compteContrepartie);
+            lEq.setLibelleLigne("Contrepartie " + ecriture.getLibelle());
+            lEq.setReferenceLigne(ecriture.getReferencePiece());
+
+            if (totalDeb.compareTo(totalCred) > 0) {
+                lEq.setCredit(ecart);
+                lEq.setDebit(BigDecimal.ZERO);
+            } else {
+                lEq.setDebit(ecart);
+                lEq.setCredit(BigDecimal.ZERO);
+            }
+            lignes.add(lEq);
+        }
+
+        if (lignes.size() < 2) {
+            throw new IllegalArgumentException("Une écriture comptable doit comporter au moins deux lignes (partie double).");
+        }
+
+        for (LigneSaisieKilometriqueDTO lDto : lignes) {
+            CompteComptable compte = resoudreOuCreerCompte(lDto.getNumeroCompte(), lDto.getLibelleCompte(), tenantId);
+            LigneEcriture ligne = new LigneEcriture();
+            ligne.setCompte(compte);
+            ligne.setDebit(lDto.getDebit() != null ? lDto.getDebit() : BigDecimal.ZERO);
+            ligne.setCredit(lDto.getCredit() != null ? lDto.getCredit() : BigDecimal.ZERO);
+            ligne.setLibelleLigne(lDto.getLibelleLigne() != null ? lDto.getLibelleLigne() : ecriture.getLibelle());
+            ligne.setReferenceLigne(lDto.getReferenceLigne() != null ? lDto.getReferenceLigne() : ecriture.getReferencePiece());
+            ligne.setPointDeVenteId(tenantId);
+            ecriture.addLigne(ligne);
+        }
+
+        if (!ecriture.isEquilibree()) {
+            throw new IllegalStateException(String.format(
+                    "Écriture déséquilibrée ! Total Débit = %s, Total Crédit = %s (Écart = %s MAD)",
+                    ecriture.getTotalDebit(), ecriture.getTotalCredit(),
+                    ecriture.getTotalDebit().subtract(ecriture.getTotalCredit())
+            ));
+        }
+
+        EcritureComptable saved = ecritureRepository.save(ecriture);
+        auditService.logCreation("EcritureComptable", saved.getId(),
+                "Saisie kilométrique pièce " + saved.getNumeroPiece() + " (" + saved.getLibelle() + ")");
+
+        return toEcritureDto(saved);
+    }
+
+    public List<EcritureComptableDTO> creerEcrituresKilometriquesLot(List<SaisieKilometriqueDTO> batch) {
+        if (batch == null || batch.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<EcritureComptableDTO> results = new ArrayList<>();
+        for (SaisieKilometriqueDTO item : batch) {
+            results.add(creerEcritureKilometrique(item));
+        }
+        return results;
+    }
+
+    public AssistanceSaisieKilometriqueDTO assisterSaisieKilometrique(String numeroCompte, BigDecimal montant, String sens) {
+        AssistanceSaisieKilometriqueDTO aide = new AssistanceSaisieKilometriqueDTO();
+        aide.setNumeroCompteSaisi(numeroCompte);
+        aide.setMontantSaisi(montant != null ? montant : BigDecimal.ZERO);
+        aide.setSensSaisi(sens != null ? sens.toUpperCase() : "DEBIT");
+
+        if (numeroCompte == null || numeroCompte.trim().isEmpty() || montant == null || montant.compareTo(BigDecimal.ZERO) <= 0) {
+            return aide;
+        }
+
+        String num = numeroCompte.trim();
+        BigDecimal m = montant;
+
+        // Détection TVA automatique
+        if (num.startsWith("6")) {
+            aide.setTvaApplicable(true);
+            aide.setCompteTvaSuggere("34552000");
+            aide.setLibelleTvaSuggere("État - TVA récupérable sur les charges");
+            aide.setSensTva("DEBIT");
+            BigDecimal montantTva = m.multiply(aide.getTauxTva()).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            aide.setMontantTvaCalcule(montantTva);
+
+            aide.setCompteContrepartieSuggere("44110000");
+            aide.setLibelleContrepartieSuggere("Fournisseurs");
+            aide.setSensContrepartie("CREDIT");
+            aide.setMontantContrepartieCalcule(m.add(montantTva));
+
+            aide.setMontantEquilibrage(m);
+            aide.setSensEquilibrage("CREDIT");
+
+        } else if (num.startsWith("2")) {
+            aide.setTvaApplicable(true);
+            aide.setCompteTvaSuggere("34551000");
+            aide.setLibelleTvaSuggere("État - TVA récupérable sur immobilisations");
+            aide.setSensTva("DEBIT");
+            BigDecimal montantTva = m.multiply(aide.getTauxTva()).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            aide.setMontantTvaCalcule(montantTva);
+
+            aide.setCompteContrepartieSuggere("44810000");
+            aide.setLibelleContrepartieSuggere("Dettes sur acquisitions d'immobilisations");
+            aide.setSensContrepartie("CREDIT");
+            aide.setMontantContrepartieCalcule(m.add(montantTva));
+
+            aide.setMontantEquilibrage(m);
+            aide.setSensEquilibrage("CREDIT");
+
+        } else if (num.startsWith("7")) {
+            aide.setTvaApplicable(true);
+            aide.setCompteTvaSuggere("44550000");
+            aide.setLibelleTvaSuggere("État - TVA facturée");
+            aide.setSensTva("CREDIT");
+            BigDecimal montantTva = m.multiply(aide.getTauxTva()).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            aide.setMontantTvaCalcule(montantTva);
+
+            aide.setCompteContrepartieSuggere("34210000");
+            aide.setLibelleContrepartieSuggere("Clients");
+            aide.setSensContrepartie("DEBIT");
+            aide.setMontantContrepartieCalcule(m.add(montantTva));
+
+            aide.setMontantEquilibrage(m);
+            aide.setSensEquilibrage("DEBIT");
+        } else {
+            aide.setMontantEquilibrage(m);
+            aide.setSensEquilibrage("DEBIT".equalsIgnoreCase(sens) ? "CREDIT" : "DEBIT");
+        }
+
+        return aide;
     }
 
     // =========================================================================
@@ -1129,6 +1365,24 @@ public class ComptabiliteService {
                 "Annulation du lettrage " + codeLettrage + " sur " + ligneIds.size() + " lignes : " + ligneIds);
     }
 
+    public void delettrerLignes(List<Long> ligneIds) {
+        Long tenantId = getTenantId();
+        if (ligneIds == null || ligneIds.isEmpty()) {
+            return;
+        }
+        List<LigneEcriture> lignes = ligneRepository.findAllById(ligneIds).stream()
+                .filter(l -> l.getPointDeVenteId().equals(tenantId))
+                .collect(Collectors.toList());
+
+        for (LigneEcriture l : lignes) {
+            l.setLettrage(null);
+        }
+        ligneRepository.saveAll(lignes);
+
+        auditService.logAction(ActionAudit.ANNULATION_LETTRAGE, "LigneEcriture",
+                ligneIds.get(0), "Délettrage manuel sur " + lignes.size() + " lignes : " + ligneIds);
+    }
+
     public Map<String, Object> autoLettrage(String prefixCompte) {
         Long tenantId = getTenantId();
         String prefix = (prefixCompte != null && !prefixCompte.trim().isEmpty()) ? prefixCompte.trim() : "3421";
@@ -1138,26 +1392,56 @@ public class ComptabiliteService {
         List<LigneEcriture> credits = nonLettrees.stream().filter(l -> l.getCredit().compareTo(BigDecimal.ZERO) > 0).collect(Collectors.toList());
 
         int countLettrees = 0;
+        int countCodes = 0;
+        Set<Long> debitsUtilises = new HashSet<>();
         Set<Long> creditsUtilises = new HashSet<>();
 
+        // PASSE 1 : Matching strict par Référence de Pièce exacte + Montant égal
         for (LigneEcriture deb : debits) {
+            if (debitsUtilises.contains(deb.getId())) continue;
             for (LigneEcriture cred : credits) {
                 if (creditsUtilises.contains(cred.getId())) continue;
 
                 if (deb.getDebit().compareTo(cred.getCredit()) == 0) {
                     boolean samePiece = deb.getReferenceLigne() != null && cred.getReferenceLigne() != null &&
-                            deb.getReferenceLigne().equalsIgnoreCase(cred.getReferenceLigne());
-                    boolean sameCompte = deb.getCompte() != null && cred.getCompte() != null &&
-                            deb.getCompte().getId().equals(cred.getCompte().getId());
+                            deb.getReferenceLigne().trim().equalsIgnoreCase(cred.getReferenceLigne().trim());
 
-                    if (sameCompte || samePiece) {
+                    if (samePiece) {
                         String code = genererCodeLettrageSuivant(tenantId);
                         deb.setLettrage(code);
                         cred.setLettrage(code);
                         ligneRepository.save(deb);
                         ligneRepository.save(cred);
+                        debitsUtilises.add(deb.getId());
                         creditsUtilises.add(cred.getId());
                         countLettrees += 2;
+                        countCodes++;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // PASSE 2 : Matching par Même Compte Comptable + Montant égal
+        for (LigneEcriture deb : debits) {
+            if (debitsUtilises.contains(deb.getId())) continue;
+            for (LigneEcriture cred : credits) {
+                if (creditsUtilises.contains(cred.getId())) continue;
+
+                if (deb.getDebit().compareTo(cred.getCredit()) == 0) {
+                    boolean sameCompte = deb.getCompte() != null && cred.getCompte() != null &&
+                            deb.getCompte().getId().equals(cred.getCompte().getId());
+
+                    if (sameCompte) {
+                        String code = genererCodeLettrageSuivant(tenantId);
+                        deb.setLettrage(code);
+                        cred.setLettrage(code);
+                        ligneRepository.save(deb);
+                        ligneRepository.save(cred);
+                        debitsUtilises.add(deb.getId());
+                        creditsUtilises.add(cred.getId());
+                        countLettrees += 2;
+                        countCodes++;
                         break;
                     }
                 }
@@ -1166,7 +1450,7 @@ public class ComptabiliteService {
 
         Map<String, Object> result = new HashMap<>();
         result.put("lignesLettrees", countLettrees);
-        result.put("codesAttribues", countLettrees / 2);
+        result.put("codesAttribues", countCodes);
         return result;
     }
 
@@ -1694,5 +1978,135 @@ public class ComptabiliteService {
         }
 
         return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    // =========================================================================
+    // AUDIT ET CONTRÔLE DE CONFORMITÉ FEC MAROCAIN (ART. 145 DU CGI)
+    // =========================================================================
+
+    @Transactional(readOnly = true)
+    public AuditFecReportDTO auditerConformiteFec(LocalDate dateDebut, LocalDate dateFin) {
+        Long tenantId = getTenantId();
+        LocalDate dDebut = (dateDebut != null) ? dateDebut : LocalDate.of(LocalDate.now().getYear(), 1, 1);
+        LocalDate dFin = (dateFin != null) ? dateFin : LocalDate.now();
+
+        List<EcritureComptable> ecritures = ecritureRepository.findByPointDeVenteIdAndDateEcritureBetweenOrderByDateEcritureAsc(
+                tenantId, dDebut, dFin);
+
+        AuditFecReportDTO audit = new AuditFecReportDTO();
+        audit.setDateDebut(dDebut);
+        audit.setDateFin(dFin);
+        audit.setTotalEcritures(ecritures.size());
+
+        BigDecimal totalDebit = BigDecimal.ZERO;
+        BigDecimal totalCredit = BigDecimal.ZERO;
+        int totalLignes = 0;
+        int nbBrouillons = 0;
+        int nbComptesSansLibelle = 0;
+        int nbAuxiliairesManquants = 0;
+
+        Set<String> numerosPiecesUniques = new HashSet<>();
+        int nbDoublonsPieces = 0;
+
+        for (EcritureComptable e : ecritures) {
+            if (!Boolean.TRUE.equals(e.getValidee())) {
+                nbBrouillons++;
+            }
+
+            String numPiece = e.getNumeroPiece() != null ? e.getNumeroPiece().trim() : ("ID-" + e.getId());
+            if (numerosPiecesUniques.contains(numPiece)) {
+                nbDoublonsPieces++;
+            } else {
+                numerosPiecesUniques.add(numPiece);
+            }
+
+            if (e.getLignes() != null) {
+                totalLignes += e.getLignes().size();
+                for (LigneEcriture l : e.getLignes()) {
+                    BigDecimal deb = (l.getDebit() != null) ? l.getDebit() : BigDecimal.ZERO;
+                    BigDecimal cred = (l.getCredit() != null) ? l.getCredit() : BigDecimal.ZERO;
+                    totalDebit = totalDebit.add(deb);
+                    totalCredit = totalCredit.add(cred);
+
+                    if (l.getCompte() == null || l.getCompte().getLibelle() == null || l.getCompte().getLibelle().trim().isEmpty()) {
+                        nbComptesSansLibelle++;
+                    }
+
+                    String cNum = (l.getCompte() != null && l.getCompte().getNumeroCompte() != null) ? l.getCompte().getNumeroCompte() : "";
+                    if ((cNum.startsWith("3421") || cNum.startsWith("4411")) &&
+                            (l.getReferenceLigne() == null || l.getReferenceLigne().trim().isEmpty()) &&
+                            (e.getReferencePiece() == null || e.getReferencePiece().trim().isEmpty())) {
+                        nbAuxiliairesManquants++;
+                    }
+                }
+            }
+        }
+
+        audit.setTotalLignes(totalLignes);
+        audit.setTotalDebit(totalDebit);
+        audit.setTotalCredit(totalCredit);
+        BigDecimal ecart = totalDebit.subtract(totalCredit).abs();
+        audit.setEcartEquilibre(ecart);
+        boolean estEquilibre = ecart.compareTo(new BigDecimal("0.01")) < 0;
+        audit.setEstParfaitementEquilibre(estEquilibre);
+        audit.setNbEcrituresBrouillons(nbBrouillons);
+        audit.setNbRupturesSequence(nbDoublonsPieces);
+        audit.setNbComptesSansLibelle(nbComptesSansLibelle);
+        audit.setNbAuxiliairesManquants(nbAuxiliairesManquants);
+
+        int score = 100;
+
+        // Contrôle 1 : Équilibre comptable parfait
+        if (!estEquilibre) {
+            score -= 35;
+            audit.getAnomaliesBloquantes().add("Déséquilibre comptable bloquant : Écart Débit/Crédit de " + ecart + " MAD.");
+        } else {
+            audit.getPointsDeControleValides().add("Équilibre général rigoureux : Débit = Crédit = " + totalDebit.setScale(2, java.math.RoundingMode.HALF_UP) + " MAD.");
+        }
+
+        // Contrôle 2 : Statut des écritures (Intangibilité Art. 145 CGI)
+        if (nbBrouillons > 0) {
+            score -= 25;
+            audit.getAnomaliesBloquantes().add(nbBrouillons + " écriture(s) en statut BROUILLON non validée(s). Les écritures doivent être validées pour un FEC officiel.");
+        } else if (ecritures.size() > 0) {
+            audit.getPointsDeControleValides().add("Intangibilité vérifiée : 100% des écritures sont validées et verrouillées.");
+        }
+
+        // Contrôle 3 : Continuité et unicité des pièces
+        if (nbDoublonsPieces > 0) {
+            score -= 15;
+            audit.getAvertissements().add(nbDoublonsPieces + " numéro(s) de pièces en double ou incohérents détectés.");
+        } else if (ecritures.size() > 0) {
+            audit.getPointsDeControleValides().add("Séquentialité des pièces respectée sans doublon de numérotation.");
+        }
+
+        // Contrôle 4 : Intégrité des comptes
+        if (nbComptesSansLibelle > 0) {
+            score -= 10;
+            audit.getAvertissements().add(nbComptesSansLibelle + " ligne(s) sans compte ou sans libellé de compte.");
+        } else if (totalLignes > 0) {
+            audit.getPointsDeControleValides().add("Plan de comptes PCGM respecté : Tous les comptes possèdent un libellé normalisé.");
+        }
+
+        // Contrôle 5 : Auxiliaires tiers
+        if (nbAuxiliairesManquants > 0) {
+            score -= 10;
+            audit.getAvertissements().add(nbAuxiliairesManquants + " écriture(s) de tiers (3421/4411) sans référence auxiliaire.");
+        } else if (totalLignes > 0) {
+            audit.getPointsDeControleValides().add("Comptabilité auxiliaire : Références tiers renseignées.");
+        }
+
+        if (score < 0) score = 0;
+        audit.setScoreConformitePourcentage(score);
+
+        if (!audit.getAnomaliesBloquantes().isEmpty()) {
+            audit.setStatutAudit("NON_CONFORME_BLOQUANT");
+        } else if (!audit.getAvertissements().isEmpty()) {
+            audit.setStatutAudit("AVERTISSEMENTS");
+        } else {
+            audit.setStatutAudit("CERTIFIE_CONFORME");
+        }
+
+        return audit;
     }
 }
