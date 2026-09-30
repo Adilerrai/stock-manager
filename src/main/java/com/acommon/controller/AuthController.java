@@ -23,6 +23,11 @@ public class AuthController {
 
 
 
+    @org.springframework.web.bind.annotation.GetMapping("/ping")
+    public ResponseEntity<java.util.Map<String, String>> ping() {
+        return ResponseEntity.ok(java.util.Map.of("status", "UP"));
+    }
+
     @PostMapping({"/login", "/login/username"})
     public ResponseEntity<JwtAuthenticationResponse> authenticateUserByUsername(@RequestBody UserLoginRequest request) {
         JwtAuthenticationResponse response = authService.authenticateByUsername(request);

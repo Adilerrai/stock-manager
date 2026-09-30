@@ -53,6 +53,25 @@ public class EcheanceFiscale {
     @Column(name = "date_creation")
     private LocalDateTime dateCreation = LocalDateTime.now();
 
+    @PrePersist
+    public void prePersist() {
+        if (dateCreation == null) {
+            dateCreation = LocalDateTime.now();
+        }
+        if (tenantId == null && societe != null) {
+            if (societe.getTenantId() != null) {
+                tenantId = societe.getTenantId();
+            } else if (societe.getMereId() != null) {
+                tenantId = societe.getMereId();
+            } else if (societe.getId() != null) {
+                tenantId = societe.getId();
+            }
+        }
+        if (tenantId == null) {
+            tenantId = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+        }
+    }
+
     public EcheanceFiscale() {}
 
     public Integer getExercice() { return exercice; }

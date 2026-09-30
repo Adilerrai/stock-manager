@@ -95,6 +95,24 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(java.io.IOException.class)
+    public ResponseEntity<ErrorResponse> handleIOException(java.io.IOException ex, HttpServletRequest request) {
+        String msg = ex.getMessage() != null ? ex.getMessage() : "";
+        if (msg.contains("abandonnée") || msg.toLowerCase().contains("broken pipe") || msg.toLowerCase().contains("connection reset")
+                || ex instanceof org.apache.catalina.connector.ClientAbortException) {
+            log.debug("Connexion interrompue par le client sur [{}] : {}", request.getRequestURI(), msg);
+            return null;
+        }
+        log.error("Erreur d'entrée/sortie sur [{}] : {}", request.getRequestURI(), ex.getMessage(), ex);
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        errorResponse.setError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        errorResponse.setMessage("Erreur d'entrée/sortie réseau");
+        errorResponse.setErrorCode("IO_ERROR");
+        errorResponse.setPath(request.getRequestURI());
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request) {
         log.error("Erreur serveur inattendue sur [{}] : {}", request.getRequestURI(), ex.getMessage());

@@ -76,11 +76,15 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Database -->
+        <!-- Database & Liquibase -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
         </dependency>
 
         <!-- Test -->
@@ -149,6 +153,9 @@
                     <include>**/*.properties</include>
                     <include>**/*.yml</include>
                     <include>**/*.yaml</include>
+                    <include>**/*.xml</include>
+                    <include>**/*.sql</include>
+                    <include>**/*.json</include>
                     <include>**/*.jrxml</include>
                     <include>**/*.jasper</include>
                 </includes>

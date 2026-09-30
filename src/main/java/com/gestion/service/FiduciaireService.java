@@ -64,7 +64,14 @@ public class FiduciaireService {
 
     private Long getTenantId() {
         Long tenantId = TenantContext.getCurrentTenant();
-        return tenantId != null ? tenantId : 1L;
+        if (tenantId != null) return tenantId;
+        User u = getCurrentUser();
+        if (u != null) {
+            if (u.getTenantId() != null) return u.getTenantId();
+            if (u.getPointDeVenteId() != null) return u.getPointDeVenteId();
+            if (u.getMereId() != null) return u.getMereId();
+        }
+        return null;
     }
 
     private User getCurrentUser() {
@@ -83,7 +90,12 @@ public class FiduciaireService {
             return user.getMereId();
         }
         Long tenant = TenantContext.getCurrentTenant();
-        return tenant != null ? tenant : 1L;
+        if (tenant != null) return tenant;
+        if (user != null) {
+            if (user.getTenantId() != null) return user.getTenantId();
+            if (user.getPointDeVenteId() != null) return user.getPointDeVenteId();
+        }
+        return null;
     }
 
     // =========================================================================
@@ -292,6 +304,9 @@ public class FiduciaireService {
 
     public SocieteDTO creerSociete(SocieteDTO dto) {
         Long mereId = (dto.getMereId() != null) ? dto.getMereId() : getCurrentMereId();
+        if (mereId == null) {
+            throw new IllegalArgumentException("Impossible d'identifier le cabinet / organisation mère de rattachement.");
+        }
 
         String code = (dto.getCode() != null && !dto.getCode().trim().isEmpty())
                 ? dto.getCode().trim().toUpperCase()
@@ -339,16 +354,21 @@ public class FiduciaireService {
 
         // Synchroniser / Créer un PointDeVente jumeau pour assurer la compatibilité complète
         try {
-            PointDeVente pdv = new PointDeVente();
-            pdv.setNom(saved.getRaisonSociale());
-            pdv.setNomPointDeVente(saved.getRaisonSociale() + " (" + saved.getCode() + ")");
-            pdv.setMereId(mereId);
-            pdv.setTenantId(saved.getId()); // Le PointDeVente porte le tenantId de la société
-            pdv.setAdresse(saved.getAdresse());
-            pdv.setTelephone(saved.getTelephone());
-            pdv.setEmail(saved.getEmail());
-            pdv.setActif(true);
-            pointDeVenteRepository.save(pdv);
+            String nomPdv = saved.getRaisonSociale() + " (" + saved.getCode() + ")";
+            if (!pointDeVenteRepository.existsByNomPointDeVente(nomPdv) && !pointDeVenteRepository.existsByTenantId(saved.getId())) {
+                PointDeVente pdv = new PointDeVente();
+                pdv.setNom(saved.getRaisonSociale());
+                pdv.setNomPointDeVente(nomPdv);
+                pdv.setMereId(mereId);
+                pdv.setTenantId(saved.getId()); // Le PointDeVente porte le tenantId de la société
+                pdv.setAdresse(saved.getAdresse());
+                pdv.setTelephone(saved.getTelephone());
+                if (saved.getEmail() != null && !saved.getEmail().isBlank() && !pointDeVenteRepository.existsByEmail(saved.getEmail())) {
+                    pdv.setEmail(saved.getEmail());
+                }
+                pdv.setActif(true);
+                pointDeVenteRepository.save(pdv);
+            }
         } catch (Exception ignored) {
         }
 
@@ -485,6 +505,12 @@ public class FiduciaireService {
     private EcheanceFiscale creerEcheance(Societe societe, String type, LocalDate dateLimite, String libelle, int annee) {
         EcheanceFiscale ef = new EcheanceFiscale();
         ef.setSociete(societe);
+        Long tenantId = (societe.getTenantId() != null) ? societe.getTenantId()
+                : (societe.getMereId() != null ? societe.getMereId() : societe.getId());
+        if (tenantId == null) {
+            tenantId = TenantContext.getCurrentTenant();
+        }
+        ef.setTenantId(tenantId);
         ef.setTypeEcheance(type);
         ef.setDateEcheance(dateLimite);
         ef.setLibelle(libelle);

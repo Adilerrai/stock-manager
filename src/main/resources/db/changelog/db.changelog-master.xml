@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- 
+      Changeset 001 : Baseline Initial Schema & Data (db.sql)
+      Si la base existe déjà (table 'users' présente), le changeset est marqué 'RAN' sans conflit.
+      Si la base est neuve, le script db.sql complet est exécuté automatiquement.
+    -->
+    <changeSet id="001-initial-schema-and-seed" author="erp-pointvente">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="users"/>
+            </not>
+        </preConditions>
+        <sqlFile path="db/db.sql" relativeToChangelogFile="false" splitStatements="true" stripComments="false"/>
+    </changeSet>
+
+</databaseChangeLog>
