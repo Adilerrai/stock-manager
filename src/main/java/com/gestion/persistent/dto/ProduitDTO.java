@@ -28,6 +28,7 @@ public class ProduitDTO {
     private BigDecimal prixAchatTtc;
     private BigDecimal prixVenteHt;
     private BigDecimal prixVenteTtc;
+    private BigDecimal prixVenteMin;
     private BigDecimal stockMinimum;
     private Long pointDeVenteId;
     private Long categorieId;
@@ -180,4 +181,10 @@ public class ProduitDTO {
 
     public BigDecimal getStockMinimum() { return stockMinimum; }
     public void setStockMinimum(BigDecimal stockMinimum) { this.stockMinimum = stockMinimum; }
+
+    public BigDecimal getPrixVenteMin() { return prixVenteMin; }
+    public void setPrixVenteMin(BigDecimal prixVenteMin) { this.prixVenteMin = prixVenteMin; }
+
+    public BigDecimal getPrixMinVente() { return prixVenteMin; }
+    public void setPrixMinVente(BigDecimal prixMinVente) { this.prixVenteMin = prixMinVente; }
 }

@@ -57,6 +57,9 @@ public class Produit {
     @Column(name = "prix_vente_ttc")
     private BigDecimal prixVenteTtc;
 
+    @Column(name = "prix_vente_min")
+    private BigDecimal prixVenteMin;
+
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "produit")
     private ProduitImage image;
 
@@ -353,5 +356,21 @@ public class Produit {
 
     public BigDecimal getPrixAchatTTC() {
         return getPrixAchatTtc();
+    }
+
+    public BigDecimal getPrixVenteMin() {
+        return prixVenteMin;
+    }
+
+    public void setPrixVenteMin(BigDecimal prixVenteMin) {
+        this.prixVenteMin = prixVenteMin;
+    }
+
+    public BigDecimal getPrixMinVente() {
+        return prixVenteMin;
+    }
+
+    public void setPrixMinVente(BigDecimal prixMinVente) {
+        this.prixVenteMin = prixMinVente;
     }
 }

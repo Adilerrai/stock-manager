@@ -9,7 +9,8 @@ public enum TypeDocumentCodification {
     BL_FOURNISSEUR("Bon de Réception Fournisseur", "BR", "{PREFIX}-{AAAA}-{NUM}", 3),
     DEVIS("Devis Client", "DEV", "{PREFIX}-{AAAA}-{NUM}", 3),
     AVOIR_CLIENT("Avoir Client", "AVR-CLI", "{PREFIX}-{AAAA}-{NUM}", 3),
-    AVOIR_FOURNISSEUR("Avoir Fournisseur", "AVR-FRS", "{PREFIX}-{AAAA}-{NUM}", 3);
+    AVOIR_FOURNISSEUR("Avoir Fournisseur", "AVR-FRS", "{PREFIX}-{AAAA}-{NUM}", 3),
+    PRODUIT("Référence Produit", "PROD", "{PREFIX}-{AAAA}-{NUM}", 4);
 
     private final String libelle;
     private final String prefixeDefaut;

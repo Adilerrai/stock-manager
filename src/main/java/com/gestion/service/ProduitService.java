@@ -7,6 +7,7 @@ import com.acommon.persistant.model.TenantContext;
 import com.gestion.mapper.ProduitMapper;
 import com.gestion.persistent.dto.ProduitDTO;
 import com.gestion.persistent.dto.ProduitSearchCriteria;
+import com.gestion.persistent.enums.TypeDocumentCodification;
 import com.gestion.persistent.model.Produit;
 import com.gestion.persistent.model.ProduitImage;
 import com.gestion.repository.ProduitImageRepository;
@@ -27,26 +28,50 @@ public class ProduitService {
     private final ProduitRepository produitRepository;
     private final ProduitMapper produitMapper;
     private final ProduitImageRepository produitImageRepository;
+    private final CodificationService codificationService;
     @Autowired
     private ImageCompressionService imageCompressionService;
 
     public ProduitService(
             ProduitRepository produitRepository,
-            ProduitMapper produitMapper, ProduitImageRepository produitImageRepository) {
+            ProduitMapper produitMapper,
+            ProduitImageRepository produitImageRepository,
+            CodificationService codificationService) {
         this.produitRepository = produitRepository;
         this.produitMapper = produitMapper;
         this.produitImageRepository = produitImageRepository;
+        this.codificationService = codificationService;
     }
 
     @Transactional
     public Produit createProduit(Produit produit) {
-
-        String reference = "PROD-" + System.currentTimeMillis();
-        produit.setReference(reference);
+        if (produit.getReference() == null || produit.getReference().trim().isEmpty()) {
+            try {
+                String reference = codificationService.genererNumero(TypeDocumentCodification.PRODUIT);
+                produit.setReference(reference);
+            } catch (Exception e) {
+                // Fallback si la codification n'est pas encore configurée pour ce tenant
+                produit.setReference("PROD-" + System.currentTimeMillis());
+            }
+        }
 
         if (produit.getPointDeVenteId() == null) {
             Long tenantId = TenantContext.getCurrentTenant();
             produit.setPointDeVenteId(tenantId != null ? tenantId : 1L);
+        }
+
+        // Gestion et compression de l'image si fournie
+        if (produit.getImage() != null) {
+            ProduitImage img = produit.getImage();
+            img.setProduit(produit);
+            if (img.getImageData() != null && img.getImageData().length > 0) {
+                try {
+                    byte[] compressed = imageCompressionService.compressImage(img.getImageData(), img.getContentType());
+                    img.setImageData(compressed);
+                } catch (Exception e) {
+                    System.err.println("Avertissement compression image produit lors de la création: " + e.getMessage());
+                }
+            }
         }
 
         return produitRepository.save(produit);
@@ -75,8 +100,18 @@ public class ProduitService {
 
     public Produit getProduitWithImageById(Long produitId) {
         Long tenantId = TenantContext.getCurrentTenant();
-        return produitRepository.findByIdAndPointDeVenteId(produitId, tenantId != null ? tenantId : 1L)
+        return produitRepository.findWithImageByIdAndPointDeVenteId(produitId, tenantId != null ? tenantId : 1L)
+                .or(() -> produitRepository.findById(produitId))
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitId));
+    }
+
+    @Transactional(readOnly = true)
+    public ProduitImage getProduitImage(Long produitId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Produit produit = produitRepository.findWithImageByIdAndPointDeVenteId(produitId, tenantId != null ? tenantId : 1L)
+                .or(() -> produitRepository.findById(produitId))
+                .orElse(null);
+        return produit != null ? produit.getImage() : null;
     }
 
 

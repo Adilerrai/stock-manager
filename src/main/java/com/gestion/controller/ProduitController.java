@@ -82,6 +82,22 @@ public class ProduitController {
     }
 
     /**
+     * Récupération directe du flux binaire de l'image d'un produit
+     */
+    @GetMapping("/{id}/image")
+    public ResponseEntity<byte[]> getProduitImage(@PathVariable Long id) {
+        com.gestion.persistent.model.ProduitImage image = produitService.getProduitImage(id);
+        if (image == null || image.getImageData() == null || image.getImageData().length == 0) {
+            return ResponseEntity.notFound().build();
+        }
+        String ct = image.getContentType() != null ? image.getContentType() : "image/jpeg";
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.parseMediaType(ct))
+                .header(org.springframework.http.HttpHeaders.CACHE_CONTROL, "max-age=86400, public")
+                .body(image.getImageData());
+    }
+
+    /**
      * Suppression de l'image du produit (met l'image à null)
      */
     @DeleteMapping("/{id}/image")

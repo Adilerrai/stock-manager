@@ -120,4 +120,13 @@
         </sql>
     </changeSet>
 
+    <!-- 
+      Changeset 004 : Ajout de la colonne prix_vente_min dans la table produits
+    -->
+    <changeSet id="004-add-produits-prix-vente-min" author="erp-pointvente">
+        <sql splitStatements="true">
+            ALTER TABLE IF EXISTS produits ADD COLUMN IF NOT EXISTS prix_vente_min NUMERIC(15, 2) DEFAULT 0.00;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

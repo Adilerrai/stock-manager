@@ -60,7 +60,11 @@ public class ImageCompressionService {
 
         BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = resizedImage.createGraphics();
+        g2d.setPaint(Color.WHITE);
+        g2d.fillRect(0, 0, newWidth, newHeight);
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
         g2d.dispose();
 
@@ -86,8 +90,22 @@ public class ImageCompressionService {
                 writer.dispose();
             }
         } else {
-            // Pour PNG et autres formats
-            ImageIO.write(image, formatName, baos);
+            // Pour les autres formats (PNG, etc.), encoder en JPEG compressé pour garantir un fichier ultra-léger (< 80KB)
+            Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
+            if (writers.hasNext()) {
+                ImageWriter writer = writers.next();
+                ImageWriteParam param = writer.getDefaultWriteParam();
+                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                param.setCompressionQuality(COMPRESSION_QUALITY);
+
+                try (ImageOutputStream ios = ImageIO.createImageOutputStream(baos)) {
+                    writer.setOutput(ios);
+                    writer.write(null, new javax.imageio.IIOImage(image, null, null), param);
+                }
+                writer.dispose();
+            } else {
+                ImageIO.write(image, "jpeg", baos);
+            }
         }
 
         return baos.toByteArray();
