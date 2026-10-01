@@ -124,7 +124,19 @@ public class BonLivraisonClientService {
                 }
 
                 ligne.setQuantiteLivree(ligneDto.getQuantiteLivree() != null ? ligneDto.getQuantiteLivree() : BigDecimal.ONE);
-                ligne.setPrixVente(ligneDto.getPrixVente() != null ? ligneDto.getPrixVente() : BigDecimal.ZERO);
+                BigDecimal pu = ligneDto.getPrixVente() != null ? ligneDto.getPrixVente() : BigDecimal.ZERO;
+
+                // RÈGLE : Bloquer si le prix de vente est inférieur au prix de vente minimum autorisé
+                Produit produit = ligne.getProduit();
+                if (produit != null && produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                    if (pu.compareTo(produit.getPrixVenteMin()) < 0) {
+                        String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
+                        throw new CommonException("Impossible de créer le bon de livraison : le prix de vente (" + pu + " MAD) pour l'article '" +
+                                nomArticle + "' est inférieur au prix de vente minimum autorisé (" + produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                    }
+                }
+
+                ligne.setPrixVente(pu);
 
                 BigDecimal montantLigne = ligne.getPrixVente().multiply(ligne.getQuantiteLivree());
                 montantTotal = montantTotal.add(montantLigne);
@@ -159,6 +171,18 @@ public class BonLivraisonClientService {
             if (ligne.getProduit() == null) {
                 throw new CommonException("Une ligne de livraison ne comporte aucun produit associé", HttpStatus.BAD_REQUEST);
             }
+
+            // RÈGLE : Bloquer validation si le prix de vente est inférieur au prix minimum autorisé
+            Produit produit = ligne.getProduit();
+            if (produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal pu = ligne.getPrixVente() != null ? ligne.getPrixVente() : BigDecimal.ZERO;
+                if (pu.compareTo(produit.getPrixVenteMin()) < 0) {
+                    String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
+                    throw new CommonException("Impossible d'expédier le bon de livraison : le prix de vente (" + pu + " MAD) pour l'article '" +
+                            nomArticle + "' est inférieur au prix de vente minimum autorisé (" + produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                }
+            }
+
             try {
                 mouvementStockService.creerMouvement(
                         ligne.getProduit().getId(),

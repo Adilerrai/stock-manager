@@ -11,6 +11,7 @@ public interface LigneCommandeClientMapper {
     @Mapping(target = "produitId", source = "produit.id")
     @Mapping(target = "produitNom", source = "produit.designation")
     @Mapping(target = "produitReference", source = "produit.reference")
+    @Mapping(target = "prixVenteMin", source = "produit.prixVenteMin")
     LigneCommandeClientDTO toDto(LigneCommandeClient ligneCommandeClient);
 
     @Mapping(target = "commandeClient", ignore = true)

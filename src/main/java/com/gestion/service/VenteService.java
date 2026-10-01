@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.exception.CommonException;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
@@ -15,6 +16,7 @@ import com.gestion.repository.VenteRepository;
 import com.gestion.persistent.dto.VenteSearchCriteria;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,6 +100,16 @@ public class VenteService {
                     pu = produit.getPrixVenteHt() != null ? produit.getPrixVenteHt() : produit.getPrixVenteTtc();
                 }
                 ligne.setPrixUnitaireHT(pu != null ? pu : BigDecimal.ZERO);
+
+                // RÈGLE : Bloquer si le prix de vente est inférieur au prix de vente minimum autorisé
+                if (produit != null && produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                    if (ligne.getPrixUnitaireHT().compareTo(produit.getPrixVenteMin()) < 0) {
+                        String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
+                        throw new CommonException("Impossible d'enregistrer la vente : le prix unitaire (" + ligne.getPrixUnitaireHT() + " MAD) pour l'article '" +
+                                nomArticle + "' est inférieur au prix de vente minimum autorisé (" + produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                    }
+                }
+
                 ligne.setTauxTVA(ligneDto.getTauxTVA() != null ? ligneDto.getTauxTVA() : new BigDecimal("19.00"));
                 ligne.setRemisePourcentage(ligneDto.getRemisePourcentage() != null ? ligneDto.getRemisePourcentage() : BigDecimal.ZERO);
                 ligne.calculerMontants();

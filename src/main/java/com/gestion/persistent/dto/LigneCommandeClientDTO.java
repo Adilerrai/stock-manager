@@ -12,6 +12,8 @@ public class LigneCommandeClientDTO {
     private BigDecimal montantLigne;
     private String observations;
 
+    private BigDecimal prixVenteMin;
+
     // Constructors
     public LigneCommandeClientDTO() {}
 
@@ -39,5 +41,8 @@ public class LigneCommandeClientDTO {
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }
+
+    public BigDecimal getPrixVenteMin() { return prixVenteMin; }
+    public void setPrixVenteMin(BigDecimal prixVenteMin) { this.prixVenteMin = prixVenteMin; }
 }
 

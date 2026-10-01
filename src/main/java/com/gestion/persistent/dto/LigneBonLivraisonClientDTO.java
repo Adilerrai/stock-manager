@@ -13,6 +13,7 @@ public class LigneBonLivraisonClientDTO {
     private Long lotId;
     private String numeroLot;
     private BigDecimal prixVente;
+    private BigDecimal prixVenteMin;
 
     public LigneBonLivraisonClientDTO() {}
 
@@ -45,4 +46,7 @@ public class LigneBonLivraisonClientDTO {
 
     public BigDecimal getPrixVente() { return prixVente; }
     public void setPrixVente(BigDecimal prixVente) { this.prixVente = prixVente; }
+
+    public BigDecimal getPrixVenteMin() { return prixVenteMin; }
+    public void setPrixVenteMin(BigDecimal prixVenteMin) { this.prixVenteMin = prixVenteMin; }
 }

@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.exception.CommonException;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
@@ -9,6 +10,7 @@ import com.gestion.persistent.enums.StatutFacture;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -187,6 +189,16 @@ public class DevisService {
         List<LigneCommandeClient> lignesCmd = new ArrayList<>();
         if (devis.getLignes() != null) {
             for (LigneDevis ld : devis.getLignes()) {
+                Produit p = ld.getProduit();
+                if (p != null && p.getPrixVenteMin() != null && p.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal pu = ld.getPrixUnitaireHT() != null ? ld.getPrixUnitaireHT() : BigDecimal.ZERO;
+                    if (pu.compareTo(p.getPrixVenteMin()) < 0) {
+                        String nomArticle = p.getDesignation() != null ? p.getDesignation() : (p.getNom() != null ? p.getNom() : ("#" + p.getId()));
+                        throw new CommonException("Impossible de transformer en commande : le prix unitaire (" + pu + " MAD) pour l'article '" +
+                                nomArticle + "' est inférieur au prix de vente minimum autorisé (" + p.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                    }
+                }
+
                 LigneCommandeClient lc = new LigneCommandeClient();
                 lc.setCommandeClient(commande);
                 lc.setProduit(ld.getProduit());

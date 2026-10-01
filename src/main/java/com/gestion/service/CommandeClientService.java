@@ -97,6 +97,16 @@ public class CommandeClientService {
         Produit produit = produitRepository.findById(ligneDTO.getProduitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", ligneDTO.getProduitId()));
 
+        // RÈGLE : Bloquer si le prix de vente unitaire est inférieur au prix de vente minimum autorisé
+        if (produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal pu = ligneDTO.getPrixUnitaire() != null ? ligneDTO.getPrixUnitaire() : BigDecimal.ZERO;
+            if (pu.compareTo(produit.getPrixVenteMin()) < 0) {
+                String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
+                throw new CommonException("Impossible d'enregistrer la commande : le prix unitaire (" + pu + " MAD) pour l'article '" +
+                        nomArticle + "' est inférieur au prix de vente minimum autorisé (" + produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+            }
+        }
+
         LigneCommandeClient ligne = new LigneCommandeClient();
         ligne.setCommandeClient(commande);
         ligne.setProduit(produit);
@@ -146,6 +156,23 @@ public class CommandeClientService {
                         .collect(Collectors.joining(", "));
                 throw new CommonException("Impossible d'annuler cette commande car elle possède un ou plusieurs bons de livraison actifs (" + 
                         numerosBl + "). Vous devez d'abord annuler ces bons de livraison.", HttpStatus.BAD_REQUEST);
+            }
+        }
+
+        if (nouveauStatut == StatutCommandeClient.CONFIRMEE || nouveauStatut == StatutCommandeClient.LIVREE) {
+            if (commande.getLignesCommande() != null) {
+                for (LigneCommandeClient ligne : commande.getLignesCommande()) {
+                    Produit produit = ligne.getProduit();
+                    if (produit != null && produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal pu = ligne.getPrixUnitaire() != null ? ligne.getPrixUnitaire() : BigDecimal.ZERO;
+                        if (pu.compareTo(produit.getPrixVenteMin()) < 0) {
+                            String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
+                            throw new CommonException("Impossible de passer la commande au statut " + nouveauStatut + " : le prix unitaire (" +
+                                    pu + " MAD) pour l'article '" + nomArticle + "' est inférieur au prix de vente minimum autorisé (" +
+                                    produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                        }
+                    }
+                }
             }
         }
 

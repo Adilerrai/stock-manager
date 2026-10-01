@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.exception.CommonException;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
@@ -11,6 +12,7 @@ import com.gestion.persistent.model.*;
 import com.gestion.repository.BonLivraisonClientRepository;
 import com.gestion.repository.BonPreparationRepository;
 import com.gestion.repository.CommandeClientRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -124,7 +126,27 @@ public class BonPreparationService {
                 LigneBonLivraisonClient lbl = new LigneBonLivraisonClient();
                 lbl.setProduit(ligne.getProduit());
                 lbl.setQuantiteLivree(ligne.getQuantitePreparee());
-                BigDecimal prix = ligne.getProduit().getPrixVenteTTC() != null ? ligne.getProduit().getPrixVenteTTC() : BigDecimal.ZERO;
+
+                BigDecimal prix = null;
+                if (bp.getCommandeClient() != null && bp.getCommandeClient().getLignesCommande() != null) {
+                    prix = bp.getCommandeClient().getLignesCommande().stream()
+                            .filter(lc -> lc.getProduit() != null && lc.getProduit().getId().equals(ligne.getProduit().getId()))
+                            .map(LigneCommandeClient::getPrixUnitaire)
+                            .findFirst()
+                            .orElse(null);
+                }
+                if (prix == null) {
+                    prix = ligne.getProduit().getPrixVenteTTC() != null ? ligne.getProduit().getPrixVenteTTC() : BigDecimal.ZERO;
+                }
+
+                if (ligne.getProduit().getPrixVenteMin() != null && ligne.getProduit().getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                    if (prix.compareTo(ligne.getProduit().getPrixVenteMin()) < 0) {
+                        String nomArticle = ligne.getProduit().getDesignation() != null ? ligne.getProduit().getDesignation() : (ligne.getProduit().getNom() != null ? ligne.getProduit().getNom() : ("#" + ligne.getProduit().getId()));
+                        throw new CommonException("Impossible de générer le bon de livraison : le prix (" + prix + " MAD) pour l'article '" +
+                                nomArticle + "' est inférieur au prix de vente minimum autorisé (" + ligne.getProduit().getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                    }
+                }
+
                 lbl.setPrixVente(prix);
                 montantTotalBL = montantTotalBL.add(prix.multiply(ligne.getQuantitePreparee()));
                 lignesBL.add(lbl);
