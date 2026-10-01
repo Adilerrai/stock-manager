@@ -14,6 +14,7 @@ import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.persistent.model.LigneBonLivraisonClient;
 import com.gestion.persistent.model.Client;
 import com.gestion.persistent.model.CommandeClient;
+import com.gestion.persistent.model.Produit;
 import com.gestion.repository.BonLivraisonClientRepository;
 import com.gestion.repository.ClientRepository;
 import com.gestion.repository.CommandeClientRepository;
