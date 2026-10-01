@@ -9,13 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "commandes")
+@Table(name = "commandes", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_commandes_tenant_numero", columnNames = {"point_de_vente_id", "numero_commande"})
+})
 public class Commande {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "numero_commande", nullable = false)
     private String numeroCommande;
 
     @ManyToOne(fetch = FetchType.LAZY)

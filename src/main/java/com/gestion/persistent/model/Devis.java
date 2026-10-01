@@ -10,14 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "devis")
+@Table(name = "devis", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_devis_tenant_numero", columnNames = {"point_de_vente_id", "numero_devis"})
+})
 public class Devis {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "numero_devis", nullable = false)
     private String numeroDevis;
 
     @Column(name = "date_devis", nullable = false)

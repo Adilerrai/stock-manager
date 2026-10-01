@@ -40,6 +40,7 @@ public class LivraisonService {
     private final LotService lotService;
     private final CommandeRepository commandeRepository;
     private final LigneCommandeRepository ligneCommandeRepository;
+    private final CodificationService codificationService;
 
     public LivraisonService(LivraisonRepository livraisonRepository, 
                            LivraisonMapper livraisonMapper,
@@ -50,7 +51,8 @@ public class LivraisonService {
                            MouvementStockService mouvementStockService,
                            LotService lotService,
                            CommandeRepository commandeRepository,
-                           LigneCommandeRepository ligneCommandeRepository) {
+                           LigneCommandeRepository ligneCommandeRepository,
+                           CodificationService codificationService) {
         this.livraisonRepository = livraisonRepository;
         this.livraisonMapper = livraisonMapper;
         this.ligneLivraisonRepository = ligneLivraisonRepository;
@@ -61,6 +63,7 @@ public class LivraisonService {
         this.lotService = lotService;
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
+        this.codificationService = codificationService;
     }
 
     @Transactional
@@ -217,9 +220,7 @@ public class LivraisonService {
     }
 
     private String generateNumeroLivraison() {
-        String prefix = "LIV-";
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        return prefix + timestamp;
+        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.BL_FOURNISSEUR);
     }
 
     public List<Livraison> getAllLivraisons() {

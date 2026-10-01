@@ -5,7 +5,8 @@ public enum ModePaiement {
     CARTE_BANCAIRE("Carte bancaire"),
     CHEQUE("Chèque"),
     VIREMENT("Virement"),
-    CREDIT("Crédit");
+    CREDIT("Crédit"),
+    TRAITE("Traite");
 
     private final String libelle;
 

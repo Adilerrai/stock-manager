@@ -9,13 +9,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "livraisons")
+@Table(name = "livraisons", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_livraisons_tenant_numero", columnNames = {"point_de_vente_id", "numero_livraison"})
+})
 public class Livraison {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "numero_livraison", nullable = false)
     private String numeroLivraison;
 
     @com.fasterxml.jackson.annotation.JsonIgnore

@@ -36,6 +36,7 @@ public class AvoirService {
     private final FactureAchatRepository factureAchatRepository;
     private final MouvementStockService mouvementStockService;
     private final ClientService clientService;
+    private final CodificationService codificationService;
 
     public AvoirService(AvoirRepository avoirRepository,
                         LigneAvoirRepository ligneAvoirRepository,
@@ -46,7 +47,8 @@ public class AvoirService {
                         FactureRepository factureRepository,
                         FactureAchatRepository factureAchatRepository,
                         MouvementStockService mouvementStockService,
-                        ClientService clientService) {
+                        ClientService clientService,
+                        CodificationService codificationService) {
         this.avoirRepository = avoirRepository;
         this.ligneAvoirRepository = ligneAvoirRepository;
         this.clientRepository = clientRepository;
@@ -57,6 +59,7 @@ public class AvoirService {
         this.factureAchatRepository = factureAchatRepository;
         this.mouvementStockService = mouvementStockService;
         this.clientService = clientService;
+        this.codificationService = codificationService;
     }
 
     public Avoir creerAvoir(Avoir avoir, Long userId) {
@@ -311,8 +314,9 @@ public class AvoirService {
     }
 
     private String genererNumeroAvoir(String prefixe, TypeAvoir typeAvoir) {
-        String base = prefixe + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-";
-        long count = avoirRepository.countByTypeAvoir(typeAvoir) + 1;
-        return base + String.format("%04d", count);
+        if (typeAvoir == TypeAvoir.FOURNISSEUR) {
+            return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.AVOIR_FOURNISSEUR);
+        }
+        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.AVOIR_CLIENT);
     }
 }

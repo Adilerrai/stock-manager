@@ -27,15 +27,18 @@ public class FactureAchatService {
     private final FournisseurRepository fournisseurRepository;
     private final ProduitRepository produitRepository;
     private final FactureAchatMapper factureAchatMapper;
+    private final CodificationService codificationService;
 
     public FactureAchatService(FactureAchatRepository factureAchatRepository,
                                FournisseurRepository fournisseurRepository,
                                ProduitRepository produitRepository,
-                               FactureAchatMapper factureAchatMapper) {
+                               FactureAchatMapper factureAchatMapper,
+                               CodificationService codificationService) {
         this.factureAchatRepository = factureAchatRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.produitRepository = produitRepository;
         this.factureAchatMapper = factureAchatMapper;
+        this.codificationService = codificationService;
     }
 
     public FactureAchatDTO creerFactureAchat(FactureAchatDTO dto) {
@@ -141,8 +144,6 @@ public class FactureAchatService {
     }
 
     private String genererNumeroFactureAchat() {
-        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        long count = factureAchatRepository.count() + 1;
-        return "FAC-ACH-" + dateStr + "-" + String.format("%04d", count);
+        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.FACTURE_FOURNISSEUR);
     }
 }

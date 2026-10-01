@@ -36,19 +36,22 @@ public class CommandeClientService {
     private final ClientRepository clientRepository;
     private final CommandeClientMapper commandeClientMapper;
     private final BonLivraisonClientRepository bonLivraisonClientRepository;
+    private final CodificationService codificationService;
 
     public CommandeClientService(CommandeClientRepository commandeClientRepository,
                                 LigneCommandeClientRepository ligneCommandeClientRepository,
                                 ProduitRepository produitRepository,
                                 ClientRepository clientRepository,
                                 CommandeClientMapper commandeClientMapper,
-                                BonLivraisonClientRepository bonLivraisonClientRepository) {
+                                BonLivraisonClientRepository bonLivraisonClientRepository,
+                                CodificationService codificationService) {
         this.commandeClientRepository = commandeClientRepository;
         this.ligneCommandeClientRepository = ligneCommandeClientRepository;
         this.produitRepository = produitRepository;
         this.clientRepository = clientRepository;
         this.commandeClientMapper = commandeClientMapper;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
+        this.codificationService = codificationService;
     }
 
     private Long getTenantId() {
@@ -162,6 +165,6 @@ public class CommandeClientService {
     }
 
     private String generateNumeroCommandeClient() {
-        return "VC-" + System.currentTimeMillis();
+        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.COMMANDE_CLIENT);
     }
 }

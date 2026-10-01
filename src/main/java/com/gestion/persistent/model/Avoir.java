@@ -11,14 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "avoirs")
+@Table(name = "avoirs", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_avoirs_tenant_numero", columnNames = {"point_de_vente_id", "numero_avoir"})
+})
 public class Avoir {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "numero_avoir", nullable = false)
     private String numeroAvoir;
 
     @Enumerated(EnumType.STRING)

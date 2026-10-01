@@ -16,7 +16,6 @@ import java.util.Map;
 @RestController
 @RequestMapping({"/api/roles", "/roles"})
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
 public class RoleController {
 
     private final RoleService roleService;

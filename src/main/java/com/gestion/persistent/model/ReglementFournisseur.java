@@ -16,12 +16,18 @@ public class ReglementFournisseur {
     @Column(name = "numero_reglement", unique = true, nullable = false)
     private String numeroReglement;
 
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd['T'HH:mm[:ss][.SSS]]")
     @Column(name = "date_reglement", nullable = false)
     private LocalDateTime dateReglement = LocalDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "facture_achat_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "lignes", "reglements"})
     private FactureAchat factureAchat;
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("factureAchatId")
+    private Long factureAchatId;
 
     @Column(name = "montant", nullable = false, precision = 15, scale = 2)
     private BigDecimal montant;
@@ -42,6 +48,7 @@ public class ReglementFournisseur {
     @Column(name = "numero_cheque")
     private String numeroCheque;
 
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd['T'HH:mm[:ss][.SSS]]")
     @Column(name = "date_echeance")
     private LocalDateTime dateEcheance;
 
@@ -71,13 +78,39 @@ public class ReglementFournisseur {
     public void setDateReglement(LocalDateTime dateReglement) { this.dateReglement = dateReglement; }
 
     public FactureAchat getFactureAchat() { return factureAchat; }
-    public void setFactureAchat(FactureAchat factureAchat) { this.factureAchat = factureAchat; }
+    public void setFactureAchat(FactureAchat factureAchat) { 
+        this.factureAchat = factureAchat;
+        if (factureAchat != null && factureAchat.getId() != null) {
+            this.factureAchatId = factureAchat.getId();
+        }
+    }
+
+    public Long getFactureAchatId() {
+        if (factureAchatId != null) return factureAchatId;
+        if (factureAchat != null) return factureAchat.getId();
+        return null;
+    }
+
+    public void setFactureAchatId(Long factureAchatId) {
+        this.factureAchatId = factureAchatId;
+    }
 
     public BigDecimal getMontant() { return montant; }
     public void setMontant(BigDecimal montant) { this.montant = montant; }
 
     public ModePaiement getModePaiement() { return modePaiement; }
     public void setModePaiement(ModePaiement modePaiement) { this.modePaiement = modePaiement; }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("modeReglement")
+    public void setModeReglement(ModePaiement modeReglement) {
+        if (this.modePaiement == null) {
+            this.modePaiement = modeReglement;
+        }
+    }
+
+    public ModePaiement getModeReglement() {
+        return this.modePaiement;
+    }
 
     public String getReferencePaiement() { return referencePaiement; }
     public void setReferencePaiement(String referencePaiement) { this.referencePaiement = referencePaiement; }

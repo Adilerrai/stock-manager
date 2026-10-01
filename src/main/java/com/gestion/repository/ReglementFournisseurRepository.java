@@ -11,7 +11,9 @@ import java.util.Optional;
 public interface ReglementFournisseurRepository extends JpaRepository<ReglementFournisseur, Long> {
     List<ReglementFournisseur> findByPointDeVenteId(Long pointDeVenteId);
     Optional<ReglementFournisseur> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
-    List<ReglementFournisseur> findByFactureAchatIdAndPointDeVenteId(Long factureAchatId, Long pointDeVenteId);
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM ReglementFournisseur r WHERE r.factureAchat.id = :factureAchatId AND r.pointDeVenteId = :pointDeVenteId")
+    List<ReglementFournisseur> findByFactureAchatIdAndPointDeVenteId(@org.springframework.data.repository.query.Param("factureAchatId") Long factureAchatId,
+                                                                    @org.springframework.data.repository.query.Param("pointDeVenteId") Long pointDeVenteId);
 
     @org.springframework.data.jpa.repository.Query("SELECT r FROM ReglementFournisseur r WHERE r.pointDeVenteId = :pointDeVenteId AND r.dateReglement BETWEEN :dateDebut AND :dateFin ORDER BY r.dateReglement DESC")
     List<ReglementFournisseur> findByPeriodeAndPointDeVenteId(@org.springframework.data.repository.query.Param("dateDebut") java.time.LocalDateTime dateDebut,

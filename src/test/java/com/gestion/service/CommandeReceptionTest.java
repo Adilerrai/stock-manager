@@ -45,6 +45,8 @@ class CommandeReceptionTest {
     private LivraisonMapper livraisonMapper;
     @Mock
     private ProduitMapper produitMapper;
+    @Mock
+    private CodificationService codificationService;
 
     private CommandeService commandeService;
 
@@ -58,7 +60,8 @@ class CommandeReceptionTest {
                 livraisonService,
                 livraisonRepository,
                 livraisonMapper,
-                produitMapper
+                produitMapper,
+                codificationService
         );
     }
 

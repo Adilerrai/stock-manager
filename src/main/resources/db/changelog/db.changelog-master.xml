@@ -53,4 +53,71 @@
         </sql>
     </changeSet>
 
+    <!-- 
+      Changeset 003 : Table de codification des documents et contraintes d'unicite par societe/tenant
+    -->
+    <changeSet id="003-create-codifications-and-update-unique-constraints" author="erp-pointvente">
+        <sql splitStatements="false">
+            CREATE TABLE IF NOT EXISTS codifications_document (
+                id BIGSERIAL PRIMARY KEY,
+                point_de_vente_id BIGINT NOT NULL,
+                type_document VARCHAR(50) NOT NULL,
+                prefixe VARCHAR(30) NOT NULL,
+                modele_format VARCHAR(60) NOT NULL DEFAULT '{PREFIX}-{AAAA}-{NUM}',
+                longueur_sequence INTEGER NOT NULL DEFAULT 3,
+                dernier_numero BIGINT NOT NULL DEFAULT 0,
+                annee_courante INTEGER,
+                mois_courant INTEGER,
+                type_reinitialisation VARCHAR(30) NOT NULL DEFAULT 'ANNUELLE',
+                actif BOOLEAN NOT NULL DEFAULT TRUE,
+                date_derniere_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT uk_codification_tenant_type UNIQUE (point_de_vente_id, type_document)
+            );
+
+            DO $$
+            DECLARE
+                r RECORD;
+            BEGIN
+                FOR r IN (
+                    SELECT c.conname, t.relname
+                    FROM pg_constraint c
+                    JOIN pg_class t ON c.conrelid = t.oid
+                    WHERE c.contype = 'u'
+                      AND t.relname IN ('factures', 'factures_achat', 'commandes', 'commandes_client', 'livraisons', 'bons_livraison_client', 'devis', 'avoirs')
+                      AND array_length(c.conkey, 1) = 1
+                ) LOOP
+                    EXECUTE 'ALTER TABLE ' || quote_ident(r.relname) || ' DROP CONSTRAINT IF EXISTS ' || quote_ident(r.conname);
+                END LOOP;
+            END $$;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_factures_tenant_numero') THEN
+                    ALTER TABLE factures ADD CONSTRAINT uk_factures_tenant_numero UNIQUE (point_de_vente_id, numero_facture);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_factures_achat_tenant_numero') THEN
+                    ALTER TABLE factures_achat ADD CONSTRAINT uk_factures_achat_tenant_numero UNIQUE (point_de_vente_id, numero_facture);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_commandes_tenant_numero') THEN
+                    ALTER TABLE commandes ADD CONSTRAINT uk_commandes_tenant_numero UNIQUE (point_de_vente_id, numero_commande);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_commandes_client_tenant_numero') THEN
+                    ALTER TABLE commandes_client ADD CONSTRAINT uk_commandes_client_tenant_numero UNIQUE (point_de_vente_id, numero_commande);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_livraisons_tenant_numero') THEN
+                    ALTER TABLE livraisons ADD CONSTRAINT uk_livraisons_tenant_numero UNIQUE (point_de_vente_id, numero_livraison);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_bl_client_tenant_numero') THEN
+                    ALTER TABLE bons_livraison_client ADD CONSTRAINT uk_bl_client_tenant_numero UNIQUE (point_de_vente_id, numero_bl);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_devis_tenant_numero') THEN
+                    ALTER TABLE devis ADD CONSTRAINT uk_devis_tenant_numero UNIQUE (point_de_vente_id, numero_devis);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uk_avoirs_tenant_numero') THEN
+                    ALTER TABLE avoirs ADD CONSTRAINT uk_avoirs_tenant_numero UNIQUE (point_de_vente_id, numero_avoir);
+                END IF;
+            END $$;
+        </sql>
+    </changeSet>
+
 </databaseChangeLog>

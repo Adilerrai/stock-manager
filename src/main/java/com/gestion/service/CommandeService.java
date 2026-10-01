@@ -39,6 +39,7 @@ public class CommandeService {
     private final LivraisonRepository livraisonRepository;
     private final LivraisonMapper livraisonMapper;
     private final ProduitMapper produitMapper;
+    private final CodificationService codificationService;
 
     public CommandeService(CommandeRepository commandeRepository,
                           LigneCommandeRepository ligneCommandeRepository,
@@ -47,7 +48,8 @@ public class CommandeService {
                           LivraisonService livraisonService,
                           LivraisonRepository livraisonRepository,
                           LivraisonMapper livraisonMapper,
-                          ProduitMapper produitMapper) {
+                          ProduitMapper produitMapper,
+                          CodificationService codificationService) {
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.fournisseurRepository = fournisseurRepository;
@@ -56,6 +58,7 @@ public class CommandeService {
         this.livraisonRepository = livraisonRepository;
         this.livraisonMapper = livraisonMapper;
         this.produitMapper = produitMapper;
+        this.codificationService = codificationService;
     }
 
     private Long getTenantId() {
@@ -276,9 +279,7 @@ public class CommandeService {
     }
 
     private String generateNumeroCommande() {
-        String prefix = "CMD-";
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        return prefix + timestamp;
+        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.COMMANDE_FOURNISSEUR);
     }
 
     public List<Commande> searchCommandes(CommandeSearchCriteria criteria) {

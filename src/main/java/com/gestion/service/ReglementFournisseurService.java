@@ -35,12 +35,39 @@ public class ReglementFournisseurService {
     public ReglementFournisseur enregistrerReglement(ReglementFournisseur reglement) {
         Long tenantId = TenantContext.getCurrentTenant();
         reglement.setPointDeVenteId(tenantId != null ? tenantId : 1L);
-        reglement.setDateReglement(LocalDateTime.now());
-        reglement.setNumeroReglement(genererNumeroReglement());
+        if (reglement.getDateReglement() == null) {
+            reglement.setDateReglement(LocalDateTime.now());
+        }
+        if (reglement.getNumeroReglement() == null || reglement.getNumeroReglement().trim().isEmpty()) {
+            reglement.setNumeroReglement(genererNumeroReglement());
+        }
 
-        // Validate invoice
-        FactureAchat facture = factureAchatService.getFactureAchatEntityById(reglement.getFactureAchat().getId());
+        // Validate invoice (support both nested object and factureAchatId)
+        Long factureId = null;
+        if (reglement.getFactureAchat() != null && reglement.getFactureAchat().getId() != null) {
+            factureId = reglement.getFactureAchat().getId();
+        } else if (reglement.getFactureAchatId() != null) {
+            factureId = reglement.getFactureAchatId();
+        }
+
+        if (factureId == null) {
+            throw new IllegalArgumentException("L'identifiant de la facture d'achat est obligatoire pour enregistrer un règlement");
+        }
+
+        FactureAchat facture = factureAchatService.getFactureAchatEntityById(factureId);
         reglement.setFactureAchat(facture);
+        reglement.setFactureAchatId(facture.getId());
+
+        if (reglement.getModePaiement() == null && reglement.getModeReglement() != null) {
+            reglement.setModePaiement(reglement.getModeReglement());
+        }
+        if (reglement.getModePaiement() == null) {
+            reglement.setModePaiement(ModePaiement.ESPECES);
+        }
+
+        if (reglement.getMontant() == null || reglement.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Le montant du règlement doit être supérieur à zéro");
+        }
 
         // Save payment
         ReglementFournisseur savedReglement = reglementFournisseurRepository.save(reglement);
@@ -51,17 +78,20 @@ public class ReglementFournisseurService {
 
         BigDecimal totalPaye = reglements.stream()
                 .map(ReglementFournisseur::getMontant)
+                .filter(java.util.Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // Update invoice status
         factureAchatService.updateStatutFacture(facture, totalPaye);
 
-        // Si paiement par chèque, insérer automatiquement dans le portefeuille Trésorerie (Décaissement)
-        if (savedReglement.getModePaiement() == ModePaiement.CHEQUE) {
+        // Si paiement par chèque ou traite, insérer automatiquement dans le portefeuille Trésorerie (Décaissement)
+        if (savedReglement.getModePaiement() == ModePaiement.CHEQUE || savedReglement.getModePaiement() == ModePaiement.TRAITE) {
             com.gestion.persistent.model.ChequeEffet cheque = new com.gestion.persistent.model.ChequeEffet();
             cheque.setNumeroPiece(savedReglement.getNumeroCheque() != null && !savedReglement.getNumeroCheque().trim().isEmpty()
                     ? savedReglement.getNumeroCheque().trim() : savedReglement.getNumeroReglement());
-            cheque.setTypeEffet(com.gestion.persistent.enums.TypeEffet.CHEQUE);
+            cheque.setTypeEffet(savedReglement.getModePaiement() == ModePaiement.TRAITE 
+                    ? com.gestion.persistent.enums.TypeEffet.TRAITE 
+                    : com.gestion.persistent.enums.TypeEffet.CHEQUE);
             cheque.setSens(com.gestion.persistent.enums.SensEffet.DECAISSEMENT_FOURNISSEUR);
             cheque.setStatut(com.gestion.persistent.enums.StatutEffet.EN_PORTEFEUILLE);
             cheque.setMontant(savedReglement.getMontant());

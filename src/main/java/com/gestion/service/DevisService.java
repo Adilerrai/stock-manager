@@ -30,6 +30,7 @@ public class DevisService {
     private final UserRepository userRepository;
     private final CommandeClientRepository commandeClientRepository;
     private final FactureRepository factureRepository;
+    private final CodificationService codificationService;
 
     public DevisService(DevisRepository devisRepository,
                         LigneDevisRepository ligneDevisRepository,
@@ -37,7 +38,8 @@ public class DevisService {
                         ProduitRepository produitRepository,
                         UserRepository userRepository,
                         @Lazy CommandeClientRepository commandeClientRepository,
-                        @Lazy FactureRepository factureRepository) {
+                        @Lazy FactureRepository factureRepository,
+                        CodificationService codificationService) {
         this.devisRepository = devisRepository;
         this.ligneDevisRepository = ligneDevisRepository;
         this.clientRepository = clientRepository;
@@ -45,6 +47,7 @@ public class DevisService {
         this.userRepository = userRepository;
         this.commandeClientRepository = commandeClientRepository;
         this.factureRepository = factureRepository;
+        this.codificationService = codificationService;
     }
 
     public Devis creerDevis(Devis devis, Long userId) {
@@ -256,8 +259,6 @@ public class DevisService {
     }
 
     private String genererNumeroDevis() {
-        String prefixe = "DEV-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + "-";
-        long count = devisRepository.countAllDevis() + 1;
-        return prefixe + String.format("%04d", count);
+        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.DEVIS);
     }
 }

@@ -41,6 +41,7 @@ public class BonLivraisonClientService {
     private final DepotRepository depotRepository;
     private final MouvementStockService mouvementStockService;
     private final BonLivraisonClientMapper bonLivraisonClientMapper;
+    private final CodificationService codificationService;
 
     public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
                                      ClientRepository clientRepository,
@@ -48,7 +49,8 @@ public class BonLivraisonClientService {
                                      ProduitRepository produitRepository,
                                      DepotRepository depotRepository,
                                      MouvementStockService mouvementStockService,
-                                     BonLivraisonClientMapper bonLivraisonClientMapper) {
+                                     BonLivraisonClientMapper bonLivraisonClientMapper,
+                                     CodificationService codificationService) {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.clientRepository = clientRepository;
         this.commandeClientRepository = commandeClientRepository;
@@ -56,6 +58,7 @@ public class BonLivraisonClientService {
         this.depotRepository = depotRepository;
         this.mouvementStockService = mouvementStockService;
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
+        this.codificationService = codificationService;
     }
 
     public Page<BonLivraisonClient> searchBonsLivraison(BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
@@ -275,13 +278,6 @@ public class BonLivraisonClientService {
     }
 
     private String genererNumeroBL() {
-        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        long count = bonLivraisonClientRepository.count() + 1;
-        String candidate = "BL-CLI-" + dateStr + "-" + String.format("%04d", count);
-        while (bonLivraisonClientRepository.existsByNumeroBl(candidate)) {
-            count++;
-            candidate = "BL-CLI-" + dateStr + "-" + String.format("%04d", count);
-        }
-        return candidate;
+        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.BL_CLIENT);
     }
 }

@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "factures")
+@Table(name = "factures", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_factures_tenant_numero", columnNames = {"point_de_vente_id", "numero_facture"})
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Facture {
 
@@ -19,7 +21,7 @@ public class Facture {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "numero_facture", nullable = false)
     private String numeroFacture;
 
     @Column(name = "date_facture", nullable = false)

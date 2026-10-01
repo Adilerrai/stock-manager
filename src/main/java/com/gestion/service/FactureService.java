@@ -41,6 +41,7 @@ public class FactureService {
     private final FactureMapper factureMapper;
     private final BonLivraisonClientMapper bonLivraisonClientMapper;
     private final ComptabiliteService comptabiliteService;
+    private final CodificationService codificationService;
 
     public FactureService(FactureRepository factureRepository,
                           LigneFactureRepository ligneFactureRepository,
@@ -49,7 +50,8 @@ public class FactureService {
                           UserRepository userRepository,
                           FactureMapper factureMapper,
                           BonLivraisonClientMapper bonLivraisonClientMapper,
-                          @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService) {
+                          @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService,
+                          CodificationService codificationService) {
         this.factureRepository = factureRepository;
         this.ligneFactureRepository = ligneFactureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -58,6 +60,7 @@ public class FactureService {
         this.factureMapper = factureMapper;
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
         this.comptabiliteService = comptabiliteService;
+        this.codificationService = codificationService;
     }
 
     public Page<Facture> searchFactures(FactureSearchCriteria criteria, Pageable pageable) {
@@ -325,8 +328,6 @@ public class FactureService {
     }
 
     private String genererNumeroFacture() {
-        String annee = String.valueOf(LocalDate.now().getYear());
-        long count = factureRepository.count() + 1;
-        return "FACT-" + annee + "-" + String.format("%06d", count);
+        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.FACTURE_CLIENT);
     }
 }

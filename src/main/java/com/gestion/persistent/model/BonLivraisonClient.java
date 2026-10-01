@@ -8,14 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "bons_livraison_client")
+@Table(name = "bons_livraison_client", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_bl_client_tenant_numero", columnNames = {"point_de_vente_id", "numero_bl"})
+})
 public class BonLivraisonClient {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "numero_bl", unique = true, nullable = false)
+    @Column(name = "numero_bl", nullable = false)
     private String numeroBl;
 
     @Column(name = "date_bl", nullable = false)
