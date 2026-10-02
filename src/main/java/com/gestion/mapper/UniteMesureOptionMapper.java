@@ -16,11 +16,11 @@ public interface UniteMesureOptionMapper {
     }
 
     default String getLabelForValue(String value) {
-        return switch (value) {
-            case "M2" -> "Mètre carré (m²)";
-            case "PIECE" -> "Pièce";
-            case "KG" -> "Kilogramme";
-            default -> value;
-        };
+        if (value == null) return null;
+        try {
+            return com.gestion.persistent.enums.UniteMesure.valueOf(value.trim().toUpperCase()).getLabel();
+        } catch (IllegalArgumentException e) {
+            return value;
+        }
     }
 }

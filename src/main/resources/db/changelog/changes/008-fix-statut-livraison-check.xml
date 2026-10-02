@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 008 :
+      Mise à jour des contraintes CHECK sur statut_livraison et statut (livraisons)
+      pour inclure le statut PARTIELLE correspondant à l'enum StatutLivraison.
+    -->
+    <changeSet id="008-fix-statut-livraison-check" author="erp-commercial">
+        <sql splitStatements="true">
+            -- 1. Contrainte sur commandes.statut_livraison
+            ALTER TABLE IF EXISTS commandes 
+                DROP CONSTRAINT IF EXISTS commandes_statut_livraison_check;
+
+            ALTER TABLE IF EXISTS commandes 
+                ADD CONSTRAINT commandes_statut_livraison_check 
+                CHECK (statut_livraison IN (
+                    'EN_ATTENTE',
+                    'EN_LIVRAISON',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+
+            -- 2. Contrainte sur livraisons.statut
+            ALTER TABLE IF EXISTS livraisons 
+                DROP CONSTRAINT IF EXISTS livraisons_statut_check;
+
+            ALTER TABLE IF EXISTS livraisons 
+                ADD CONSTRAINT livraisons_statut_check 
+                CHECK (statut IN (
+                    'EN_ATTENTE',
+                    'EN_LIVRAISON',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+
+            -- 3. Contrainte sur bons_livraison_client.statut
+            ALTER TABLE IF EXISTS bons_livraison_client 
+                DROP CONSTRAINT IF EXISTS bons_livraison_client_statut_check;
+
+            ALTER TABLE IF EXISTS bons_livraison_client 
+                ADD CONSTRAINT bons_livraison_client_statut_check 
+                CHECK (statut IN (
+                    'EN_ATTENTE',
+                    'EN_LIVRAISON',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

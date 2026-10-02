@@ -31,4 +31,7 @@
     <!-- Changeset 007 : Mise à jour contrainte statut commandes_client (BACKORDER, etc.) -->
     <include file="changes/007-fix-commandes-client-statut-check.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 008 : Mise à jour contraintes statut livraison (PARTIELLE) -->
+    <include file="changes/008-fix-statut-livraison-check.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
