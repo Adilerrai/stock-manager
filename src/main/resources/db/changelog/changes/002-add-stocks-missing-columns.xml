@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 002 : Ajout des colonnes manquantes dans la table stocks et multi-tenant pour la prod
+    -->
+    <changeSet id="002-add-stocks-missing-columns" author="erp-pointvente">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="stocks"/>
+        </preConditions>
+        <sql splitStatements="true">
+            ALTER TABLE stocks ADD COLUMN IF NOT EXISTS quantite_disponible NUMERIC(12, 2) DEFAULT 0.00 NOT NULL;
+            ALTER TABLE stocks ADD COLUMN IF NOT EXISTS quantite_reservee NUMERIC(12, 2) DEFAULT 0.00;
+            ALTER TABLE stocks ADD COLUMN IF NOT EXISTS seuil_alerte NUMERIC(12, 2);
+            ALTER TABLE stocks ADD COLUMN IF NOT EXISTS derniere_maj TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+            UPDATE stocks s
+            SET quantite_disponible = COALESCE((
+                SELECT SUM(sq.quantite_disponible)
+                FROM stock_qualites sq
+                WHERE sq.stock_id = s.id
+            ), 0.00),
+            quantite_reservee = COALESCE((
+                SELECT SUM(sq.quantite_reservee)
+                FROM stock_qualites sq
+                WHERE sq.stock_id = s.id
+            ), 0.00)
+            WHERE quantite_disponible = 0.00;
+
+            ALTER TABLE IF EXISTS commandes_client ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;
+            ALTER TABLE IF EXISTS mouvements_stock ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT;
+            ALTER TABLE IF EXISTS livraisons ADD COLUMN IF NOT EXISTS point_de_vente_id BIGINT DEFAULT 1;
+            ALTER TABLE IF EXISTS entreprise_profiles ADD COLUMN IF NOT EXISTS vente_stock_negatif BOOLEAN DEFAULT FALSE;
+            ALTER TABLE IF EXISTS lignes_livraison DROP CONSTRAINT IF EXISTS uk_bgip3ymlrc9lga65p5dy9jfbr;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,11 +1,13 @@
 package com.gestion.persistent.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gestion.persistent.enums.StatutDevis;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class DevisDTO {
     private Long id;
@@ -98,4 +100,44 @@ public class DevisDTO {
 
     public LocalDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
+
+    // Aliases pour compatibilité frontend et Jackson
+    public BigDecimal getMontantTotal() {
+        return (montantFinal != null && montantFinal.compareTo(BigDecimal.ZERO) > 0) ? montantFinal : montantTTC;
+    }
+
+    public void setMontantTotal(BigDecimal montantTotal) {
+        if (this.montantFinal == null) {
+            this.montantFinal = montantTotal;
+        }
+    }
+
+    public String getObservations() {
+        return notes;
+    }
+
+    public void setObservations(String observations) {
+        if (this.notes == null || this.notes.isEmpty()) {
+            this.notes = observations;
+        }
+    }
+
+    public List<LigneDevisDTO> getLignesDevis() {
+        return lignes;
+    }
+
+    public void setLignesDevis(List<LigneDevisDTO> lignesDevis) {
+        if (lignesDevis != null) {
+            this.lignes = lignesDevis;
+        }
+    }
+
+    @JsonProperty("client")
+    public void unpackClient(Map<String, Object> client) {
+        if (client != null && client.get("id") != null) {
+            try {
+                this.clientId = Long.valueOf(client.get("id").toString());
+            } catch (Exception ignored) {}
+        }
+    }
 }

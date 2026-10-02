@@ -44,6 +44,7 @@ public class User implements UserDetails {
     private String telephone;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "genre", length = 20)
     private Genre genre; // "HOMME" ou "FEMME"
 
     @Column(name = "mere_id")

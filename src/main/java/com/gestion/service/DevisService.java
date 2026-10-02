@@ -4,6 +4,8 @@ import com.acommon.exception.CommonException;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
+import com.gestion.persistent.dto.DevisDTO;
+import com.gestion.persistent.dto.LigneDevisDTO;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.StatutDevis;
 import com.gestion.persistent.enums.StatutFacture;
@@ -50,6 +52,117 @@ public class DevisService {
         this.commandeClientRepository = commandeClientRepository;
         this.factureRepository = factureRepository;
         this.codificationService = codificationService;
+    }
+
+    public Devis creerDevis(DevisDTO dto, Long userId) {
+        if (dto.getClientId() == null) {
+            throw new RuntimeException("Le client est obligatoire pour créer un devis");
+        }
+        Client client = clientRepository.findById(dto.getClientId())
+                .orElseThrow(() -> new RuntimeException("Client non trouvé avec l'id: " + dto.getClientId()));
+
+        Devis devis = new Devis();
+        devis.setClient(client);
+
+        if (userId != null) {
+            User user = userRepository.findById(userId).orElse(null);
+            devis.setCreePar(user);
+        }
+
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId != null) {
+            devis.setPointDeVenteId(tenantId);
+        }
+
+        if (dto.getNumeroDevis() != null && !dto.getNumeroDevis().trim().isEmpty()) {
+            devis.setNumeroDevis(dto.getNumeroDevis());
+        } else {
+            devis.setNumeroDevis(genererNumeroDevis());
+        }
+
+        devis.setDateDevis(dto.getDateDevis() != null ? dto.getDateDevis() : LocalDate.now());
+        devis.setDateValidite(dto.getDateValidite() != null ? dto.getDateValidite() : devis.getDateDevis().plusDays(30));
+        devis.setStatut(dto.getStatut() != null ? dto.getStatut() : StatutDevis.BROUILLON);
+        devis.setRemiseGlobale(dto.getRemiseGlobale() != null ? dto.getRemiseGlobale() : BigDecimal.ZERO);
+        devis.setNotes(dto.getNotes() != null ? dto.getNotes() : dto.getObservations());
+        devis.setConditionsPaiement(dto.getConditionsPaiement());
+        devis.setDateCreation(LocalDateTime.now());
+
+        if (dto.getLignes() != null) {
+            for (LigneDevisDTO ligneDTO : dto.getLignes()) {
+                LigneDevis ligne = new LigneDevis();
+                if (ligneDTO.getProduitId() != null) {
+                    Produit p = produitRepository.findById(ligneDTO.getProduitId())
+                            .orElseThrow(() -> new RuntimeException("Produit non trouvé: " + ligneDTO.getProduitId()));
+                    ligne.setProduit(p);
+                    if (ligneDTO.getPrixUnitaireHT() == null || ligneDTO.getPrixUnitaireHT().compareTo(BigDecimal.ZERO) == 0) {
+                        ligne.setPrixUnitaireHT(p.getPrixVenteHt() != null ? p.getPrixVenteHt() : p.getPrixVente());
+                    } else {
+                        ligne.setPrixUnitaireHT(ligneDTO.getPrixUnitaireHT());
+                    }
+                } else {
+                    throw new RuntimeException("Le produit est obligatoire pour chaque ligne de devis");
+                }
+
+                ligne.setQuantite(ligneDTO.getQuantite() != null ? ligneDTO.getQuantite() : BigDecimal.ONE);
+                ligne.setTauxTVA(ligneDTO.getTauxTVA() != null ? ligneDTO.getTauxTVA() : BigDecimal.valueOf(20));
+                ligne.setTauxRemise(ligneDTO.getTauxRemise() != null ? ligneDTO.getTauxRemise() : BigDecimal.ZERO);
+                ligne.setDescription(ligneDTO.getDescription() != null ? ligneDTO.getDescription() : ligneDTO.getDesignation());
+
+                devis.addLigne(ligne);
+                ligne.calculerMontants();
+            }
+        }
+
+        devis.calculerTotaux();
+        return devisRepository.save(devis);
+    }
+
+    public Devis modifierDevis(Long id, DevisDTO maj) {
+        Devis existant = getDevisById(id);
+
+        if (maj.getDateDevis() != null) existant.setDateDevis(maj.getDateDevis());
+        if (maj.getDateValidite() != null) existant.setDateValidite(maj.getDateValidite());
+        if (maj.getRemiseGlobale() != null) existant.setRemiseGlobale(maj.getRemiseGlobale());
+        if (maj.getNotes() != null) existant.setNotes(maj.getNotes());
+        else if (maj.getObservations() != null) existant.setNotes(maj.getObservations());
+        if (maj.getConditionsPaiement() != null) existant.setConditionsPaiement(maj.getConditionsPaiement());
+        if (maj.getStatut() != null) existant.setStatut(maj.getStatut());
+
+        if (maj.getClientId() != null) {
+            Client c = clientRepository.findById(maj.getClientId())
+                    .orElseThrow(() -> new RuntimeException("Client non trouvé"));
+            existant.setClient(c);
+        }
+
+        if (maj.getLignes() != null) {
+            existant.getLignes().clear();
+            for (LigneDevisDTO l : maj.getLignes()) {
+                LigneDevis ligne = new LigneDevis();
+                if (l.getProduitId() != null) {
+                    Produit p = produitRepository.findById(l.getProduitId())
+                            .orElseThrow(() -> new RuntimeException("Produit non trouvé"));
+                    ligne.setProduit(p);
+                    if (l.getPrixUnitaireHT() == null || l.getPrixUnitaireHT().compareTo(BigDecimal.ZERO) == 0) {
+                        ligne.setPrixUnitaireHT(p.getPrixVenteHt() != null ? p.getPrixVenteHt() : p.getPrixVente());
+                    } else {
+                        ligne.setPrixUnitaireHT(l.getPrixUnitaireHT());
+                    }
+                } else {
+                    throw new RuntimeException("Le produit est obligatoire pour chaque ligne de devis");
+                }
+                ligne.setQuantite(l.getQuantite() != null ? l.getQuantite() : BigDecimal.ONE);
+                ligne.setTauxTVA(l.getTauxTVA() != null ? l.getTauxTVA() : BigDecimal.valueOf(20));
+                ligne.setTauxRemise(l.getTauxRemise() != null ? l.getTauxRemise() : BigDecimal.ZERO);
+                ligne.setDescription(l.getDescription() != null ? l.getDescription() : l.getDesignation());
+
+                existant.addLigne(ligne);
+                ligne.calculerMontants();
+            }
+        }
+
+        existant.calculerTotaux();
+        return devisRepository.save(existant);
     }
 
     public Devis creerDevis(Devis devis, Long userId) {

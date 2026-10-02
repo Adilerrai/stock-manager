@@ -40,5 +40,18 @@ public class DatabaseFixStartupRunner implements ApplicationRunner {
                     "CHECK (statut IN ('OUVERT', 'CLOTURE', 'EN_CLOTURE'))");
         } catch (Exception ignored) {
         }
+
+        try {
+            // 3. Corriger le type de la colonne 'genre' dans users (convertir smallint en VARCHAR pour correspondre à EnumType.STRING)
+            jdbcTemplate.execute("ALTER TABLE users DROP CONSTRAINT IF EXISTS users_genre_check");
+            jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN genre TYPE VARCHAR(20) USING (" +
+                    "CASE WHEN genre::text = '0' THEN 'HOMME' " +
+                    "WHEN genre::text = '1' THEN 'FEMME' " +
+                    "WHEN genre::text ILIKE 'femme' THEN 'FEMME' " +
+                    "ELSE 'HOMME' END)");
+            log.info("✅ Colonne 'genre' de la table 'users' migrée en VARCHAR(20) avec succès.");
+        } catch (Exception e) {
+            log.warn("⚠️ Impossible de modifier la colonne genre de la table users: {}", e.getMessage());
+        }
     }
 }

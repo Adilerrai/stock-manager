@@ -53,4 +53,52 @@ public class LigneDevisDTO {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    // Aliases pour compatibilité frontend et Jackson
+    public String getDesignation() {
+        return produitDesignation != null ? produitDesignation : description;
+    }
+    public void setDesignation(String designation) {
+        if (this.produitDesignation == null) {
+            this.produitDesignation = designation;
+        }
+        if (this.description == null) {
+            this.description = designation;
+        }
+    }
+
+    public String getReference() {
+        return produitReference;
+    }
+    public void setReference(String reference) {
+        this.produitReference = reference;
+    }
+
+    public BigDecimal getPrixUnitaire() {
+        return prixUnitaireHT;
+    }
+    public void setPrixUnitaire(BigDecimal prixUnitaire) {
+        this.prixUnitaireHT = prixUnitaire;
+    }
+
+    public BigDecimal getTauxTva() {
+        return tauxTVA;
+    }
+    public void setTauxTva(BigDecimal tauxTva) {
+        this.tauxTVA = tauxTva;
+    }
+
+    public BigDecimal getRemisePct() {
+        return tauxRemise;
+    }
+    public void setRemisePct(BigDecimal remisePct) {
+        this.tauxRemise = remisePct;
+    }
+
+    public BigDecimal getMontantTotal() {
+        return montantTTC;
+    }
+    public void setMontantTotal(BigDecimal montantTotal) {
+        this.montantTTC = montantTotal;
+    }
 }
