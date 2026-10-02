@@ -28,6 +28,11 @@ public class FactureAchatController {
         return ResponseEntity.ok(factureAchatService.getFacturesAchat());
     }
 
+    @GetMapping("/impayees")
+    public ResponseEntity<List<FactureAchatDTO>> getFacturesAchatImpayees() {
+        return ResponseEntity.ok(factureAchatService.getFacturesAchatImpayees());
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<FactureAchatDTO> getFactureAchatById(@PathVariable Long id) {
         return ResponseEntity.ok(factureAchatService.getFactureAchatById(id));

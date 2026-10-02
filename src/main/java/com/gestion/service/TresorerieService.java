@@ -5,6 +5,9 @@ import com.gestion.persistent.dto.BalanceAgeeDTO;
 import com.gestion.persistent.dto.EcheancierDTO;
 import com.gestion.persistent.dto.ReleveClientDTO;
 import com.gestion.persistent.enums.ModePaiement;
+import com.gestion.persistent.enums.SensEffet;
+import com.gestion.persistent.enums.StatutEffet;
+import com.gestion.persistent.enums.TypeEffet;
 import com.gestion.persistent.enums.StatutAvoir;
 import com.gestion.persistent.enums.StatutFacture;
 import com.gestion.persistent.enums.StatutRemise;
@@ -20,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.gestion.persistent.dto.ReleveFournisseurDTO;
 
@@ -35,6 +39,7 @@ public class TresorerieService {
     private final ReglementFournisseurRepository reglementFournisseurRepository;
     private final AvoirRepository avoirRepository;
     private final BordereauRemiseRepository bordereauRemiseRepository;
+    private final ChequeEffetRepository chequeEffetRepository;
 
     public TresorerieService(ClientRepository clientRepository,
                              FournisseurRepository fournisseurRepository,
@@ -43,7 +48,8 @@ public class TresorerieService {
                              PaiementRepository paiementRepository,
                              ReglementFournisseurRepository reglementFournisseurRepository,
                              AvoirRepository avoirRepository,
-                             BordereauRemiseRepository bordereauRemiseRepository) {
+                             BordereauRemiseRepository bordereauRemiseRepository,
+                             ChequeEffetRepository chequeEffetRepository) {
         this.clientRepository = clientRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.factureRepository = factureRepository;
@@ -52,6 +58,7 @@ public class TresorerieService {
         this.reglementFournisseurRepository = reglementFournisseurRepository;
         this.avoirRepository = avoirRepository;
         this.bordereauRemiseRepository = bordereauRemiseRepository;
+        this.chequeEffetRepository = chequeEffetRepository;
     }
 
     public ReleveFournisseurDTO genererReleveFournisseur(Long fournisseurId, LocalDate dateDebut, LocalDate dateFin) {
@@ -338,56 +345,92 @@ public class TresorerieService {
         EcheancierDTO ech = new EcheancierDTO();
         List<EcheancierDTO.LigneEcheanceDTO> list = new ArrayList<>();
 
-        // Factures clients impayées
-        List<Facture> facturesImpayees = factureRepository.findFacturesImpayees();
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long pointDeVenteId = tenantId != null ? tenantId : 1L;
+
+        // 1. Factures clients impayées
+        List<Facture> facturesImpayees = factureRepository.findFacturesImpayeesByPointDeVenteId(pointDeVenteId);
         for (Facture f : facturesImpayees) {
             LocalDate d = f.getDateEcheance() != null ? f.getDateEcheance() : f.getDateFacture();
             if (d != null && (dateDebut == null || !d.isBefore(dateDebut)) && (dateFin == null || !d.isAfter(dateFin))) {
                 list.add(new EcheancierDTO.LigneEcheanceDTO(
                         d,
                         "ENCAISSEMENT",
-                        f.getClient() != null ? f.getClient().getNomComplet() : "Client",
+                        f.getClient() != null ? (f.getClient().getNomComplet() != null ? f.getClient().getNomComplet() : f.getClient().getNom()) : "Client",
                         "FACTURE_VENTE",
                         f.getNumeroFacture(),
                         f.getMontantRestant(),
-                        f.getStatut() != null ? f.getStatut().name() : "EN_ATTENTE"
+                        f.getStatut() != null ? f.getStatut().name() : "EN_ATTENTE",
+                        f.getId(),
+                        null
                 ));
             }
         }
 
-        // Chèques reçus en portefeuille non encore échus
-        Long tenantId = TenantContext.getCurrentTenant();
-        List<Paiement> paiements = tenantId != null ? paiementRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
-        for (Paiement p : paiements) {
-            if (p.getModePaiement() == ModePaiement.CHEQUE && p.getDateEcheance() != null) {
-                LocalDate d = p.getDateEcheance().toLocalDate();
-                if ((dateDebut == null || !d.isBefore(dateDebut)) && (dateFin == null || !d.isAfter(dateFin))) {
+        // 2. Chèques & Traites en portefeuille ou remis à l'encaissement (Effets de commerce)
+        List<ChequeEffet> chequesEffets = chequeEffetRepository.findByPointDeVenteIdOrderByDateEcheanceAsc(pointDeVenteId);
+        for (ChequeEffet ce : chequesEffets) {
+            if (ce.getStatut() == StatutEffet.EN_PORTEFEUILLE || ce.getStatut() == StatutEffet.REMIS_A_L_ENCAISSEMENT) {
+                LocalDate d = ce.getDateEcheance() != null ? ce.getDateEcheance() : ce.getDateEmission();
+                if (d != null && (dateDebut == null || !d.isBefore(dateDebut)) && (dateFin == null || !d.isAfter(dateFin))) {
+                    String sens = ce.getSens() == SensEffet.ENCAISSEMENT_CLIENT ? "ENCAISSEMENT" : "DECAISSEMENT";
+                    String tiers;
+                    if (ce.getSens() == SensEffet.ENCAISSEMENT_CLIENT) {
+                        tiers = ce.getClient() != null ? ce.getClient().getNom() : (ce.getTireur() != null ? ce.getTireur() : "Client");
+                    } else {
+                        tiers = ce.getFournisseur() != null ? ce.getFournisseur().getNom() : (ce.getBeneficiaire() != null ? ce.getBeneficiaire() : "Fournisseur");
+                    }
+                    String typeDoc = ce.getTypeEffet() == TypeEffet.TRAITE ? "TRAITE" : "CHEQUE";
                     list.add(new EcheancierDTO.LigneEcheanceDTO(
                             d,
-                            "ENCAISSEMENT",
-                            p.getClient() != null ? p.getClient().getNom() : (p.getNomBanque() != null ? p.getNomBanque() : "Banque"),
-                            "CHEQUE_PORTEFEUILLE",
-                            "Chq " + (p.getNumeroCheque() != null ? p.getNumeroCheque() : p.getNumeroPaiement()),
-                            p.getMontant(),
-                            "EN_PORTEFEUILLE"
+                            sens,
+                            tiers,
+                            typeDoc,
+                            ce.getNumeroPiece() != null ? ce.getNumeroPiece() : ("EFF-" + ce.getId()),
+                            ce.getMontant(),
+                            ce.getStatut() != null ? ce.getStatut().name() : "EN_PORTEFEUILLE",
+                            ce.getId(),
+                            ce.getBanqueEmettrice()
                     ));
                 }
             }
         }
 
-        // Factures achats fournisseurs
-        List<FactureAchat> facturesAchats = tenantId != null ? factureAchatRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
+        // 3. Factures achats fournisseurs impayées
+        List<FactureAchat> facturesAchats = factureAchatRepository.findByPointDeVenteId(pointDeVenteId);
+        List<ReglementFournisseur> allReglements = reglementFournisseurRepository.findByPointDeVenteId(pointDeVenteId);
+        Map<Long, BigDecimal> mapPaye = allReglements.stream()
+                .filter(r -> r.getFactureAchat() != null && r.getFactureAchat().getId() != null && r.getMontant() != null)
+                .collect(Collectors.groupingBy(
+                        r -> r.getFactureAchat().getId(),
+                        Collectors.reducing(BigDecimal.ZERO, ReglementFournisseur::getMontant, BigDecimal::add)
+                ));
+
         for (FactureAchat fa : facturesAchats) {
-            LocalDate d = fa.getDateFacture() != null ? fa.getDateFacture().toLocalDate().plusDays(30) : LocalDate.now();
+            if (fa.getStatut() == StatutFacture.PAYEE_TOTALEMENT || fa.getStatut() == StatutFacture.ANNULEE) {
+                continue;
+            }
+            BigDecimal totalPaye = mapPaye.getOrDefault(fa.getId(), BigDecimal.ZERO);
+            BigDecimal restant = fa.getMontantTtc() != null ? fa.getMontantTtc().subtract(totalPaye) : BigDecimal.ZERO;
+            if (restant.compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+
+            LocalDate d = fa.getDateEcheance() != null
+                    ? fa.getDateEcheance().toLocalDate()
+                    : (fa.getDateFacture() != null ? fa.getDateFacture().toLocalDate().plusDays(30) : LocalDate.now());
+
             if ((dateDebut == null || !d.isBefore(dateDebut)) && (dateFin == null || !d.isAfter(dateFin))) {
                 list.add(new EcheancierDTO.LigneEcheanceDTO(
                         d,
                         "DECAISSEMENT",
-                        fa.getFournisseur() != null ? fa.getFournisseur().getRaisonSociale() : "Fournisseur",
+                        fa.getFournisseur() != null ? fa.getFournisseur().getNom() : "Fournisseur",
                         "FACTURE_ACHAT",
                         fa.getNumeroFacture(),
-                        fa.getMontantTtc(),
-                        "A_PAYER"
+                        restant,
+                        fa.getStatut() != null ? fa.getStatut().name() : "EN_ATTENTE",
+                        fa.getId(),
+                        null
                 ));
             }
         }

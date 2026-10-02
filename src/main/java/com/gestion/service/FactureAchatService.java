@@ -28,17 +28,20 @@ public class FactureAchatService {
     private final ProduitRepository produitRepository;
     private final FactureAchatMapper factureAchatMapper;
     private final CodificationService codificationService;
+    private final com.gestion.repository.ReglementFournisseurRepository reglementFournisseurRepository;
 
     public FactureAchatService(FactureAchatRepository factureAchatRepository,
                                FournisseurRepository fournisseurRepository,
                                ProduitRepository produitRepository,
                                FactureAchatMapper factureAchatMapper,
-                               CodificationService codificationService) {
+                               CodificationService codificationService,
+                               com.gestion.repository.ReglementFournisseurRepository reglementFournisseurRepository) {
         this.factureAchatRepository = factureAchatRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.produitRepository = produitRepository;
         this.factureAchatMapper = factureAchatMapper;
         this.codificationService = codificationService;
+        this.reglementFournisseurRepository = reglementFournisseurRepository;
     }
 
     public FactureAchatDTO creerFactureAchat(FactureAchatDTO dto) {
@@ -114,8 +117,23 @@ public class FactureAchatService {
     public List<FactureAchatDTO> getFacturesAchat() {
         Long tenantId = TenantContext.getCurrentTenant();
         List<FactureAchat> factures = factureAchatRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
-        return factures.stream()
+        List<FactureAchatDTO> dtos = factures.stream()
                 .map(factureAchatMapper::toDto)
+                .collect(Collectors.toList());
+        enrichirSoldes(dtos);
+        return dtos;
+    }
+
+    public List<FactureAchatDTO> getFacturesAchatImpayees() {
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<FactureAchat> factures = factureAchatRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        List<FactureAchatDTO> dtos = factures.stream()
+                .filter(f -> f.getStatut() != StatutFacture.PAYEE_TOTALEMENT && f.getStatut() != StatutFacture.ANNULEE)
+                .map(factureAchatMapper::toDto)
+                .collect(Collectors.toList());
+        enrichirSoldes(dtos);
+        return dtos.stream()
+                .filter(dto -> dto.getMontantRestant() != null && dto.getMontantRestant().compareTo(BigDecimal.ZERO) > 0)
                 .collect(Collectors.toList());
     }
 
@@ -129,7 +147,27 @@ public class FactureAchatService {
         Long tenantId = TenantContext.getCurrentTenant();
         FactureAchat facture = factureAchatRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
                 .orElseThrow(() -> new RuntimeException("Facture d'achat non trouvée avec l'id: " + id));
-        return factureAchatMapper.toDto(facture);
+        FactureAchatDTO dto = factureAchatMapper.toDto(facture);
+        enrichirSoldes(java.util.Collections.singletonList(dto));
+        return dto;
+    }
+
+    private void enrichirSoldes(List<FactureAchatDTO> dtoList) {
+        if (dtoList == null || dtoList.isEmpty()) return;
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<com.gestion.persistent.model.ReglementFournisseur> allRegs = reglementFournisseurRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        java.util.Map<Long, BigDecimal> mapPaye = allRegs.stream()
+                .filter(r -> r.getFactureAchat() != null && r.getFactureAchat().getId() != null && r.getMontant() != null)
+                .collect(Collectors.groupingBy(
+                        r -> r.getFactureAchat().getId(),
+                        Collectors.reducing(BigDecimal.ZERO, com.gestion.persistent.model.ReglementFournisseur::getMontant, BigDecimal::add)
+                ));
+        for (FactureAchatDTO dto : dtoList) {
+            BigDecimal paye = mapPaye.getOrDefault(dto.getId(), BigDecimal.ZERO);
+            dto.setMontantPaye(paye);
+            BigDecimal ttc = dto.getMontantTtc() != null ? dto.getMontantTtc() : BigDecimal.ZERO;
+            dto.setMontantRestant(ttc.subtract(paye).max(BigDecimal.ZERO));
+        }
     }
 
     public void updateStatutFacture(FactureAchat facture, BigDecimal montantRegleTotal) {

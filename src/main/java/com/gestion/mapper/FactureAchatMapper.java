@@ -12,6 +12,8 @@ public interface FactureAchatMapper {
     @Mapping(target = "fournisseurNom", source = "fournisseur.raisonSociale")
     @Mapping(target = "fournisseurTelephone", source = "fournisseur.telephone")
     @Mapping(target = "lignes", source = "lignes")
+    @Mapping(target = "montantPaye", ignore = true)
+    @Mapping(target = "montantRestant", ignore = true)
     FactureAchatDTO toDto(FactureAchat entity);
 
     @Mapping(target = "fournisseur", ignore = true)

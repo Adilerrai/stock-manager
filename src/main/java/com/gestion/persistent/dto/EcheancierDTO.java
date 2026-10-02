@@ -19,11 +19,19 @@ public class EcheancierDTO {
         private String reference;
         private BigDecimal montant;
         private String statut;
+        private Long documentId;
+        private String banque;
 
         public LigneEcheanceDTO() {}
 
         public LigneEcheanceDTO(LocalDate dateEcheance, String sens, String tiersNom,
                                 String typeDocument, String reference, BigDecimal montant, String statut) {
+            this(dateEcheance, sens, tiersNom, typeDocument, reference, montant, statut, null, null);
+        }
+
+        public LigneEcheanceDTO(LocalDate dateEcheance, String sens, String tiersNom,
+                                String typeDocument, String reference, BigDecimal montant,
+                                String statut, Long documentId, String banque) {
             this.dateEcheance = dateEcheance;
             this.sens = sens;
             this.tiersNom = tiersNom;
@@ -31,6 +39,8 @@ public class EcheancierDTO {
             this.reference = reference;
             this.montant = montant;
             this.statut = statut;
+            this.documentId = documentId;
+            this.banque = banque;
         }
 
         public LocalDate getDateEcheance() { return dateEcheance; }
@@ -53,6 +63,12 @@ public class EcheancierDTO {
 
         public String getStatut() { return statut; }
         public void setStatut(String statut) { this.statut = statut; }
+
+        public Long getDocumentId() { return documentId; }
+        public void setDocumentId(Long documentId) { this.documentId = documentId; }
+
+        public String getBanque() { return banque; }
+        public void setBanque(String banque) { this.banque = banque; }
     }
 
     public EcheancierDTO() {}

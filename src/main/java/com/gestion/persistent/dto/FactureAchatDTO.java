@@ -17,6 +17,8 @@ public class FactureAchatDTO {
     private BigDecimal montantHt;
     private BigDecimal montantTva;
     private BigDecimal montantTtc;
+    private BigDecimal montantPaye = BigDecimal.ZERO;
+    private BigDecimal montantRestant = BigDecimal.ZERO;
     private StatutFacture statut;
     private String observations;
     private Long pointDeVenteId;
@@ -53,6 +55,12 @@ public class FactureAchatDTO {
 
     public BigDecimal getMontantTtc() { return montantTtc; }
     public void setMontantTtc(BigDecimal montantTtc) { this.montantTtc = montantTtc; }
+
+    public BigDecimal getMontantPaye() { return montantPaye; }
+    public void setMontantPaye(BigDecimal montantPaye) { this.montantPaye = montantPaye; }
+
+    public BigDecimal getMontantRestant() { return montantRestant; }
+    public void setMontantRestant(BigDecimal montantRestant) { this.montantRestant = montantRestant; }
 
     public StatutFacture getStatut() { return statut; }
     public void setStatut(StatutFacture statut) { this.statut = statut; }
