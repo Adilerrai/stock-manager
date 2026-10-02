@@ -37,6 +37,8 @@ class ReglesMetierStockEtCommandesTest {
     @Mock
     private StockRepository stockRepository;
     @Mock
+    private StockQualiteRepository stockQualiteRepository;
+    @Mock
     private ProduitRepository produitRepository;
     @Mock
     private EntrepriseProfileService entrepriseProfileService;
@@ -57,7 +59,7 @@ class ReglesMetierStockEtCommandesTest {
 
     @BeforeEach
     void setUp() {
-        stockService = new StockService(stockRepository, produitRepository, entrepriseProfileService);
+        stockService = new StockService(stockRepository, stockQualiteRepository, produitRepository, entrepriseProfileService);
     }
 
     @Test
