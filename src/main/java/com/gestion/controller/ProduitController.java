@@ -46,6 +46,11 @@ public class ProduitController {
         return produitMapper.toDto(updatedProduit);
     }
 
+    @GetMapping("/{id}/historique-prix")
+    public ResponseEntity<List<com.gestion.persistent.model.HistoriquePrixProduit>> getHistoriquePrix(@PathVariable Long id) {
+        return ResponseEntity.ok(produitService.getHistoriquePrixByProduitId(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduit(@PathVariable Long id) {
         produitService.deleteProduit(id);

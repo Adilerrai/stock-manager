@@ -35,6 +35,51 @@ public class LigneBonLivraisonClient {
     @Column(name = "prix_vente", nullable = false, precision = 15, scale = 2)
     private BigDecimal prixVente;
 
+    @Column(name = "prix_vente_brut", precision = 15, scale = 2)
+    private BigDecimal prixVenteBrut;
+
+    @Column(name = "remise_pourcentage", precision = 5, scale = 2)
+    private BigDecimal remisePourcentage = BigDecimal.ZERO;
+
+    @Column(name = "remise_montant", precision = 12, scale = 2)
+    private BigDecimal remiseMontant = BigDecimal.ZERO;
+
+    @Column(name = "montant_ligne", precision = 15, scale = 2)
+    private BigDecimal montantLigne;
+
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        if (this.prixVenteBrut == null) {
+            this.prixVenteBrut = this.prixVente != null ? this.prixVente : BigDecimal.ZERO;
+        }
+        calculerMontantLigne();
+    }
+
+    public void calculerMontantLigne() {
+        BigDecimal qte = this.quantiteLivree != null ? this.quantiteLivree : BigDecimal.ZERO;
+        BigDecimal brutUnit = this.prixVenteBrut != null ? this.prixVenteBrut : (this.prixVente != null ? this.prixVente : BigDecimal.ZERO);
+        BigDecimal totalBrut = qte.multiply(brutUnit);
+
+        BigDecimal montantApresRemise = totalBrut;
+        if (this.remisePourcentage != null && this.remisePourcentage.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal reduction = totalBrut.multiply(this.remisePourcentage).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            montantApresRemise = totalBrut.subtract(reduction);
+        }
+        if (this.remiseMontant != null && this.remiseMontant.compareTo(BigDecimal.ZERO) > 0) {
+            montantApresRemise = montantApresRemise.subtract(this.remiseMontant);
+        }
+
+        this.montantLigne = montantApresRemise.compareTo(BigDecimal.ZERO) >= 0 ? montantApresRemise : BigDecimal.ZERO;
+
+        // Prix net unitaire effectif
+        if (qte.compareTo(BigDecimal.ZERO) > 0) {
+            this.prixVente = this.montantLigne.divide(qte, 2, java.math.RoundingMode.HALF_UP);
+        } else {
+            this.prixVente = brutUnit;
+        }
+    }
+
     public LigneBonLivraisonClient() {}
 
     public Long getId() { return id; }
@@ -57,5 +102,17 @@ public class LigneBonLivraisonClient {
 
     public BigDecimal getPrixVente() { return prixVente; }
     public void setPrixVente(BigDecimal prixVente) { this.prixVente = prixVente; }
+
+    public BigDecimal getPrixVenteBrut() { return prixVenteBrut != null ? prixVenteBrut : prixVente; }
+    public void setPrixVenteBrut(BigDecimal prixVenteBrut) { this.prixVenteBrut = prixVenteBrut; }
+
+    public BigDecimal getRemisePourcentage() { return remisePourcentage != null ? remisePourcentage : BigDecimal.ZERO; }
+    public void setRemisePourcentage(BigDecimal remisePourcentage) { this.remisePourcentage = remisePourcentage; }
+
+    public BigDecimal getRemiseMontant() { return remiseMontant != null ? remiseMontant : BigDecimal.ZERO; }
+    public void setRemiseMontant(BigDecimal remiseMontant) { this.remiseMontant = remiseMontant; }
+
+    public BigDecimal getMontantLigne() { return montantLigne; }
+    public void setMontantLigne(BigDecimal montantLigne) { this.montantLigne = montantLigne; }
 }
 

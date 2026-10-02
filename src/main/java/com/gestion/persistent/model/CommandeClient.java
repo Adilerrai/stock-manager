@@ -54,6 +54,21 @@ public class CommandeClient {
     @Column(name = "taux_tva", precision = 5, scale = 2)
     private BigDecimal tauxTVA = BigDecimal.valueOf(20);
 
+    @Column(name = "remise_globale_pourcentage", precision = 5, scale = 2)
+    private BigDecimal remiseGlobalePourcentage = BigDecimal.ZERO;
+
+    @Column(name = "remise_globale_montant", precision = 12, scale = 2)
+    private BigDecimal remiseGlobaleMontant = BigDecimal.ZERO;
+
+    @Column(name = "is_recurrente")
+    private Boolean isRecurrente = false;
+
+    @Column(name = "frequence_recurrence", length = 30)
+    private String frequenceRecurrence; // HEBDOMADAIRE, MENSUEL, TRIMESTRIEL
+
+    @Column(name = "prochaine_date_recurrence")
+    private LocalDateTime prochaineDateRecurrence;
+
     private String observations;
 
     @OneToMany(mappedBy = "commandeClient", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -72,6 +87,37 @@ public class CommandeClient {
                 this.pointDeVenteId = 1L;
             }
         }
+        recalculerMontants();
+    }
+
+    public void recalculerMontants() {
+        BigDecimal totalLignes = BigDecimal.ZERO;
+        if (this.lignesCommande != null) {
+            for (LigneCommandeClient ligne : this.lignesCommande) {
+                if (Boolean.TRUE.equals(ligne.getAnnulee())) {
+                    continue;
+                }
+                ligne.calculerMontantLigne();
+                if (ligne.getMontantLigne() != null) {
+                    totalLignes = totalLignes.add(ligne.getMontantLigne());
+                }
+            }
+        }
+
+        // Remise globale
+        BigDecimal baseHT = totalLignes;
+        if (this.remiseGlobalePourcentage != null && this.remiseGlobalePourcentage.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal reduction = baseHT.multiply(this.remiseGlobalePourcentage).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            baseHT = baseHT.subtract(reduction);
+        }
+        if (this.remiseGlobaleMontant != null && this.remiseGlobaleMontant.compareTo(BigDecimal.ZERO) > 0) {
+            baseHT = baseHT.subtract(this.remiseGlobaleMontant);
+        }
+
+        this.montantHT = baseHT.compareTo(BigDecimal.ZERO) >= 0 ? baseHT : BigDecimal.ZERO;
+        BigDecimal tva = this.tauxTVA != null ? this.tauxTVA : BigDecimal.valueOf(20);
+        BigDecimal facteurTva = BigDecimal.ONE.add(tva.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP));
+        this.montantTTC = this.montantHT.multiply(facteurTva).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     // Constructors
@@ -119,6 +165,21 @@ public class CommandeClient {
 
     public BigDecimal getTauxTVA() { return tauxTVA; }
     public void setTauxTVA(BigDecimal tauxTVA) { this.tauxTVA = tauxTVA; }
+
+    public BigDecimal getRemiseGlobalePourcentage() { return remiseGlobalePourcentage != null ? remiseGlobalePourcentage : BigDecimal.ZERO; }
+    public void setRemiseGlobalePourcentage(BigDecimal remiseGlobalePourcentage) { this.remiseGlobalePourcentage = remiseGlobalePourcentage; }
+
+    public BigDecimal getRemiseGlobaleMontant() { return remiseGlobaleMontant != null ? remiseGlobaleMontant : BigDecimal.ZERO; }
+    public void setRemiseGlobaleMontant(BigDecimal remiseGlobaleMontant) { this.remiseGlobaleMontant = remiseGlobaleMontant; }
+
+    public Boolean getIsRecurrente() { return isRecurrente != null ? isRecurrente : false; }
+    public void setIsRecurrente(Boolean isRecurrente) { this.isRecurrente = isRecurrente; }
+
+    public String getFrequenceRecurrence() { return frequenceRecurrence; }
+    public void setFrequenceRecurrence(String frequenceRecurrence) { this.frequenceRecurrence = frequenceRecurrence; }
+
+    public LocalDateTime getProchaineDateRecurrence() { return prochaineDateRecurrence; }
+    public void setProchaineDateRecurrence(LocalDateTime prochaineDateRecurrence) { this.prochaineDateRecurrence = prochaineDateRecurrence; }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }

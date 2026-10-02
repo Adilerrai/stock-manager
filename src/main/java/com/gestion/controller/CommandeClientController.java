@@ -72,4 +72,19 @@ public class CommandeClientController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(commandeDTOs);
     }
+
+    @PostMapping("/{id}/lignes/{ligneId}/annuler")
+    public ResponseEntity<CommandeClientDTO> annulerLigneCommande(
+            @PathVariable Long id,
+            @PathVariable Long ligneId,
+            @RequestParam(required = false, defaultValue = "Annulation de ligne") String motif) {
+        CommandeClient commande = commandeClientService.annulerLigneCommande(id, ligneId, motif);
+        return ResponseEntity.ok(commandeClientMapper.toDto(commande));
+    }
+
+    @PostMapping("/{id}/generer-recurrente")
+    public ResponseEntity<CommandeClientDTO> genererProchaineCommandeRecurrente(@PathVariable Long id) {
+        CommandeClient nouvelle = commandeClientService.genererProchaineCommandeRecurrente(id);
+        return ResponseEntity.ok(commandeClientMapper.toDto(nouvelle));
+    }
 }

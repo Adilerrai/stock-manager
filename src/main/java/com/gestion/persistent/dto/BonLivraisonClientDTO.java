@@ -16,6 +16,8 @@ public class BonLivraisonClientDTO {
     private Long commandeClientId;
     private String commandeClientNumero;
     private StatutLivraison statut;
+    private BigDecimal remiseGlobalePourcentage;
+    private BigDecimal remiseGlobaleMontant;
     private BigDecimal montantTotal;
     private String observations;
     private Long pointDeVenteId;
@@ -52,6 +54,12 @@ public class BonLivraisonClientDTO {
 
     public StatutLivraison getStatut() { return statut; }
     public void setStatut(StatutLivraison statut) { this.statut = statut; }
+
+    public BigDecimal getRemiseGlobalePourcentage() { return remiseGlobalePourcentage != null ? remiseGlobalePourcentage : BigDecimal.ZERO; }
+    public void setRemiseGlobalePourcentage(BigDecimal remiseGlobalePourcentage) { this.remiseGlobalePourcentage = remiseGlobalePourcentage; }
+
+    public BigDecimal getRemiseGlobaleMontant() { return remiseGlobaleMontant != null ? remiseGlobaleMontant : BigDecimal.ZERO; }
+    public void setRemiseGlobaleMontant(BigDecimal remiseGlobaleMontant) { this.remiseGlobaleMontant = remiseGlobaleMontant; }
 
     public BigDecimal getMontantTotal() { return montantTotal; }
     public void setMontantTotal(BigDecimal montantTotal) { this.montantTotal = montantTotal; }

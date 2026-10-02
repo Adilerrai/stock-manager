@@ -5,7 +5,10 @@ public enum StatutCommandeClient {
     CONFIRMEE,
     EN_PREPARATION,
     PRETE,
+    LIVREE_PARTIELLE,
     LIVREE,
+    BACKORDER,
+    RELIQUAT,
     FACTUREE,
     ANNULEE
 }

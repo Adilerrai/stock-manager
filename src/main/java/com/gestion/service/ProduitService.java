@@ -29,6 +29,7 @@ public class ProduitService {
     private final ProduitMapper produitMapper;
     private final ProduitImageRepository produitImageRepository;
     private final CodificationService codificationService;
+    private final com.gestion.repository.HistoriquePrixProduitRepository historiquePrixProduitRepository;
     @Autowired
     private ImageCompressionService imageCompressionService;
 
@@ -36,11 +37,13 @@ public class ProduitService {
             ProduitRepository produitRepository,
             ProduitMapper produitMapper,
             ProduitImageRepository produitImageRepository,
-            CodificationService codificationService) {
+            CodificationService codificationService,
+            com.gestion.repository.HistoriquePrixProduitRepository historiquePrixProduitRepository) {
         this.produitRepository = produitRepository;
         this.produitMapper = produitMapper;
         this.produitImageRepository = produitImageRepository;
         this.codificationService = codificationService;
+        this.historiquePrixProduitRepository = historiquePrixProduitRepository;
     }
 
     @Transactional
@@ -116,13 +119,36 @@ public class ProduitService {
 
 
     @Transactional
-
     public Produit updateProduit(ProduitDTO produitDTO) {
 
         Produit produit = produitRepository.findById(produitDTO.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", produitDTO.getId()));
         
+        java.math.BigDecimal ancienPrixVente = produit.getPrixVente();
+        java.math.BigDecimal ancienPrixMin = produit.getPrixVenteMin();
+
         produitMapper.updateEntityFromDto(produitDTO, produit);
+
+        // Traçabilité historique des prix de vente si le prix normal ou le prix min a changé
+        java.math.BigDecimal nouveauPrixVente = produit.getPrixVente();
+        java.math.BigDecimal nouveauPrixMin = produit.getPrixVenteMin();
+        boolean prixVenteChange = (ancienPrixVente == null && nouveauPrixVente != null) ||
+                (ancienPrixVente != null && nouveauPrixVente != null && ancienPrixVente.compareTo(nouveauPrixVente) != 0);
+        boolean prixMinChange = (ancienPrixMin == null && nouveauPrixMin != null) ||
+                (ancienPrixMin != null && nouveauPrixMin != null && ancienPrixMin.compareTo(nouveauPrixMin) != 0);
+
+        if (prixVenteChange || prixMinChange) {
+            com.gestion.persistent.model.HistoriquePrixProduit hist = new com.gestion.persistent.model.HistoriquePrixProduit();
+            hist.setProduit(produit);
+            hist.setPointDeVenteId(produit.getPointDeVenteId() != null ? produit.getPointDeVenteId() : 1L);
+            hist.setAncienPrixVente(ancienPrixVente);
+            hist.setNouveauPrixVente(nouveauPrixVente);
+            hist.setAncienPrixMin(ancienPrixMin);
+            hist.setNouveauPrixMin(nouveauPrixMin);
+            hist.setDateModification(java.time.LocalDateTime.now());
+            hist.setMotif("Mise à jour via fiche produit");
+            historiquePrixProduitRepository.save(hist);
+        }
 
         // Debug et gestion de l'image
         if (produitDTO.getImage() != null) {
@@ -279,6 +305,13 @@ public class ProduitService {
         }
 
         return produitRepository.save(produit);
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.gestion.persistent.model.HistoriquePrixProduit> getHistoriquePrixByProduitId(Long produitId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenant = tenantId != null ? tenantId : 1L;
+        return historiquePrixProduitRepository.findByProduitIdAndPointDeVenteIdOrderByDateModificationDesc(produitId, effectiveTenant);
     }
 
 }

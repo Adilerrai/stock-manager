@@ -35,6 +35,12 @@ public class BonLivraisonClient {
     @Column(name = "statut")
     private StatutLivraison statut = StatutLivraison.EN_ATTENTE;
 
+    @Column(name = "remise_globale_pourcentage", precision = 5, scale = 2)
+    private BigDecimal remiseGlobalePourcentage = BigDecimal.ZERO;
+
+    @Column(name = "remise_globale_montant", precision = 12, scale = 2)
+    private BigDecimal remiseGlobaleMontant = BigDecimal.ZERO;
+
     @Column(name = "montant_total", precision = 15, scale = 2)
     private BigDecimal montantTotal = BigDecimal.ZERO;
 
@@ -46,6 +52,39 @@ public class BonLivraisonClient {
 
     @OneToMany(mappedBy = "bonLivraisonClient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneBonLivraisonClient> lignes = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    public void prePersist() {
+        if (this.pointDeVenteId == null) {
+            Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            this.pointDeVenteId = tenant != null ? tenant : 1L;
+        }
+        recalculerMontantTotal();
+    }
+
+    public void recalculerMontantTotal() {
+        BigDecimal totalLignes = BigDecimal.ZERO;
+        if (this.lignes != null) {
+            for (LigneBonLivraisonClient ligne : this.lignes) {
+                ligne.calculerMontantLigne();
+                if (ligne.getMontantLigne() != null) {
+                    totalLignes = totalLignes.add(ligne.getMontantLigne());
+                }
+            }
+        }
+
+        BigDecimal netTotal = totalLignes;
+        if (this.remiseGlobalePourcentage != null && this.remiseGlobalePourcentage.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal reduction = netTotal.multiply(this.remiseGlobalePourcentage).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            netTotal = netTotal.subtract(reduction);
+        }
+        if (this.remiseGlobaleMontant != null && this.remiseGlobaleMontant.compareTo(BigDecimal.ZERO) > 0) {
+            netTotal = netTotal.subtract(this.remiseGlobaleMontant);
+        }
+
+        this.montantTotal = netTotal.compareTo(BigDecimal.ZERO) >= 0 ? netTotal : BigDecimal.ZERO;
+    }
 
     public BonLivraisonClient() {}
 
@@ -69,6 +108,12 @@ public class BonLivraisonClient {
 
     public BigDecimal getMontantTotal() { return montantTotal; }
     public void setMontantTotal(BigDecimal montantTotal) { this.montantTotal = montantTotal; }
+
+    public BigDecimal getRemiseGlobalePourcentage() { return remiseGlobalePourcentage != null ? remiseGlobalePourcentage : BigDecimal.ZERO; }
+    public void setRemiseGlobalePourcentage(BigDecimal remiseGlobalePourcentage) { this.remiseGlobalePourcentage = remiseGlobalePourcentage; }
+
+    public BigDecimal getRemiseGlobaleMontant() { return remiseGlobaleMontant != null ? remiseGlobaleMontant : BigDecimal.ZERO; }
+    public void setRemiseGlobaleMontant(BigDecimal remiseGlobaleMontant) { this.remiseGlobaleMontant = remiseGlobaleMontant; }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }

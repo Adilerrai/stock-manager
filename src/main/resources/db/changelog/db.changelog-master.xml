@@ -25,4 +25,7 @@
     <!-- Changeset 005 : Conversion de la colonne genre dans users en VARCHAR(20) -->
     <include file="changes/005-alter-users-genre-to-varchar.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 006 (Sprint 1) : Commandes, Tarifs, Reliquats et Historique des Prix -->
+    <include file="changes/006-sprint1-commandes-tarifs-reservations.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

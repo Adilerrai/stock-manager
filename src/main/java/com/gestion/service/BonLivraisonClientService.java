@@ -12,6 +12,7 @@ import com.gestion.persistent.enums.TypeMouvement;
 import com.gestion.persistent.enums.QualiteProduit;
 import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.persistent.model.LigneBonLivraisonClient;
+import com.gestion.persistent.model.LigneCommandeClient;
 import com.gestion.persistent.model.Client;
 import com.gestion.persistent.model.CommandeClient;
 import com.gestion.persistent.model.Produit;
@@ -43,6 +44,7 @@ public class BonLivraisonClientService {
     private final MouvementStockService mouvementStockService;
     private final BonLivraisonClientMapper bonLivraisonClientMapper;
     private final CodificationService codificationService;
+    private final com.gestion.repository.StockRepository stockRepository;
 
     public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
                                      ClientRepository clientRepository,
@@ -51,7 +53,8 @@ public class BonLivraisonClientService {
                                      DepotRepository depotRepository,
                                      MouvementStockService mouvementStockService,
                                      BonLivraisonClientMapper bonLivraisonClientMapper,
-                                     CodificationService codificationService) {
+                                     CodificationService codificationService,
+                                     com.gestion.repository.StockRepository stockRepository) {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.clientRepository = clientRepository;
         this.commandeClientRepository = commandeClientRepository;
@@ -60,6 +63,7 @@ public class BonLivraisonClientService {
         this.mouvementStockService = mouvementStockService;
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
         this.codificationService = codificationService;
+        this.stockRepository = stockRepository;
     }
 
     public Page<BonLivraisonClient> searchBonsLivraison(BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
@@ -102,7 +106,18 @@ public class BonLivraisonClientService {
                 .orElseThrow(() -> new RuntimeException("Client non trouvé avec l'id: " + targetClientId));
         bl.setClient(client);
 
-        BigDecimal montantTotal = BigDecimal.ZERO;
+        // Report des remises globales
+        if (dto.getRemiseGlobalePourcentage() != null) {
+            bl.setRemiseGlobalePourcentage(dto.getRemiseGlobalePourcentage());
+        } else if (commande != null && commande.getRemiseGlobalePourcentage() != null) {
+            bl.setRemiseGlobalePourcentage(commande.getRemiseGlobalePourcentage());
+        }
+
+        if (dto.getRemiseGlobaleMontant() != null) {
+            bl.setRemiseGlobaleMontant(dto.getRemiseGlobaleMontant());
+        } else if (commande != null && commande.getRemiseGlobaleMontant() != null) {
+            bl.setRemiseGlobaleMontant(commande.getRemiseGlobaleMontant());
+        }
 
         if (dto.getLignes() != null) {
             for (var ligneDto : dto.getLignes()) {
@@ -125,28 +140,51 @@ public class BonLivraisonClientService {
                 }
 
                 ligne.setQuantiteLivree(ligneDto.getQuantiteLivree() != null ? ligneDto.getQuantiteLivree() : BigDecimal.ONE);
-                BigDecimal pu = ligneDto.getPrixVente() != null ? ligneDto.getPrixVente() : BigDecimal.ZERO;
 
-                // RÈGLE : Bloquer si le prix de vente est inférieur au prix de vente minimum autorisé
-                Produit produit = ligne.getProduit();
-                if (produit != null && produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
-                    if (pu.compareTo(produit.getPrixVenteMin()) < 0) {
-                        String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
-                        throw new CommonException("Impossible de créer le bon de livraison : le prix de vente (" + pu + " MAD) pour l'article '" +
-                                nomArticle + "' est inférieur au prix de vente minimum autorisé (" + produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                BigDecimal puBrut = ligneDto.getPrixVenteBrut() != null ? ligneDto.getPrixVenteBrut() : 
+                        (ligneDto.getPrixVente() != null ? ligneDto.getPrixVente() : BigDecimal.ZERO);
+                BigDecimal remisePct = ligneDto.getRemisePourcentage() != null ? ligneDto.getRemisePourcentage() : BigDecimal.ZERO;
+                BigDecimal remiseMt = ligneDto.getRemiseMontant() != null ? ligneDto.getRemiseMontant() : BigDecimal.ZERO;
+
+                // Si issu d'une commande et pas précisé, chercher sur la ligne de commande correspondante
+                if (commande != null && commande.getLignesCommande() != null && remisePct.compareTo(BigDecimal.ZERO) == 0 && remiseMt.compareTo(BigDecimal.ZERO) == 0) {
+                    for (LigneCommandeClient lcmd : commande.getLignesCommande()) {
+                        if (lcmd.getProduit() != null && lcmd.getProduit().getId().equals(ligneDto.getProduitId())) {
+                            if (lcmd.getRemisePourcentage() != null && lcmd.getRemisePourcentage().compareTo(BigDecimal.ZERO) > 0) {
+                                remisePct = lcmd.getRemisePourcentage();
+                            }
+                            if (lcmd.getRemiseMontant() != null && lcmd.getRemiseMontant().compareTo(BigDecimal.ZERO) > 0) {
+                                remiseMt = lcmd.getRemiseMontant();
+                            }
+                            if (puBrut.compareTo(BigDecimal.ZERO) == 0 && lcmd.getPrixUnitaire() != null) {
+                                puBrut = lcmd.getPrixUnitaire();
+                            }
+                            break;
+                        }
                     }
                 }
 
-                ligne.setPrixVente(pu);
+                ligne.setPrixVenteBrut(puBrut);
+                ligne.setRemisePourcentage(remisePct);
+                ligne.setRemiseMontant(remiseMt);
+                ligne.calculerMontantLigne();
 
-                BigDecimal montantLigne = ligne.getPrixVente().multiply(ligne.getQuantiteLivree());
-                montantTotal = montantTotal.add(montantLigne);
+                // RÈGLE : Bloquer si le prix de vente net est inférieur au prix de vente minimum autorisé
+                Produit produit = ligne.getProduit();
+                if (produit != null && produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal puNet = ligne.getPrixVente() != null ? ligne.getPrixVente() : BigDecimal.ZERO;
+                    if (puNet.compareTo(produit.getPrixVenteMin()) < 0) {
+                        String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
+                        throw new CommonException("Impossible de créer le bon de livraison : le prix de vente net (" + puNet + " MAD) pour l'article '" +
+                                nomArticle + "' est inférieur au prix de vente minimum autorisé (" + produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                    }
+                }
 
                 bl.getLignes().add(ligne);
             }
         }
 
-        bl.setMontantTotal(montantTotal);
+        bl.recalculerMontantTotal();
         BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
         return bonLivraisonClientMapper.toDto(saved);
     }
@@ -195,6 +233,15 @@ public class BonLivraisonClientService {
                         bl.getNumeroBl(),
                         "Expédition BL client " + bl.getNumeroBl()
                 );
+
+                // Déduire la réservation de stock car la marchandise sort physiquement
+                stockRepository.findByProduitId(ligne.getProduit().getId()).ifPresent(stock -> {
+                    BigDecimal reservee = stock.getQuantiteReservee() != null ? stock.getQuantiteReservee() : BigDecimal.ZERO;
+                    BigDecimal qteLivree = ligne.getQuantiteLivree() != null ? ligne.getQuantiteLivree() : BigDecimal.ZERO;
+                    BigDecimal nouveauRes = reservee.subtract(qteLivree);
+                    stock.setQuantiteReservee(nouveauRes.compareTo(BigDecimal.ZERO) >= 0 ? nouveauRes : BigDecimal.ZERO);
+                    stockRepository.save(stock);
+                });
             } catch (Exception ex) {
                 String nomProd = ligne.getProduit().getNom() != null ? ligne.getProduit().getNom() : String.valueOf(ligne.getProduit().getId());
                 throw new CommonException("Impossible de déstocker le produit '" + nomProd + "' : " + 
@@ -204,10 +251,45 @@ public class BonLivraisonClientService {
 
         bl.setStatut(StatutLivraison.LIVREE);
 
-        // Update linked order status if any
+        // Update linked order status and reliquats if any
         if (bl.getCommandeClient() != null) {
             CommandeClient commande = bl.getCommandeClient();
-            commande.setStatut(StatutCommandeClient.LIVREE);
+            if (commande.getLignesCommande() != null) {
+                for (LigneBonLivraisonClient ligneBl : bl.getLignes()) {
+                    if (ligneBl.getProduit() == null) continue;
+                    for (LigneCommandeClient ligneCmd : commande.getLignesCommande()) {
+                        if (ligneCmd.getProduit() != null && ligneCmd.getProduit().getId().equals(ligneBl.getProduit().getId())) {
+                            BigDecimal dejaLivre = ligneCmd.getQuantiteLivree() != null ? ligneCmd.getQuantiteLivree() : BigDecimal.ZERO;
+                            BigDecimal qteBl = ligneBl.getQuantiteLivree() != null ? ligneBl.getQuantiteLivree() : BigDecimal.ZERO;
+                            ligneCmd.setQuantiteLivree(dejaLivre.add(qteBl));
+                            ligneCmd.setQuantiteReliquat(ligneCmd.calculerReliquat());
+                            break;
+                        }
+                    }
+                }
+
+                // Déterminer si tout est livré ou livraison partielle
+                boolean toutLivre = true;
+                boolean auMoinsUneLivraison = false;
+                for (LigneCommandeClient lc : commande.getLignesCommande()) {
+                    if (Boolean.TRUE.equals(lc.getAnnulee())) continue;
+                    BigDecimal rel = lc.getQuantiteReliquat() != null ? lc.getQuantiteReliquat() : lc.calculerReliquat();
+                    if (rel.compareTo(BigDecimal.ZERO) > 0) {
+                        toutLivre = false;
+                    }
+                    if (lc.getQuantiteLivree() != null && lc.getQuantiteLivree().compareTo(BigDecimal.ZERO) > 0) {
+                        auMoinsUneLivraison = true;
+                    }
+                }
+
+                if (toutLivre) {
+                    commande.setStatut(StatutCommandeClient.LIVREE);
+                } else if (auMoinsUneLivraison) {
+                    commande.setStatut(StatutCommandeClient.LIVREE_PARTIELLE);
+                }
+            } else {
+                commande.setStatut(StatutCommandeClient.LIVREE);
+            }
             commandeClientRepository.save(commande);
         }
 

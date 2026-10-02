@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 006 (Sprint 1) :
+      - Colonnes de remises et récurrence sur commandes_client
+      - Colonnes de reliquats, livraison partielle et remises sur lignes_commande_client
+      - Table historique_prix_produit pour la traçabilité des prix de vente
+    -->
+    <changeSet id="006-sprint1-commandes-tarifs-reservations" author="erp-commercial">
+        <sql splitStatements="true">
+            -- 1. Colonnes sur commandes_client
+            ALTER TABLE IF EXISTS commandes_client 
+                ADD COLUMN IF NOT EXISTS remise_globale_pourcentage NUMERIC(5, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS remise_globale_montant NUMERIC(12, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS is_recurrente BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS frequence_recurrence VARCHAR(30),
+                ADD COLUMN IF NOT EXISTS prochaine_date_recurrence TIMESTAMP;
+
+            -- 2. Colonnes sur lignes_commande_client
+            ALTER TABLE IF EXISTS lignes_commande_client 
+                ADD COLUMN IF NOT EXISTS quantite_commandee NUMERIC(12, 3),
+                ADD COLUMN IF NOT EXISTS quantite_livree NUMERIC(12, 3) DEFAULT 0.000,
+                ADD COLUMN IF NOT EXISTS quantite_reliquat NUMERIC(12, 3),
+                ADD COLUMN IF NOT EXISTS remise_pourcentage NUMERIC(5, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS remise_montant NUMERIC(12, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS annulee BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS motif_annulation VARCHAR(255);
+
+            -- Initialisation des nouvelles colonnes pour les lignes existantes
+            UPDATE lignes_commande_client 
+            SET quantite_commandee = COALESCE(quantite, 0),
+                quantite_reliquat = COALESCE(quantite, 0)
+            WHERE quantite_commandee IS NULL;
+
+            -- 3. Colonnes de remises sur bons_livraison_client et lignes_bon_livraison_client
+            ALTER TABLE IF EXISTS bons_livraison_client 
+                ADD COLUMN IF NOT EXISTS remise_globale_pourcentage NUMERIC(5, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS remise_globale_montant NUMERIC(12, 2) DEFAULT 0.00;
+
+            ALTER TABLE IF EXISTS lignes_bon_livraison_client 
+                ADD COLUMN IF NOT EXISTS prix_vente_brut NUMERIC(15, 2),
+                ADD COLUMN IF NOT EXISTS remise_pourcentage NUMERIC(5, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS remise_montant NUMERIC(12, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_ligne NUMERIC(15, 2);
+
+            -- Initialiser prix_vente_brut et montant_ligne pour les lignes BL existantes
+            UPDATE lignes_bon_livraison_client 
+            SET prix_vente_brut = COALESCE(prix_vente, 0),
+                montant_ligne = COALESCE(prix_vente, 0) * COALESCE(quantite_livree, 0)
+            WHERE prix_vente_brut IS NULL;
+
+            -- 4. Table historique_prix_produit
+            CREATE TABLE IF NOT EXISTS historique_prix_produit (
+                id BIGSERIAL PRIMARY KEY,
+                produit_id BIGINT NOT NULL REFERENCES produits(id) ON DELETE CASCADE,
+                point_de_vente_id BIGINT NOT NULL DEFAULT 1,
+                ancien_prix_vente NUMERIC(12, 2),
+                nouveau_prix_vente NUMERIC(12, 2),
+                ancien_prix_min NUMERIC(12, 2),
+                nouveau_prix_min NUMERIC(12, 2),
+                date_modification TIMESTAMP NOT NULL DEFAULT NOW(),
+                modifie_par_id BIGINT,
+                motif VARCHAR(255)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_hist_prix_produit ON historique_prix_produit(produit_id);
+            CREATE INDEX IF NOT EXISTS idx_hist_prix_tenant ON historique_prix_produit(point_de_vente_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

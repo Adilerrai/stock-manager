@@ -37,6 +37,7 @@ public class CommandeClientService {
     private final CommandeClientMapper commandeClientMapper;
     private final BonLivraisonClientRepository bonLivraisonClientRepository;
     private final CodificationService codificationService;
+    private final StockService stockService;
 
     public CommandeClientService(CommandeClientRepository commandeClientRepository,
                                 LigneCommandeClientRepository ligneCommandeClientRepository,
@@ -44,7 +45,8 @@ public class CommandeClientService {
                                 ClientRepository clientRepository,
                                 CommandeClientMapper commandeClientMapper,
                                 BonLivraisonClientRepository bonLivraisonClientRepository,
-                                CodificationService codificationService) {
+                                CodificationService codificationService,
+                                StockService stockService) {
         this.commandeClientRepository = commandeClientRepository;
         this.ligneCommandeClientRepository = ligneCommandeClientRepository;
         this.produitRepository = produitRepository;
@@ -52,6 +54,7 @@ public class CommandeClientService {
         this.commandeClientMapper = commandeClientMapper;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.codificationService = codificationService;
+        this.stockService = stockService;
     }
 
     private Long getTenantId() {
@@ -75,22 +78,37 @@ public class CommandeClientService {
         commande.setStatut(commandeDTO.getStatut() != null ? commandeDTO.getStatut() : StatutCommandeClient.BROUILLON);
         commande.setDateCommande(commandeDTO.getDateCommande() != null ? commandeDTO.getDateCommande() : LocalDateTime.now());
         commande.setDateLivraisonPrevue(commandeDTO.getDateLivraisonPrevue());
-        commande.setTauxTVA(commandeDTO.getTauxTVA());
+        commande.setTauxTVA(commandeDTO.getTauxTVA() != null ? commandeDTO.getTauxTVA() : BigDecimal.valueOf(20));
+        commande.setRemiseGlobalePourcentage(commandeDTO.getRemiseGlobalePourcentage());
+        commande.setRemiseGlobaleMontant(commandeDTO.getRemiseGlobaleMontant());
+        commande.setIsRecurrente(commandeDTO.getIsRecurrente());
+        commande.setFrequenceRecurrence(commandeDTO.getFrequenceRecurrence());
+        commande.setProchaineDateRecurrence(commandeDTO.getProchaineDateRecurrence());
         commande.setObservations(commandeDTO.getObservations());
 
         commande = commandeClientRepository.save(commande);
 
         // Créer les lignes de commande
-        BigDecimal montantHT = BigDecimal.ZERO;
-        for (LigneCommandeClientDTO ligneDTO : commandeDTO.getLignesCommande()) {
-            LigneCommandeClient ligne = createLigneCommandeClient(commande, ligneDTO);
-            montantHT = montantHT.add(ligne.getMontantLigne());
+        if (commandeDTO.getLignesCommande() != null) {
+            for (LigneCommandeClientDTO ligneDTO : commandeDTO.getLignesCommande()) {
+                LigneCommandeClient ligne = createLigneCommandeClient(commande, ligneDTO);
+                commande.getLignesCommande().add(ligne);
+            }
         }
 
-        commande.setMontantHT(montantHT);
-        commande.setMontantTTC(montantHT.multiply(BigDecimal.ONE.add(commande.getTauxTVA().divide(BigDecimal.valueOf(100)))));
-        
-        return commandeClientRepository.save(commande);
+        commande.recalculerMontants();
+        commande = commandeClientRepository.save(commande);
+
+        // Si la commande est créée directement au statut CONFIRMEE, réserver le stock
+        if (commande.getStatut() == StatutCommandeClient.CONFIRMEE) {
+            boolean toutReserve = reserverStockPourCommande(commande);
+            if (!toutReserve) {
+                commande.setStatut(StatutCommandeClient.BACKORDER);
+                commande = commandeClientRepository.save(commande);
+            }
+        }
+
+        return commande;
     }
 
     private LigneCommandeClient createLigneCommandeClient(CommandeClient commande, LigneCommandeClientDTO ligneDTO) {
@@ -107,13 +125,19 @@ public class CommandeClientService {
             }
         }
 
+        BigDecimal qte = ligneDTO.getQuantite() != null ? ligneDTO.getQuantite() : BigDecimal.ONE;
         LigneCommandeClient ligne = new LigneCommandeClient();
         ligne.setCommandeClient(commande);
         ligne.setProduit(produit);
-        ligne.setQuantite(ligneDTO.getQuantite());
-        ligne.setPrixUnitaire(ligneDTO.getPrixUnitaire());
-        ligne.setMontantLigne(ligneDTO.getQuantite().multiply(ligneDTO.getPrixUnitaire()));
+        ligne.setQuantite(qte);
+        ligne.setQuantiteCommandee(ligneDTO.getQuantiteCommandee() != null ? ligneDTO.getQuantiteCommandee() : qte);
+        ligne.setQuantiteLivree(BigDecimal.ZERO);
+        ligne.setQuantiteReliquat(ligne.getQuantiteCommandee());
+        ligne.setPrixUnitaire(ligneDTO.getPrixUnitaire() != null ? ligneDTO.getPrixUnitaire() : BigDecimal.ZERO);
+        ligne.setRemisePourcentage(ligneDTO.getRemisePourcentage() != null ? ligneDTO.getRemisePourcentage() : BigDecimal.ZERO);
+        ligne.setRemiseMontant(ligneDTO.getRemiseMontant() != null ? ligneDTO.getRemiseMontant() : BigDecimal.ZERO);
         ligne.setObservations(ligneDTO.getObservations());
+        ligne.calculerMontantLigne();
 
         return ligneCommandeClientRepository.save(ligne);
     }
@@ -130,12 +154,13 @@ public class CommandeClientService {
     @Transactional
     public CommandeClient updateStatut(Long commandeId, StatutCommandeClient nouveauStatut) {
         CommandeClient commande = getCommandeClientEntityById(commandeId);
+        StatutCommandeClient ancienStatut = commande.getStatut();
 
         if (nouveauStatut == StatutCommandeClient.ANNULEE) {
-            if (commande.getStatut() == StatutCommandeClient.ANNULEE) {
+            if (ancienStatut == StatutCommandeClient.ANNULEE) {
                 throw new CommonException("Cette commande est déjà annulée.", HttpStatus.BAD_REQUEST);
             }
-            if (commande.getStatut() == StatutCommandeClient.FACTUREE) {
+            if (ancienStatut == StatutCommandeClient.FACTUREE) {
                 throw new CommonException("Impossible d'annuler une commande déjà facturée.", HttpStatus.BAD_REQUEST);
             }
 
@@ -157,27 +182,172 @@ public class CommandeClientService {
                 throw new CommonException("Impossible d'annuler cette commande car elle possède un ou plusieurs bons de livraison actifs (" + 
                         numerosBl + "). Vous devez d'abord annuler ces bons de livraison.", HttpStatus.BAD_REQUEST);
             }
+
+            // Libérer le stock réservé non livré
+            libererStockPourCommande(commande);
         }
 
-        if (nouveauStatut == StatutCommandeClient.CONFIRMEE || nouveauStatut == StatutCommandeClient.LIVREE) {
-            if (commande.getLignesCommande() != null) {
-                for (LigneCommandeClient ligne : commande.getLignesCommande()) {
-                    Produit produit = ligne.getProduit();
-                    if (produit != null && produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
-                        BigDecimal pu = ligne.getPrixUnitaire() != null ? ligne.getPrixUnitaire() : BigDecimal.ZERO;
-                        if (pu.compareTo(produit.getPrixVenteMin()) < 0) {
-                            String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
-                            throw new CommonException("Impossible de passer la commande au statut " + nouveauStatut + " : le prix unitaire (" +
-                                    pu + " MAD) pour l'article '" + nomArticle + "' est inférieur au prix de vente minimum autorisé (" +
-                                    produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+        if (nouveauStatut == StatutCommandeClient.CONFIRMEE) {
+            validerPrixMinPourCommande(commande, nouveauStatut);
+
+            // Si elle n'était pas déjà confirmée, réserver le stock disponible
+            if (ancienStatut != StatutCommandeClient.CONFIRMEE) {
+                boolean toutReserve = reserverStockPourCommande(commande);
+                if (!toutReserve) {
+                    // Si rupture de stock, basculer en BACKORDER (en attente d'approvisionnement)
+                    nouveauStatut = StatutCommandeClient.BACKORDER;
+                }
+            }
+        }
+
+        if (nouveauStatut == StatutCommandeClient.LIVREE) {
+            validerPrixMinPourCommande(commande, nouveauStatut);
+        }
+
+        commande.setStatut(nouveauStatut);
+        return commandeClientRepository.save(commande);
+    }
+
+    private void validerPrixMinPourCommande(CommandeClient commande, StatutCommandeClient nouveauStatut) {
+        if (commande.getLignesCommande() != null) {
+            for (LigneCommandeClient ligne : commande.getLignesCommande()) {
+                if (Boolean.TRUE.equals(ligne.getAnnulee())) continue;
+                Produit produit = ligne.getProduit();
+                if (produit != null && produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal pu = ligne.getPrixUnitaire() != null ? ligne.getPrixUnitaire() : BigDecimal.ZERO;
+                    if (pu.compareTo(produit.getPrixVenteMin()) < 0) {
+                        String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
+                        throw new CommonException("Impossible de passer la commande au statut " + nouveauStatut + " : le prix unitaire (" +
+                                pu + " MAD) pour l'article '" + nomArticle + "' est inférieur au prix de vente minimum autorisé (" +
+                                produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean reserverStockPourCommande(CommandeClient commande) {
+        boolean toutReserve = true;
+        if (commande.getLignesCommande() != null) {
+            for (LigneCommandeClient ligne : commande.getLignesCommande()) {
+                if (Boolean.TRUE.equals(ligne.getAnnulee())) continue;
+                if (ligne.getProduit() != null) {
+                    BigDecimal aReserver = ligne.getQuantiteReliquat() != null ? ligne.getQuantiteReliquat() : ligne.calculerReliquat();
+                    if (aReserver.compareTo(BigDecimal.ZERO) > 0) {
+                        boolean ok = stockService.reserverStock(ligne.getProduit().getId(), aReserver);
+                        if (!ok) {
+                            toutReserve = false;
                         }
                     }
                 }
             }
         }
+        return toutReserve;
+    }
 
-        commande.setStatut(nouveauStatut);
+    private void libererStockPourCommande(CommandeClient commande) {
+        if (commande.getLignesCommande() != null) {
+            for (LigneCommandeClient ligne : commande.getLignesCommande()) {
+                if (Boolean.TRUE.equals(ligne.getAnnulee())) continue;
+                if (ligne.getProduit() != null) {
+                    BigDecimal aLiberer = ligne.getQuantiteReliquat() != null ? ligne.getQuantiteReliquat() : ligne.calculerReliquat();
+                    if (aLiberer.compareTo(BigDecimal.ZERO) > 0) {
+                        stockService.libererStock(ligne.getProduit().getId(), aLiberer);
+                    }
+                }
+            }
+        }
+    }
+
+    @Transactional
+    public CommandeClient annulerLigneCommande(Long commandeId, Long ligneId, String motif) {
+        CommandeClient commande = getCommandeClientEntityById(commandeId);
+        LigneCommandeClient ligne = ligneCommandeClientRepository.findById(ligneId)
+                .orElseThrow(() -> new ResourceNotFoundException("LigneCommandeClient", "id", ligneId));
+
+        if (!ligne.getCommandeClient().getId().equals(commandeId)) {
+            throw new CommonException("La ligne spécifiée n'appartient pas à cette commande.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (Boolean.TRUE.equals(ligne.getAnnulee())) {
+            throw new CommonException("Cette ligne est déjà annulée.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Si la commande avait réservé du stock, libérer la part non livrée
+        if (commande.getStatut() == StatutCommandeClient.CONFIRMEE || commande.getStatut() == StatutCommandeClient.BACKORDER) {
+            BigDecimal aLiberer = ligne.getQuantiteReliquat() != null ? ligne.getQuantiteReliquat() : ligne.calculerReliquat();
+            if (aLiberer.compareTo(BigDecimal.ZERO) > 0 && ligne.getProduit() != null) {
+                stockService.libererStock(ligne.getProduit().getId(), aLiberer);
+            }
+        }
+
+        ligne.setAnnulee(true);
+        ligne.setMotifAnnulation(motif);
+        ligne.setQuantiteReliquat(BigDecimal.ZERO);
+        ligneCommandeClientRepository.save(ligne);
+
+        commande.recalculerMontants();
+
+        // Si toutes les lignes sont annulées, annuler la commande
+        boolean toutesAnnulees = commande.getLignesCommande().stream()
+                .allMatch(l -> Boolean.TRUE.equals(l.getAnnulee()));
+        if (toutesAnnulees) {
+            commande.setStatut(StatutCommandeClient.ANNULEE);
+        }
+
         return commandeClientRepository.save(commande);
+    }
+
+    @Transactional
+    public CommandeClient genererProchaineCommandeRecurrente(Long commandeId) {
+        CommandeClient source = getCommandeClientEntityById(commandeId);
+        if (!Boolean.TRUE.equals(source.getIsRecurrente())) {
+            throw new CommonException("Cette commande n'est pas configurée comme commande récurrente.", HttpStatus.BAD_REQUEST);
+        }
+
+        CommandeClientDTO dto = new CommandeClientDTO();
+        dto.setClientId(source.getClient() != null ? source.getClient().getId() : null);
+        dto.setClientNom(source.getClientNom());
+        dto.setClientTelephone(source.getClientTelephone());
+        dto.setClientEmail(source.getClientEmail());
+        dto.setAdresseLivraison(source.getAdresseLivraison());
+        dto.setStatut(StatutCommandeClient.BROUILLON);
+        dto.setDateCommande(LocalDateTime.now());
+        dto.setTauxTVA(source.getTauxTVA());
+        dto.setRemiseGlobalePourcentage(source.getRemiseGlobalePourcentage());
+        dto.setRemiseGlobaleMontant(source.getRemiseGlobaleMontant());
+        dto.setObservations("Générée automatiquement d'après la commande récurrente " + source.getNumeroCommande());
+
+        List<LigneCommandeClientDTO> lignesDTO = new java.util.ArrayList<>();
+        if (source.getLignesCommande() != null) {
+            for (LigneCommandeClient lc : source.getLignesCommande()) {
+                if (Boolean.TRUE.equals(lc.getAnnulee())) continue;
+                LigneCommandeClientDTO ldto = new LigneCommandeClientDTO();
+                ldto.setProduitId(lc.getProduit().getId());
+                ldto.setQuantite(lc.getQuantiteCommandee());
+                ldto.setPrixUnitaire(lc.getPrixUnitaire());
+                ldto.setRemisePourcentage(lc.getRemisePourcentage());
+                ldto.setRemiseMontant(lc.getRemiseMontant());
+                ldto.setObservations(lc.getObservations());
+                lignesDTO.add(ldto);
+            }
+        }
+        dto.setLignesCommande(lignesDTO);
+
+        CommandeClient nouvelle = createCommandeClient(dto);
+
+        // Mettre à jour la date de prochaine occurrence sur la commande source
+        LocalDateTime prochaine = source.getProchaineDateRecurrence() != null ? source.getProchaineDateRecurrence() : LocalDateTime.now();
+        if ("HEBDOMADAIRE".equalsIgnoreCase(source.getFrequenceRecurrence())) {
+            source.setProchaineDateRecurrence(prochaine.plusWeeks(1));
+        } else if ("TRIMESTRIEL".equalsIgnoreCase(source.getFrequenceRecurrence())) {
+            source.setProchaineDateRecurrence(prochaine.plusMonths(3));
+        } else {
+            source.setProchaineDateRecurrence(prochaine.plusMonths(1));
+        }
+        commandeClientRepository.save(source);
+
+        return nouvelle;
     }
 
     public List<CommandeClient> getCommandesByStatut(StatutCommandeClient statut) {

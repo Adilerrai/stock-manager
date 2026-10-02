@@ -21,6 +21,12 @@ public class CommandeClientDTO {
     private BigDecimal montantHT;
     private BigDecimal montantTTC;
     private BigDecimal tauxTVA;
+    private BigDecimal remiseGlobalePourcentage;
+    private BigDecimal remiseGlobaleMontant;
+    private Boolean isRecurrente;
+    private String frequenceRecurrence;
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.acommon.config.FlexibleLocalDateTimeDeserializer.class)
+    private LocalDateTime prochaineDateRecurrence;
     private String observations;
     private Long pointDeVenteId;
     private List<LigneCommandeClientDTO> lignesCommande;
@@ -121,5 +127,19 @@ public class CommandeClientDTO {
     public void setObservations(String observations) {
         this.observations = observations;
     }
-// ... autres getters/setters
+
+    public BigDecimal getRemiseGlobalePourcentage() { return remiseGlobalePourcentage != null ? remiseGlobalePourcentage : BigDecimal.ZERO; }
+    public void setRemiseGlobalePourcentage(BigDecimal remiseGlobalePourcentage) { this.remiseGlobalePourcentage = remiseGlobalePourcentage; }
+
+    public BigDecimal getRemiseGlobaleMontant() { return remiseGlobaleMontant != null ? remiseGlobaleMontant : BigDecimal.ZERO; }
+    public void setRemiseGlobaleMontant(BigDecimal remiseGlobaleMontant) { this.remiseGlobaleMontant = remiseGlobaleMontant; }
+
+    public Boolean getIsRecurrente() { return isRecurrente != null ? isRecurrente : false; }
+    public void setIsRecurrente(Boolean isRecurrente) { this.isRecurrente = isRecurrente; }
+
+    public String getFrequenceRecurrence() { return frequenceRecurrence; }
+    public void setFrequenceRecurrence(String frequenceRecurrence) { this.frequenceRecurrence = frequenceRecurrence; }
+
+    public LocalDateTime getProchaineDateRecurrence() { return prochaineDateRecurrence; }
+    public void setProchaineDateRecurrence(LocalDateTime prochaineDateRecurrence) { this.prochaineDateRecurrence = prochaineDateRecurrence; }
 }

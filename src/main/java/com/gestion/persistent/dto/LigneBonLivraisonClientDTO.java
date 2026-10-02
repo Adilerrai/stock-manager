@@ -13,6 +13,10 @@ public class LigneBonLivraisonClientDTO {
     private Long lotId;
     private String numeroLot;
     private BigDecimal prixVente;
+    private BigDecimal prixVenteBrut;
+    private BigDecimal remisePourcentage;
+    private BigDecimal remiseMontant;
+    private BigDecimal montantLigne;
     private BigDecimal prixVenteMin;
 
     public LigneBonLivraisonClientDTO() {}
@@ -46,6 +50,18 @@ public class LigneBonLivraisonClientDTO {
 
     public BigDecimal getPrixVente() { return prixVente; }
     public void setPrixVente(BigDecimal prixVente) { this.prixVente = prixVente; }
+
+    public BigDecimal getPrixVenteBrut() { return prixVenteBrut != null ? prixVenteBrut : prixVente; }
+    public void setPrixVenteBrut(BigDecimal prixVenteBrut) { this.prixVenteBrut = prixVenteBrut; }
+
+    public BigDecimal getRemisePourcentage() { return remisePourcentage != null ? remisePourcentage : BigDecimal.ZERO; }
+    public void setRemisePourcentage(BigDecimal remisePourcentage) { this.remisePourcentage = remisePourcentage; }
+
+    public BigDecimal getRemiseMontant() { return remiseMontant != null ? remiseMontant : BigDecimal.ZERO; }
+    public void setRemiseMontant(BigDecimal remiseMontant) { this.remiseMontant = remiseMontant; }
+
+    public BigDecimal getMontantLigne() { return montantLigne; }
+    public void setMontantLigne(BigDecimal montantLigne) { this.montantLigne = montantLigne; }
 
     public BigDecimal getPrixVenteMin() { return prixVenteMin; }
     public void setPrixVenteMin(BigDecimal prixVenteMin) { this.prixVenteMin = prixVenteMin; }
