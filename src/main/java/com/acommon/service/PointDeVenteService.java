@@ -13,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ public class PointDeVenteService {
         this(pointDeVenteRepository, userRepository, null);
     }
 
+    @Autowired
     public PointDeVenteService(
             PointDeVenteRepository pointDeVenteRepository,
             UserRepository userRepository,
