@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -194,7 +195,11 @@ public class VenteService {
     }
 
     public List<VenteDTO> getAllVentes() {
-        return venteRepository.findAll().stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) {
+            return Collections.emptyList();
+        }
+        return venteRepository.findByPointDeVenteIdOrderByDateVenteDesc(tenantId).stream()
                 .map(venteMapper::toDto)
                 .collect(Collectors.toList());
     }

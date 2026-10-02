@@ -10,6 +10,7 @@ public class ProduitSearchCriteria {
     private BigDecimal prixMax;
     private Boolean actif;
     private String categorie;
+    private Long societeId;
 
     // Constructors
     public ProduitSearchCriteria() {}
@@ -35,4 +36,7 @@ public class ProduitSearchCriteria {
 
     public String getCategorie() { return categorie; }
     public void setCategorie(String categorie) { this.categorie = categorie; }
+
+    public Long getSocieteId() { return societeId; }
+    public void setSocieteId(Long societeId) { this.societeId = societeId; }
 }

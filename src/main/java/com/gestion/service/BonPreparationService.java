@@ -180,8 +180,11 @@ public class BonPreparationService {
 
     @Transactional(readOnly = true)
     public List<BonPreparationDTO> getTousLesBons() {
-        return bonPreparationRepository.findAll().stream()
-                .sorted(Comparator.comparing(BonPreparation::getDateCreation).reversed())
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) {
+            return Collections.emptyList();
+        }
+        return bonPreparationRepository.findByPointDeVenteIdOrderByDateCreationDesc(tenantId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }

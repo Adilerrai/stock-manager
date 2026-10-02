@@ -13,6 +13,8 @@ import java.util.Optional;
 public interface FournisseurRepository extends JpaRepository<Fournisseur, Long>, FournisseurRepositoryCustom {
 
     List<Fournisseur> findByActifTrue();
+
+    List<Fournisseur> findByPointDeVenteId(Long pointDeVenteId);
     
     List<Fournisseur> findByPointDeVenteIdAndActifTrue(Long pointDeVenteId);
 

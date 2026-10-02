@@ -11,6 +11,7 @@ public class BonLivraisonClientSearchCriteria {
     private Boolean facturee;
     private LocalDateTime dateDebut;
     private LocalDateTime dateFin;
+    private Long societeId;
 
     public BonLivraisonClientSearchCriteria() {}
 
@@ -34,4 +35,7 @@ public class BonLivraisonClientSearchCriteria {
 
     public LocalDateTime getDateFin() { return dateFin; }
     public void setDateFin(LocalDateTime dateFin) { this.dateFin = dateFin; }
+
+    public Long getSocieteId() { return societeId; }
+    public void setSocieteId(Long societeId) { this.societeId = societeId; }
 }

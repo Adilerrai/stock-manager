@@ -47,15 +47,11 @@ public class LotService {
         }
 
 
-        // If still null, fallback to any active depot global
+        // If still null, fallback to active depot for tenant
         if (depot == null) {
-            List<Depot> allDepots = depotRepository.findAll();
-            for (Depot d : allDepots) {
-                if (d.getActif() != null && d.getActif()) {
-                    depot = d;
-                    log.info("Using global fallback active depot {}", depot.getId());
-                    break;
-                }
+            Long tenantId = produit.getPointDeVenteId() != null ? produit.getPointDeVenteId() : com.acommon.persistant.model.TenantContext.getCurrentTenant();
+            if (tenantId != null) {
+                depot = depotRepository.findByPointDeVenteIdAndActifTrue(tenantId).stream().findFirst().orElse(null);
             }
         }
 

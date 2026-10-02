@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.LigneRapprochementDTO;
 import com.gestion.persistent.dto.RapprochementAchatDTO;
 import com.gestion.persistent.enums.StatutConformiteAchat;
@@ -46,7 +47,8 @@ public class RapprochementAchatService {
         }
 
         // Trouver les livraisons récentes de ce fournisseur
-        List<Livraison> livraisons = livraisonRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Livraison> livraisons = tenantId != null ? livraisonRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
         Livraison livraisonConcernee = null;
         if (facture.getFournisseur() != null) {
             for (Livraison liv : livraisons) {
@@ -175,7 +177,8 @@ public class RapprochementAchatService {
      * Retourne la liste des rapprochements présentant des litiges bloquants
      */
     public List<RapprochementAchatDTO> getRapprochementsLitigieux() {
-        List<FactureAchat> factures = factureAchatRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<FactureAchat> factures = tenantId != null ? factureAchatRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
         List<RapprochementAchatDTO> litiges = new ArrayList<>();
 
         for (FactureAchat f : factures) {

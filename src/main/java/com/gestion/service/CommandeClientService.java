@@ -6,6 +6,7 @@ import com.acommon.exception.ResourceNotFoundException;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.mapper.CommandeClientMapper;
 import com.gestion.persistent.dto.CommandeClientDTO;
+import com.gestion.persistent.dto.CommandeClientSearchCriteria;
 import com.gestion.persistent.dto.LigneCommandeClientDTO;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.StatutLivraison;
@@ -18,8 +19,12 @@ import com.gestion.repository.ClientRepository;
 import com.gestion.repository.CommandeClientRepository;
 import com.gestion.repository.LigneCommandeClientRepository;
 import com.gestion.repository.ProduitRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import java.util.Collections;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -60,6 +65,10 @@ public class CommandeClientService {
     private Long getTenantId() {
         Long tenant = TenantContext.getCurrentTenant();
         return tenant != null ? tenant : 1L;
+    }
+
+    public Page<CommandeClient> searchCommandesClient(CommandeClientSearchCriteria criteria, Pageable pageable) {
+        return commandeClientRepository.findByCriteria(criteria, pageable);
     }
 
     @Transactional
@@ -167,10 +176,8 @@ public class CommandeClientService {
             // RÈGLE : Impossible d'annuler une commande liée à des bons de livraison actifs (non annulés)
             Long tenantId = getTenantId();
             List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByCommandeClientIdAndPointDeVenteId(commandeId, tenantId);
-            if (bls == null || bls.isEmpty()) {
-                bls = bonLivraisonClientRepository.findAll().stream()
-                        .filter(b -> b.getCommandeClient() != null && commandeId.equals(b.getCommandeClient().getId()))
-                        .collect(Collectors.toList());
+            if (bls == null) {
+                bls = Collections.emptyList();
             }
 
             boolean hasActiveBl = bls.stream().anyMatch(bl -> bl.getStatut() != StatutLivraison.ANNULEE);

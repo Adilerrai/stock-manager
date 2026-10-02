@@ -14,6 +14,7 @@ public class PaiementSearchCriteria {
     private LocalDateTime dateFin;
     private BigDecimal montantMin;
     private BigDecimal montantMax;
+    private Long societeId;
 
     public PaiementSearchCriteria() {}
 
@@ -43,4 +44,7 @@ public class PaiementSearchCriteria {
 
     public BigDecimal getMontantMax() { return montantMax; }
     public void setMontantMax(BigDecimal montantMax) { this.montantMax = montantMax; }
+
+    public Long getSocieteId() { return societeId; }
+    public void setSocieteId(Long societeId) { this.societeId = societeId; }
 }

@@ -232,7 +232,8 @@ public class TresorerieService {
 
     public BalanceAgeeDTO calculerBalanceAgeeClients() {
         BalanceAgeeDTO balance = new BalanceAgeeDTO();
-        List<Client> clients = clientRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Client> clients = tenantId != null ? clientRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
         LocalDate today = LocalDate.now();
 
         Map<Long, BalanceAgeeDTO.LigneBalanceAgeeDTO> mapTiers = new HashMap<>();
@@ -283,7 +284,8 @@ public class TresorerieService {
 
     public BalanceAgeeDTO calculerBalanceAgeeFournisseurs() {
         BalanceAgeeDTO balance = new BalanceAgeeDTO();
-        List<Fournisseur> fournisseurs = fournisseurRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Fournisseur> fournisseurs = tenantId != null ? fournisseurRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
         LocalDate today = LocalDate.now();
 
         Map<Long, BalanceAgeeDTO.LigneBalanceAgeeDTO> mapTiers = new HashMap<>();
@@ -354,7 +356,8 @@ public class TresorerieService {
         }
 
         // Chèques reçus en portefeuille non encore échus
-        List<Paiement> paiements = paiementRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Paiement> paiements = tenantId != null ? paiementRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
         for (Paiement p : paiements) {
             if (p.getModePaiement() == ModePaiement.CHEQUE && p.getDateEcheance() != null) {
                 LocalDate d = p.getDateEcheance().toLocalDate();
@@ -373,7 +376,7 @@ public class TresorerieService {
         }
 
         // Factures achats fournisseurs
-        List<FactureAchat> facturesAchats = factureAchatRepository.findAll();
+        List<FactureAchat> facturesAchats = tenantId != null ? factureAchatRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
         for (FactureAchat fa : facturesAchats) {
             LocalDate d = fa.getDateFacture() != null ? fa.getDateFacture().toLocalDate().plusDays(30) : LocalDate.now();
             if ((dateDebut == null || !d.isBefore(dateDebut)) && (dateFin == null || !d.isAfter(dateFin))) {
@@ -440,7 +443,7 @@ public class TresorerieService {
         if (tenantId != null) {
             return bordereauRemiseRepository.findByPointDeVenteIdOrderByDateRemiseDesc(tenantId);
         }
-        return bordereauRemiseRepository.findAll();
+        return Collections.emptyList();
     }
 
     private String genererNumeroBordereau() {

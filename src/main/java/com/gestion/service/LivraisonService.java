@@ -228,6 +228,10 @@ public class LivraisonService {
         return livraisonRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
     }
 
+    public org.springframework.data.domain.Page<Livraison> searchLivraisons(LivraisonSearchCriteria criteria, org.springframework.data.domain.Pageable pageable) {
+        return livraisonRepository.findByCriteria(criteria, pageable);
+    }
+
     @Transactional
     public Livraison updateLivraison(LivraisonDTO livraisonDTO) {
         Livraison existingLivraison = getLivraisonById(livraisonDTO.getId());

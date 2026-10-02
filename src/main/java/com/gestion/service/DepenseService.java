@@ -65,8 +65,11 @@ public class DepenseService {
 
     @Transactional(readOnly = true)
     public List<DepenseDTO> getAllDepenses() {
-        return depenseRepository.findAll().stream()
-                .sorted(Comparator.comparing(Depense::getDateDepense).reversed())
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) {
+            return Collections.emptyList();
+        }
+        return depenseRepository.findByPointDeVenteIdOrderByDateDepenseDesc(tenantId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -76,20 +79,28 @@ public class DepenseService {
         if (debut == null) debut = LocalDate.now().withDayOfMonth(1);
         if (fin == null) fin = LocalDate.now();
 
-        return depenseRepository.findByPeriode(debut, fin).stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) {
+            return Collections.emptyList();
+        }
+        return depenseRepository.findByPeriodeAndPointDeVenteId(debut, fin, tenantId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public DepenseDTO getDepenseById(Long id) {
-        Depense d = depenseRepository.findById(id)
+        Long tenantId = TenantContext.getCurrentTenant();
+        Depense d = (tenantId != null ? depenseRepository.findByIdAndPointDeVenteId(id, tenantId) : depenseRepository.findById(id))
                 .orElseThrow(() -> new RuntimeException("Dépense non trouvée avec l'id: " + id));
         return toDto(d);
     }
 
     public void supprimerDepense(Long id) {
-        depenseRepository.deleteById(id);
+        Long tenantId = TenantContext.getCurrentTenant();
+        Depense d = (tenantId != null ? depenseRepository.findByIdAndPointDeVenteId(id, tenantId) : depenseRepository.findById(id))
+                .orElseThrow(() -> new RuntimeException("Dépense non trouvée avec l'id: " + id));
+        depenseRepository.delete(d);
     }
 
     @Transactional(readOnly = true)
@@ -97,7 +108,10 @@ public class DepenseService {
         if (debut == null) debut = LocalDate.now().withDayOfMonth(1);
         if (fin == null) fin = LocalDate.now();
 
-        List<Object[]> rows = depenseRepository.findTotauxParCategorie(debut, fin);
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Object[]> rows = tenantId != null
+                ? depenseRepository.findTotauxParCategorieAndPointDeVenteId(debut, fin, tenantId)
+                : depenseRepository.findTotauxParCategorie(debut, fin);
         Map<String, BigDecimal> map = new LinkedHashMap<>();
 
         if (rows != null) {
@@ -121,8 +135,11 @@ public class DepenseService {
         if (debut == null) debut = LocalDate.now().withDayOfMonth(1);
         if (fin == null) fin = LocalDate.now();
 
+        Long tenantId = TenantContext.getCurrentTenant();
         MargeDTO marge = margeService.calculerMargeGlobale(debut, fin);
-        BigDecimal totalDepenses = depenseRepository.sumMontantByPeriode(debut, fin);
+        BigDecimal totalDepenses = tenantId != null
+                ? depenseRepository.sumMontantByPeriodeAndPointDeVenteId(debut, fin, tenantId)
+                : depenseRepository.sumMontantByPeriode(debut, fin);
         if (totalDepenses == null) totalDepenses = BigDecimal.ZERO;
 
         BigDecimal resultatNet = marge.getMargeNetteCommerciale().subtract(totalDepenses);

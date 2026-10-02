@@ -11,6 +11,7 @@ public class LivraisonSearchCriteria {
     private StatutLivraison statut;
     private LocalDateTime dateDebutLivraison;
     private LocalDateTime dateFinLivraison;
+    private Long societeId;
 
     // Constructors
     public LivraisonSearchCriteria() {}
@@ -36,4 +37,7 @@ public class LivraisonSearchCriteria {
 
     public LocalDateTime getDateFinLivraison() { return dateFinLivraison; }
     public void setDateFinLivraison(LocalDateTime dateFinLivraison) { this.dateFinLivraison = dateFinLivraison; }
+
+    public Long getSocieteId() { return societeId; }
+    public void setSocieteId(Long societeId) { this.societeId = societeId; }
 }

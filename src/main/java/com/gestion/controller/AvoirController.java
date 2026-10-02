@@ -1,9 +1,12 @@
 package com.gestion.controller;
 
+import com.gestion.persistent.dto.AvoirSearchCriteria;
 import com.gestion.persistent.dto.StatistiqueMotifRetourDTO;
 import com.gestion.persistent.enums.TypeAvoir;
 import com.gestion.persistent.model.Avoir;
 import com.gestion.service.AvoirService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +67,13 @@ public class AvoirController {
             return ResponseEntity.ok(avoirService.getAvoirsByType(type));
         }
         return ResponseEntity.ok(avoirService.getAllAvoirs());
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<Avoir>> searchAvoirs(
+            @RequestBody AvoirSearchCriteria criteria, Pageable pageable) {
+        Page<Avoir> page = avoirService.searchAvoirs(criteria, pageable);
+        return ResponseEntity.ok(page);
     }
 
     @GetMapping("/client/{clientId}")

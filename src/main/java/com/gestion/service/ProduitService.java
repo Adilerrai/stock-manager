@@ -90,9 +90,7 @@ public class ProduitService {
     public List<Produit> getAllProduitsWithoutImages() {
         Long tenantId = TenantContext.getCurrentTenant();
         Long effectiveTenant = tenantId != null ? tenantId : 1L;
-        return produitRepository.findAll().stream()
-                .filter(p -> p.getPointDeVenteId() != null && p.getPointDeVenteId().equals(effectiveTenant))
-                .collect(Collectors.toList());
+        return produitRepository.findByPointDeVenteId(effectiveTenant);
     }
 
     public Produit getProduitById(Long produitId) {

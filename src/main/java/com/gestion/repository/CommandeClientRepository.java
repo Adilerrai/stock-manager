@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CommandeClientRepository extends JpaRepository<CommandeClient, Long> {
+public interface CommandeClientRepository extends JpaRepository<CommandeClient, Long>, CommandeClientRepositoryCustom {
     
 
     List<CommandeClient> findByPointDeVenteId(Long pointDeVenteId);

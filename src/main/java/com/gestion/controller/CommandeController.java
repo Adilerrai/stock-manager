@@ -7,6 +7,7 @@ import com.gestion.persistent.enums.StatutCommande;
 import com.gestion.persistent.model.Commande;
 import com.gestion.service.CommandeService;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -60,22 +61,10 @@ public class CommandeController {
     }
 
     @PostMapping("/search")
-    public ResponseEntity<List<CommandeDTO>> searchCommandes(@RequestBody CommandeSearchCriteria criteria, Pageable pageable) {
-        List<Commande> results = commandeService.searchCommandes(criteria);
-        List<CommandeDTO> dtoList = results.stream()
-                .map(commandeMapper::toDto)
-                .collect(Collectors.toList());
-        // Pagination manuelle si pageable fourni et taille inférieure à la liste
-        if (pageable != null && pageable.isPaged()) {
-            int start = (int) pageable.getOffset();
-            int end = Math.min(start + pageable.getPageSize(), dtoList.size());
-            if (start > dtoList.size()) {
-                return ResponseEntity.ok(List.of());
-            }
-            List<CommandeDTO> pageSlice = dtoList.subList(start, end);
-            return ResponseEntity.ok(pageSlice);
-        }
-        return ResponseEntity.ok(dtoList);
+    public ResponseEntity<Page<CommandeDTO>> searchCommandes(
+            @RequestBody CommandeSearchCriteria criteria, Pageable pageable) {
+        Page<Commande> page = commandeService.searchCommandes(criteria, pageable);
+        return ResponseEntity.ok(page.map(commandeMapper::toDto));
     }
 
     @PutMapping("/{id}/confirmer")

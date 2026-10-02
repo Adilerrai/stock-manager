@@ -7,6 +7,7 @@ public class FournisseurSearchCriteria {
     private String email;
     private String contact;
     private Boolean actif;
+    private Long societeId;
 
     public FournisseurSearchCriteria() {}
 
@@ -58,6 +59,12 @@ public class FournisseurSearchCriteria {
     public void setActif(Boolean actif) {
         this.actif = actif;
     }
+
+    public Long getSocieteId() {
+        return societeId;
+    }
+
+    public void setSocieteId(Long societeId) {
+        this.societeId = societeId;
+    }
 }
-
-

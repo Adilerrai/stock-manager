@@ -2,6 +2,7 @@ package com.acommon.service;
 
 import com.acommon.persistant.dto.JwtAuthenticationResponse;
 import com.acommon.persistant.dto.UserLoginRequest;
+import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.PointDeVenteRepository;
 import com.acommon.repository.UserRepository;
@@ -79,22 +80,45 @@ public class AuthService {
 
         User authenticatedUser = (User) authentication.getPrincipal();
 
-        // 5. Détermination du tenantId et du nom du point de vente
-        Long tenantId = authenticatedUser.getTenantId() != null
-                ? authenticatedUser.getTenantId()
-                : authenticatedUser.getPointDeVenteId();
-
-        String nomPdv = null;
-        if (authenticatedUser.getPointDeVente() != null) {
-            nomPdv = authenticatedUser.getPointDeVente().getNomPointDeVente();
-        } else if (authenticatedUser.getPointDeVenteId() != null) {
-            nomPdv = pointDeVenteRepository.findById(authenticatedUser.getPointDeVenteId())
-                    .map(com.acommon.persistant.model.PointDeVente::getNomPointDeVente)
-                    .orElse(null);
+        // 5. Détermination du tenantId racine et du point de vente
+        PointDeVente pdv = authenticatedUser.getPointDeVente();
+        if (pdv == null && authenticatedUser.getPointDeVenteId() != null) {
+            pdv = pointDeVenteRepository.findById(authenticatedUser.getPointDeVenteId()).orElse(null);
+            if (pdv != null) {
+                authenticatedUser.setPointDeVente(pdv);
+            }
         }
 
+        Long tenantId = null;
+        if (pdv != null) {
+            tenantId = (pdv.getTenantId() != null && pdv.getTenantId() > 0) ? pdv.getTenantId() : pdv.getId();
+        } else if (authenticatedUser.getTenantId() != null && authenticatedUser.getTenantId() > 0) {
+            Long userTenantId = authenticatedUser.getTenantId();
+            tenantId = userTenantId;
+            pdv = pointDeVenteRepository.findById(userTenantId)
+                    .or(() -> pointDeVenteRepository.findByTenantId(userTenantId))
+                    .orElse(null);
+            if (pdv != null) {
+                authenticatedUser.setPointDeVente(pdv);
+            }
+        } else if (authenticatedUser.getMereId() != null && authenticatedUser.getMereId() > 0) {
+            tenantId = authenticatedUser.getMereId();
+        } else {
+            tenantId = null;
+        }
+
+        if (tenantId != null && (authenticatedUser.getTenantId() == null || !authenticatedUser.getTenantId().equals(tenantId)
+                || authenticatedUser.getMereId() == null || !authenticatedUser.getMereId().equals(tenantId))) {
+            authenticatedUser.setTenantId(tenantId);
+            authenticatedUser.setMereId(tenantId);
+            userRepository.save(authenticatedUser);
+        }
+
+        Long pdvId = (pdv != null) ? pdv.getId() : authenticatedUser.getPointDeVenteId();
+        String nomPdv = (pdv != null) ? pdv.getNomPointDeVente() : null;
+
         // 6. Génération du token JWT avec le tenantId et le pointDeVenteId
-        String token = jwtUtil.generateToken(authenticatedUser, tenantId, authenticatedUser.getPointDeVenteId());
+        String token = jwtUtil.generateToken(authenticatedUser, tenantId, pdvId);
 
         return JwtAuthenticationResponse.builder()
                 .token(token)

@@ -71,7 +71,9 @@ public class ClientRepositoryImpl implements ClientRepositoryCustom {
     private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Client> root, ClientSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
-        Long tenantId = TenantContext.getCurrentTenant();
+        Long tenantId = (criteria != null && criteria.getSocieteId() != null)
+                ? criteria.getSocieteId()
+                : TenantContext.getCurrentTenant();
         if (tenantId != null) {
             predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
         } else {

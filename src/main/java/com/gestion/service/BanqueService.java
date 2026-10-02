@@ -38,9 +38,6 @@ public class BanqueService {
     public List<BanqueDTO> getBanquesActives() {
         Long tenantId = getTenantId();
         List<Banque> banques = banqueRepository.findByPointDeVenteIdAndActifTrueOrderByNomAsc(tenantId);
-        if (banques.isEmpty()) {
-            banques = banqueRepository.findByActifTrueOrderByNomAsc();
-        }
         return banques.stream().map(this::toDto).collect(Collectors.toList());
     }
 
@@ -48,9 +45,6 @@ public class BanqueService {
     public List<BanqueDTO> getAllBanques() {
         Long tenantId = getTenantId();
         List<Banque> banques = banqueRepository.findByPointDeVenteIdOrderByNomAsc(tenantId);
-        if (banques.isEmpty()) {
-            banques = banqueRepository.findAll();
-        }
         return banques.stream().map(this::toDto).collect(Collectors.toList());
     }
 

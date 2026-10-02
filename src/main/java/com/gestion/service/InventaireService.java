@@ -16,6 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -68,7 +69,7 @@ public class InventaireService {
             inv.setPointDeVenteId(tenantId);
         }
 
-        List<Produit> produits = (tenantId != null) ? produitRepository.findByPointDeVenteId(tenantId) : produitRepository.findAll();
+        List<Produit> produits = (tenantId != null) ? produitRepository.findByPointDeVenteId(tenantId) : Collections.emptyList();
         List<LigneInventaire> lignes = new ArrayList<>();
 
         for (Produit p : produits) {
@@ -174,7 +175,7 @@ public class InventaireService {
         if (tenantId != null) {
             return inventaireRepository.findByPointDeVenteIdOrderByDateInventaireDesc(tenantId);
         }
-        return inventaireRepository.findAll();
+        return java.util.Collections.emptyList();
     }
 
     public List<Inventaire> getInventairesByDepot(Long depotId) {

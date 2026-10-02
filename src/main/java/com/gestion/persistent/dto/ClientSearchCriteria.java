@@ -15,6 +15,7 @@ public class ClientSearchCriteria {
     private Long commercialId;
     private Boolean actif;
     private Boolean depassementCredit;
+    private Long societeId;
 
     public ClientSearchCriteria() {}
 
@@ -50,4 +51,7 @@ public class ClientSearchCriteria {
 
     public Boolean getDepassementCredit() { return depassementCredit; }
     public void setDepassementCredit(Boolean depassementCredit) { this.depassementCredit = depassementCredit; }
+
+    public Long getSocieteId() { return societeId; }
+    public void setSocieteId(Long societeId) { this.societeId = societeId; }
 }

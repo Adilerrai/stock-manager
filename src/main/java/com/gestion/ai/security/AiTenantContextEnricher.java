@@ -1,10 +1,13 @@
 package com.gestion.ai.security;
 
+import com.acommon.persistant.model.CurrentRequestContext;
 import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.PointDeVenteRepository;
 import com.acommon.repository.UserRepository;
+import com.gestion.persistent.model.Societe;
+import com.gestion.repository.SocieteRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Component
@@ -22,71 +26,109 @@ public class AiTenantContextEnricher {
 
     private final UserRepository userRepository;
     private final PointDeVenteRepository pointDeVenteRepository;
+    private final SocieteRepository societeRepository;
 
     public AiTenantContextEnricher(UserRepository userRepository,
-                                   PointDeVenteRepository pointDeVenteRepository) {
+                                   PointDeVenteRepository pointDeVenteRepository,
+                                   SocieteRepository societeRepository) {
         this.userRepository = userRepository;
         this.pointDeVenteRepository = pointDeVenteRepository;
+        this.societeRepository = societeRepository;
     }
 
     /**
-     * Résout l'utilisateur connecté et déduit l'arbre de visibilité tenant (Holding vs Filiale)
+     * Résout l'utilisateur connecté et déduit l'arbre de visibilité tenant (Holding vs Filiale / Société Active)
      */
     public AiTenantScope resolveCurrentScope() {
         User currentUser = resolveCurrentUser();
-        Long tenantId = null;
         Long mereId = null;
         String roleName = "UTILISATEUR";
-        String nomEntreprise = "Point de Vente";
+        String nomEntreprise = null;
 
         if (currentUser != null) {
-            tenantId = currentUser.getTenantId() != null ? currentUser.getTenantId() : currentUser.getPointDeVenteId();
             mereId = currentUser.getMereId();
             if (currentUser.getRole() != null) {
                 roleName = currentUser.getRole().getNom();
             }
         }
 
-        if (tenantId == null) {
-            tenantId = TenantContext.getCurrentTenant();
+        // 1. PRIORITÉ ABSOLUE : La société active envoyée par le frontend (X-Societe-Id ou TenantContext)
+        Long activeTenantId = CurrentRequestContext.getSocieteId();
+        if (activeTenantId == null) {
+            activeTenantId = TenantContext.getCurrentTenant();
+        }
+        if (activeTenantId == null && currentUser != null) {
+            activeTenantId = currentUser.getPointDeVenteId() != null 
+                    ? currentUser.getPointDeVenteId() 
+                    : currentUser.getTenantId();
+        }
+        if (activeTenantId == null) {
+            activeTenantId = 1L; // Fallback par défaut
         }
 
-        if (tenantId == null) {
-            tenantId = 1L; // Fallback par défaut sécurisé
-        }
-
-        PointDeVente pdv = pointDeVenteRepository.findByTenantId(tenantId).orElse(null);
-        if (pdv != null) {
-            nomEntreprise = pdv.getNomPointDeVente() != null ? pdv.getNomPointDeVente() : pdv.getNom();
+        // 2. Recherche du profil légal dans Societe
+        Societe societe = societeRepository.findById(activeTenantId).orElse(null);
+        if (societe != null) {
+            nomEntreprise = societe.getRaisonSociale() + " (" + societe.getCode() + ")";
             if (mereId == null) {
-                mereId = pdv.getMereId();
+                mereId = societe.getMereId();
             }
         }
 
-        // Détection de l'arbre : si mereId est null, l'entreprise est la holding ou une société autonome
+        // 2b. Recherche dans PointDeVente si non trouvé dans Societe
+        if (nomEntreprise == null) {
+            final Long pdvLookupId = activeTenantId;
+            PointDeVente pdv = pointDeVenteRepository.findById(pdvLookupId)
+                    .or(() -> pointDeVenteRepository.findByTenantId(pdvLookupId))
+                    .orElse(null);
+            if (pdv != null) {
+                nomEntreprise = pdv.getNomPointDeVente() != null ? pdv.getNomPointDeVente() : pdv.getNom();
+                if (mereId == null) {
+                    mereId = pdv.getMereId();
+                }
+            }
+        }
+
+        if (nomEntreprise == null) {
+            nomEntreprise = "Société #" + activeTenantId;
+        }
+
+        // 3. Détermination de l'arbre accessible
         boolean isHolding = (mereId == null);
         Set<Long> accessibleTenantIds = new HashSet<>();
-        accessibleTenantIds.add(tenantId);
+        accessibleTenantIds.add(activeTenantId);
 
-        if (isHolding) {
-            // La société mère a visibilité sur ses filiales
-            List<Long> filialeTenantIds = pointDeVenteRepository.findTenantIdsByMereId(tenantId);
-            if (filialeTenantIds != null && !filialeTenantIds.isEmpty()) {
-                accessibleTenantIds.addAll(filialeTenantIds);
+        if (mereId != null) {
+            // Société fille / filiale : ajouter la mère et les sociétés sœurs du même cabinet
+            accessibleTenantIds.add(mereId);
+            List<Societe> soeurs = societeRepository.findByMereIdAndActifTrueOrderByRaisonSocialeAsc(mereId);
+            for (Societe s : soeurs) {
+                accessibleTenantIds.add(s.getId());
+            }
+        } else {
+            // Cabinet mère / Holding : accès consolidé à toutes les sociétés filles
+            accessibleTenantIds.add(activeTenantId);
+            List<Societe> filiales = societeRepository.findByMereIdAndActifTrueOrderByRaisonSocialeAsc(activeTenantId);
+            for (Societe s : filiales) {
+                accessibleTenantIds.add(s.getId());
+            }
+            List<Long> pdvIds = pointDeVenteRepository.findTenantIdsByMereId(activeTenantId);
+            if (pdvIds != null) {
+                accessibleTenantIds.addAll(pdvIds);
             }
         }
 
-        log.debug("AiTenantScope résolu: tenantId={}, mereId={}, isHolding={}, accessibleTenants={}",
-                tenantId, mereId, isHolding, accessibleTenantIds);
+        log.debug("AiTenantScope résolu: activeTenantId={}, mereId={}, isHolding={}, accessibleTenants={}",
+                activeTenantId, mereId, isHolding, accessibleTenantIds);
 
         return new AiTenantScope(
                 currentUser,
-                tenantId,
+                activeTenantId,
                 mereId,
                 isHolding,
                 accessibleTenantIds,
                 roleName,
-                nomEntreprise != null ? nomEntreprise : "Entreprise " + tenantId
+                nomEntreprise
         );
     }
 

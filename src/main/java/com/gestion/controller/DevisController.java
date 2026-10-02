@@ -5,12 +5,15 @@ import com.gestion.mapper.DevisMapper;
 import com.gestion.mapper.FactureMapper;
 import com.gestion.persistent.dto.CommandeClientDTO;
 import com.gestion.persistent.dto.DevisDTO;
+import com.gestion.persistent.dto.DevisSearchCriteria;
 import com.gestion.persistent.dto.FactureDTO;
 import com.gestion.persistent.enums.StatutDevis;
 import com.gestion.persistent.model.CommandeClient;
 import com.gestion.persistent.model.Devis;
 import com.gestion.persistent.model.Facture;
 import com.gestion.service.DevisService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -65,6 +68,13 @@ public class DevisController {
                 .map(devisMapper::toDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<DevisDTO>> searchDevis(
+            @RequestBody DevisSearchCriteria criteria, Pageable pageable) {
+        Page<Devis> page = devisService.searchDevis(criteria, pageable);
+        return ResponseEntity.ok(page.map(devisMapper::toDto));
     }
 
     @GetMapping("/client/{clientId}")

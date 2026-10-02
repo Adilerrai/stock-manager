@@ -28,6 +28,11 @@ public class TenantContext {
         if (tenant != null) {
             return tenant;
         }
+        Long ctxSociete = CurrentRequestContext.getSocieteId();
+        if (ctxSociete != null) {
+            CURRENT_TENANT.set(ctxSociete);
+            return ctxSociete;
+        }
         try {
             org.springframework.security.core.Authentication auth =
                     org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();

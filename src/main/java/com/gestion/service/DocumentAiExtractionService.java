@@ -117,17 +117,8 @@ public class DocumentAiExtractionService {
             // 2. Préparation du contexte de matching avec la base de données
             Long tenantId = getTenantId();
             List<Fournisseur> fournisseurs = fournisseurRepository.findByPointDeVenteIdAndActifTrue(tenantId);
-            if (fournisseurs.isEmpty()) {
-                fournisseurs = fournisseurRepository.findAll();
-            }
             List<Client> clients = clientRepository.findByPointDeVenteId(tenantId);
-            if (clients.isEmpty()) {
-                clients = clientRepository.findAll();
-            }
             List<Produit> produits = produitRepository.findByPointDeVenteId(tenantId);
-            if (produits.isEmpty()) {
-                produits = produitRepository.findAll();
-            }
 
             // 3. Appel Groq AI pour analyse structurée et matching
             DocumentOcrAnalysisResultDTO dto = appelerGroqPourMatching(ocrText, typeDocumentAttendu, fournisseurs, clients, produits);
@@ -572,9 +563,6 @@ public class DocumentAiExtractionService {
         Depot depot = depotRepository.findByPointDeVenteId(tenantId).stream()
                 .findFirst()
                 .orElse(null);
-        if (depot == null) {
-            depot = depotRepository.findAll().stream().findFirst().orElse(null);
-        }
 
         Livraison liv = new Livraison();
         liv.setNumeroLivraison(dto.getNumeroPiece() != null ? dto.getNumeroPiece() : "BL-" + System.currentTimeMillis());

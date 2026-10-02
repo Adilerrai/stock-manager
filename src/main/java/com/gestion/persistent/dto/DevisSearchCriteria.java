@@ -1,37 +1,36 @@
 package com.gestion.persistent.dto;
 
-import com.gestion.persistent.enums.StatutFacture;
+import com.gestion.persistent.enums.StatutDevis;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class FactureSearchCriteria {
-    private String numeroFacture;
+/**
+ * Critères de recherche multi-critères pour les devis avec pagination côté serveur.
+ */
+public class DevisSearchCriteria {
+    private String numeroDevis;
     private Long clientId;
-    private StatutFacture statut;
-    private Boolean estEchue;
-    private Boolean payee;
+    private String clientNom;
+    private StatutDevis statut;
     private LocalDate dateDebut;
     private LocalDate dateFin;
     private BigDecimal montantMin;
     private BigDecimal montantMax;
     private Long societeId;
 
-    public FactureSearchCriteria() {}
+    public DevisSearchCriteria() {}
 
-    public String getNumeroFacture() { return numeroFacture; }
-    public void setNumeroFacture(String numeroFacture) { this.numeroFacture = numeroFacture; }
+    public String getNumeroDevis() { return numeroDevis; }
+    public void setNumeroDevis(String numeroDevis) { this.numeroDevis = numeroDevis; }
 
     public Long getClientId() { return clientId; }
     public void setClientId(Long clientId) { this.clientId = clientId; }
 
-    public StatutFacture getStatut() { return statut; }
-    public void setStatut(StatutFacture statut) { this.statut = statut; }
+    public String getClientNom() { return clientNom; }
+    public void setClientNom(String clientNom) { this.clientNom = clientNom; }
 
-    public Boolean getEstEchue() { return estEchue; }
-    public void setEstEchue(Boolean estEchue) { this.estEchue = estEchue; }
-
-    public Boolean getPayee() { return payee; }
-    public void setPayee(Boolean payee) { this.payee = payee; }
+    public StatutDevis getStatut() { return statut; }
+    public void setStatut(StatutDevis statut) { this.statut = statut; }
 
     public LocalDate getDateDebut() { return dateDebut; }
     public void setDateDebut(LocalDate dateDebut) { this.dateDebut = dateDebut; }

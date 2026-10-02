@@ -17,8 +17,32 @@ public interface DepenseRepository extends JpaRepository<Depense, Long> {
 
     Optional<Depense> findByReference(String reference);
 
+    Optional<Depense> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
+
     List<Depense> findByPointDeVenteIdOrderByDateDepenseDesc(Long pointDeVenteId);
 
+    @Query("SELECT d FROM Depense d WHERE d.pointDeVenteId = :pointDeVenteId AND d.dateDepense BETWEEN :debut AND :fin ORDER BY d.dateDepense DESC")
+    List<Depense> findByPeriodeAndPointDeVenteId(@Param("debut") LocalDate debut,
+                                                @Param("fin") LocalDate fin,
+                                                @Param("pointDeVenteId") Long pointDeVenteId);
+
+    @Query("SELECT d FROM Depense d WHERE d.pointDeVenteId = :pointDeVenteId AND d.categorie = :categorie AND d.dateDepense BETWEEN :debut AND :fin ORDER BY d.dateDepense DESC")
+    List<Depense> findByCategorieAndPeriodeAndPointDeVenteId(@Param("categorie") CategorieDepense categorie,
+                                                            @Param("debut") LocalDate debut,
+                                                            @Param("fin") LocalDate fin,
+                                                            @Param("pointDeVenteId") Long pointDeVenteId);
+
+    @Query("SELECT COALESCE(SUM(d.montant), 0) FROM Depense d WHERE d.pointDeVenteId = :pointDeVenteId AND d.dateDepense BETWEEN :debut AND :fin")
+    BigDecimal sumMontantByPeriodeAndPointDeVenteId(@Param("debut") LocalDate debut,
+                                                   @Param("fin") LocalDate fin,
+                                                   @Param("pointDeVenteId") Long pointDeVenteId);
+
+    @Query("SELECT d.categorie, COALESCE(SUM(d.montant), 0) FROM Depense d WHERE d.pointDeVenteId = :pointDeVenteId AND d.dateDepense BETWEEN :debut AND :fin GROUP BY d.categorie ORDER BY SUM(d.montant) DESC")
+    List<Object[]> findTotauxParCategorieAndPointDeVenteId(@Param("debut") LocalDate debut,
+                                                          @Param("fin") LocalDate fin,
+                                                          @Param("pointDeVenteId") Long pointDeVenteId);
+
+    // Fallbacks
     @Query("SELECT d FROM Depense d WHERE d.dateDepense BETWEEN :debut AND :fin ORDER BY d.dateDepense DESC")
     List<Depense> findByPeriode(@Param("debut") LocalDate debut, @Param("fin") LocalDate fin);
 

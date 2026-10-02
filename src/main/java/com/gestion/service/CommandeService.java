@@ -286,6 +286,10 @@ public class CommandeService {
         return commandeRepository.findByCriteria(criteria);
     }
 
+    public org.springframework.data.domain.Page<Commande> searchCommandes(CommandeSearchCriteria criteria, org.springframework.data.domain.Pageable pageable) {
+        return commandeRepository.findByCriteria(criteria, pageable);
+    }
+
     public byte[] generateCommandePdf(Long commandeId) {
         Commande commande = getCommandeById(commandeId);
         

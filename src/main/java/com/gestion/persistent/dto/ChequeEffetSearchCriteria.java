@@ -17,6 +17,7 @@ public class ChequeEffetSearchCriteria {
     private LocalDate dateEcheanceFin;
     private BigDecimal montantMin;
     private BigDecimal montantMax;
+    private Long societeId;
 
     public ChequeEffetSearchCriteria() {}
 
@@ -49,4 +50,7 @@ public class ChequeEffetSearchCriteria {
 
     public BigDecimal getMontantMax() { return montantMax; }
     public void setMontantMax(BigDecimal montantMax) { this.montantMax = montantMax; }
+
+    public Long getSocieteId() { return societeId; }
+    public void setSocieteId(Long societeId) { this.societeId = societeId; }
 }

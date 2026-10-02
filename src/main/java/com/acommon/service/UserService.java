@@ -73,7 +73,9 @@ public class UserService {
             if (request.getPointDeVenteId() != null) {
                 targetPointDeVente = pointDeVenteRepository.findById(request.getPointDeVenteId())
                         .orElseThrow(() -> new IllegalArgumentException("Point de vente introuvable avec l'ID : " + request.getPointDeVenteId()));
-                targetTenantId = targetPointDeVente.getTenantId();
+                targetTenantId = (targetPointDeVente.getTenantId() != null && targetPointDeVente.getTenantId() > 0)
+                        ? targetPointDeVente.getTenantId()
+                        : targetPointDeVente.getId();
             } else {
                 Long tenant = TenantContext.getCurrentTenant();
                 targetTenantId = (tenant != null) ? tenant : 0L;
@@ -96,7 +98,7 @@ public class UserService {
                 targetPointDeVente = pointDeVenteRepository.findById(request.getPointDeVenteId())
                         .orElseThrow(() -> new IllegalArgumentException("Point de vente introuvable avec l'ID : " + request.getPointDeVenteId()));
                 // Vérification stricte que le point de vente appartient au tenant de l'entreprise
-                if (!targetTenantId.equals(targetPointDeVente.getTenantId())) {
+                if (!targetTenantId.equals(targetPointDeVente.getTenantId()) && !targetTenantId.equals(targetPointDeVente.getId())) {
                     throw new AccessDeniedException("Le point de vente spécifié n'appartient pas à votre entreprise (tenant " + targetTenantId + ")");
                 }
             } else {
@@ -142,6 +144,7 @@ public class UserService {
         user.setGenre(request.getGenre());
         user.setRole(role);
         user.setTenantId(targetTenantId);
+        user.setMereId(targetTenantId);
         user.setPointDeVente(targetPointDeVente);
         user.setEnabled(true);
         user.setAccountNonExpired(true);

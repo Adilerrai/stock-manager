@@ -25,4 +25,7 @@ public interface SocieteRepository extends JpaRepository<Societe, Long> {
     Optional<Societe> findByCodeAndMereId(String code, Long mereId);
     boolean existsByCodeAndMereId(String code, Long mereId);
     long countByMereIdAndActifTrue(Long mereId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT s FROM Societe s WHERE (s.tenantId = :tenantId OR s.mereId = :tenantId) AND s.actif = true ORDER BY s.raisonSociale ASC")
+    List<Societe> findByTenantIdOrMereIdAndActifTrue(@org.springframework.data.repository.query.Param("tenantId") Long tenantId);
 }

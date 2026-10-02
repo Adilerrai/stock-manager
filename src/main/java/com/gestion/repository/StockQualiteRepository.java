@@ -12,6 +12,9 @@ import java.util.List;
 @Repository
 public interface StockQualiteRepository extends JpaRepository<StockQualite, Long> {
 
+    @Query("SELECT sq FROM StockQualite sq WHERE sq.produit.pointDeVenteId = :tenantId")
+    List<StockQualite> findByTenantId(@Param("tenantId") Long tenantId);
+
     @Query("SELECT sq FROM StockQualite sq WHERE sq.qualite = :qualite")
     List<StockQualite> findByQualite(@Param("qualite") QualiteProduit qualite);
 
@@ -42,4 +45,3 @@ public interface StockQualiteRepository extends JpaRepository<StockQualite, Long
     @Query("SELECT COUNT(sq) FROM StockQualite sq WHERE sq.quantiteDisponible > 0 AND sq.quantiteDisponible <= sq.seuilAlerte AND sq.produit.pointDeVenteId = :tenantId")
     Long countStockBasByTenant(@Param("tenantId") Long tenantId);
 }
-

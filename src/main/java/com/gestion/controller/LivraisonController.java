@@ -1,11 +1,14 @@
 package com.gestion.controller;
 
 import com.gestion.persistent.dto.LivraisonDTO;
+import com.gestion.persistent.dto.LivraisonSearchCriteria;
 import com.gestion.persistent.model.Livraison;
 import com.gestion.service.LivraisonService;
 import com.gestion.mapper.LivraisonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,7 +60,12 @@ public class LivraisonController {
         return ResponseEntity.ok(livraisonDTOs);
     }
 
-
+    @PostMapping("/search")
+    public ResponseEntity<Page<LivraisonDTO>> searchLivraisons(
+            @RequestBody LivraisonSearchCriteria criteria, Pageable pageable) {
+        Page<Livraison> page = livraisonService.searchLivraisons(criteria, pageable);
+        return ResponseEntity.ok(page.map(livraisonMapper::toDto));
+    }
 
     @PutMapping("/update")
     public ResponseEntity<LivraisonDTO> updateLivraison(@RequestBody LivraisonDTO livraisonDTO) {

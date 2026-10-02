@@ -12,8 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequestMapping({"/api/points-de-vente", "/api/v1/points-de-vente"})
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
+@PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
 public class PointDeVenteController {
 
     private final PointDeVenteService pointDeVenteService;
@@ -27,6 +28,7 @@ public class PointDeVenteController {
      * Accessible par l'Admin d'entreprise, les managers ou le SuperAdmin.
      */
     @GetMapping("")
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<List<PointDeVenteResponse>> getPointsDeVente() {
         return ResponseEntity.ok(pointDeVenteService.getPointsDeVenteByCurrentTenant());
     }
@@ -35,6 +37,7 @@ public class PointDeVenteController {
      * Détails d'un point de vente par ID.
      */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_USER')")
     public ResponseEntity<PointDeVenteResponse> getPointDeVenteById(@PathVariable Long id) {
         return ResponseEntity.ok(pointDeVenteService.getPointDeVenteById(id));
     }

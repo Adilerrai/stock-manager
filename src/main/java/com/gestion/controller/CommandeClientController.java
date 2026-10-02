@@ -2,9 +2,12 @@ package com.gestion.controller;
 
 import com.gestion.mapper.CommandeClientMapper;
 import com.gestion.persistent.dto.CommandeClientDTO;
+import com.gestion.persistent.dto.CommandeClientSearchCriteria;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.model.CommandeClient;
 import com.gestion.service.CommandeClientService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,6 +40,13 @@ public class CommandeClientController {
                 .map(commandeClientMapper::toDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(commandeDTOs);
+    }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<CommandeClientDTO>> searchCommandesClient(
+            @RequestBody CommandeClientSearchCriteria criteria, Pageable pageable) {
+        Page<CommandeClient> page = commandeClientService.searchCommandesClient(criteria, pageable);
+        return ResponseEntity.ok(page.map(commandeClientMapper::toDto));
     }
 
     @GetMapping("/{id}")

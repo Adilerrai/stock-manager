@@ -3,6 +3,7 @@ package com.gestion.service;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
+import com.gestion.persistent.dto.AvoirSearchCriteria;
 import com.gestion.persistent.dto.StatistiqueMotifRetourDTO;
 import com.gestion.persistent.enums.MotifRetour;
 import com.gestion.persistent.enums.QualiteProduit;
@@ -11,6 +12,8 @@ import com.gestion.persistent.enums.TypeAvoir;
 import com.gestion.persistent.enums.TypeMouvement;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -257,7 +260,11 @@ public class AvoirService {
         if (tenantId != null) {
             return avoirRepository.findByPointDeVenteIdOrderByDateAvoirDesc(tenantId);
         }
-        return avoirRepository.findAll();
+        return java.util.Collections.emptyList();
+    }
+
+    public Page<Avoir> searchAvoirs(AvoirSearchCriteria criteria, Pageable pageable) {
+        return avoirRepository.findByCriteria(criteria, pageable);
     }
 
     public List<Avoir> getAvoirsByType(TypeAvoir typeAvoir) {

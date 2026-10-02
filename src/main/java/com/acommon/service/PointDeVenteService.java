@@ -98,13 +98,8 @@ public class PointDeVenteService {
 
     @Transactional
     public PointDeVenteResponse createPointDeVente(PointDeVenteRequest request) {
-        Long tenantId = resolveCurrentTenant();
-        if (tenantId == null) {
-            throw new AccessDeniedException("Impossible d'identifier l'entreprise (tenant) pour ce point de vente");
-        }
-
         PointDeVente pdv = new PointDeVente();
-        pdv.setTenantId(tenantId);
+        pdv.setTenantId(0L); // Temporaire avant génération de l'ID
         pdv.setNomPointDeVente(request.getNomPointDeVente().trim());
         pdv.setNom(request.getNomPointDeVente().trim());
         pdv.setAdresse(request.getAdresse());
@@ -113,7 +108,13 @@ public class PointDeVenteService {
         pdv.setActif(request.getActif() != null ? request.getActif() : true);
         pdv.setDateCreation(LocalDateTime.now());
 
+        // 1. Sauvegarde pour générer l'ID en base
         PointDeVente saved = pointDeVenteRepository.save(pdv);
+
+        // 2. Le Point de Vente C'EST le Tenant : son tenantId est exactement son ID généré
+        saved.setTenantId(saved.getId());
+        saved = pointDeVenteRepository.save(saved);
+
         return mapToResponse(saved);
     }
 
@@ -144,7 +145,7 @@ public class PointDeVenteService {
     private PointDeVenteResponse mapToResponse(PointDeVente pdv) {
         PointDeVenteResponse res = new PointDeVenteResponse();
         res.setId(pdv.getId());
-        res.setTenantId(pdv.getTenantId());
+        res.setTenantId(pdv.getId()); // Le Point de Vente C'EST le Tenant
         res.setNomPointDeVente(pdv.getNomPointDeVente());
         res.setNom(pdv.getNom());
         res.setAdresse(pdv.getAdresse());

@@ -63,22 +63,15 @@ public class EntrepriseManagementService {
                     "Un utilisateur avec l'identifiant '" + request.getAdminUsername() + "' existe déjà");
         }
 
-        // 2. Calcul ou validation du nouveau tenantId unique
-        Long newTenantId;
-        if (request.getTenantId() != null) {
-            if (pointDeVenteRepository.existsByTenantId(request.getTenantId())) {
-                throw new IllegalArgumentException(
-                        "Une entreprise avec le tenant ID '" + request.getTenantId() + "' existe déjà");
-            }
-            newTenantId = request.getTenantId();
-        } else {
-            Long maxTenant = pointDeVenteRepository.findMaxTenantId();
-            newTenantId = (maxTenant != null && maxTenant > 0) ? maxTenant + 1 : 1L;
+        // 2. Validation du tenant ID si fourni
+        if (request.getTenantId() != null && pointDeVenteRepository.existsByTenantId(request.getTenantId())) {
+            throw new IllegalArgumentException(
+                    "Une entreprise avec le tenant ID '" + request.getTenantId() + "' existe déjà");
         }
 
-        // 3. Création du PointDeVente (Tenant)
+        // 3. Création du PointDeVente (Le Point de Vente C'EST le Tenant)
         PointDeVente pdv = new PointDeVente();
-        pdv.setTenantId(newTenantId);
+        pdv.setTenantId(request.getTenantId() != null ? request.getTenantId() : 0L);
         pdv.setNomPointDeVente(request.getNomEntreprise());
         pdv.setNom(request.getNomEntreprise());
         pdv.setAdresse(request.getAdresse());
@@ -89,6 +82,11 @@ public class EntrepriseManagementService {
         pdv.setActif(true);
         pdv.setDateCreation(LocalDateTime.now());
         PointDeVente savedPdv = pointDeVenteRepository.save(pdv);
+
+        // L'ID créé EST le tenant : users et société prennent ce tenant
+        Long newTenantId = (request.getTenantId() != null) ? request.getTenantId() : savedPdv.getId();
+        savedPdv.setTenantId(newTenantId);
+        savedPdv = pointDeVenteRepository.save(savedPdv);
 
         Long tenantPointDeVenteId = savedPdv.getId();
 

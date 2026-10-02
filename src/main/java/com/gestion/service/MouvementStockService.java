@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,7 +65,7 @@ public class MouvementStockService {
 
         Long tenantId = TenantContext.getCurrentTenant();
         if (depot == null) {
-            List<Depot> all = (tenantId != null) ? depotRepository.findByPointDeVenteIdAndActifTrue(tenantId) : depotRepository.findAll();
+            List<Depot> all = (tenantId != null) ? depotRepository.findByPointDeVenteIdAndActifTrue(tenantId) : Collections.emptyList();
             for (Depot d : all) {
                 if (d.getActif() != null && d.getActif()) { depot = d; break; }
             }

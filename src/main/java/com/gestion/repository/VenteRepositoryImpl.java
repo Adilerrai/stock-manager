@@ -70,9 +70,13 @@ public class VenteRepositoryImpl implements VenteRepositoryCustom {
     private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Vente> root, VenteSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
-        Long tenantId = TenantContext.getCurrentTenant();
+        Long tenantId = (criteria != null && criteria.getSocieteId() != null)
+                ? criteria.getSocieteId()
+                : TenantContext.getCurrentTenant();
         if (tenantId != null) {
             predicates.add(cb.equal(root.get("pointDeVenteId"), tenantId));
+        } else {
+            predicates.add(cb.equal(root.get("pointDeVenteId"), -1L));
         }
 
         if (criteria == null) {

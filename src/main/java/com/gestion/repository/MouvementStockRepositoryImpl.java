@@ -68,12 +68,16 @@ public class MouvementStockRepositoryImpl implements MouvementStockRepositoryCus
     private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<MouvementStock> root, MouvementStockSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
-        Long tenantId = TenantContext.getCurrentTenant();
+        Long tenantId = (criteria != null && criteria.getSocieteId() != null)
+                ? criteria.getSocieteId()
+                : TenantContext.getCurrentTenant();
         if (tenantId != null) {
             predicates.add(cb.or(
                     cb.equal(root.get("pointDeVenteId"), tenantId),
                     cb.and(cb.isNull(root.get("pointDeVenteId")), cb.equal(root.get("produit").get("pointDeVenteId"), tenantId))
             ));
+        } else {
+            predicates.add(cb.equal(root.get("pointDeVenteId"), -1L));
         }
 
         if (criteria == null) {

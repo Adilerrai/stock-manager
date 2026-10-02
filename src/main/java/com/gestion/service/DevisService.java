@@ -5,6 +5,7 @@ import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
 import com.gestion.persistent.dto.DevisDTO;
+import com.gestion.persistent.dto.DevisSearchCriteria;
 import com.gestion.persistent.dto.LigneDevisDTO;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.StatutDevis;
@@ -14,6 +15,8 @@ import com.gestion.repository.*;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -259,7 +262,11 @@ public class DevisService {
         if (tenantId != null) {
             return devisRepository.findByPointDeVenteIdOrderByDateDevisDesc(tenantId);
         }
-        return devisRepository.findAll();
+        return java.util.Collections.emptyList();
+    }
+
+    public Page<Devis> searchDevis(DevisSearchCriteria criteria, Pageable pageable) {
+        return devisRepository.findByCriteria(criteria, pageable);
     }
 
     public List<Devis> getDevisByClient(Long clientId) {

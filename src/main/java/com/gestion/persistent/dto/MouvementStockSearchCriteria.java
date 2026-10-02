@@ -10,6 +10,7 @@ public class MouvementStockSearchCriteria {
     private String numeroLot;
     private LocalDateTime dateDebut;
     private LocalDateTime dateFin;
+    private Long societeId;
 
     public MouvementStockSearchCriteria() {}
 
@@ -30,4 +31,7 @@ public class MouvementStockSearchCriteria {
 
     public LocalDateTime getDateFin() { return dateFin; }
     public void setDateFin(LocalDateTime dateFin) { this.dateFin = dateFin; }
+
+    public Long getSocieteId() { return societeId; }
+    public void setSocieteId(Long societeId) { this.societeId = societeId; }
 }

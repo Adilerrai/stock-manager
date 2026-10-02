@@ -29,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,18 +85,60 @@ public class FiduciaireService {
         return null;
     }
 
-    private Long getCurrentMereId() {
+    public Long resolveRootCabinetId(Long startId) {
+        if (startId == null) return null;
+        Long current = startId;
+        java.util.Set<Long> visited = new java.util.HashSet<>();
+        while (current != null && visited.add(current)) {
+            Optional<Societe> socOpt = societeRepository.findById(current);
+            if (socOpt.isPresent()) {
+                Societe soc = socOpt.get();
+                Long parent = soc.getMereId() != null ? soc.getMereId() : soc.getTenantId();
+                if (parent != null && !parent.equals(current)) {
+                    current = parent;
+                } else {
+                    return current;
+                }
+            } else {
+                // Ce n'est pas une société cliente, c'est l'ID du Cabinet/Tenant Mère racine
+                return current;
+            }
+        }
+        return current;
+    }
+
+    public Long getRootCabinetId() {
         User user = getCurrentUser();
-        if (user != null && user.getMereId() != null) {
-            return user.getMereId();
+        if (user != null) {
+            if (user.getPointDeVente() != null && user.getPointDeVente().getId() != null) {
+                PointDeVente pdv = user.getPointDeVente();
+                return (pdv.getMereId() != null && pdv.getMereId() > 0) ? resolveRootCabinetId(pdv.getMereId()) : pdv.getId();
+            }
+            if (user.getPointDeVenteId() != null) {
+                return user.getPointDeVenteId();
+            }
+            if (user.getMereId() != null && user.getMereId() > 0) {
+                Long root = resolveRootCabinetId(user.getMereId());
+                if (root != null) return root;
+            }
+            if (user.getTenantId() != null && user.getTenantId() > 0) {
+                Long root = resolveRootCabinetId(user.getTenantId());
+                if (root != null) return root;
+            }
         }
         Long tenant = TenantContext.getCurrentTenant();
-        if (tenant != null) return tenant;
-        if (user != null) {
-            if (user.getTenantId() != null) return user.getTenantId();
-            if (user.getPointDeVenteId() != null) return user.getPointDeVenteId();
+        if (tenant != null) {
+            return resolveRootCabinetId(tenant);
         }
         return null;
+    }
+
+    private Long getCurrentTenantId() {
+        return getRootCabinetId();
+    }
+
+    private Long getCurrentMereId() {
+        return getRootCabinetId();
     }
 
     // =========================================================================
@@ -108,14 +151,15 @@ public class FiduciaireService {
             throw new IllegalStateException("Utilisateur non authentifié");
         }
 
-        Long mereId = user.getMereId();
+        Long rootCabinetId = getRootCabinetId();
 
         // 1. Recherche de la société cible
         Societe targetSociete = societeRepository.findById(targetSocieteId)
                 .orElseThrow(() -> new IllegalArgumentException("Société introuvable avec l'ID: " + targetSocieteId));
 
-        // 2. Vérification stricte d'isolation : la société DOIT appartenir à la Mère de l'utilisateur !
-        if (mereId != null && targetSociete.getMereId() != null && !mereId.equals(targetSociete.getMereId())) {
+        // 2. Vérification stricte d'isolation
+        Long targetRootId = resolveRootCabinetId(targetSociete.getId());
+        if (rootCabinetId != null && targetRootId != null && !rootCabinetId.equals(targetRootId) && !rootCabinetId.equals(targetSociete.getId())) {
             throw new SecurityException("Accès refusé : la société '" + targetSociete.getRaisonSociale() 
                     + "' n'appartient pas à votre cabinet/holding Mère.");
         }
@@ -134,19 +178,14 @@ public class FiduciaireService {
             throw new IllegalStateException("Impossible de basculer vers une société inactive.");
         }
 
-        // 3. Mise à jour de la société active en base
-        user.setTenantId(targetSociete.getId());
-        pointDeVenteRepository.findById(targetSociete.getId()).ifPresent(user::setPointDeVente);
-        user.setPointDeVenteId(targetSociete.getId());
-        userRepository.save(user);
-
-        // 4. Positionnement du contexte de thread
+        // 3. Positionnement du contexte de thread pour le dossier sélectionné
         TenantContext.setCurrentTenant(targetSociete.getId());
 
-        // 5. Régénération du token JWT avec le nouveau tenantId (la société active)
-        String newToken = jwtUtil.generateToken(user, targetSociete.getId(), targetSociete.getId());
+        // 4. Génération du token JWT :
+        // Le token porte le rootCabinetId comme tenant principal et la société cible comme pointDeVenteId/scope dossier
+        String newToken = jwtUtil.generateToken(user, rootCabinetId, targetSociete.getId());
 
-        // 6. Audit
+        // 5. Audit
         auditService.logCreation("SwitchSociete", targetSociete.getId(), 
                 "Bascule vers société: " + targetSociete.getRaisonSociale() + " (ID: " + targetSociete.getId() + ")");
 
@@ -167,18 +206,47 @@ public class FiduciaireService {
                                         .collect(Collectors.toList())
                                 : List.of()
                 )
-                .tenantId(targetSociete.getId())
-                .pointDeVenteId(targetSociete.getId())
+                .tenantId(rootCabinetId)
+                .pointDeVenteId(user.getPointDeVenteId() != null ? user.getPointDeVenteId() : rootCabinetId)
                 .nomPointDeVente(targetSociete.getRaisonSociale())
                 .tokenType("Bearer")
                 .build();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<SocieteDTO> listerMesSocietes() {
-        Long mereId = getCurrentMereId();
+        Long rootCabinetId = getRootCabinetId();
         User user = getCurrentUser();
-        List<Societe> societes = societeRepository.findByMereIdAndActifTrueOrderByRaisonSocialeAsc(mereId);
+
+        // 1. Récupérer toutes les sociétés actives
+        List<Societe> allSocietes = societeRepository.findAll().stream()
+                .filter(s -> Boolean.TRUE.equals(s.getActif()))
+                .collect(Collectors.toList());
+
+        // 2. Normalisation automatique en arrière-plan : si une société a son mereId pointant vers une autre société au lieu du root, la rattacher directement au cabinet racine
+        if (rootCabinetId != null) {
+            for (Societe s : allSocietes) {
+                Long socRoot = resolveRootCabinetId(s.getId());
+                if (rootCabinetId.equals(socRoot) && (!rootCabinetId.equals(s.getMereId()) || !rootCabinetId.equals(s.getTenantId()))) {
+                    s.setMereId(rootCabinetId);
+                    s.setTenantId(rootCabinetId);
+                    societeRepository.save(s);
+                }
+            }
+        }
+
+        // 3. Filtrer les sociétés appartenant au cabinet racine
+        List<Societe> societes = allSocietes.stream()
+                .filter(s -> {
+                    if (rootCabinetId == null) return true;
+                    Long socRoot = resolveRootCabinetId(s.getId());
+                    return rootCabinetId.equals(socRoot) 
+                            || rootCabinetId.equals(s.getMereId()) 
+                            || rootCabinetId.equals(s.getTenantId())
+                            || rootCabinetId.equals(s.getId());
+                })
+                .sorted(java.util.Comparator.comparing(Societe::getRaisonSociale, java.util.Comparator.nullsLast(String::compareToIgnoreCase)))
+                .collect(Collectors.toList());
 
         boolean isAdmin = user == null || (user.getRole() != null && 
                 ("ROLE_ADMIN".equals(user.getRole().getNom()) || "ROLE_SUPERADMIN".equals(user.getRole().getNom())));
@@ -303,22 +371,31 @@ public class FiduciaireService {
     // =========================================================================
 
     public SocieteDTO creerSociete(SocieteDTO dto) {
-        Long mereId = (dto.getMereId() != null) ? dto.getMereId() : getCurrentMereId();
-        if (mereId == null) {
-            throw new IllegalArgumentException("Impossible d'identifier le cabinet / organisation mère de rattachement.");
+        // Le Point de Vente C'EST le Tenant : on récupère directement l'ID du point de vente de l'utilisateur
+        User user = getCurrentUser();
+        Long tenantId = null;
+        if (user != null && user.getPointDeVente() != null && user.getPointDeVente().getId() != null) {
+            PointDeVente pdv = user.getPointDeVente();
+            tenantId = (pdv.getMereId() != null && pdv.getMereId() > 0) ? pdv.getMereId() : pdv.getId();
+        } else {
+            tenantId = getRootCabinetId();
+        }
+
+        if (tenantId == null) {
+            throw new IllegalStateException("Impossible de déterminer le cabinet racine pour la création de la société.");
         }
 
         String code = (dto.getCode() != null && !dto.getCode().trim().isEmpty())
                 ? dto.getCode().trim().toUpperCase()
-                : "SOC-" + (societeRepository.countByMereIdAndActifTrue(mereId) + 1);
+                : "SOC-" + (societeRepository.countByTenantIdAndActifTrue(tenantId) + 1);
 
-        if (societeRepository.existsByCodeAndMereId(code, mereId)) {
-            throw new IllegalArgumentException("Une société avec le code " + code + " existe déjà pour votre cabinet/holding.");
+        if (societeRepository.existsByCodeAndTenantId(code, tenantId) || societeRepository.existsByCodeAndMereId(code, tenantId)) {
+            throw new IllegalArgumentException("Une société avec le code " + code + " existe déjà pour votre cabinet/tenant.");
         }
 
         Societe societe = new Societe();
-        societe.setMereId(mereId);
-        societe.setTenantId(mereId);
+        societe.setMereId(tenantId);   // MERE_ID = Cabinet racine (Tenant 2)
+        societe.setTenantId(tenantId); // TENANT_ID = Cabinet racine (Tenant 2)
         societe.setCode(code);
         societe.setRaisonSociale(dto.getRaisonSociale() != null ? dto.getRaisonSociale() : "Société " + code);
         societe.setFormeJuridique(dto.getFormeJuridique() != null ? dto.getFormeJuridique() : "SARL");
@@ -342,9 +419,9 @@ public class FiduciaireService {
         societe.setResponsableDossier(dto.getResponsableDossier());
         societe.setActif(true);
 
-        long nbSocietesExistantes = societeRepository.countByMereIdAndActifTrue(mereId);
+        long nbSocietesExistantes = societeRepository.countByTenantIdAndActifTrue(tenantId);
         if (nbSocietesExistantes == 0 || Boolean.TRUE.equals(dto.getIsParDefaut())) {
-            desactiverAncienneParDefaut(mereId);
+            desactiverAncienneParDefaut(tenantId);
             societe.setIsParDefaut(true);
         } else {
             societe.setIsParDefaut(false);
@@ -352,25 +429,8 @@ public class FiduciaireService {
 
         Societe saved = societeRepository.save(societe);
 
-        // Synchroniser / Créer un PointDeVente jumeau pour assurer la compatibilité complète
-        try {
-            String nomPdv = saved.getRaisonSociale() + " (" + saved.getCode() + ")";
-            if (!pointDeVenteRepository.existsByNomPointDeVente(nomPdv) && !pointDeVenteRepository.existsByTenantId(saved.getId())) {
-                PointDeVente pdv = new PointDeVente();
-                pdv.setNom(saved.getRaisonSociale());
-                pdv.setNomPointDeVente(nomPdv);
-                pdv.setMereId(mereId);
-                pdv.setTenantId(saved.getId()); // Le PointDeVente porte le tenantId de la société
-                pdv.setAdresse(saved.getAdresse());
-                pdv.setTelephone(saved.getTelephone());
-                if (saved.getEmail() != null && !saved.getEmail().isBlank() && !pointDeVenteRepository.existsByEmail(saved.getEmail())) {
-                    pdv.setEmail(saved.getEmail());
-                }
-                pdv.setActif(true);
-                pointDeVenteRepository.save(pdv);
-            }
-        } catch (Exception ignored) {
-        }
+        // PAS DE CRÉATION DE POINT DE VENTE : les points de vente sont gérés par le SuperAdmin.
+        // La société est un dossier client rattaché au cabinet tenant mère.
 
         auditService.logCreation("SOCIETE", saved.getId(), "Création société cliente / filiale : " + saved.getCode() + " - " + saved.getRaisonSociale());
 
@@ -420,8 +480,11 @@ public class FiduciaireService {
 
     @Transactional(readOnly = true)
     public List<SocieteDTO> listerSocietes() {
-        Long mereId = getCurrentMereId();
-        return societeRepository.findByMereIdOrderByRaisonSocialeAsc(mereId).stream()
+        Long tenantId = getCurrentTenantId();
+        List<Societe> societes = (tenantId != null) 
+                ? societeRepository.findByTenantIdOrMereIdAndActifTrue(tenantId)
+                : societeRepository.findAll();
+        return societes.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -544,10 +607,13 @@ public class FiduciaireService {
 
     @Transactional(readOnly = true)
     public DashboardFiduciaireDTO getDashboardFiduciaire() {
-        Long mereId = getCurrentMereId();
+        Long tenantId = getCurrentTenantId();
         DashboardFiduciaireDTO dash = new DashboardFiduciaireDTO();
 
-        long nbSocietes = societeRepository.countByMereIdAndActifTrue(mereId);
+        List<Societe> societes = (tenantId != null) 
+                ? societeRepository.findByTenantIdOrMereIdAndActifTrue(tenantId)
+                : List.of();
+        long nbSocietes = societes.size();
         dash.setTotalSocietes(nbSocietes);
         dash.setSocietesActives(nbSocietes);
 
@@ -575,8 +641,6 @@ public class FiduciaireService {
                         .map(this::toEcheanceDto)
                         .collect(Collectors.toList())
         );
-
-        List<Societe> societes = societeRepository.findByMereIdOrderByRaisonSocialeAsc(mereId);
         List<DashboardFiduciaireDTO.SyntheseDossierDTO> syntheses = societes.stream().map(s -> {
             DashboardFiduciaireDTO.SyntheseDossierDTO syn = new DashboardFiduciaireDTO.SyntheseDossierDTO();
             syn.setSocieteId(s.getId());

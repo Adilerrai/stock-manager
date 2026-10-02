@@ -135,8 +135,8 @@ public class BonLivraisonClientService {
                 if (ligneDto.getDepotId() != null) {
                     depotRepository.findById(ligneDto.getDepotId()).ifPresent(ligne::setDepot);
                 }
-                if (ligne.getDepot() == null) {
-                    depotRepository.findAll().stream().findFirst().ifPresent(ligne::setDepot);
+                if (ligne.getDepot() == null && tenantId != null) {
+                    depotRepository.findByPointDeVenteIdAndActifTrue(tenantId).stream().findFirst().ifPresent(ligne::setDepot);
                 }
 
                 ligne.setQuantiteLivree(ligneDto.getQuantiteLivree() != null ? ligneDto.getQuantiteLivree() : BigDecimal.ONE);

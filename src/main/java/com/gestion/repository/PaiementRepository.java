@@ -14,6 +14,7 @@ import java.util.List;
 @Repository
 public interface PaiementRepository extends JpaRepository<Paiement, Long>, PaiementRepositoryCustom {
 
+    List<Paiement> findByPointDeVenteId(Long pointDeVenteId);
 
     List<Paiement> findByVenteId(Long venteId);
 
@@ -22,7 +23,6 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long>, Paiem
     List<Paiement> findByClientId(Long clientId);
 
     java.util.Optional<Paiement> findByNumeroPaiement(String numeroPaiement);
-
 
     @Query("SELECT p FROM Paiement p WHERE " +
            " p.datePaiement BETWEEN :dateDebut AND :dateFin " +
@@ -72,5 +72,3 @@ public interface PaiementRepository extends JpaRepository<Paiement, Long>, Paiem
                                                   @Param("dateFin") LocalDateTime dateFin,
                                                   @Param("tenantId") Long tenantId);
 }
-
-

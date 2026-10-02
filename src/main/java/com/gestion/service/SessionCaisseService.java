@@ -113,7 +113,7 @@ public class SessionCaisseService {
         if (tenantId != null) {
             return sessionCaisseRepository.findByPointDeVenteIdOrderByDateOuvertureDesc(tenantId);
         }
-        return sessionCaisseRepository.findAll();
+        return java.util.Collections.emptyList();
     }
 
     private String genererReference() {

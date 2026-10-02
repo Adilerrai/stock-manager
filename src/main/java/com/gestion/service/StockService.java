@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -158,7 +159,7 @@ public class StockService {
     public List<Stock> getAllStocks() {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId == null) {
-            return stockRepository.findAll();
+            return Collections.emptyList();
         }
         return stockRepository.findByPointDeVenteId(tenantId);
     }

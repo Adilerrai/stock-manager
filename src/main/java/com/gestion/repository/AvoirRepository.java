@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AvoirRepository extends JpaRepository<Avoir, Long> {
+public interface AvoirRepository extends JpaRepository<Avoir, Long>, AvoirRepositoryCustom {
 
     Optional<Avoir> findByNumeroAvoir(String numeroAvoir);
 

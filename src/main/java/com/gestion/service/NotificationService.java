@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -124,8 +125,10 @@ public class NotificationService {
 
         // 2. Alerte Factures Impayées échues
         try {
-            List<Facture> factures = factureRepository.findAll();
             LocalDate today = LocalDate.now();
+            List<Facture> factures = (tenantId != null)
+                    ? factureRepository.findFacturesEchuesByPointDeVenteId(today, tenantId)
+                    : Collections.emptyList();
             for (Facture f : factures) {
                 if (f.getStatut() != StatutFacture.PAYEE_TOTALEMENT && f.getStatut() != StatutFacture.ANNULEE) {
                     if (f.getDateEcheance() != null && f.getDateEcheance().isBefore(today)) {

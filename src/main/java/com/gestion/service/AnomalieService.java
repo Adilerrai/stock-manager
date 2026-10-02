@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.AnomalieDTO;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
@@ -58,7 +59,8 @@ public class AnomalieService {
      */
     public List<AnomalieDTO> detecterAnomaliesCredits() {
         List<AnomalieDTO> anomalies = new ArrayList<>();
-        List<Client> clients = clientRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Client> clients = tenantId != null ? clientRepository.findByPointDeVenteId(tenantId) : java.util.Collections.emptyList();
 
         for (Client c : clients) {
             BigDecimal autorise = c.getCreditAutorise() != null ? c.getCreditAutorise() : BigDecimal.ZERO;
@@ -122,7 +124,8 @@ public class AnomalieService {
         }
 
         // Détection factures annulées mais avec encaissement
-        List<Facture> factures = factureRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Facture> factures = tenantId != null ? factureRepository.findByPointDeVenteIdOrderByDateFactureDesc(tenantId) : java.util.Collections.emptyList();
         for (Facture f : factures) {
             if (Boolean.TRUE.equals(f.getAnnulee()) && f.getMontantPaye() != null && f.getMontantPaye().compareTo(BigDecimal.ZERO) > 0) {
                 AnomalieDTO a = new AnomalieDTO(
@@ -147,7 +150,8 @@ public class AnomalieService {
      */
     public List<AnomalieDTO> detecterAnomaliesStock() {
         List<AnomalieDTO> anomalies = new ArrayList<>();
-        List<StockQualite> stocks = stockQualiteRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<StockQualite> stocks = tenantId != null ? stockQualiteRepository.findByTenantId(tenantId) : java.util.Collections.emptyList();
 
         for (StockQualite sq : stocks) {
             BigDecimal dispo = sq.getQuantiteDisponible() != null ? sq.getQuantiteDisponible() : BigDecimal.ZERO;
@@ -231,7 +235,8 @@ public class AnomalieService {
      */
     public List<AnomalieDTO> detecterAnomaliesPaiements() {
         List<AnomalieDTO> anomalies = new ArrayList<>();
-        List<Paiement> paiements = paiementRepository.findAll();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Paiement> paiements = tenantId != null ? paiementRepository.findByPointDeVenteId(tenantId) : java.util.Collections.emptyList();
 
         for (Paiement p : paiements) {
             if (!Boolean.TRUE.equals(p.getAnnule()) && p.getVente() == null && p.getFacture() == null) {

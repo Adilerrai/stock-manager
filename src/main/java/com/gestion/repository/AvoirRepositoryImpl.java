@@ -1,8 +1,8 @@
 package com.gestion.repository;
 
 import com.acommon.persistant.model.TenantContext;
-import com.gestion.persistent.dto.PaiementSearchCriteria;
-import com.gestion.persistent.model.Paiement;
+import com.gestion.persistent.dto.AvoirSearchCriteria;
+import com.gestion.persistent.model.Avoir;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -16,20 +16,20 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public class PaiementRepositoryImpl implements PaiementRepositoryCustom {
+public class AvoirRepositoryImpl implements AvoirRepositoryCustom {
 
     @PersistenceContext
     private EntityManager entityManager;
 
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
-            "id", "numeroTransaction", "datePaiement", "modePaiement", "montant"
+            "id", "numeroAvoir", "dateAvoir", "montantHT", "montantTTC", "statut", "typeAvoir"
     );
 
     @Override
-    public Page<Paiement> findByCriteria(PaiementSearchCriteria criteria, Pageable pageable) {
+    public Page<Avoir> findByCriteria(AvoirSearchCriteria criteria, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Paiement> query = cb.createQuery(Paiement.class);
-        Root<Paiement> root = query.from(Paiement.class);
+        CriteriaQuery<Avoir> query = cb.createQuery(Avoir.class);
+        Root<Avoir> root = query.from(Avoir.class);
 
         List<Predicate> predicates = buildPredicates(cb, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
@@ -45,19 +45,19 @@ public class PaiementRepositoryImpl implements PaiementRepositoryCustom {
             if (!orders.isEmpty()) {
                 query.orderBy(orders);
             } else {
-                query.orderBy(cb.desc(root.get("datePaiement")));
+                query.orderBy(cb.desc(root.get("dateAvoir")));
             }
         } else {
-            query.orderBy(cb.desc(root.get("datePaiement")));
+            query.orderBy(cb.desc(root.get("dateAvoir")));
         }
 
-        List<Paiement> results = entityManager.createQuery(query)
+        List<Avoir> results = entityManager.createQuery(query)
                 .setFirstResult((int) pageable.getOffset())
                 .setMaxResults(pageable.getPageSize())
                 .getResultList();
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
-        Root<Paiement> countRoot = countQuery.from(Paiement.class);
+        Root<Avoir> countRoot = countQuery.from(Avoir.class);
         List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria);
         countQuery.select(cb.count(countRoot)).where(countPredicates.toArray(new Predicate[0]));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
@@ -65,7 +65,7 @@ public class PaiementRepositoryImpl implements PaiementRepositoryCustom {
         return new PageImpl<>(results, pageable, total);
     }
 
-    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Paiement> root, PaiementSearchCriteria criteria) {
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Avoir> root, AvoirSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
         Long tenantId = (criteria != null && criteria.getSocieteId() != null)
@@ -81,40 +81,40 @@ public class PaiementRepositoryImpl implements PaiementRepositoryCustom {
             return predicates;
         }
 
-        if (criteria.getModePaiement() != null) {
-            predicates.add(cb.equal(root.get("modePaiement"), criteria.getModePaiement()));
+        if (criteria.getNumeroAvoir() != null && !criteria.getNumeroAvoir().trim().isEmpty()) {
+            predicates.add(cb.like(cb.lower(root.get("numeroAvoir")), "%" + criteria.getNumeroAvoir().trim().toLowerCase() + "%"));
+        }
+
+        if (criteria.getTypeAvoir() != null) {
+            predicates.add(cb.equal(root.get("typeAvoir"), criteria.getTypeAvoir()));
+        }
+
+        if (criteria.getStatut() != null) {
+            predicates.add(cb.equal(root.get("statut"), criteria.getStatut()));
         }
 
         if (criteria.getClientId() != null) {
             predicates.add(cb.equal(root.get("client").get("id"), criteria.getClientId()));
         }
 
-        if (criteria.getVenteId() != null) {
-            predicates.add(cb.equal(root.get("vente").get("id"), criteria.getVenteId()));
-        }
-
-        if (criteria.getFactureId() != null) {
-            predicates.add(cb.equal(root.get("facture").get("id"), criteria.getFactureId()));
-        }
-
-        if (criteria.getAnnule() != null) {
-            predicates.add(cb.equal(root.get("annule"), criteria.getAnnule()));
+        if (criteria.getFournisseurId() != null) {
+            predicates.add(cb.equal(root.get("fournisseur").get("id"), criteria.getFournisseurId()));
         }
 
         if (criteria.getDateDebut() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("datePaiement"), criteria.getDateDebut()));
+            predicates.add(cb.greaterThanOrEqualTo(root.get("dateAvoir"), criteria.getDateDebut()));
         }
 
         if (criteria.getDateFin() != null) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("datePaiement"), criteria.getDateFin()));
+            predicates.add(cb.lessThanOrEqualTo(root.get("dateAvoir"), criteria.getDateFin()));
         }
 
         if (criteria.getMontantMin() != null) {
-            predicates.add(cb.greaterThanOrEqualTo(root.get("montant"), criteria.getMontantMin()));
+            predicates.add(cb.greaterThanOrEqualTo(root.get("montantTTC"), criteria.getMontantMin()));
         }
 
         if (criteria.getMontantMax() != null) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("montant"), criteria.getMontantMax()));
+            predicates.add(cb.lessThanOrEqualTo(root.get("montantTTC"), criteria.getMontantMax()));
         }
 
         return predicates;
