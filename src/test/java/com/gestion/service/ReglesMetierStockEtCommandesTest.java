@@ -6,7 +6,7 @@ import com.acommon.persistant.dto.PointDeVenteResponse;
 import com.acommon.persistant.model.PointDeVente;
 import com.acommon.repository.PointDeVenteRepository;
 import com.acommon.repository.UserRepository;
-import com.acommon.service.EntrepriseProfileService;
+import com.gestion.service.EntrepriseProfileService;
 import com.acommon.service.PointDeVenteService;
 import com.gestion.persistent.dto.BonLivraisonClientDTO;
 import com.gestion.persistent.dto.LigneBonLivraisonClientDTO;
