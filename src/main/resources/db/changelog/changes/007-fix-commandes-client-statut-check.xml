@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 007 :
+      Mise à jour de la contrainte CHECK sur le statut de commandes_client
+      pour accepter BACKORDER, RELIQUAT et FACTUREE.
+    -->
+    <changeSet id="007-fix-commandes-client-statut-check" author="erp-commercial">
+        <sql splitStatements="true">
+            -- 1. Suppression de l'ancienne contrainte limitative
+            ALTER TABLE IF EXISTS commandes_client 
+                DROP CONSTRAINT IF EXISTS commandes_client_statut_check;
+
+            -- 2. Recréation de la contrainte avec l'ensemble complet des statuts
+            ALTER TABLE IF EXISTS commandes_client 
+                ADD CONSTRAINT commandes_client_statut_check 
+                CHECK (statut IN (
+                    'BROUILLON',
+                    'CONFIRMEE',
+                    'EN_PREPARATION',
+                    'PRETE',
+                    'LIVREE_PARTIELLE',
+                    'LIVREE',
+                    'BACKORDER',
+                    'RELIQUAT',
+                    'FACTUREE',
+                    'ANNULEE'
+                ));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

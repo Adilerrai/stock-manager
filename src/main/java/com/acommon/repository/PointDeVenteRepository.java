@@ -41,9 +41,10 @@ public interface PointDeVenteRepository extends JpaRepository<PointDeVente, Long
            "OR LOWER(p.telephone) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<PointDeVente> searchPointsDeVente(@Param("search") String search, Pageable pageable);
 
-    @Query("SELECT p FROM PointDeVente p WHERE p.actif = :actif AND " +
-           "(LOWER(p.nomPointDeVente) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(p.email) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(p.telephone) LIKE LOWER(CONCAT('%', :search, '%')))")
     Page<PointDeVente> searchPointsDeVenteByActif(@Param("search") String search, @Param("actif") Boolean actif, Pageable pageable);
+
+    List<PointDeVente> findAllByMereId(Long mereId);
+
+    @Query("SELECT p.tenantId FROM PointDeVente p WHERE p.mereId = :mereId")
+    List<Long> findTenantIdsByMereId(@Param("mereId") Long mereId);
 }
