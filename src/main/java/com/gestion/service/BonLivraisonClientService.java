@@ -86,6 +86,11 @@ public class BonLivraisonClientService {
         if (dto.getCommandeClientId() != null) {
             commande = commandeClientRepository.findById(dto.getCommandeClientId()).orElse(null);
             if (commande != null) {
+                if (commande.getStatut() == com.gestion.persistent.enums.StatutCommandeClient.BROUILLON) {
+                    String numCmd = commande.getNumeroCommande() != null ? commande.getNumeroCommande() : ("#" + commande.getId());
+                    throw new CommonException("Impossible de créer un bon de livraison : la commande client " + numCmd + 
+                            " est au statut BROUILLON. Veuillez d'abord la confirmer / valider.", HttpStatus.BAD_REQUEST);
+                }
                 bl.setCommandeClient(commande);
             }
         }
@@ -205,6 +210,8 @@ public class BonLivraisonClientService {
             throw new CommonException("Le bon de livraison ne contient aucune ligne à expédier", HttpStatus.BAD_REQUEST);
         }
 
+        boolean isFromOrder = bl.getCommandeClient() != null;
+
         // Subtract stock for each line item
         for (LigneBonLivraisonClient ligne : bl.getLignes()) {
             if (ligne.getProduit() == null) {
@@ -231,17 +238,9 @@ public class BonLivraisonClientService {
                         ligne.getLot() != null && ligne.getLot().getQualite() != null ? 
                                 ligne.getLot().getQualite() : QualiteProduit.PREMIERE_QUALITE,
                         bl.getNumeroBl(),
-                        "Expédition BL client " + bl.getNumeroBl()
+                        "Expédition BL client " + bl.getNumeroBl(),
+                        isFromOrder
                 );
-
-                // Déduire la réservation de stock car la marchandise sort physiquement
-                stockRepository.findByProduitId(ligne.getProduit().getId()).ifPresent(stock -> {
-                    BigDecimal reservee = stock.getQuantiteReservee() != null ? stock.getQuantiteReservee() : BigDecimal.ZERO;
-                    BigDecimal qteLivree = ligne.getQuantiteLivree() != null ? ligne.getQuantiteLivree() : BigDecimal.ZERO;
-                    BigDecimal nouveauRes = reservee.subtract(qteLivree);
-                    stock.setQuantiteReservee(nouveauRes.compareTo(BigDecimal.ZERO) >= 0 ? nouveauRes : BigDecimal.ZERO);
-                    stockRepository.save(stock);
-                });
             } catch (Exception ex) {
                 String nomProd = ligne.getProduit().getNom() != null ? ligne.getProduit().getNom() : String.valueOf(ligne.getProduit().getId());
                 throw new CommonException("Impossible de déstocker le produit '" + nomProd + "' : " + 

@@ -180,6 +180,11 @@ public class CommandeClientService {
                 bls = Collections.emptyList();
             }
 
+            boolean hasFacturedBl = bls.stream().anyMatch(bl -> bl.getFacture() != null || Boolean.TRUE.equals(bl.isFacture()));
+            if (hasFacturedBl) {
+                throw new CommonException("Impossible d'annuler cette commande car un ou plusieurs bons de livraison associés sont déjà facturés. Vous devez d'abord annuler les factures.", HttpStatus.BAD_REQUEST);
+            }
+
             boolean hasActiveBl = bls.stream().anyMatch(bl -> bl.getStatut() != StatutLivraison.ANNULEE);
             if (hasActiveBl) {
                 String numerosBl = bls.stream()

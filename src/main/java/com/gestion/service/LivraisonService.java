@@ -1,8 +1,10 @@
 package com.gestion.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
+import com.acommon.exception.CommonException;
 import com.acommon.exception.ResourceNotFoundException;
 import com.acommon.persistant.model.TenantContext;
+import org.springframework.http.HttpStatus;
 import com.gestion.persistent.dto.LivraisonDTO;
 import com.gestion.persistent.dto.LigneLivraisonDTO;
 import com.gestion.persistent.dto.LivraisonSearchCriteria;
@@ -266,6 +268,12 @@ public class LivraisonService {
         Commande commande = commandeRepository.findById(livraison.getCommande().getId())
                 .orElseThrow(RuntimeException::new);
         
+        if (commande.getStatut() == StatutCommande.BROUILLON) {
+            String num = commande.getNumeroCommande() != null ? commande.getNumeroCommande() : ("#" + commande.getId());
+            throw new CommonException("Impossible de créer une livraison : la commande fournisseur " + num + 
+                    " est au statut BROUILLON. Veuillez d'abord valider la commande.", HttpStatus.BAD_REQUEST);
+        }
+
         if (commande.getStatutLivraison() == StatutLivraison.LIVREE) {
             throw new IllegalStateException("Cette commande est déjà entièrement livrée");
         }
@@ -393,6 +401,12 @@ public class LivraisonService {
         Commande commande = commandeRepository.findById(commandeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Commande", "id", commandeId));
         
+        if (commande.getStatut() == StatutCommande.BROUILLON) {
+            String num = commande.getNumeroCommande() != null ? commande.getNumeroCommande() : ("#" + commande.getId());
+            throw new CommonException("Impossible de créer une livraison : la commande fournisseur " + num + 
+                    " est encore au statut BROUILLON. Veuillez d'abord valider la commande.", HttpStatus.BAD_REQUEST);
+        }
+
         if (commande.getStatutLivraison() == StatutLivraison.LIVREE) {
             throw new IllegalStateException("Cette commande est déjà entièrement livrée");
         }

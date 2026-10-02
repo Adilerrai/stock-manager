@@ -1,8 +1,10 @@
 package com.gestion.service;
 
 import com.acommon.annotation.MultitenantSearchMethod;
+import com.acommon.exception.CommonException;
 import com.acommon.exception.ResourceNotFoundException;
 import com.acommon.persistant.model.TenantContext;
+import org.springframework.http.HttpStatus;
 import com.gestion.persistent.dto.*;
 import com.gestion.persistent.enums.QualiteProduit;
 import com.gestion.persistent.enums.StatutCommande;
@@ -146,8 +148,26 @@ public class CommandeService {
     public Commande annulerCommande(Long commandeId) {
         Commande commande = getCommandeById(commandeId);
         
+        if (commande.getStatut() == StatutCommande.ANNULEE) {
+            throw new CommonException("Cette commande est déjà annulée.", HttpStatus.BAD_REQUEST);
+        }
+
         if (commande.getStatut() == StatutCommande.LIVREE) {
-            throw new IllegalStateException("Impossible d'annuler une commande déjà livrée");
+            throw new CommonException("Impossible d'annuler une commande déjà livrée.", HttpStatus.BAD_REQUEST);
+        }
+
+        // RÈGLE : Impossible d'annuler une commande liée à des livraisons actives (non annulées)
+        List<Livraison> livraisons = livraisonRepository.findByCommande_Id(commandeId);
+        if (livraisons != null && !livraisons.isEmpty()) {
+            boolean hasActiveLivraison = livraisons.stream().anyMatch(l -> l.getStatut() != StatutLivraison.ANNULEE);
+            if (hasActiveLivraison) {
+                String numeros = livraisons.stream()
+                        .filter(l -> l.getStatut() != StatutLivraison.ANNULEE)
+                        .map(l -> l.getNumeroLivraison() != null ? l.getNumeroLivraison() : ("#" + l.getId()))
+                        .collect(Collectors.joining(", "));
+                throw new CommonException("Impossible d'annuler cette commande car elle possède un ou plusieurs bons de livraison actifs (" + 
+                        numeros + "). Vous devez d'abord annuler ces livraisons.", HttpStatus.BAD_REQUEST);
+            }
         }
         
         commande.setStatut(StatutCommande.ANNULEE);

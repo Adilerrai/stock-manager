@@ -15,6 +15,8 @@ import java.util.Optional;
 public interface LivraisonRepository extends JpaRepository<Livraison, Long>, LivraisonRepositoryCustom {
 
 
+    List<Livraison> findByCommande_Id(Long commandeId);
+
     List<Livraison> findByCommande_IdAndStatut(Long commandeId, StatutLivraison statut);
 
     List<Livraison> findByPointDeVenteId(Long pointDeVenteId);

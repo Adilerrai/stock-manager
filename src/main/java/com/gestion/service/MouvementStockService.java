@@ -47,11 +47,11 @@ public class MouvementStockService {
     @Transactional
     public MouvementStock creerMouvement(Long produitId, Long depotId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, QualiteProduit qualite,
-                                         String referenceDocument, String motif) {
+                                         String referenceDocument, String motif, boolean depuisReservation) {
         // Charger le produit et calculer quantités
         Stock stock = stockRepository.findByProduitWithQualities(produitId).orElse(null);
         BigDecimal quantiteAvant = stock != null ? stock.getQuantiteTotaleDisponible() : BigDecimal.ZERO;
-        appliquerMouvementStock(produitId, typeMouvement, quantite, qualite);
+        appliquerMouvementStock(produitId, typeMouvement, quantite, qualite, depuisReservation);
         stock = stockRepository.findByProduitWithQualities(produitId).orElse(null);
         BigDecimal quantiteApres = stock != null ? stock.getQuantiteTotaleDisponible() : BigDecimal.ZERO;
 
@@ -91,31 +91,38 @@ public class MouvementStockService {
     }
 
     @Transactional
+    public MouvementStock creerMouvement(Long produitId, Long depotId, TypeMouvement typeMouvement,
+                                         BigDecimal quantite, QualiteProduit qualite,
+                                         String referenceDocument, String motif) {
+        return creerMouvement(produitId, depotId, typeMouvement, quantite, qualite, referenceDocument, motif, false);
+    }
+
+    @Transactional
     public MouvementStock creerMouvement(Long produitId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, QualiteProduit qualite,
                                          String referenceDocument, String motif) {
-        return creerMouvement(produitId, null, typeMouvement, quantite, qualite, referenceDocument, motif);
+        return creerMouvement(produitId, null, typeMouvement, quantite, qualite, referenceDocument, motif, false);
     }
 
     @Transactional
     public MouvementStock creerMouvement(Long produitId, Long depotId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, String referenceDocument, String motif) {
-        return creerMouvement(produitId, depotId, typeMouvement, quantite, QualiteProduit.PREMIERE_QUALITE, referenceDocument, motif);
+        return creerMouvement(produitId, depotId, typeMouvement, quantite, QualiteProduit.PREMIERE_QUALITE, referenceDocument, motif, false);
     }
 
     @Transactional
     public MouvementStock creerMouvement(Long produitId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, String referenceDocument, String motif) {
-        return creerMouvement(produitId, null, typeMouvement, quantite, QualiteProduit.PREMIERE_QUALITE, referenceDocument, motif);
+        return creerMouvement(produitId, null, typeMouvement, quantite, QualiteProduit.PREMIERE_QUALITE, referenceDocument, motif, false);
     }
 
     private void appliquerMouvementStock(Long produitId, TypeMouvement typeMouvement,
-                                         BigDecimal quantite, QualiteProduit qualite) {
+                                         BigDecimal quantite, QualiteProduit qualite, boolean depuisReservation) {
         switch (typeMouvement) {
             case ENTREE_LIVRAISON, AJUSTEMENT_POSITIF, TRANSFERT_ENTREE ->
                 stockService.ajouterStockParQualite(produitId, qualite, quantite);
             case SORTIE_VENTE, SORTIE_COMMANDE, AJUSTEMENT_NEGATIF, TRANSFERT_SORTIE ->
-                stockService.retirerStockParQualite(produitId, qualite, quantite);
+                stockService.retirerStockParQualite(produitId, qualite, quantite, depuisReservation);
             case INVENTAIRE -> {
                 Stock stock = stockRepository.findByProduitWithQualities(produitId).orElse(null);
                 if (stock != null) {

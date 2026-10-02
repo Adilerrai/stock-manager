@@ -77,6 +77,10 @@ public class StockService {
     }
 
     public Stock retirerStock(Long produitId, BigDecimal quantite) {
+        return retirerStock(produitId, quantite, false);
+    }
+
+    public Stock retirerStock(Long produitId, BigDecimal quantite, boolean depuisReservation) {
         boolean allowNegative = entrepriseProfileService.isVenteStockNegatifAutorisee();
 
         Stock stock = stockRepository.findByProduitId(produitId).orElse(null);
@@ -89,15 +93,67 @@ public class StockService {
             stock = new Stock();
             stock.setProduit(produit);
             stock.setQuantiteDisponible(BigDecimal.ZERO);
+            stock.setQuantiteReservee(BigDecimal.ZERO);
         }
 
-        if (!allowNegative && stock.getQuantiteDisponible().compareTo(quantite) < 0) {
-            throw new IllegalArgumentException(String.format(
-                    "Stock insuffisant pour le produit %s (Disponible: %s, Demandé: %s)",
-                    stock.getProduit().getNom(), stock.getQuantiteDisponible(), quantite));
+        BigDecimal reservee = stock.getQuantiteReservee() != null ? stock.getQuantiteReservee() : BigDecimal.ZERO;
+        BigDecimal disponible = stock.getQuantiteDisponible() != null ? stock.getQuantiteDisponible() : BigDecimal.ZERO;
+
+        if (depuisReservation) {
+            BigDecimal totalPhysique = disponible.add(reservee);
+            if (!allowNegative && totalPhysique.compareTo(quantite) < 0) {
+                String nomProd = stock.getProduit() != null && stock.getProduit().getNom() != null 
+                        ? stock.getProduit().getNom() 
+                        : (stock.getProduit() != null && stock.getProduit().getDesignation() != null 
+                                ? stock.getProduit().getDesignation() 
+                                : String.valueOf(produitId));
+                throw new IllegalArgumentException(String.format(
+                        "Stock physique insuffisant pour le produit %s (Total en stock: %s, Demandé: %s)",
+                        nomProd, totalPhysique, quantite));
+            }
+
+            // Déduire en priorité de la réserve liée à la commande
+            if (reservee.compareTo(quantite) >= 0) {
+                stock.setQuantiteReservee(reservee.subtract(quantite));
+            } else {
+                BigDecimal reste = quantite.subtract(reservee);
+                stock.setQuantiteReservee(BigDecimal.ZERO);
+                stock.setQuantiteDisponible(disponible.subtract(reste));
+            }
+        } else {
+            if (!allowNegative && disponible.compareTo(quantite) < 0) {
+                String nomProd = stock.getProduit() != null && stock.getProduit().getNom() != null 
+                        ? stock.getProduit().getNom() 
+                        : (stock.getProduit() != null && stock.getProduit().getDesignation() != null 
+                                ? stock.getProduit().getDesignation() 
+                                : String.valueOf(produitId));
+                throw new IllegalArgumentException(String.format(
+                        "Stock insuffisant pour le produit %s (Disponible: %s, Demandé: %s)",
+                        nomProd, disponible, quantite));
+            }
+            stock.setQuantiteDisponible(disponible.subtract(quantite));
         }
 
-        stock.setQuantiteDisponible(stock.getQuantiteDisponible().subtract(quantite));
+        // Synchroniser également les stock_qualites si présents
+        if (stock.getStocksQualite() != null && !stock.getStocksQualite().isEmpty()) {
+            for (StockQualite sq : stock.getStocksQualite()) {
+                if (depuisReservation) {
+                    BigDecimal sqRes = sq.getQuantiteReservee() != null ? sq.getQuantiteReservee() : BigDecimal.ZERO;
+                    if (sqRes.compareTo(quantite) >= 0) {
+                        sq.setQuantiteReservee(sqRes.subtract(quantite));
+                    } else {
+                        BigDecimal reste = quantite.subtract(sqRes);
+                        sq.setQuantiteReservee(BigDecimal.ZERO);
+                        BigDecimal sqDispo = sq.getQuantiteDisponible() != null ? sq.getQuantiteDisponible() : BigDecimal.ZERO;
+                        sq.setQuantiteDisponible(sqDispo.subtract(reste));
+                    }
+                } else {
+                    BigDecimal sqDispo = sq.getQuantiteDisponible() != null ? sq.getQuantiteDisponible() : BigDecimal.ZERO;
+                    sq.setQuantiteDisponible(sqDispo.subtract(quantite));
+                }
+            }
+        }
+
         stock.setDerniereMaj(LocalDateTime.now());
         return stockRepository.save(stock);
     }
@@ -184,7 +240,11 @@ public class StockService {
     }
 
     public Stock retirerStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite) {
-        return retirerStock(produitId, quantite);
+        return retirerStock(produitId, quantite, false);
+    }
+
+    public Stock retirerStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite, boolean depuisReservation) {
+        return retirerStock(produitId, quantite, depuisReservation);
     }
 
     public boolean reserverStockParQualite(Long produitId, QualiteProduit qualite, BigDecimal quantite) {

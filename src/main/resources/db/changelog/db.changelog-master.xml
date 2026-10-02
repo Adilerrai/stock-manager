@@ -34,4 +34,7 @@
     <!-- Changeset 008 : Mise à jour contraintes statut livraison (PARTIELLE) -->
     <include file="changes/008-fix-statut-livraison-check.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 009 : Dépôt principal automatique pour chaque point de vente -->
+    <include file="changes/009-ensure-principal-depots.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

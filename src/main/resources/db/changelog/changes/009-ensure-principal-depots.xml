@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 009 :
+      Création automatique d'un Dépôt Principal pour chaque Point de Vente existant qui n'en possède pas encore.
+    -->
+    <changeSet id="009-ensure-principal-depots" author="erp-commercial">
+        <sql splitStatements="true">
+            INSERT INTO depots (nom, description, adresse, actif, point_de_vente_id, date_creation)
+            SELECT 
+                'Dépôt Principal',
+                'Dépôt principal du point de vente ' || COALESCE(pdv.nom_point_de_vente, pdv.nom, 'Principal'),
+                COALESCE(pdv.adresse, 'Dépôt Principal'),
+                true,
+                pdv.id,
+                NOW()
+            FROM point_de_vente pdv
+            WHERE NOT EXISTS (
+                SELECT 1 FROM depots d WHERE d.point_de_vente_id = pdv.id
+            );
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

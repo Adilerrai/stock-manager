@@ -22,12 +22,21 @@ public class PointDeVenteService {
 
     private final PointDeVenteRepository pointDeVenteRepository;
     private final UserRepository userRepository;
+    private final com.gestion.repository.DepotRepository depotRepository;
 
     public PointDeVenteService(
             PointDeVenteRepository pointDeVenteRepository,
             UserRepository userRepository) {
+        this(pointDeVenteRepository, userRepository, null);
+    }
+
+    public PointDeVenteService(
+            PointDeVenteRepository pointDeVenteRepository,
+            UserRepository userRepository,
+            com.gestion.repository.DepotRepository depotRepository) {
         this.pointDeVenteRepository = pointDeVenteRepository;
         this.userRepository = userRepository;
+        this.depotRepository = depotRepository;
     }
 
     private boolean isSuperAdmin(Authentication auth) {
@@ -115,7 +124,29 @@ public class PointDeVenteService {
         saved.setTenantId(saved.getId());
         saved = pointDeVenteRepository.save(saved);
 
+        // 3. Création automatique du Dépôt Principal pour ce Point de Vente (tenant)
+        creerDepotPrincipalPourPointDeVente(saved);
+
         return mapToResponse(saved);
+    }
+
+    private void creerDepotPrincipalPourPointDeVente(PointDeVente pdv) {
+        if (depotRepository == null) {
+            return;
+        }
+        Long tenantId = pdv.getId();
+        if (!depotRepository.existsByNomAndPointDeVenteId("Dépôt Principal", tenantId)) {
+            com.gestion.persistent.model.Depot depot = new com.gestion.persistent.model.Depot();
+            depot.setNom("Dépôt Principal");
+            depot.setDescription("Dépôt principal du point de vente " + pdv.getNomPointDeVente());
+            depot.setAdresse(pdv.getAdresse() != null && !pdv.getAdresse().isBlank() 
+                    ? pdv.getAdresse() 
+                    : "Adresse principale - " + pdv.getNomPointDeVente());
+            depot.setPointDeVenteId(tenantId);
+            depot.setActif(true);
+            depot.setDateCreation(LocalDateTime.now());
+            depotRepository.save(depot);
+        }
     }
 
     @Transactional
