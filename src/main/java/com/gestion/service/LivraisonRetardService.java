@@ -12,6 +12,7 @@ import com.gestion.repository.CommandeClientRepository;
 import com.gestion.repository.CommandeRepository;
 import com.gestion.repository.LivraisonRepository;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,7 +63,7 @@ public class LivraisonRetardService {
     }
 
     // =========================================================================
-    // 1. FOURNISSEURS (ACHATS)
+    // 1. FOURNISSEURS (ACHATS - ARTICLES ET LIGNES NON LIVRÉES)
     // =========================================================================
 
     public List<LivraisonRetardDTO> getRetardsFournisseurs(Long requestedPdvId) {
@@ -70,87 +71,142 @@ public class LivraisonRetardService {
         List<Commande> commandes = commandeRepository.findByPointDeVenteId(pdvId);
         LocalDateTime now = LocalDateTime.now();
 
-        List<LivraisonRetardDTO> retards = new ArrayList<>();
+        List<LivraisonRetardDTO> items = new ArrayList<>();
 
         for (Commande c : commandes) {
-            if (c.getDateLivraisonPrevue() == null) continue;
-            if (c.getStatut() == StatutCommande.ANNULEE || c.getStatut() == StatutCommande.BROUILLON) continue;
-            if (c.getStatut() == StatutCommande.LIVREE || c.getStatutLivraison() == StatutLivraison.LIVREE) continue;
+            // Ignorer uniquement les commandes annulées ou totalement livrées
+            if (c.getStatut() == StatutCommande.ANNULEE) continue;
+            if (c.getStatut() == StatutCommande.LIVREE && c.getStatutLivraison() == StatutLivraison.LIVREE) continue;
 
-            if (c.getDateLivraisonPrevue().isBefore(now)) {
+            // BLs liés
+            List<Livraison> livs = livraisonRepository.findByCommande_Id(c.getId());
+            String numeroBl = (livs != null && !livs.isEmpty())
+                    ? livs.stream().map(Livraison::getNumeroLivraison).filter(Objects::nonNull).collect(Collectors.joining(", "))
+                    : "-";
+
+            String nomTiers = (c.getFournisseur() != null && c.getFournisseur().getNom() != null)
+                    ? c.getFournisseur().getNom() : "Fournisseur non spécifié";
+            String telTiers = c.getFournisseur() != null ? c.getFournisseur().getTelephone() : null;
+            String emailTiers = c.getFournisseur() != null ? c.getFournisseur().getEmail() : null;
+
+            Long joursRetard = 0L;
+            if (c.getDateLivraisonPrevue() != null && c.getDateLivraisonPrevue().isBefore(now)) {
+                joursRetard = ChronoUnit.DAYS.between(c.getDateLivraisonPrevue().toLocalDate(), LocalDate.now());
+                if (joursRetard <= 0) joursRetard = 1L;
+            }
+
+            if (c.getLignesCommande() != null && !c.getLignesCommande().isEmpty()) {
+                for (LigneCommande lc : c.getLignesCommande()) {
+                    int qteCmd = lc.getQuantiteCommandee() != null ? lc.getQuantiteCommandee() : 0;
+                    int qteLiv = lc.getQuantiteLivree() != null ? lc.getQuantiteLivree() : 0;
+                    int reste = qteCmd - qteLiv;
+
+                    // Si la ligne est déjà totalement reçue, on passe à la suivante
+                    if (reste <= 0) continue;
+
+                    LivraisonRetardDTO dto = new LivraisonRetardDTO();
+                    dto.setId(lc.getId());
+                    dto.setLigneId(lc.getId());
+                    dto.setCommandeId(c.getId());
+                    dto.setType("FOURNISSEUR");
+                    dto.setNumeroCommande(c.getNumeroCommande() != null ? c.getNumeroCommande() : ("CF #" + c.getId()));
+                    dto.setNumeroBl(numeroBl);
+                    dto.setNomTiers(nomTiers);
+                    dto.setTelephoneTiers(telTiers);
+                    dto.setEmailTiers(emailTiers);
+                    dto.setDateCommande(c.getDateCommande());
+                    dto.setDateLivraisonPrevue(c.getDateLivraisonPrevue());
+                    dto.setJoursRetard(joursRetard);
+
+                    boolean estPartielle = qteLiv > 0;
+                    dto.setStatut(estPartielle ? "Partiellement livrée" : "Non livrée");
+                    dto.setStatutCode(estPartielle ? "PARTIELLE" : "NON_LIVREE");
+
+                    Produit p = lc.getProduit();
+                    if (p != null) {
+                        dto.setProduitId(p.getId());
+                        dto.setProduitReference(p.getReference() != null ? p.getReference() : "-");
+                        String pNom = p.getDesignation() != null ? p.getDesignation() : p.getNom();
+                        dto.setProduitNom(pNom != null ? pNom : "Article #" + p.getId());
+                    } else {
+                        dto.setProduitNom("Article");
+                        dto.setProduitReference("-");
+                    }
+
+                    dto.setQuantiteCommandee(BigDecimal.valueOf(qteCmd));
+                    dto.setQuantiteLivree(BigDecimal.valueOf(qteLiv));
+                    dto.setQuantiteRestante(BigDecimal.valueOf(reste));
+
+                    BigDecimal pu = lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO;
+                    dto.setPrixUnitaire(pu);
+
+                    BigDecimal montantRestant = pu.multiply(BigDecimal.valueOf(reste));
+                    dto.setMontantRestant(montantRestant);
+                    dto.setMontantTotal(montantRestant);
+
+                    dto.setArticlesEnAttente(dto.getProduitNom() + " (" + reste + "/" + qteCmd + " restant)");
+                    dto.setNombreArticlesTotal(1);
+                    dto.setNombreArticlesRestants(1);
+                    dto.setPointDeVenteId(c.getPointDeVenteId());
+
+                    items.add(dto);
+                }
+            } else {
+                // Si la commande n'a pas de lignes détaillées mais n'est pas livrée
                 LivraisonRetardDTO dto = new LivraisonRetardDTO();
                 dto.setId(c.getId());
+                dto.setCommandeId(c.getId());
                 dto.setType("FOURNISSEUR");
-                dto.setNumeroCommande(c.getNumeroCommande() != null ? c.getNumeroCommande() : ("CMD #" + c.getId()));
-
-                // BL liés
-                List<Livraison> livs = livraisonRepository.findByCommande_Id(c.getId());
-                if (livs != null && !livs.isEmpty()) {
-                    dto.setNumeroBl(livs.stream().map(Livraison::getNumeroLivraison).filter(Objects::nonNull).collect(Collectors.joining(", ")));
-                } else {
-                    dto.setNumeroBl("-");
-                }
-
-                if (c.getFournisseur() != null) {
-                    dto.setNomTiers(c.getFournisseur().getNom());
-                    dto.setTelephoneTiers(c.getFournisseur().getTelephone());
-                    dto.setEmailTiers(c.getFournisseur().getEmail());
-                } else {
-                    dto.setNomTiers("Fournisseur non spécifié");
-                }
-
+                dto.setNumeroCommande(c.getNumeroCommande() != null ? c.getNumeroCommande() : ("CF #" + c.getId()));
+                dto.setNumeroBl(numeroBl);
+                dto.setNomTiers(nomTiers);
+                dto.setTelephoneTiers(telTiers);
+                dto.setEmailTiers(emailTiers);
                 dto.setDateCommande(c.getDateCommande());
                 dto.setDateLivraisonPrevue(c.getDateLivraisonPrevue());
-
-                long jours = ChronoUnit.DAYS.between(c.getDateLivraisonPrevue().toLocalDate(), LocalDate.now());
-                if (jours <= 0) jours = 1;
-                dto.setJoursRetard(jours);
-
-                boolean estPartielle = c.getStatut() == StatutCommande.PARTIELLE || c.getStatutLivraison() == StatutLivraison.PARTIELLE;
-                dto.setStatut(estPartielle ? "Partiellement livrée" : "En attente de réception");
-                dto.setStatutCode(estPartielle ? "PARTIELLE" : "EN_ATTENTE");
-
+                dto.setJoursRetard(joursRetard);
+                dto.setStatut("Non livrée");
+                dto.setStatutCode("NON_LIVREE");
+                dto.setProduitNom("Articles de la commande");
+                dto.setProduitReference("-");
+                dto.setQuantiteCommandee(BigDecimal.ONE);
+                dto.setQuantiteLivree(BigDecimal.ZERO);
+                dto.setQuantiteRestante(BigDecimal.ONE);
+                dto.setPrixUnitaire(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
                 dto.setMontantTotal(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
-
-                // Articles et reliquats
-                List<String> articles = new ArrayList<>();
-                int totalArt = 0;
-                int restantArt = 0;
-                if (c.getLignesCommande() != null) {
-                    for (LigneCommande lc : c.getLignesCommande()) {
-                        totalArt++;
-                        int qteCmd = lc.getQuantiteCommandee();
-                        int qteLiv = lc.getQuantiteLivree();
-                        int reste = qteCmd - qteLiv;
-                        if (reste > 0) {
-                            restantArt++;
-                            String pNom = lc.getProduit() != null ? lc.getProduit().getNom() : "Article";
-                            articles.add(pNom + " (" + reste + "/" + qteCmd + " restant)");
-                        }
-                    }
-                }
-                dto.setNombreArticlesTotal(totalArt);
-                dto.setNombreArticlesRestants(restantArt);
-                dto.setArticlesEnAttente(articles.isEmpty() ? "Aucun reliquat" : String.join(", ", articles));
+                dto.setMontantRestant(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
+                dto.setArticlesEnAttente("Commande en attente de réception");
+                dto.setNombreArticlesTotal(1);
+                dto.setNombreArticlesRestants(1);
                 dto.setPointDeVenteId(c.getPointDeVenteId());
-
-                retards.add(dto);
+                items.add(dto);
             }
         }
 
-        retards.sort(Comparator.comparing(LivraisonRetardDTO::getJoursRetard, Comparator.reverseOrder()));
-        return retards;
+        // Tri : les retards les plus critiques d'abord, puis les commandes les plus récentes
+        items.sort((a, b) -> {
+            long rA = a.getJoursRetard() != null ? a.getJoursRetard() : 0L;
+            long rB = b.getJoursRetard() != null ? b.getJoursRetard() : 0L;
+            int cmp = Long.compare(rB, rA);
+            if (cmp != 0) return cmp;
+            if (a.getDateCommande() != null && b.getDateCommande() != null) {
+                return b.getDateCommande().compareTo(a.getDateCommande());
+            }
+            return 0;
+        });
+
+        return items;
     }
 
     public byte[] genererExcelRetardsFournisseurs(Long requestedPdvId) {
         Long pdvId = resolveTenant(requestedPdvId);
-        List<LivraisonRetardDTO> retards = getRetardsFournisseurs(pdvId);
+        List<LivraisonRetardDTO> items = getRetardsFournisseurs(pdvId);
         String nomPdv = getNomPointDeVente(pdvId);
 
         return buildWorkbook(
-                "LIVRAISONS FOURNISSEURS EN RETARD",
+                "SUIVI DES ARTICLES FOURNISSEURS NON LIVRÉS & RELIQUATS",
                 "Fournisseur",
-                retards,
+                items,
                 nomPdv,
                 IndexedColors.DARK_BLUE.getIndex(),
                 IndexedColors.WHITE.getIndex()
@@ -158,7 +214,7 @@ public class LivraisonRetardService {
     }
 
     // =========================================================================
-    // 2. CLIENTS (VENTES)
+    // 2. CLIENTS (VENTES - ARTICLES ET COMMANDES NON LIVRÉES)
     // =========================================================================
 
     public List<LivraisonRetardDTO> getRetardsClients(Long requestedPdvId) {
@@ -166,91 +222,149 @@ public class LivraisonRetardService {
         List<CommandeClient> commandes = commandeClientRepository.findByPointDeVenteId(pdvId);
         LocalDateTime now = LocalDateTime.now();
 
-        List<LivraisonRetardDTO> retards = new ArrayList<>();
+        List<LivraisonRetardDTO> items = new ArrayList<>();
 
         for (CommandeClient c : commandes) {
-            if (c.getDateLivraisonPrevue() == null) continue;
-            if (c.getStatut() == StatutCommandeClient.ANNULEE || c.getStatut() == StatutCommandeClient.BROUILLON) continue;
-            if (c.getStatut() == StatutCommandeClient.LIVREE || c.getStatut() == StatutCommandeClient.FACTUREE) continue;
+            if (c.getStatut() == StatutCommandeClient.ANNULEE) continue;
+            if (c.getStatut() == StatutCommandeClient.LIVREE) continue;
 
-            if (c.getDateLivraisonPrevue().isBefore(now)) {
+            // BLs liés
+            List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByCommandeClientIdAndPointDeVenteId(c.getId(), pdvId);
+            String numeroBl = (bls != null && !bls.isEmpty())
+                    ? bls.stream().map(BonLivraisonClient::getNumeroBl).filter(Objects::nonNull).collect(Collectors.joining(", "))
+                    : "-";
+
+            String nomTiers = "Client non spécifié";
+            String telTiers = null;
+            String emailTiers = null;
+            if (c.getClient() != null) {
+                nomTiers = c.getClient().getNomComplet();
+                telTiers = c.getClient().getTelephone();
+                emailTiers = c.getClient().getEmail();
+            } else if (c.getClientNom() != null) {
+                nomTiers = c.getClientNom();
+                telTiers = c.getClientTelephone();
+                emailTiers = c.getClientEmail();
+            }
+
+            Long joursRetard = 0L;
+            if (c.getDateLivraisonPrevue() != null && c.getDateLivraisonPrevue().isBefore(now)) {
+                joursRetard = ChronoUnit.DAYS.between(c.getDateLivraisonPrevue().toLocalDate(), LocalDate.now());
+                if (joursRetard <= 0) joursRetard = 1L;
+            }
+
+            if (c.getLignesCommande() != null && !c.getLignesCommande().isEmpty()) {
+                for (LigneCommandeClient lc : c.getLignesCommande()) {
+                    BigDecimal qteCmd = lc.getQuantiteCommandee() != null ? lc.getQuantiteCommandee()
+                            : (lc.getQuantite() != null ? lc.getQuantite() : BigDecimal.ZERO);
+                    BigDecimal qteLiv = lc.getQuantiteLivree() != null ? lc.getQuantiteLivree() : BigDecimal.ZERO;
+                    BigDecimal reste = qteCmd.subtract(qteLiv);
+
+                    // Si ligne totalement livrée, passer
+                    if (reste.compareTo(BigDecimal.ZERO) <= 0) continue;
+
+                    LivraisonRetardDTO dto = new LivraisonRetardDTO();
+                    dto.setId(lc.getId());
+                    dto.setLigneId(lc.getId());
+                    dto.setCommandeId(c.getId());
+                    dto.setType("CLIENT");
+                    dto.setNumeroCommande(c.getNumeroCommande() != null ? c.getNumeroCommande() : ("CC #" + c.getId()));
+                    dto.setNumeroBl(numeroBl);
+                    dto.setNomTiers(nomTiers);
+                    dto.setTelephoneTiers(telTiers);
+                    dto.setEmailTiers(emailTiers);
+                    dto.setDateCommande(c.getDateCommande());
+                    dto.setDateLivraisonPrevue(c.getDateLivraisonPrevue());
+                    dto.setJoursRetard(joursRetard);
+
+                    boolean estPartielle = qteLiv.compareTo(BigDecimal.ZERO) > 0;
+                    dto.setStatut(estPartielle ? "Partiellement expédiée" : "Non livrée");
+                    dto.setStatutCode(estPartielle ? "PARTIELLE" : "NON_LIVREE");
+
+                    Produit p = lc.getProduit();
+                    if (p != null) {
+                        dto.setProduitId(p.getId());
+                        dto.setProduitReference(p.getReference() != null ? p.getReference() : "-");
+                        String pNom = p.getDesignation() != null ? p.getDesignation() : p.getNom();
+                        dto.setProduitNom(pNom != null ? pNom : "Article #" + p.getId());
+                    } else {
+                        dto.setProduitNom("Article");
+                        dto.setProduitReference("-");
+                    }
+
+                    dto.setQuantiteCommandee(qteCmd);
+                    dto.setQuantiteLivree(qteLiv);
+                    dto.setQuantiteRestante(reste);
+
+                    BigDecimal pu = lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO;
+                    dto.setPrixUnitaire(pu);
+
+                    BigDecimal montantRestant = pu.multiply(reste);
+                    dto.setMontantRestant(montantRestant);
+                    dto.setMontantTotal(montantRestant);
+
+                    dto.setArticlesEnAttente(dto.getProduitNom() + " (" + reste.stripTrailingZeros().toPlainString() + "/" + qteCmd.stripTrailingZeros().toPlainString() + " restant)");
+                    dto.setNombreArticlesTotal(1);
+                    dto.setNombreArticlesRestants(1);
+                    dto.setPointDeVenteId(c.getPointDeVenteId());
+
+                    items.add(dto);
+                }
+            } else {
                 LivraisonRetardDTO dto = new LivraisonRetardDTO();
                 dto.setId(c.getId());
+                dto.setCommandeId(c.getId());
                 dto.setType("CLIENT");
-                dto.setNumeroCommande(c.getNumeroCommande() != null ? c.getNumeroCommande() : ("CMD #" + c.getId()));
-
-                // BLs liés
-                List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByCommandeClientIdAndPointDeVenteId(c.getId(), pdvId);
-                if (bls != null && !bls.isEmpty()) {
-                    dto.setNumeroBl(bls.stream().map(BonLivraisonClient::getNumeroBl).filter(Objects::nonNull).collect(Collectors.joining(", ")));
-                } else {
-                    dto.setNumeroBl("-");
-                }
-
-                if (c.getClient() != null) {
-                    dto.setNomTiers(c.getClient().getNomComplet());
-                    dto.setTelephoneTiers(c.getClient().getTelephone());
-                    dto.setEmailTiers(c.getClient().getEmail());
-                } else if (c.getClientNom() != null) {
-                    dto.setNomTiers(c.getClientNom());
-                    dto.setTelephoneTiers(c.getClientTelephone());
-                    dto.setEmailTiers(c.getClientEmail());
-                } else {
-                    dto.setNomTiers("Client non spécifié");
-                }
-
+                dto.setNumeroCommande(c.getNumeroCommande() != null ? c.getNumeroCommande() : ("CC #" + c.getId()));
+                dto.setNumeroBl(numeroBl);
+                dto.setNomTiers(nomTiers);
+                dto.setTelephoneTiers(telTiers);
+                dto.setEmailTiers(emailTiers);
                 dto.setDateCommande(c.getDateCommande());
                 dto.setDateLivraisonPrevue(c.getDateLivraisonPrevue());
-
-                long jours = ChronoUnit.DAYS.between(c.getDateLivraisonPrevue().toLocalDate(), LocalDate.now());
-                if (jours <= 0) jours = 1;
-                dto.setJoursRetard(jours);
-
-                boolean estPartielle = c.getStatut() == StatutCommandeClient.LIVREE_PARTIELLE;
-                dto.setStatut(estPartielle ? "Partiellement livrée" : "En attente d'expédition");
-                dto.setStatutCode(estPartielle ? "LIVREE_PARTIELLE" : "EN_ATTENTE");
-
-                dto.setMontantTotal(c.getMontantTTC() != null ? c.getMontantTTC() : BigDecimal.ZERO);
-
-                // Articles et reliquats
-                List<String> articles = new ArrayList<>();
-                int totalArt = 0;
-                int restantArt = 0;
-                if (c.getLignesCommande() != null) {
-                    for (LigneCommandeClient lc : c.getLignesCommande()) {
-                        if (Boolean.TRUE.equals(lc.getAnnulee())) continue;
-                        totalArt++;
-                        BigDecimal qteCmd = lc.getQuantiteCommandee() != null ? lc.getQuantiteCommandee() : BigDecimal.ZERO;
-                        BigDecimal rel = lc.getQuantiteReliquat() != null ? lc.getQuantiteReliquat() : lc.calculerReliquat();
-                        if (rel != null && rel.compareTo(BigDecimal.ZERO) > 0) {
-                            restantArt++;
-                            String pNom = lc.getProduit() != null ? lc.getProduit().getNom() : "Article";
-                            articles.add(pNom + " (" + rel + "/" + qteCmd + " restant)");
-                        }
-                    }
-                }
-                dto.setNombreArticlesTotal(totalArt);
-                dto.setNombreArticlesRestants(restantArt);
-                dto.setArticlesEnAttente(articles.isEmpty() ? "Aucun reliquat" : String.join(", ", articles));
+                dto.setJoursRetard(joursRetard);
+                dto.setStatut("Non livrée");
+                dto.setStatutCode("NON_LIVREE");
+                dto.setProduitNom("Articles de la commande");
+                dto.setProduitReference("-");
+                dto.setQuantiteCommandee(BigDecimal.ONE);
+                dto.setQuantiteLivree(BigDecimal.ZERO);
+                dto.setQuantiteRestante(BigDecimal.ONE);
+                dto.setPrixUnitaire(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
+                dto.setMontantTotal(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
+                dto.setMontantRestant(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
+                dto.setArticlesEnAttente("Commande en attente d'expédition");
+                dto.setNombreArticlesTotal(1);
+                dto.setNombreArticlesRestants(1);
                 dto.setPointDeVenteId(c.getPointDeVenteId());
-
-                retards.add(dto);
+                items.add(dto);
             }
         }
 
-        retards.sort(Comparator.comparing(LivraisonRetardDTO::getJoursRetard, Comparator.reverseOrder()));
-        return retards;
+        // Tri
+        items.sort((a, b) -> {
+            long rA = a.getJoursRetard() != null ? a.getJoursRetard() : 0L;
+            long rB = b.getJoursRetard() != null ? b.getJoursRetard() : 0L;
+            int cmp = Long.compare(rB, rA);
+            if (cmp != 0) return cmp;
+            if (a.getDateCommande() != null && b.getDateCommande() != null) {
+                return b.getDateCommande().compareTo(a.getDateCommande());
+            }
+            return 0;
+        });
+
+        return items;
     }
 
     public byte[] genererExcelRetardsClients(Long requestedPdvId) {
         Long pdvId = resolveTenant(requestedPdvId);
-        List<LivraisonRetardDTO> retards = getRetardsClients(pdvId);
+        List<LivraisonRetardDTO> items = getRetardsClients(pdvId);
         String nomPdv = getNomPointDeVente(pdvId);
 
         return buildWorkbook(
-                "LIVRAISONS CLIENTS EN RETARD",
+                "SUIVI DES ARTICLES CLIENTS NON LIVRÉS & RELIQUATS D'EXPÉDITION",
                 "Client",
-                retards,
+                items,
                 nomPdv,
                 IndexedColors.TEAL.getIndex(),
                 IndexedColors.WHITE.getIndex()
@@ -258,254 +372,306 @@ public class LivraisonRetardService {
     }
 
     // =========================================================================
-    // 3. MOTEUR DE GÉNÉRATION POI EXCEL
+    // 3. GÉNÉRATEUR EXCEL APACHE POI
     // =========================================================================
 
-    private byte[] buildWorkbook(String titreDoc, String tiersLabel, List<LivraisonRetardDTO> retards, String nomPdv, short headerBgColor, short headerTextColor) {
-        try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Sheet sheet = wb.createSheet("Livraisons en retard");
+    private byte[] buildWorkbook(String titreRapport,
+                                 String labelTiers,
+                                 List<LivraisonRetardDTO> items,
+                                 String nomPointDeVente,
+                                 short headerBgColor,
+                                 short headerTextColor) {
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Lignes Non Livrées");
             sheet.setDisplayGridlines(true);
 
-            CreationHelper createHelper = wb.getCreationHelper();
-            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            // Formats
+            DataFormat dataFormat = workbook.createDataFormat();
+            short currencyFormat = dataFormat.getFormat("#,##0.00 \"MAD\"");
+            short integerFormat = dataFormat.getFormat("#,##0");
 
-            // --- STYLES ---
-            // Titre Principal
-            CellStyle titleStyle = wb.createCellStyle();
-            Font titleFont = wb.createFont();
-            titleFont.setFontName("Calibri");
-            titleFont.setFontHeightInPoints((short) 16);
-            titleFont.setBold(true);
-            titleFont.setColor(headerBgColor);
-            titleStyle.setFont(titleFont);
-            titleStyle.setAlignment(HorizontalAlignment.LEFT);
+            // Fonts
+            Font fontTitre = workbook.createFont();
+            fontTitre.setFontHeightInPoints((short) 15);
+            fontTitre.setBold(true);
+            fontTitre.setColor(IndexedColors.DARK_BLUE.getIndex());
 
-            // Sous-titre
-            CellStyle subTitleStyle = wb.createCellStyle();
-            Font subTitleFont = wb.createFont();
-            subTitleFont.setFontName("Calibri");
-            subTitleFont.setFontHeightInPoints((short) 10);
-            subTitleFont.setItalic(true);
-            subTitleFont.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
-            subTitleStyle.setFont(subTitleFont);
+            Font fontSubtitle = workbook.createFont();
+            fontSubtitle.setFontHeightInPoints((short) 10);
+            fontSubtitle.setItalic(true);
+            fontSubtitle.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
 
-            // Header Tableau
-            CellStyle headerStyle = wb.createCellStyle();
-            Font headerFont = wb.createFont();
-            headerFont.setFontName("Calibri");
-            headerFont.setFontHeightInPoints((short) 11);
-            headerFont.setBold(true);
-            headerFont.setColor(headerTextColor);
-            headerStyle.setFont(headerFont);
-            headerStyle.setFillForegroundColor(headerBgColor);
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            headerStyle.setAlignment(HorizontalAlignment.CENTER);
-            headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
-            headerStyle.setBorderTop(BorderStyle.THIN);
-            headerStyle.setBorderBottom(BorderStyle.THIN);
-            headerStyle.setBorderLeft(BorderStyle.THIN);
-            headerStyle.setBorderRight(BorderStyle.THIN);
+            Font fontHeader = workbook.createFont();
+            fontHeader.setFontHeightInPoints((short) 10);
+            fontHeader.setBold(true);
+            fontHeader.setColor(headerTextColor);
 
-            // Cellule standard
-            CellStyle cellStyle = wb.createCellStyle();
-            cellStyle.setBorderTop(BorderStyle.THIN);
-            cellStyle.setBorderBottom(BorderStyle.THIN);
-            cellStyle.setBorderLeft(BorderStyle.THIN);
-            cellStyle.setBorderRight(BorderStyle.THIN);
-            cellStyle.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            cellStyle.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            cellStyle.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            cellStyle.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            Font fontData = workbook.createFont();
+            fontData.setFontHeightInPoints((short) 10);
 
-            // Cellule Date
-            CellStyle dateStyle = wb.createCellStyle();
-            dateStyle.cloneStyleFrom(cellStyle);
-            dateStyle.setAlignment(HorizontalAlignment.CENTER);
+            Font fontBold = workbook.createFont();
+            fontBold.setFontHeightInPoints((short) 10);
+            fontBold.setBold(true);
 
-            // Cellule Montant
-            CellStyle amountStyle = wb.createCellStyle();
-            amountStyle.cloneStyleFrom(cellStyle);
-            amountStyle.setDataFormat(createHelper.createDataFormat().getFormat("#,##0.00 \"MAD\""));
-            amountStyle.setAlignment(HorizontalAlignment.RIGHT);
+            Font fontCritique = workbook.createFont();
+            fontCritique.setFontHeightInPoints((short) 10);
+            fontCritique.setBold(true);
+            fontCritique.setColor(IndexedColors.RED.getIndex());
 
-            // Cellule Retard Critique (> 7j)
-            CellStyle retardCritiqueStyle = wb.createCellStyle();
-            retardCritiqueStyle.cloneStyleFrom(cellStyle);
-            retardCritiqueStyle.setFillForegroundColor(IndexedColors.ROSE.getIndex());
-            retardCritiqueStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            Font redFont = wb.createFont();
-            redFont.setBold(true);
-            redFont.setColor(IndexedColors.DARK_RED.getIndex());
-            retardCritiqueStyle.setFont(redFont);
-            retardCritiqueStyle.setAlignment(HorizontalAlignment.CENTER);
+            Font fontSuccess = workbook.createFont();
+            fontSuccess.setFontHeightInPoints((short) 10);
+            fontSuccess.setBold(true);
+            fontSuccess.setColor(IndexedColors.GREEN.getIndex());
 
-            // Cellule Retard Modéré (<= 7j)
-            CellStyle retardModereStyle = wb.createCellStyle();
-            retardModereStyle.cloneStyleFrom(cellStyle);
-            retardModereStyle.setFillForegroundColor(IndexedColors.LEMON_CHIFFON.getIndex());
-            retardModereStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            Font amberFont = wb.createFont();
-            amberFont.setBold(true);
-            amberFont.setColor(IndexedColors.DARK_YELLOW.getIndex());
-            retardModereStyle.setFont(amberFont);
-            retardModereStyle.setAlignment(HorizontalAlignment.CENTER);
+            // Styles
+            CellStyle styleTitle = workbook.createCellStyle();
+            styleTitle.setFont(fontTitre);
+            styleTitle.setAlignment(HorizontalAlignment.LEFT);
+            styleTitle.setVerticalAlignment(VerticalAlignment.CENTER);
 
-            // Cellule Total en bas
-            CellStyle totalStyle = wb.createCellStyle();
-            totalStyle.cloneStyleFrom(cellStyle);
-            Font totalFont = wb.createFont();
-            totalFont.setBold(true);
-            totalStyle.setFont(totalFont);
-            totalStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            totalStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            totalStyle.setBorderTop(BorderStyle.MEDIUM);
-            totalStyle.setBorderBottom(BorderStyle.DOUBLE);
+            CellStyle styleSub = workbook.createCellStyle();
+            styleSub.setFont(fontSubtitle);
 
-            CellStyle totalAmountStyle = wb.createCellStyle();
-            totalAmountStyle.cloneStyleFrom(totalStyle);
-            totalAmountStyle.setDataFormat(createHelper.createDataFormat().getFormat("#,##0.00 \"MAD\""));
-            totalAmountStyle.setAlignment(HorizontalAlignment.RIGHT);
+            CellStyle styleHeader = workbook.createCellStyle();
+            styleHeader.setFont(fontHeader);
+            styleHeader.setFillForegroundColor(headerBgColor);
+            styleHeader.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            styleHeader.setAlignment(HorizontalAlignment.CENTER);
+            styleHeader.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleHeader.setBorderTop(BorderStyle.MEDIUM);
+            styleHeader.setBorderBottom(BorderStyle.MEDIUM);
+            styleHeader.setBorderLeft(BorderStyle.THIN);
+            styleHeader.setBorderRight(BorderStyle.THIN);
+            styleHeader.setWrapText(true);
 
-            // --- ÉCRITURE DES LIGNES ---
-            int rowIdx = 1;
+            CellStyle styleText = createBorderedStyle(workbook, fontData, HorizontalAlignment.LEFT);
+            CellStyle styleCenter = createBorderedStyle(workbook, fontData, HorizontalAlignment.CENTER);
+            CellStyle styleRight = createBorderedStyle(workbook, fontData, HorizontalAlignment.RIGHT);
 
-            // Ligne 1 : Titre
-            Row rTitle = sheet.createRow(rowIdx++);
-            Cell cTitle = rTitle.createCell(1);
-            cTitle.setCellValue("📋 " + titreDoc);
-            cTitle.setCellStyle(titleStyle);
+            CellStyle styleQty = createBorderedStyle(workbook, fontData, HorizontalAlignment.RIGHT);
+            styleQty.setDataFormat(integerFormat);
 
-            // Ligne 2 : Sous-titre / Métadonnées
-            Row rMeta = sheet.createRow(rowIdx++);
-            Cell cMeta = rMeta.createCell(1);
-            cMeta.setCellValue("Point de Vente : " + nomPdv + "  |  Généré le : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
-            cMeta.setCellStyle(subTitleStyle);
+            CellStyle styleCurrency = createBorderedStyle(workbook, fontData, HorizontalAlignment.RIGHT);
+            styleCurrency.setDataFormat(currencyFormat);
+
+            CellStyle styleRetardCritique = createBorderedStyle(workbook, fontCritique, HorizontalAlignment.CENTER);
+            CellStyle styleRetardNormal = createBorderedStyle(workbook, fontData, HorizontalAlignment.CENTER);
+            CellStyle styleDansDelais = createBorderedStyle(workbook, fontSuccess, HorizontalAlignment.CENTER);
+
+            CellStyle styleTotal = workbook.createCellStyle();
+            styleTotal.setFont(fontBold);
+            styleTotal.setBorderTop(BorderStyle.DOUBLE);
+            styleTotal.setBorderBottom(BorderStyle.DOUBLE);
+            styleTotal.setBorderLeft(BorderStyle.THIN);
+            styleTotal.setBorderRight(BorderStyle.THIN);
+            styleTotal.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            styleTotal.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            styleTotal.setAlignment(HorizontalAlignment.RIGHT);
+
+            CellStyle styleTotalCurrency = workbook.createCellStyle();
+            styleTotalCurrency.cloneStyleFrom(styleTotal);
+            styleTotalCurrency.setDataFormat(currencyFormat);
+
+            CellStyle styleTotalQty = workbook.createCellStyle();
+            styleTotalQty.cloneStyleFrom(styleTotal);
+            styleTotalQty.setDataFormat(integerFormat);
+
+            // Dates format
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+            // 1. Titre
+            int rowIdx = 0;
+            Row rowTitle = sheet.createRow(rowIdx++);
+            rowTitle.setHeightInPoints(24);
+            Cell cellTitle = rowTitle.createCell(0);
+            cellTitle.setCellValue(titreRapport);
+            cellTitle.setCellStyle(styleTitle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
+
+            // 2. Métadonnées
+            Row rowMeta = sheet.createRow(rowIdx++);
+            Cell cellMeta = rowMeta.createCell(0);
+            cellMeta.setCellValue("Point de Vente : " + nomPointDeVente + "  |  Date de génération : " +
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) +
+                    "  |  Total lignes non livrées : " + items.size());
+            cellMeta.setCellStyle(styleSub);
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 12));
 
             rowIdx++; // Ligne vide
 
-            // Ligne 4 : KPIs / Résumé
-            BigDecimal montantTotalCumule = retards.stream()
-                    .map(LivraisonRetardDTO::getMontantTotal)
-                    .filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            double moyenneRetard = retards.stream()
-                    .mapToLong(r -> r.getJoursRetard() != null ? r.getJoursRetard() : 0L)
-                    .average().orElse(0.0);
-
-            Row rKpi = sheet.createRow(rowIdx++);
-            rKpi.createCell(1).setCellValue("Total Commandes en retard : " + retards.size());
-            rKpi.createCell(4).setCellValue("Montant Global Engagé : " + String.format("%.2f MAD", montantTotalCumule));
-            rKpi.createCell(7).setCellValue("Retard Moyen : " + String.format("%.1f jours", moyenneRetard));
-
-            rowIdx++; // Ligne vide
-
-            // Ligne 6 : En-têtes de colonnes
+            // 3. En-tête des colonnes
             String[] headers = {
                     "N° Commande",
-                    "N° Bon Livraison",
-                    tiersLabel,
-                    "Téléphone",
                     "Date Commande",
+                    labelTiers,
+                    "Contact",
+                    "Réf Article",
+                    "Désignation Article (Item)",
+                    "Qté Commandée",
+                    "Qté Livrée",
+                    "Qté Restante (Non Livrée)",
+                    "Prix Unit. HT",
+                    "Montant Restant",
                     "Date Prévue",
-                    "Retard (Jours)",
-                    "État Livraison",
-                    "Montant (MAD)",
-                    "Articles & Reliquats Restants"
+                    "Statut Ligne",
+                    "Échéance / Retard"
             };
 
-            Row rHead = sheet.createRow(rowIdx++);
-            rHead.setHeightInPoints(26);
-            for (int col = 0; col < headers.length; col++) {
-                Cell ch = rHead.createCell(col + 1);
-                ch.setCellValue(headers[col]);
-                ch.setCellStyle(headerStyle);
+            Row headerRow = sheet.createRow(rowIdx++);
+            headerRow.setHeightInPoints(28);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(styleHeader);
             }
 
-            // Lignes de Données
-            for (LivraisonRetardDTO r : retards) {
+            // 4. Données
+            BigDecimal grandTotalMontant = BigDecimal.ZERO;
+            BigDecimal grandTotalQteRestante = BigDecimal.ZERO;
+
+            for (LivraisonRetardDTO it : items) {
                 Row row = sheet.createRow(rowIdx++);
                 row.setHeightInPoints(20);
 
-                // 1. N° Commande
+                // Col 0: N° Commande
+                Cell c0 = row.createCell(0);
+                c0.setCellValue(it.getNumeroCommande() != null ? it.getNumeroCommande() : "-");
+                c0.setCellStyle(styleCenter);
+
+                // Col 1: Date Commande
                 Cell c1 = row.createCell(1);
-                c1.setCellValue(r.getNumeroCommande() != null ? r.getNumeroCommande() : "-");
-                c1.setCellStyle(cellStyle);
+                c1.setCellValue(it.getDateCommande() != null ? it.getDateCommande().format(dtf) : "-");
+                c1.setCellStyle(styleCenter);
 
-                // 2. N° BL
+                // Col 2: Tiers
                 Cell c2 = row.createCell(2);
-                c2.setCellValue(r.getNumeroBl() != null ? r.getNumeroBl() : "-");
-                c2.setCellStyle(cellStyle);
+                c2.setCellValue(it.getNomTiers() != null ? it.getNomTiers() : "-");
+                c2.setCellStyle(styleText);
 
-                // 3. Tiers (Client ou Fournisseur)
+                // Col 3: Contact
                 Cell c3 = row.createCell(3);
-                c3.setCellValue(r.getNomTiers() != null ? r.getNomTiers() : "-");
-                c3.setCellStyle(cellStyle);
+                String contact = it.getTelephoneTiers() != null ? it.getTelephoneTiers() : "";
+                if (it.getEmailTiers() != null) {
+                    contact = contact.isEmpty() ? it.getEmailTiers() : (contact + " / " + it.getEmailTiers());
+                }
+                c3.setCellValue(contact.isEmpty() ? "-" : contact);
+                c3.setCellStyle(styleText);
 
-                // 4. Téléphone
+                // Col 4: Réf Article
                 Cell c4 = row.createCell(4);
-                c4.setCellValue(r.getTelephoneTiers() != null ? r.getTelephoneTiers() : "-");
-                c4.setCellStyle(cellStyle);
+                c4.setCellValue(it.getProduitReference() != null ? it.getProduitReference() : "-");
+                c4.setCellStyle(styleCenter);
 
-                // 5. Date Commande
+                // Col 5: Désignation Article
                 Cell c5 = row.createCell(5);
-                c5.setCellValue(r.getDateCommande() != null ? r.getDateCommande().format(dateFormatter) : "-");
-                c5.setCellStyle(dateStyle);
+                c5.setCellValue(it.getProduitNom() != null ? it.getProduitNom() : "-");
+                c5.setCellStyle(styleText);
 
-                // 6. Date Prévue
+                // Col 6: Qté Commandée
                 Cell c6 = row.createCell(6);
-                c6.setCellValue(r.getDateLivraisonPrevue() != null ? r.getDateLivraisonPrevue().format(dateFormatter) : "-");
-                c6.setCellStyle(dateStyle);
+                double qCmd = it.getQuantiteCommandee() != null ? it.getQuantiteCommandee().doubleValue() : 0.0;
+                c6.setCellValue(qCmd);
+                c6.setCellStyle(styleQty);
 
-                // 7. Retard Jours
+                // Col 7: Qté Livrée
                 Cell c7 = row.createCell(7);
-                long jr = r.getJoursRetard() != null ? r.getJoursRetard() : 0;
-                c7.setCellValue(jr + " j");
-                c7.setCellStyle(jr > 7 ? retardCritiqueStyle : retardModereStyle);
+                double qLiv = it.getQuantiteLivree() != null ? it.getQuantiteLivree().doubleValue() : 0.0;
+                c7.setCellValue(qLiv);
+                c7.setCellStyle(styleQty);
 
-                // 8. État
+                // Col 8: Qté Restante
                 Cell c8 = row.createCell(8);
-                c8.setCellValue(r.getStatut() != null ? r.getStatut() : "-");
-                c8.setCellStyle(cellStyle);
+                double qReste = it.getQuantiteRestante() != null ? it.getQuantiteRestante().doubleValue() : 0.0;
+                c8.setCellValue(qReste);
+                c8.setCellStyle(styleQty);
+                grandTotalQteRestante = grandTotalQteRestante.add(BigDecimal.valueOf(qReste));
 
-                // 9. Montant
+                // Col 9: Prix Unitaire
                 Cell c9 = row.createCell(9);
-                c9.setCellValue(r.getMontantTotal() != null ? r.getMontantTotal().doubleValue() : 0.0);
-                c9.setCellStyle(amountStyle);
+                double pu = it.getPrixUnitaire() != null ? it.getPrixUnitaire().doubleValue() : 0.0;
+                c9.setCellValue(pu);
+                c9.setCellStyle(styleCurrency);
 
-                // 10. Reliquats
+                // Col 10: Montant Restant
                 Cell c10 = row.createCell(10);
-                c10.setCellValue(r.getArticlesEnAttente() != null ? r.getArticlesEnAttente() : "-");
-                c10.setCellStyle(cellStyle);
+                BigDecimal mnt = it.getMontantRestant() != null ? it.getMontantRestant()
+                        : (it.getMontantTotal() != null ? it.getMontantTotal() : BigDecimal.ZERO);
+                c10.setCellValue(mnt.doubleValue());
+                c10.setCellStyle(styleCurrency);
+                grandTotalMontant = grandTotalMontant.add(mnt);
+
+                // Col 11: Date Prévue
+                Cell c11 = row.createCell(11);
+                c11.setCellValue(it.getDateLivraisonPrevue() != null ? it.getDateLivraisonPrevue().format(dtf) : "Non planifiée");
+                c11.setCellStyle(styleCenter);
+
+                // Col 12: Statut Ligne
+                Cell c12 = row.createCell(12);
+                c12.setCellValue(it.getStatut() != null ? it.getStatut() : "Non livrée");
+                c12.setCellStyle(styleCenter);
+
+                // Col 13: Échéance / Retard
+                Cell c13 = row.createCell(13);
+                long jr = it.getJoursRetard() != null ? it.getJoursRetard() : 0L;
+                if (jr > 0) {
+                    c13.setCellValue("Retard: +" + jr + " j");
+                    c13.setCellStyle(jr >= 15 ? styleRetardCritique : styleRetardNormal);
+                } else if (it.getDateLivraisonPrevue() != null) {
+                    c13.setCellValue("Dans les délais");
+                    c13.setCellStyle(styleDansDelais);
+                } else {
+                    c13.setCellValue("En attente");
+                    c13.setCellStyle(styleCenter);
+                }
             }
 
-            // Ligne de Totalisation
-            Row rTotal = sheet.createRow(rowIdx++);
-            rTotal.setHeightInPoints(24);
-            for (int col = 1; col <= headers.length; col++) {
-                Cell ct = rTotal.createCell(col);
-                ct.setCellStyle(totalStyle);
+            // 5. Ligne Totaux
+            Row totalRow = sheet.createRow(rowIdx);
+            totalRow.setHeightInPoints(22);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = totalRow.createCell(i);
+                cell.setCellStyle(styleTotal);
             }
-            Cell cTotLabel = rTotal.getCell(1);
-            cTotLabel.setCellValue("TOTAL (" + retards.size() + " commandes en retard)");
+            totalRow.getCell(0).setCellValue("TOTAL GLOBAL");
+            totalRow.getCell(0).setCellStyle(styleTotal);
 
-            Cell cTotMontant = rTotal.getCell(9);
-            cTotMontant.setCellValue(montantTotalCumule.doubleValue());
-            cTotMontant.setCellStyle(totalAmountStyle);
+            // Total Qte Restante
+            Cell totalQteCell = totalRow.getCell(8);
+            totalQteCell.setCellValue(grandTotalQteRestante.doubleValue());
+            totalQteCell.setCellStyle(styleTotalQty);
 
-            // Ajustement de la largeur des colonnes
-            for (int col = 0; col < headers.length; col++) {
-                sheet.autoSizeColumn(col + 1);
-                int curWidth = sheet.getColumnWidth(col + 1);
-                sheet.setColumnWidth(col + 1, Math.max(curWidth + 1200, 3800));
+            // Total Montant Restant
+            Cell totalMntCell = totalRow.getCell(10);
+            totalMntCell.setCellValue(grandTotalMontant.doubleValue());
+            totalMntCell.setCellStyle(styleTotalCurrency);
+
+            // Ajustement automatique des largeurs de colonnes
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+                int currentWidth = sheet.getColumnWidth(i);
+                sheet.setColumnWidth(i, Math.max(currentWidth + 1200, 3200));
             }
-            // Colonne reliquats un peu plus large
-            sheet.setColumnWidth(10, 10000);
 
-            wb.write(out);
+            workbook.write(out);
             return out.toByteArray();
         } catch (IOException e) {
-            throw new RuntimeException("Erreur lors de la génération du fichier Excel des livraisons en retard", e);
+            throw new RuntimeException("Erreur lors de la génération du fichier Excel POI : " + e.getMessage(), e);
         }
+    }
+
+    private CellStyle createBorderedStyle(Workbook workbook, Font font, HorizontalAlignment align) {
+        CellStyle style = workbook.createCellStyle();
+        style.setFont(font);
+        style.setAlignment(align);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        return style;
     }
 }

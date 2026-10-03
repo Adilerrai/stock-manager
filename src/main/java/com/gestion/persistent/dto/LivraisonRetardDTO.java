@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 public class LivraisonRetardDTO {
     private Long id;
+    private Long commandeId;
+    private Long ligneId;
     private String type; // FOURNISSEUR ou CLIENT
     private String numeroCommande;
     private String numeroBl;
@@ -14,18 +16,34 @@ public class LivraisonRetardDTO {
     private LocalDateTime dateCommande;
     private LocalDateTime dateLivraisonPrevue;
     private Long joursRetard;
-    private String statut;
-    private String statutCode;
+    private String statut; // "Non livrée", "Partiellement livrée"
+    private String statutCode; // "NON_LIVREE", "PARTIELLE"
     private BigDecimal montantTotal;
     private String articlesEnAttente;
     private Integer nombreArticlesTotal;
     private Integer nombreArticlesRestants;
     private Long pointDeVenteId;
 
+    // Détail de l'article / ligne non livrée
+    private Long produitId;
+    private String produitReference;
+    private String produitNom;
+    private BigDecimal quantiteCommandee;
+    private BigDecimal quantiteLivree;
+    private BigDecimal quantiteRestante;
+    private BigDecimal prixUnitaire;
+    private BigDecimal montantRestant;
+
     public LivraisonRetardDTO() {}
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getCommandeId() { return commandeId; }
+    public void setCommandeId(Long commandeId) { this.commandeId = commandeId; }
+
+    public Long getLigneId() { return ligneId; }
+    public void setLigneId(Long ligneId) { this.ligneId = ligneId; }
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
@@ -74,4 +92,28 @@ public class LivraisonRetardDTO {
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
+
+    public Long getProduitId() { return produitId; }
+    public void setProduitId(Long produitId) { this.produitId = produitId; }
+
+    public String getProduitReference() { return produitReference; }
+    public void setProduitReference(String produitReference) { this.produitReference = produitReference; }
+
+    public String getProduitNom() { return produitNom; }
+    public void setProduitNom(String produitNom) { this.produitNom = produitNom; }
+
+    public BigDecimal getQuantiteCommandee() { return quantiteCommandee; }
+    public void setQuantiteCommandee(BigDecimal quantiteCommandee) { this.quantiteCommandee = quantiteCommandee; }
+
+    public BigDecimal getQuantiteLivree() { return quantiteLivree; }
+    public void setQuantiteLivree(BigDecimal quantiteLivree) { this.quantiteLivree = quantiteLivree; }
+
+    public BigDecimal getQuantiteRestante() { return quantiteRestante; }
+    public void setQuantiteRestante(BigDecimal quantiteRestante) { this.quantiteRestante = quantiteRestante; }
+
+    public BigDecimal getPrixUnitaire() { return prixUnitaire; }
+    public void setPrixUnitaire(BigDecimal prixUnitaire) { this.prixUnitaire = prixUnitaire; }
+
+    public BigDecimal getMontantRestant() { return montantRestant; }
+    public void setMontantRestant(BigDecimal montantRestant) { this.montantRestant = montantRestant; }
 }
