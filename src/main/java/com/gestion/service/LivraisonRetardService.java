@@ -172,9 +172,9 @@ public class LivraisonRetardService {
                 dto.setQuantiteCommandee(BigDecimal.ONE);
                 dto.setQuantiteLivree(BigDecimal.ZERO);
                 dto.setQuantiteRestante(BigDecimal.ONE);
-                dto.setPrixUnitaire(c.getMontantTTC() != null ? c.getMontantTTC() : BigDecimal.ZERO);
-                dto.setMontantTotal(c.getMontantTTC() != null ? c.getMontantTTC() : BigDecimal.ZERO);
-                dto.setMontantRestant(c.getMontantTTC() != null ? c.getMontantTTC() : BigDecimal.ZERO);
+                dto.setPrixUnitaire(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
+                dto.setMontantTotal(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
+                dto.setMontantRestant(c.getMontantTotal() != null ? c.getMontantTotal() : BigDecimal.ZERO);
                 dto.setArticlesEnAttente("Commande en attente de réception");
                 dto.setNombreArticlesTotal(1);
                 dto.setNombreArticlesRestants(1);
