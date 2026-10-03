@@ -12,8 +12,6 @@ import com.gestion.repository.CommandeClientRepository;
 import com.gestion.repository.CommandeRepository;
 import com.gestion.repository.LivraisonRepository;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.ss.util.CellRangeAddress;
-import org.apache.poi.xssf.usermodel.XSSFColor;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -154,7 +152,8 @@ public class LivraisonRetardService {
                 "Fournisseur",
                 retards,
                 nomPdv,
-                new byte[]{(byte) 30, (byte) 58, (byte) 138} // Navy #1E3A8A
+                IndexedColors.DARK_BLUE.getIndex(),
+                IndexedColors.WHITE.getIndex()
         );
     }
 
@@ -211,7 +210,7 @@ public class LivraisonRetardService {
                 dto.setStatut(estPartielle ? "Partiellement livrée" : "En attente d'expédition");
                 dto.setStatutCode(estPartielle ? "LIVREE_PARTIELLE" : "EN_ATTENTE");
 
-                dto.setMontantTotal(c.getTotalTTC() != null ? c.getTotalTTC() : BigDecimal.ZERO);
+                dto.setMontantTotal(c.getMontantTTC() != null ? c.getMontantTTC() : BigDecimal.ZERO);
 
                 // Articles et reliquats
                 List<String> articles = new ArrayList<>();
@@ -253,7 +252,8 @@ public class LivraisonRetardService {
                 "Client",
                 retards,
                 nomPdv,
-                new byte[]{(byte) 16, (byte) 120, (byte) 80} // Teal-Emerald #107850
+                IndexedColors.TEAL.getIndex(),
+                IndexedColors.WHITE.getIndex()
         );
     }
 
@@ -261,7 +261,7 @@ public class LivraisonRetardService {
     // 3. MOTEUR DE GÉNÉRATION POI EXCEL
     // =========================================================================
 
-    private byte[] buildWorkbook(String titreDoc, String tiersLabel, List<LivraisonRetardDTO> retards, String nomPdv, byte[] primaryRgb) {
+    private byte[] buildWorkbook(String titreDoc, String tiersLabel, List<LivraisonRetardDTO> retards, String nomPdv, short headerBgColor, short headerTextColor) {
         try (Workbook wb = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = wb.createSheet("Livraisons en retard");
             sheet.setDisplayGridlines(true);
@@ -276,7 +276,7 @@ public class LivraisonRetardService {
             titleFont.setFontName("Calibri");
             titleFont.setFontHeightInPoints((short) 16);
             titleFont.setBold(true);
-            titleFont.setColor(new XSSFColor(primaryRgb, null));
+            titleFont.setColor(headerBgColor);
             titleStyle.setFont(titleFont);
             titleStyle.setAlignment(HorizontalAlignment.LEFT);
 
@@ -295,9 +295,9 @@ public class LivraisonRetardService {
             headerFont.setFontName("Calibri");
             headerFont.setFontHeightInPoints((short) 11);
             headerFont.setBold(true);
-            headerFont.setColor(IndexedColors.WHITE.getIndex());
+            headerFont.setColor(headerTextColor);
             headerStyle.setFont(headerFont);
-            headerStyle.setFillForegroundColor(new XSSFColor(primaryRgb, null));
+            headerStyle.setFillForegroundColor(headerBgColor);
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             headerStyle.setAlignment(HorizontalAlignment.CENTER);
             headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
@@ -312,10 +312,10 @@ public class LivraisonRetardService {
             cellStyle.setBorderBottom(BorderStyle.THIN);
             cellStyle.setBorderLeft(BorderStyle.THIN);
             cellStyle.setBorderRight(BorderStyle.THIN);
-            cellStyle.setBorderColor(BorderSide.TOP, IndexedColors.GREY_25_PERCENT);
-            cellStyle.setBorderColor(BorderSide.BOTTOM, IndexedColors.GREY_25_PERCENT);
-            cellStyle.setBorderColor(BorderSide.LEFT, IndexedColors.GREY_25_PERCENT);
-            cellStyle.setBorderColor(BorderSide.RIGHT, IndexedColors.GREY_25_PERCENT);
+            cellStyle.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            cellStyle.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            cellStyle.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            cellStyle.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
 
             // Cellule Date
             CellStyle dateStyle = wb.createCellStyle();
@@ -331,22 +331,22 @@ public class LivraisonRetardService {
             // Cellule Retard Critique (> 7j)
             CellStyle retardCritiqueStyle = wb.createCellStyle();
             retardCritiqueStyle.cloneStyleFrom(cellStyle);
-            retardCritiqueStyle.setFillForegroundColor(new XSSFColor(new byte[]{(byte) 254, (byte) 226, (byte) 226}, null)); // Red-100
+            retardCritiqueStyle.setFillForegroundColor(IndexedColors.ROSE.getIndex());
             retardCritiqueStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             Font redFont = wb.createFont();
             redFont.setBold(true);
-            redFont.setColor(new XSSFColor(new byte[]{(byte) 153, (byte) 27, (byte) 27}, null)); // Red-800
+            redFont.setColor(IndexedColors.DARK_RED.getIndex());
             retardCritiqueStyle.setFont(redFont);
             retardCritiqueStyle.setAlignment(HorizontalAlignment.CENTER);
 
             // Cellule Retard Modéré (<= 7j)
             CellStyle retardModereStyle = wb.createCellStyle();
             retardModereStyle.cloneStyleFrom(cellStyle);
-            retardModereStyle.setFillForegroundColor(new XSSFColor(new byte[]{(byte) 254, (byte) 243, (byte) 199}, null)); // Amber-100
+            retardModereStyle.setFillForegroundColor(IndexedColors.LEMON_CHIFFON.getIndex());
             retardModereStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             Font amberFont = wb.createFont();
             amberFont.setBold(true);
-            amberFont.setColor(new XSSFColor(new byte[]{(byte) 146, (byte) 64, (byte) 14}, null)); // Amber-800
+            amberFont.setColor(IndexedColors.DARK_YELLOW.getIndex());
             retardModereStyle.setFont(amberFont);
             retardModereStyle.setAlignment(HorizontalAlignment.CENTER);
 
@@ -356,7 +356,7 @@ public class LivraisonRetardService {
             Font totalFont = wb.createFont();
             totalFont.setBold(true);
             totalStyle.setFont(totalFont);
-            totalStyle.setFillForegroundColor(new XSSFColor(new byte[]{(byte) 241, (byte) 245, (byte) 249}, null)); // Slate-100
+            totalStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             totalStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             totalStyle.setBorderTop(BorderStyle.MEDIUM);
             totalStyle.setBorderBottom(BorderStyle.DOUBLE);
@@ -394,7 +394,7 @@ public class LivraisonRetardService {
                     .average().orElse(0.0);
 
             Row rKpi = sheet.createRow(rowIdx++);
-            rKpi.createCell(1).setCellValue("Total Dossiers en retard : " + retards.size());
+            rKpi.createCell(1).setCellValue("Total Commandes en retard : " + retards.size());
             rKpi.createCell(4).setCellValue("Montant Global Engagé : " + String.format("%.2f MAD", montantTotalCumule));
             rKpi.createCell(7).setCellValue("Retard Moyen : " + String.format("%.1f jours", moyenneRetard));
 
