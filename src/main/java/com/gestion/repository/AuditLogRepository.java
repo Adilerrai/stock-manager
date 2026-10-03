@@ -15,7 +15,7 @@ import java.util.List;
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
 
-    /** Historique d'un objet précis (ex: toutes les actions sur l'écriture #42) */
+    /** Historique d'un objet precis (ex: toutes les actions sur l'ecriture #42) */
     List<AuditLog> findByEntiteAndEntiteIdAndPointDeVenteIdOrderByDateActionDesc(
             String entite, Long entiteId, Long pointDeVenteId);
 
@@ -30,18 +30,18 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findByUtilisateurAndPointDeVenteIdOrderByDateActionDesc(
             String utilisateur, Long pointDeVenteId, Pageable pageable);
 
-    /** Historique par période */
+    /** Historique par periode */
     Page<AuditLog> findByPointDeVenteIdAndDateActionBetweenOrderByDateActionDesc(
             Long pointDeVenteId, LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
 
-    /** Les N dernières actions par point de vente (ou tous si pointDeVenteId est null) */
+    /** Les N dernieres actions par point de vente (ou tous si pointDeVenteId est null) */
     Page<AuditLog> findByPointDeVenteIdOrderByDateActionDesc(Long pointDeVenteId, Pageable pageable);
 
     @Query("SELECT a FROM AuditLog a WHERE (:pointDeVenteId IS NULL OR a.pointDeVenteId = :pointDeVenteId) ORDER BY a.dateAction DESC")
     Page<AuditLog> findByPointDeVenteIdOrAllOrderByDateActionDesc(
             @Param("pointDeVenteId") Long pointDeVenteId, Pageable pageable);
 
-    /** Recherche multi-critères filtrée par point de vente */
+    /** Recherche multi-criteres filtree par point de vente */
     @Query("SELECT a FROM AuditLog a WHERE (:pointDeVenteId IS NULL OR a.pointDeVenteId = :pointDeVenteId) " +
            "AND (:entite IS NULL OR a.entite = :entite) " +
            "AND (:action IS NULL OR a.action = :action) " +
@@ -57,4 +57,16 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
             @Param("dateDebut") LocalDateTime dateDebut,
             @Param("dateFin") LocalDateTime dateFin,
             Pageable pageable);
+
+    @Query("SELECT DISTINCT a.utilisateur FROM AuditLog a WHERE (:pointDeVenteId IS NULL OR a.pointDeVenteId = :pointDeVenteId) AND a.utilisateur IS NOT NULL ORDER BY a.utilisateur ASC")
+    List<String> findDistinctUtilisateursByPointDeVenteId(@Param("pointDeVenteId") Long pointDeVenteId);
+
+    @Query("SELECT a FROM AuditLog a WHERE (:pointDeVenteId IS NULL OR a.pointDeVenteId = :pointDeVenteId) " +
+           "AND (:dateDebut IS NULL OR a.dateAction >= :dateDebut) " +
+           "AND (:dateFin IS NULL OR a.dateAction <= :dateFin) " +
+           "ORDER BY a.dateAction DESC")
+    List<AuditLog> findForStats(
+            @Param("pointDeVenteId") Long pointDeVenteId,
+            @Param("dateDebut") LocalDateTime dateDebut,
+            @Param("dateFin") LocalDateTime dateFin);
 }
