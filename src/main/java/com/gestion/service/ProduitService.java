@@ -145,6 +145,17 @@ public class ProduitService {
             hist.setNouveauPrixMin(nouveauPrixMin);
             hist.setDateModification(java.time.LocalDateTime.now());
             hist.setMotif("Mise à jour via fiche produit");
+            try {
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.isAuthenticated()) {
+                    if (auth.getPrincipal() instanceof com.acommon.persistant.model.User user) {
+                        hist.setModifieParId(user.getId());
+                        hist.setModifieParNom(user.getNomComplet() != null && !user.getNomComplet().isBlank() ? user.getNomComplet() : user.getUsername());
+                    } else if (auth.getName() != null) {
+                        hist.setModifieParNom(auth.getName());
+                    }
+                }
+            } catch (Exception ignored) {}
             historiquePrixProduitRepository.save(hist);
         }
 

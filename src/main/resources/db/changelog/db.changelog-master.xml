@@ -37,4 +37,7 @@
     <!-- Changeset 009 : Dépôt principal automatique pour chaque point de vente -->
     <include file="changes/009-ensure-principal-depots.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 010 : Ajout colonne modifie_par_nom dans historique_prix_produit -->
+    <include file="changes/010-add-modifie-par-nom-historique-prix.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

@@ -40,7 +40,8 @@ public class UserService {
     private boolean isSuperAdmin(Authentication auth) {
         if (auth == null) return false;
         return auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_SUPERADMIN"));
+                .anyMatch(a -> "ROLE_SUPERADMIN".equalsIgnoreCase(a.getAuthority())
+                            || "SUPERADMIN".equalsIgnoreCase(a.getAuthority()));
     }
 
     private String getCurrentUsername() {
@@ -57,6 +58,66 @@ public class UserService {
         return userRepository.findByEmail(auth.getName())
                 .or(() -> userRepository.findByUsername(auth.getName()))
                 .orElse(null);
+    }
+
+    private PointDeVente getAdminPointDeVente(User currentUser) {
+        if (currentUser == null) return null;
+        if (currentUser.getPointDeVente() != null) {
+            return currentUser.getPointDeVente();
+        }
+        if (currentUser.getPointDeVenteId() != null) {
+            return pointDeVenteRepository.findById(currentUser.getPointDeVenteId()).orElse(null);
+        }
+        return null;
+    }
+
+    private Long getAdminPointDeVenteId(User currentUser) {
+        if (currentUser == null) return null;
+        if (currentUser.getPointDeVente() != null && currentUser.getPointDeVente().getId() != null) {
+            return currentUser.getPointDeVente().getId();
+        }
+        if (currentUser.getPointDeVenteId() != null) {
+            return currentUser.getPointDeVenteId();
+        }
+        return null;
+    }
+
+    private boolean isUserInAdminScope(User targetUser, Long adminPdvId, Long adminTenantId) {
+        if (targetUser == null) return false;
+
+        // Un administrateur ne peut JAMAIS administrer un SUPERADMIN
+        if (targetUser.getRole() != null && "ROLE_SUPERADMIN".equalsIgnoreCase(targetUser.getRole().getNom())) {
+            return false;
+        }
+
+        // Si l'administrateur est rattaché à un point de vente / agence spécifique :
+        if (adminPdvId != null) {
+            if (targetUser.getPointDeVente() != null && adminPdvId.equals(targetUser.getPointDeVente().getId())) {
+                return true;
+            }
+            if (adminPdvId.equals(targetUser.getPointDeVenteId())) {
+                return true;
+            }
+            if (targetUser.getPointDeVente() == null && adminPdvId.equals(targetUser.getTenantId())) {
+                return true;
+            }
+            return false;
+        }
+
+        // Si l'administrateur n'est rattaché à aucun point de vente spécifique, repli sur le tenant
+        if (adminTenantId != null) {
+            if (adminTenantId.equals(targetUser.getTenantId())) {
+                return true;
+            }
+            if (targetUser.getPointDeVente() != null && adminTenantId.equals(targetUser.getPointDeVente().getTenantId())) {
+                return true;
+            }
+            if (adminTenantId.equals(targetUser.getPointDeVenteId())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Transactional
@@ -81,33 +142,34 @@ public class UserService {
                 targetTenantId = (tenant != null) ? tenant : 0L;
             }
         } else {
-            // Pour l'administrateur d'entreprise (ROLE_ADMIN, etc.) :
-            // Le tenantId DOIT OBLIGATOIREMENT être récupéré depuis l'utilisateur connecté !
-            if (currentUser != null && currentUser.getTenantId() != null) {
-                targetTenantId = currentUser.getTenantId();
-            } else {
-                Long tenant = TenantContext.getCurrentTenant();
-                if (tenant == null) {
-                    throw new AccessDeniedException("Impossible d'identifier l'entreprise (tenant) de l'utilisateur connecté");
-                }
-                targetTenantId = tenant;
-            }
+            // Pour l'administrateur point de vente : gestion STRICTEMENT limitée à son agence / point de vente
+            PointDeVente adminPdv = getAdminPointDeVente(currentUser);
+            Long currentTenant = (currentUser != null && currentUser.getTenantId() != null)
+                    ? currentUser.getTenantId()
+                    : TenantContext.getCurrentTenant();
 
-            // Gestion de l'association PointDeVente :
-            if (request.getPointDeVenteId() != null) {
-                targetPointDeVente = pointDeVenteRepository.findById(request.getPointDeVenteId())
-                        .orElseThrow(() -> new IllegalArgumentException("Point de vente introuvable avec l'ID : " + request.getPointDeVenteId()));
-                // Vérification stricte que le point de vente appartient au tenant de l'entreprise
-                if (!targetTenantId.equals(targetPointDeVente.getTenantId()) && !targetTenantId.equals(targetPointDeVente.getId())) {
-                    throw new AccessDeniedException("Le point de vente spécifié n'appartient pas à votre entreprise (tenant " + targetTenantId + ")");
+            if (adminPdv != null) {
+                // Si l'admin tente de spécifier un autre point de vente, refuser
+                if (request.getPointDeVenteId() != null && !request.getPointDeVenteId().equals(adminPdv.getId())) {
+                    throw new AccessDeniedException("Accès refusé : vous ne pouvez créer des utilisateurs que pour votre propre agence / point de vente (ID " + adminPdv.getId() + ")");
                 }
-            } else {
-                // Par défaut, affecter au point de vente de l'admin connecté ou au point de vente principal du tenant
-                if (currentUser != null && currentUser.getPointDeVente() != null) {
-                    targetPointDeVente = currentUser.getPointDeVente();
+                targetPointDeVente = adminPdv;
+                targetTenantId = (adminPdv.getTenantId() != null && adminPdv.getTenantId() > 0)
+                        ? adminPdv.getTenantId()
+                        : adminPdv.getId();
+            } else if (currentTenant != null) {
+                targetTenantId = currentTenant;
+                if (request.getPointDeVenteId() != null) {
+                    targetPointDeVente = pointDeVenteRepository.findById(request.getPointDeVenteId())
+                            .orElseThrow(() -> new IllegalArgumentException("Point de vente introuvable avec l'ID : " + request.getPointDeVenteId()));
+                    if (!targetTenantId.equals(targetPointDeVente.getTenantId()) && !targetTenantId.equals(targetPointDeVente.getId())) {
+                        throw new AccessDeniedException("Le point de vente spécifié n'appartient pas à votre entreprise (tenant " + targetTenantId + ")");
+                    }
                 } else {
                     targetPointDeVente = pointDeVenteRepository.findByTenantId(targetTenantId).orElse(null);
                 }
+            } else {
+                throw new AccessDeniedException("Impossible d'identifier l'agence ou l'entreprise de l'administrateur connecté");
             }
         }
 
@@ -144,7 +206,9 @@ public class UserService {
         user.setGenre(request.getGenre());
         user.setRole(role);
         user.setTenantId(targetTenantId);
-        user.setMereId(targetTenantId);
+        user.setMereId(targetPointDeVente != null && targetPointDeVente.getMereId() != null
+                ? targetPointDeVente.getMereId()
+                : targetTenantId);
         user.setPointDeVente(targetPointDeVente);
         user.setEnabled(true);
         user.setAccountNonExpired(true);
@@ -168,16 +232,30 @@ public class UserService {
             }
         } else {
             User currentUser = getCurrentUser();
+            Long adminPdvId = getAdminPointDeVenteId(currentUser);
             Long currentTenant = (currentUser != null && currentUser.getTenantId() != null)
                     ? currentUser.getTenantId()
                     : TenantContext.getCurrentTenant();
 
-            if (currentTenant == null) {
+            if (adminPdvId == null && currentTenant == null) {
                 return List.of();
             }
 
+            // Contrôle strict du filtre s'il est fourni
             if (pointDeVenteIdFilter != null) {
-                users = userRepository.findByTenantIdAndPointDeVenteId(currentTenant, pointDeVenteIdFilter);
+                if (adminPdvId != null && !pointDeVenteIdFilter.equals(adminPdvId)) {
+                    throw new AccessDeniedException("Accès refusé : vous ne pouvez consulter que les utilisateurs de votre agence / point de vente");
+                }
+                if (adminPdvId == null && !pointDeVenteIdFilter.equals(currentTenant)) {
+                    throw new AccessDeniedException("Accès refusé : vous ne pouvez consulter que les utilisateurs de votre entreprise");
+                }
+            }
+
+            if (adminPdvId != null) {
+                users = userRepository.findByPointDeVenteId(adminPdvId);
+                if (users.isEmpty()) {
+                    users = userRepository.findByTenantId(adminPdvId);
+                }
             } else {
                 users = userRepository.findByTenantOrPointDeVenteTenant(currentTenant);
                 if (users.isEmpty()) {
@@ -187,6 +265,11 @@ public class UserService {
                     users = userRepository.findByPointDeVenteId(currentTenant);
                 }
             }
+
+            // Filtrage de sécurité : exclure les SuperAdmins et s'assurer que l'utilisateur appartient au périmètre
+            users = users.stream()
+                    .filter(u -> isUserInAdminScope(u, adminPdvId, currentTenant))
+                    .collect(Collectors.toList());
         }
 
         return users.stream()
@@ -238,14 +321,24 @@ public class UserService {
                     .orElseThrow(() -> new IllegalArgumentException("Point de vente introuvable : " + request.getPointDeVenteId()));
             if (!superAdmin) {
                 User currentUser = getCurrentUser();
+                Long adminPdvId = getAdminPointDeVenteId(currentUser);
+                if (adminPdvId != null && !adminPdvId.equals(request.getPointDeVenteId())) {
+                    throw new AccessDeniedException("Accès refusé : vous ne pouvez pas déplacer un utilisateur vers une autre agence / point de vente");
+                }
                 Long currentTenant = (currentUser != null && currentUser.getTenantId() != null)
                         ? currentUser.getTenantId()
                         : user.getTenantId();
-                if (currentTenant != null && !currentTenant.equals(pdv.getTenantId())) {
+                if (currentTenant != null && !currentTenant.equals(pdv.getTenantId()) && !currentTenant.equals(pdv.getId())) {
                     throw new AccessDeniedException("Le point de vente spécifié n'appartient pas à votre entreprise");
                 }
             }
             user.setPointDeVente(pdv);
+            if (superAdmin) {
+                user.setTenantId(pdv.getTenantId() != null && pdv.getTenantId() > 0 ? pdv.getTenantId() : pdv.getId());
+                if (pdv.getMereId() != null) {
+                    user.setMereId(pdv.getMereId());
+                }
+            }
         }
 
         if (request.getRole() != null && !request.getRole().isBlank()) {
@@ -319,18 +412,13 @@ public class UserService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (!isSuperAdmin(auth)) {
             User currentUser = getCurrentUser();
+            Long adminPdvId = getAdminPointDeVenteId(currentUser);
             Long currentTenant = (currentUser != null && currentUser.getTenantId() != null)
                     ? currentUser.getTenantId()
                     : TenantContext.getCurrentTenant();
 
-            if (currentTenant != null) {
-                boolean tenantMatches = currentTenant.equals(user.getTenantId())
-                        || (user.getPointDeVente() != null && currentTenant.equals(user.getPointDeVente().getTenantId()))
-                        || currentTenant.equals(user.getPointDeVenteId());
-
-                if (!tenantMatches) {
-                    throw new AccessDeniedException("Accès refusé : cet utilisateur appartient à une autre entreprise");
-                }
+            if (!isUserInAdminScope(user, adminPdvId, currentTenant)) {
+                throw new AccessDeniedException("Accès refusé : vous n'avez pas l'autorisation d'accéder ou de modifier cet utilisateur");
             }
         }
         return user;

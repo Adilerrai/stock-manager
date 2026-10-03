@@ -65,6 +65,7 @@ public class DashboardService {
      */
     public DashboardDTO getDashboardMetrics() {
         DashboardDTO dashboard = new DashboardDTO();
+        Long tenantId = TenantContext.getCurrentTenant();
 
         LocalDate today = LocalDate.now();
         LocalDate hier = today.minusDays(1);
@@ -77,50 +78,74 @@ public class DashboardService {
         LocalDateTime debutMoisDT = debutMois.atStartOfDay();
 
         // 1. Chiffre d'affaires
-        BigDecimal caAujourdhui = venteRepository.calculerChiffreAffaires(debutAujourdhui, finAujourdhui);
+        BigDecimal caAujourdhui = tenantId != null
+                ? venteRepository.calculerChiffreAffairesByPointDeVenteId(debutAujourdhui, finAujourdhui, tenantId)
+                : venteRepository.calculerChiffreAffaires(debutAujourdhui, finAujourdhui);
         dashboard.setCaAujourdhui(caAujourdhui != null ? caAujourdhui : BigDecimal.ZERO);
 
-        BigDecimal caHier = venteRepository.calculerChiffreAffaires(debutHier, finHier);
+        BigDecimal caHier = tenantId != null
+                ? venteRepository.calculerChiffreAffairesByPointDeVenteId(debutHier, finHier, tenantId)
+                : venteRepository.calculerChiffreAffaires(debutHier, finHier);
         dashboard.setCaHier(caHier != null ? caHier : BigDecimal.ZERO);
 
-        BigDecimal caMois = venteRepository.calculerChiffreAffaires(debutMoisDT, finAujourdhui);
+        BigDecimal caMois = tenantId != null
+                ? venteRepository.calculerChiffreAffairesByPointDeVenteId(debutMoisDT, finAujourdhui, tenantId)
+                : venteRepository.calculerChiffreAffaires(debutMoisDT, finAujourdhui);
         dashboard.setCaMoisEnCours(caMois != null ? caMois : BigDecimal.ZERO);
 
-        Long nbVentesAuj = venteRepository.countVentesByStatutAndPeriode(StatutVente.VALIDEE, debutAujourdhui, finAujourdhui);
+        Long nbVentesAuj = tenantId != null
+                ? venteRepository.countVentesByStatutAndPeriodeAndPointDeVenteId(StatutVente.VALIDEE, debutAujourdhui, finAujourdhui, tenantId)
+                : venteRepository.countVentesByStatutAndPeriode(StatutVente.VALIDEE, debutAujourdhui, finAujourdhui);
         dashboard.setNombreVentesAujourdhui(nbVentesAuj != null ? nbVentesAuj : 0L);
 
-        Long nbVentesHier = venteRepository.countVentesByStatutAndPeriode(StatutVente.VALIDEE, debutHier, finHier);
+        Long nbVentesHier = tenantId != null
+                ? venteRepository.countVentesByStatutAndPeriodeAndPointDeVenteId(StatutVente.VALIDEE, debutHier, finHier, tenantId)
+                : venteRepository.countVentesByStatutAndPeriode(StatutVente.VALIDEE, debutHier, finHier);
         dashboard.setNombreVentesHier(nbVentesHier != null ? nbVentesHier : 0L);
 
-        Long nbVentesMois = venteRepository.countVentesByStatutAndPeriode(StatutVente.VALIDEE, debutMoisDT, finAujourdhui);
+        Long nbVentesMois = tenantId != null
+                ? venteRepository.countVentesByStatutAndPeriodeAndPointDeVenteId(StatutVente.VALIDEE, debutMoisDT, finAujourdhui, tenantId)
+                : venteRepository.countVentesByStatutAndPeriode(StatutVente.VALIDEE, debutMoisDT, finAujourdhui);
         dashboard.setNombreVentesMoisEnCours(nbVentesMois != null ? nbVentesMois : 0L);
 
         // 2. Créances Clients
-        BigDecimal totalCreances = factureRepository.sumTotalCreances();
+        BigDecimal totalCreances = tenantId != null
+                ? factureRepository.sumTotalCreancesByPointDeVenteId(tenantId)
+                : factureRepository.sumTotalCreances();
         dashboard.setTotalCreancesClients(totalCreances != null ? totalCreances : BigDecimal.ZERO);
 
-        BigDecimal creancesEchues = factureRepository.sumCreancesEchues(today);
+        BigDecimal creancesEchues = tenantId != null
+                ? factureRepository.sumCreancesEchuesByPointDeVenteId(today, tenantId)
+                : factureRepository.sumCreancesEchues(today);
         dashboard.setTotalCreancesEchues(creancesEchues != null ? creancesEchues : BigDecimal.ZERO);
 
         BigDecimal creancesNonEchues = dashboard.getTotalCreancesClients().subtract(dashboard.getTotalCreancesEchues());
         dashboard.setTotalCreancesNonEchues(creancesNonEchues.compareTo(BigDecimal.ZERO) >= 0 ? creancesNonEchues : BigDecimal.ZERO);
 
-        Long nbFacturesImpayees = factureRepository.countFacturesImpayees();
+        Long nbFacturesImpayees = tenantId != null
+                ? factureRepository.countFacturesImpayeesByPointDeVenteId(tenantId)
+                : factureRepository.countFacturesImpayees();
         dashboard.setNombreFacturesImpayees(nbFacturesImpayees != null ? nbFacturesImpayees : 0L);
 
         // 3. Encaissements & Trésorerie du jour
-        BigDecimal totalEncaissements = paiementRepository.sumMontantByPeriode(debutAujourdhui, finAujourdhui);
+        BigDecimal totalEncaissements = tenantId != null
+                ? paiementRepository.sumMontantByPeriodeAndTenant(debutAujourdhui, finAujourdhui, tenantId)
+                : paiementRepository.sumMontantByPeriode(debutAujourdhui, finAujourdhui);
         dashboard.setTotalEncaissementsAujourdhui(totalEncaissements != null ? totalEncaissements : BigDecimal.ZERO);
 
         Map<String, BigDecimal> encaissementsMap = new HashMap<>();
         for (ModePaiement mode : ModePaiement.values()) {
-            BigDecimal sum = paiementRepository.sumMontantByModePaiement(mode, debutAujourdhui, finAujourdhui);
+            BigDecimal sum = tenantId != null
+                    ? paiementRepository.sumMontantByModePaiementAndTenant(mode, debutAujourdhui, finAujourdhui, tenantId)
+                    : paiementRepository.sumMontantByModePaiement(mode, debutAujourdhui, finAujourdhui);
             encaissementsMap.put(mode.name(), sum != null ? sum : BigDecimal.ZERO);
         }
         dashboard.setEncaissementsParMode(encaissementsMap);
 
         // Caisse active
-        List<SessionCaisse> sessionsOuvertes = sessionCaisseRepository.findByStatutOrderByDateOuvertureDesc(StatutSessionCaisse.OUVERTE);
+        List<SessionCaisse> sessionsOuvertes = tenantId != null
+                ? sessionCaisseRepository.findByStatutAndPointDeVenteIdOrderByDateOuvertureDesc(StatutSessionCaisse.OUVERTE, tenantId)
+                : sessionCaisseRepository.findByStatutOrderByDateOuvertureDesc(StatutSessionCaisse.OUVERTE);
         BigDecimal soldeCaisse = BigDecimal.ZERO;
         for (SessionCaisse sc : sessionsOuvertes) {
             BigDecimal fond = sc.getFondDeCaisseInitial() != null ? sc.getFondDeCaisseInitial() : BigDecimal.ZERO;
@@ -130,11 +155,12 @@ public class DashboardService {
         dashboard.setSoldeCaisseActuel(soldeCaisse);
 
         // Dettes fournisseurs
-        BigDecimal dettesFrs = factureAchatRepository.sumTotalDettesFournisseurs();
+        BigDecimal dettesFrs = tenantId != null
+                ? factureAchatRepository.sumTotalDettesFournisseursByPointDeVenteId(tenantId)
+                : factureAchatRepository.sumTotalDettesFournisseurs();
         dashboard.setTotalDettesFournisseurs(dettesFrs != null ? dettesFrs : BigDecimal.ZERO);
 
         // 4. Stocks & Alertes
-        Long tenantId = TenantContext.getCurrentTenant();
         Long ruptures = tenantId != null ? stockQualiteRepository.countEnRuptureByTenant(tenantId) : stockQualiteRepository.countEnRupture();
         dashboard.setNombreProduitsEnRupture(ruptures != null ? ruptures : 0L);
 
@@ -147,7 +173,9 @@ public class DashboardService {
             dashboard.setMargeMoisEnCours(marge.getMargeNetteCommerciale());
             dashboard.setTauxMargeMoisEnCours(marge.getTauxMarge());
 
-            BigDecimal depensesMois = depenseRepository.sumMontantByPeriode(debutMois, today);
+            BigDecimal depensesMois = tenantId != null
+                    ? depenseRepository.sumMontantByPeriodeAndPointDeVenteId(debutMois, today, tenantId)
+                    : depenseRepository.sumMontantByPeriode(debutMois, today);
             if (depensesMois == null) depensesMois = BigDecimal.ZERO;
             dashboard.setTotalDepensesMoisEnCours(depensesMois);
             dashboard.setResultatNetMoisEnCours(marge.getMargeNetteCommerciale().subtract(depensesMois));
@@ -159,7 +187,9 @@ public class DashboardService {
         }
 
         // 6. Top Clients (Top 5)
-        List<Object[]> topClientsRaw = venteRepository.findTopClients(PageRequest.of(0, 5));
+        List<Object[]> topClientsRaw = tenantId != null
+                ? venteRepository.findTopClientsByPointDeVenteId(tenantId, PageRequest.of(0, 5))
+                : venteRepository.findTopClients(PageRequest.of(0, 5));
         List<TopClientDTO> topClients = new ArrayList<>();
         if (topClientsRaw != null) {
             for (Object[] row : topClientsRaw) {
@@ -174,7 +204,9 @@ public class DashboardService {
         dashboard.setTopClients(topClients);
 
         // 7. Top Produits (Top 5)
-        List<Object[]> topProduitsRaw = ligneVenteRepository.findTopProduits(PageRequest.of(0, 5));
+        List<Object[]> topProduitsRaw = tenantId != null
+                ? ligneVenteRepository.findTopProduitsByPointDeVenteId(tenantId, PageRequest.of(0, 5))
+                : ligneVenteRepository.findTopProduits(PageRequest.of(0, 5));
         List<TopProduitDTO> topProduits = new ArrayList<>();
         if (topProduitsRaw != null) {
             for (Object[] row : topProduitsRaw) {

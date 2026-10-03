@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 010 :
+      Ajout de la colonne manquante modifie_par_nom dans historique_prix_produit
+    -->
+    <changeSet id="010-add-modifie-par-nom-historique-prix" author="erp-commercial">
+        <sql splitStatements="true">
+            ALTER TABLE IF EXISTS historique_prix_produit 
+                ADD COLUMN IF NOT EXISTS modifie_par_nom VARCHAR(255);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

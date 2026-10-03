@@ -73,7 +73,9 @@ public class BarometreService {
         BigDecimal liquidites = treso != null && treso.getTresorerieDisponibleGlobale() != null
                 ? treso.getTresorerieDisponibleGlobale() : BigDecimal.ZERO;
 
-        BigDecimal depensesMois = depenseRepository.sumMontantByPeriode(debutMois, today);
+        BigDecimal depensesMois = tenantId != null
+                ? depenseRepository.sumMontantByPeriodeAndPointDeVenteId(debutMois, today, tenantId)
+                : depenseRepository.sumMontantByPeriode(debutMois, today);
         if (depensesMois == null || depensesMois.compareTo(BigDecimal.ZERO) == 0) depensesMois = new BigDecimal("100000"); // estimation base
 
         int scoreTreso = 70;

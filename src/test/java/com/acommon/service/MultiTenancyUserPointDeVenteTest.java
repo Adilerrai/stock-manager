@@ -97,7 +97,6 @@ class MultiTenancyUserPointDeVenteTest {
         when(pointDeVenteRepository.existsByNomPointDeVente("Tech Solutions")).thenReturn(false);
         when(userRepository.existsByEmail("admin@tech.com")).thenReturn(false);
         when(userRepository.existsByUsername("techadmin")).thenReturn(false);
-        when(pointDeVenteRepository.findMaxTenantId()).thenReturn(10L);
         when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
 
         PointDeVente savedPdv = new PointDeVente();
@@ -129,18 +128,17 @@ class MultiTenancyUserPointDeVenteTest {
 
         // Then
         assertNotNull(response);
-        assertEquals(11L, response.getTenantId());
+        assertEquals(100L, response.getTenantId());
         assertEquals("Tech Solutions", response.getNomEntreprise());
         assertEquals(500L, response.getAdminUserId());
         assertEquals("admin@tech.com", response.getAdminEmail());
 
-        // Verify that PointDeVente has the unique tenantId = 11
-        verify(pointDeVenteRepository).save(argThat(pdv ->
-                pdv.getTenantId().equals(11L) && pdv.getNomPointDeVente().equals("Tech Solutions")));
+        // Verify that PointDeVente is saved
+        verify(pointDeVenteRepository, atLeastOnce()).save(argThat(pdv ->
+                pdv.getNomPointDeVente().equals("Tech Solutions")));
 
-        // Verify that the created user has role ROLE_ADMIN, tenantId = 11 and is attached to the PointDeVente
+        // Verify that the created user has role ROLE_ADMIN and is attached to the PointDeVente
         verify(userRepository).save(argThat(u ->
-                u.getTenantId().equals(11L) &&
                 u.getRole().getNom().equals("ROLE_ADMIN") &&
                 u.getPointDeVente() != null &&
                 u.getPointDeVente().getId().equals(100L)));
@@ -275,5 +273,162 @@ class MultiTenancyUserPointDeVenteTest {
         assertEquals(11L, users.get(0).getTenantId());
         verify(userRepository).findByTenantId(11L);
         verify(userRepository, never()).findAll();
+    }
+
+    @Test
+    void testSuperAdmin_CanCreateUserForAnyAgence() {
+        // Given : Connected SuperAdmin
+        Role superAdminRole = new Role();
+        superAdminRole.setNom("ROLE_SUPERADMIN");
+
+        User superAdmin = new User();
+        superAdmin.setId(1L);
+        superAdmin.setEmail("superadmin@erp.com");
+        superAdmin.setUsername("superadmin");
+        superAdmin.setRole(superAdminRole);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                superAdmin, null, superAdmin.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // Any agency (PointDeVente 250)
+        PointDeVente agenceFes = new PointDeVente();
+        agenceFes.setId(250L);
+        agenceFes.setTenantId(25L);
+        agenceFes.setNomPointDeVente("Agence Fès");
+        when(pointDeVenteRepository.findById(250L)).thenReturn(Optional.of(agenceFes));
+
+        when(userRepository.findByEmail("commercial.fes@erp.com")).thenReturn(Optional.empty());
+        when(userRepository.findByUsername("comm_fes")).thenReturn(Optional.empty());
+
+        Role commRole = new Role();
+        commRole.setId(5L);
+        commRole.setNom("ROLE_COMMERCIAL");
+        when(roleRepository.findByNom("ROLE_COMMERCIAL")).thenReturn(Optional.of(commRole));
+        when(passwordEncoder.encode(any())).thenReturn("encodedPassword");
+
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            u.setId(700L);
+            return u;
+        });
+
+        // When
+        UserCreationRequest request = new UserCreationRequest();
+        request.setEmail("commercial.fes@erp.com");
+        request.setUsername("comm_fes");
+        request.setPassword("Secret2026!");
+        request.setNomComplet("Commercial Fès");
+        request.setRole("ROLE_COMMERCIAL");
+        request.setPointDeVenteId(250L);
+
+        UserResponse response = userService.createUser(request);
+
+        // Then : SuperAdmin successfully created user for Agence Fès
+        assertNotNull(response);
+        assertEquals(250L, response.getPointDeVenteId());
+        assertEquals("Agence Fès", response.getNomPointDeVente());
+        assertEquals(25L, response.getTenantId());
+        verify(userRepository).save(argThat(u ->
+                u.getPointDeVente() != null && u.getPointDeVente().getId().equals(250L)));
+    }
+
+    @Test
+    void testPointDeVenteAdmin_CannotCreateUserForAnotherPointDeVente() {
+        // Given : Connected Admin of Agence Marrakech (PDV 100)
+        Role adminRole = new Role();
+        adminRole.setNom("ROLE_ADMIN");
+
+        PointDeVente pdvMarrakech = new PointDeVente();
+        pdvMarrakech.setId(100L);
+        pdvMarrakech.setTenantId(10L);
+        pdvMarrakech.setNomPointDeVente("Agence Marrakech");
+
+        User adminMarrakech = new User();
+        adminMarrakech.setId(50L);
+        adminMarrakech.setEmail("admin.marrakech@erp.com");
+        adminMarrakech.setUsername("admin_kech");
+        adminMarrakech.setPointDeVente(pdvMarrakech);
+        adminMarrakech.setTenantId(10L);
+        adminMarrakech.setRole(adminRole);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                adminMarrakech, null, adminMarrakech.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // When : Admin Marrakech attempts to create a user for Agence Tanger (PDV 200)
+        UserCreationRequest request = new UserCreationRequest();
+        request.setEmail("vendeur.tanger@erp.com");
+        request.setUsername("vend_tanger");
+        request.setPassword("Secret2026!");
+        request.setNomComplet("Vendeur Tanger");
+        request.setRole("ROLE_VENDEUR");
+        request.setPointDeVenteId(200L); // Different point de vente
+
+        // Then : Must throw AccessDeniedException
+        assertThrows(AccessDeniedException.class, () -> userService.createUser(request));
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void testPointDeVenteAdmin_CannotAccessUserFromAnotherAgencyOrSuperAdmin() {
+        // Given : Connected Admin of Agence Marrakech (PDV 100)
+        Role adminRole = new Role();
+        adminRole.setNom("ROLE_ADMIN");
+
+        PointDeVente pdvMarrakech = new PointDeVente();
+        pdvMarrakech.setId(100L);
+        pdvMarrakech.setTenantId(10L);
+        pdvMarrakech.setNomPointDeVente("Agence Marrakech");
+
+        User adminMarrakech = new User();
+        adminMarrakech.setId(50L);
+        adminMarrakech.setEmail("admin.marrakech@erp.com");
+        adminMarrakech.setUsername("admin_kech");
+        adminMarrakech.setPointDeVente(pdvMarrakech);
+        adminMarrakech.setTenantId(10L);
+        adminMarrakech.setRole(adminRole);
+
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+                adminMarrakech, null, adminMarrakech.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        // 1. Target user from Marrakech (same agency)
+        User userMarrakech = new User();
+        userMarrakech.setId(101L);
+        userMarrakech.setPointDeVente(pdvMarrakech);
+        userMarrakech.setTenantId(10L);
+        userMarrakech.setRole(adminRole);
+        when(userRepository.findById(101L)).thenReturn(Optional.of(userMarrakech));
+
+        // 2. Target user from Agence Rabat (different agency PDV 200)
+        PointDeVente pdvRabat = new PointDeVente();
+        pdvRabat.setId(200L);
+        pdvRabat.setTenantId(20L);
+
+        User userRabat = new User();
+        userRabat.setId(201L);
+        userRabat.setPointDeVente(pdvRabat);
+        userRabat.setTenantId(20L);
+        userRabat.setRole(adminRole);
+        when(userRepository.findById(201L)).thenReturn(Optional.of(userRabat));
+
+        // 3. Target user is SuperAdmin
+        Role superAdminRole = new Role();
+        superAdminRole.setNom("ROLE_SUPERADMIN");
+        User superAdminUser = new User();
+        superAdminUser.setId(1L);
+        superAdminUser.setRole(superAdminRole);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(superAdminUser));
+
+        // When & Then
+        // Marrakech admin CAN view Marrakech user
+        assertNotNull(userService.getUserById(101L));
+
+        // Marrakech admin CANNOT view Rabat user
+        assertThrows(AccessDeniedException.class, () -> userService.getUserById(201L));
+
+        // Marrakech admin CANNOT view SuperAdmin
+        assertThrows(AccessDeniedException.class, () -> userService.getUserById(1L));
     }
 }

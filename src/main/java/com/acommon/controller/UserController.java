@@ -15,7 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping({"/api/users", "/users", "/api/v1/users"})
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
+@PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER') or hasAnyRole('SUPERADMIN', 'ADMIN', 'POINT_DE_VENTE_MANAGER')")
 public class UserController {
 
     private final UserService userService;

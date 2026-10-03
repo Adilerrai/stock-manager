@@ -96,7 +96,10 @@ public class AnomalieService {
     public List<AnomalieDTO> detecterAnomaliesFactures() {
         List<AnomalieDTO> anomalies = new ArrayList<>();
         LocalDate today = LocalDate.now();
-        List<Facture> facturesEchues = factureRepository.findFacturesEchues(today);
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Facture> facturesEchues = tenantId != null
+                ? factureRepository.findFacturesEchuesByPointDeVenteId(today, tenantId)
+                : factureRepository.findFacturesEchues(today);
 
         for (Facture f : facturesEchues) {
             if (f.getDateEcheance() != null) {
@@ -124,7 +127,6 @@ public class AnomalieService {
         }
 
         // Détection factures annulées mais avec encaissement
-        Long tenantId = TenantContext.getCurrentTenant();
         List<Facture> factures = tenantId != null ? factureRepository.findByPointDeVenteIdOrderByDateFactureDesc(tenantId) : java.util.Collections.emptyList();
         for (Facture f : factures) {
             if (Boolean.TRUE.equals(f.getAnnulee()) && f.getMontantPaye() != null && f.getMontantPaye().compareTo(BigDecimal.ZERO) > 0) {
@@ -203,7 +205,10 @@ public class AnomalieService {
      */
     public List<AnomalieDTO> detecterAnomaliesCaisse() {
         List<AnomalieDTO> anomalies = new ArrayList<>();
-        List<SessionCaisse> sessionsAvecEcart = sessionCaisseRepository.findSessionsAvecEcart();
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<SessionCaisse> sessionsAvecEcart = tenantId != null
+                ? sessionCaisseRepository.findSessionsAvecEcartByPointDeVenteId(tenantId)
+                : sessionCaisseRepository.findSessionsAvecEcart();
 
         for (SessionCaisse s : sessionsAvecEcart) {
             String caissierNom = s.getCaissier() != null ? (s.getCaissier().getNomComplet() != null ? s.getCaissier().getNomComplet() : s.getCaissier().getUsername()) : "Inconnu";

@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping({"/api/points-de-vente", "/api/v1/points-de-vente"})
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
+@PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN', 'ROLE_POINT_DE_VENTE_MANAGER') or hasAnyRole('SUPERADMIN', 'ADMIN', 'POINT_DE_VENTE_MANAGER')")
 public class PointDeVenteController {
 
     private final PointDeVenteService pointDeVenteService;

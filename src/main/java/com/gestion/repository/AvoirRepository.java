@@ -38,6 +38,12 @@ public interface AvoirRepository extends JpaRepository<Avoir, Long>, AvoirReposi
                                                     @Param("dateDebut") LocalDate dateDebut,
                                                     @Param("dateFin") LocalDate dateFin);
 
+    @Query("SELECT COALESCE(SUM(a.montantTTC), 0) FROM Avoir a WHERE a.typeAvoir = :typeAvoir AND a.statut != 'ANNULE' AND a.pointDeVenteId = :pointDeVenteId AND a.dateAvoir BETWEEN :dateDebut AND :dateFin")
+    java.math.BigDecimal sumMontantByPeriodeAndTypeAndPointDeVenteId(@Param("typeAvoir") TypeAvoir typeAvoir,
+                                                                    @Param("dateDebut") LocalDate dateDebut,
+                                                                    @Param("dateFin") LocalDate dateFin,
+                                                                    @Param("pointDeVenteId") Long pointDeVenteId);
+
     @Query("SELECT la.motifRetour, COUNT(la), SUM(la.montantTTC) FROM LigneAvoir la " +
            "WHERE la.avoir.typeAvoir = 'CLIENT' AND la.avoir.statut != 'ANNULE' " +
            "AND la.avoir.dateAvoir BETWEEN :dateDebut AND :dateFin " +

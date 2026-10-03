@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.MargeDTO;
 import com.gestion.persistent.dto.MargeDTO.LigneMargeDTO;
 import com.gestion.persistent.enums.TypeAvoir;
@@ -46,6 +47,7 @@ public class MargeService {
 
         LocalDateTime debutDateTime = dateDebut.atStartOfDay();
         LocalDateTime finDateTime = dateFin.atTime(LocalTime.MAX);
+        Long tenantId = TenantContext.getCurrentTenant();
 
         MargeDTO dto = new MargeDTO();
         dto.setDateDebut(dateDebut);
@@ -56,7 +58,9 @@ public class MargeService {
         BigDecimal remisesLignes = BigDecimal.ZERO;
 
         // 1. Totaux depuis les ventes POS validées
-        List<Object[]> totauxVente = ligneVenteRepository.calculerTotauxMargeGlobale(debutDateTime, finDateTime);
+        List<Object[]> totauxVente = tenantId != null
+                ? ligneVenteRepository.calculerTotauxMargeGlobaleByPointDeVenteId(debutDateTime, finDateTime, tenantId)
+                : ligneVenteRepository.calculerTotauxMargeGlobale(debutDateTime, finDateTime);
         if (totauxVente != null && !totauxVente.isEmpty()) {
             Object[] row = totauxVente.get(0);
             if (row != null && row.length >= 3) {
@@ -67,7 +71,9 @@ public class MargeService {
         }
 
         // 2. Totaux depuis les Factures de vente validées (non annulées, hors vente POS)
-        List<Object[]> totauxFacture = ligneFactureRepository.calculerTotauxMargeGlobale(dateDebut, dateFin);
+        List<Object[]> totauxFacture = tenantId != null
+                ? ligneFactureRepository.calculerTotauxMargeGlobaleByPointDeVenteId(dateDebut, dateFin, tenantId)
+                : ligneFactureRepository.calculerTotauxMargeGlobale(dateDebut, dateFin);
         if (totauxFacture != null && !totauxFacture.isEmpty()) {
             Object[] row = totauxFacture.get(0);
             if (row != null && row.length >= 3) {
@@ -78,7 +84,9 @@ public class MargeService {
         }
 
         // 3. Avoirs clients (retours de marchandises)
-        BigDecimal retours = avoirRepository.sumMontantByPeriodeAndType(TypeAvoir.CLIENT, dateDebut, dateFin);
+        BigDecimal retours = tenantId != null
+                ? avoirRepository.sumMontantByPeriodeAndTypeAndPointDeVenteId(TypeAvoir.CLIENT, dateDebut, dateFin, tenantId)
+                : avoirRepository.sumMontantByPeriodeAndType(TypeAvoir.CLIENT, dateDebut, dateFin);
         if (retours == null) retours = BigDecimal.ZERO;
 
         BigDecimal margeBrute = caHT.subtract(coutHT);
@@ -111,15 +119,20 @@ public class MargeService {
 
         LocalDateTime debut = dateDebut.atStartOfDay();
         LocalDateTime fin = dateFin.atTime(LocalTime.MAX);
+        Long tenantId = TenantContext.getCurrentTenant();
 
         Map<Long, LigneMargeDTO> map = new LinkedHashMap<>();
 
         // Depuis POS
-        List<Object[]> rowsVente = ligneVenteRepository.calculerMargeParProduit(debut, fin);
+        List<Object[]> rowsVente = tenantId != null
+                ? ligneVenteRepository.calculerMargeParProduitByPointDeVenteId(debut, fin, tenantId)
+                : ligneVenteRepository.calculerMargeParProduit(debut, fin);
         accumulerLignesMarge(map, rowsVente);
 
         // Depuis Factures
-        List<Object[]> rowsFacture = ligneFactureRepository.calculerMargeParProduit(dateDebut, dateFin);
+        List<Object[]> rowsFacture = tenantId != null
+                ? ligneFactureRepository.calculerMargeParProduitByPointDeVenteId(dateDebut, dateFin, tenantId)
+                : ligneFactureRepository.calculerMargeParProduit(dateDebut, dateFin);
         accumulerLignesMarge(map, rowsFacture);
 
         List<LigneMargeDTO> result = new ArrayList<>(map.values());
@@ -134,15 +147,20 @@ public class MargeService {
 
         LocalDateTime debut = dateDebut.atStartOfDay();
         LocalDateTime fin = dateFin.atTime(LocalTime.MAX);
+        Long tenantId = TenantContext.getCurrentTenant();
 
         Map<Long, LigneMargeDTO> map = new LinkedHashMap<>();
 
         // Depuis POS
-        List<Object[]> rowsVente = ligneVenteRepository.calculerMargeParCategorie(debut, fin);
+        List<Object[]> rowsVente = tenantId != null
+                ? ligneVenteRepository.calculerMargeParCategorieByPointDeVenteId(debut, fin, tenantId)
+                : ligneVenteRepository.calculerMargeParCategorie(debut, fin);
         accumulerLignesCategorie(map, rowsVente);
 
         // Depuis Factures
-        List<Object[]> rowsFacture = ligneFactureRepository.calculerMargeParCategorie(dateDebut, dateFin);
+        List<Object[]> rowsFacture = tenantId != null
+                ? ligneFactureRepository.calculerMargeParCategorieByPointDeVenteId(dateDebut, dateFin, tenantId)
+                : ligneFactureRepository.calculerMargeParCategorie(dateDebut, dateFin);
         accumulerLignesCategorie(map, rowsFacture);
 
         List<LigneMargeDTO> result = new ArrayList<>(map.values());
@@ -157,15 +175,20 @@ public class MargeService {
 
         LocalDateTime debut = dateDebut.atStartOfDay();
         LocalDateTime fin = dateFin.atTime(LocalTime.MAX);
+        Long tenantId = TenantContext.getCurrentTenant();
 
         Map<Long, LigneMargeDTO> map = new LinkedHashMap<>();
 
         // Depuis POS
-        List<Object[]> rowsVente = ligneVenteRepository.calculerMargeParClient(debut, fin);
+        List<Object[]> rowsVente = tenantId != null
+                ? ligneVenteRepository.calculerMargeParClientByPointDeVenteId(debut, fin, tenantId)
+                : ligneVenteRepository.calculerMargeParClient(debut, fin);
         accumulerLignesClient(map, rowsVente);
 
         // Depuis Factures
-        List<Object[]> rowsFacture = ligneFactureRepository.calculerMargeParClient(dateDebut, dateFin);
+        List<Object[]> rowsFacture = tenantId != null
+                ? ligneFactureRepository.calculerMargeParClientByPointDeVenteId(dateDebut, dateFin, tenantId)
+                : ligneFactureRepository.calculerMargeParClient(dateDebut, dateFin);
         accumulerLignesClient(map, rowsFacture);
 
         List<LigneMargeDTO> result = new ArrayList<>(map.values());

@@ -50,17 +50,26 @@ public class TresorerieAvanceeService {
      */
     @Transactional(readOnly = true)
     public SyntheseTresorerieDTO getSynthese() {
-        BigDecimal totalCaisses = compteRepository.sumSoldeByType(TypeCompteFinancier.CAISSE_PHYSIQUE);
-        BigDecimal totalBanques = compteRepository.sumSoldeByType(TypeCompteFinancier.COMPTE_BANCAIRE);
+        Long tenantId = TenantContext.getCurrentTenant();
+        BigDecimal totalCaisses = tenantId != null
+                ? compteRepository.sumSoldeByPointDeVenteIdAndType(tenantId, TypeCompteFinancier.CAISSE_PHYSIQUE)
+                : compteRepository.sumSoldeByType(TypeCompteFinancier.CAISSE_PHYSIQUE);
+        BigDecimal totalBanques = tenantId != null
+                ? compteRepository.sumSoldeByPointDeVenteIdAndType(tenantId, TypeCompteFinancier.COMPTE_BANCAIRE)
+                : compteRepository.sumSoldeByType(TypeCompteFinancier.COMPTE_BANCAIRE);
         if (totalCaisses == null)
             totalCaisses = BigDecimal.ZERO;
         if (totalBanques == null)
             totalBanques = BigDecimal.ZERO;
 
-        List<CompteFinancierDTO> caisses = compteRepository.findByTypeAndActifTrue(TypeCompteFinancier.CAISSE_PHYSIQUE)
+        List<CompteFinancierDTO> caisses = (tenantId != null
+                ? compteRepository.findByPointDeVenteIdAndTypeAndActifTrue(tenantId, TypeCompteFinancier.CAISSE_PHYSIQUE)
+                : compteRepository.findByTypeAndActifTrue(TypeCompteFinancier.CAISSE_PHYSIQUE))
                 .stream().map(this::toDto).collect(Collectors.toList());
 
-        List<CompteFinancierDTO> banques = compteRepository.findByTypeAndActifTrue(TypeCompteFinancier.COMPTE_BANCAIRE)
+        List<CompteFinancierDTO> banques = (tenantId != null
+                ? compteRepository.findByPointDeVenteIdAndTypeAndActifTrue(tenantId, TypeCompteFinancier.COMPTE_BANCAIRE)
+                : compteRepository.findByTypeAndActifTrue(TypeCompteFinancier.COMPTE_BANCAIRE))
                 .stream().map(this::toDto).collect(Collectors.toList());
 
         SyntheseTresorerieDTO synthese = new SyntheseTresorerieDTO();
@@ -75,7 +84,11 @@ public class TresorerieAvanceeService {
 
     @Transactional(readOnly = true)
     public List<CompteFinancierDTO> getTousLesComptes() {
-        return compteRepository.findByActifTrue().stream()
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<CompteFinancier> list = tenantId != null
+                ? compteRepository.findByPointDeVenteIdAndActifTrue(tenantId)
+                : compteRepository.findByActifTrue();
+        return list.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
