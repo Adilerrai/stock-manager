@@ -19,6 +19,13 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     List<AuditLog> findByEntiteAndEntiteIdAndPointDeVenteIdOrderByDateActionDesc(
             String entite, Long entiteId, Long pointDeVenteId);
 
+    @Query("SELECT a FROM AuditLog a WHERE a.entite = :entite AND a.entiteId = :entiteId " +
+           "AND (:pointDeVenteId IS NULL OR a.pointDeVenteId = :pointDeVenteId) ORDER BY a.dateAction DESC")
+    List<AuditLog> findByEntiteAndEntiteIdAndOptionalPointDeVenteId(
+            @Param("entite") String entite,
+            @Param("entiteId") Long entiteId,
+            @Param("pointDeVenteId") Long pointDeVenteId);
+
     /** Historique par utilisateur */
     Page<AuditLog> findByUtilisateurAndPointDeVenteIdOrderByDateActionDesc(
             String utilisateur, Long pointDeVenteId, Pageable pageable);
@@ -27,19 +34,23 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
     Page<AuditLog> findByPointDeVenteIdAndDateActionBetweenOrderByDateActionDesc(
             Long pointDeVenteId, LocalDateTime dateDebut, LocalDateTime dateFin, Pageable pageable);
 
-    /** Les N dernières actions (dashboard) */
+    /** Les N dernières actions par point de vente (ou tous si pointDeVenteId est null) */
     Page<AuditLog> findByPointDeVenteIdOrderByDateActionDesc(Long pointDeVenteId, Pageable pageable);
 
-    /** Recherche multi-critères */
-    @Query("SELECT a FROM AuditLog a WHERE a.pointDeVenteId = :tenantId " +
+    @Query("SELECT a FROM AuditLog a WHERE (:pointDeVenteId IS NULL OR a.pointDeVenteId = :pointDeVenteId) ORDER BY a.dateAction DESC")
+    Page<AuditLog> findByPointDeVenteIdOrAllOrderByDateActionDesc(
+            @Param("pointDeVenteId") Long pointDeVenteId, Pageable pageable);
+
+    /** Recherche multi-critères filtrée par point de vente */
+    @Query("SELECT a FROM AuditLog a WHERE (:pointDeVenteId IS NULL OR a.pointDeVenteId = :pointDeVenteId) " +
            "AND (:entite IS NULL OR a.entite = :entite) " +
            "AND (:action IS NULL OR a.action = :action) " +
-           "AND (:utilisateur IS NULL OR a.utilisateur = :utilisateur) " +
+           "AND (:utilisateur IS NULL OR LOWER(a.utilisateur) LIKE LOWER(CONCAT('%', :utilisateur, '%'))) " +
            "AND (:dateDebut IS NULL OR a.dateAction >= :dateDebut) " +
            "AND (:dateFin IS NULL OR a.dateAction <= :dateFin) " +
            "ORDER BY a.dateAction DESC")
     Page<AuditLog> rechercher(
-            @Param("tenantId") Long tenantId,
+            @Param("pointDeVenteId") Long pointDeVenteId,
             @Param("entite") String entite,
             @Param("action") ActionAudit action,
             @Param("utilisateur") String utilisateur,

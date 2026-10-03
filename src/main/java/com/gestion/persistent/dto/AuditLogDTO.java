@@ -16,6 +16,8 @@ public class AuditLogDTO {
     private String description;
     private String utilisateur;
     private LocalDateTime dateAction;
+    private Long pointDeVenteId;
+    private String nomPointDeVente;
 
     public AuditLogDTO() {}
 
@@ -50,4 +52,10 @@ public class AuditLogDTO {
 
     public LocalDateTime getDateAction() { return dateAction; }
     public void setDateAction(LocalDateTime dateAction) { this.dateAction = dateAction; }
+
+    public Long getPointDeVenteId() { return pointDeVenteId; }
+    public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
+
+    public String getNomPointDeVente() { return nomPointDeVente; }
+    public void setNomPointDeVente(String nomPointDeVente) { this.nomPointDeVente = nomPointDeVente; }
 }
