@@ -5,6 +5,12 @@ import com.acommon.persistant.model.User;
 import com.acommon.persistant.model.PointDeVente;
 import com.acommon.repository.PointDeVenteRepository;
 import com.gestion.persistent.dto.AuditLogDTO;
+import com.gestion.persistent.dto.AuditStatsResponseDTO;
+import com.gestion.persistent.dto.CollaborateurAuditStatDTO;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ArrayList;
+
 import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.persistent.model.AuditLog;
 import com.gestion.repository.AuditLogRepository;
@@ -170,6 +176,94 @@ public class AuditService {
         return auditLogRepository.rechercher(pointDeVenteId, entite, action, utilisateur,
                 dateDebut, dateFin, pageable)
                 .map(this::toDto);
+    }
+
+
+    // =========================================================================
+    // STATISTIQUES ET ACTIVITÉS COLLABORATEURS PAR POINT DE VENTE
+    // =========================================================================
+
+    @Transactional(readOnly = true)
+    public AuditStatsResponseDTO getStatistiquesPointDeVente(Long pointDeVenteId, LocalDateTime dateDebut, LocalDateTime dateFin) {
+        AuditStatsResponseDTO stats = new AuditStatsResponseDTO();
+        stats.setPointDeVenteId(pointDeVenteId);
+        if (pointDeVenteId != null) {
+            stats.setNomPointDeVente(pdvNameCache.computeIfAbsent(pointDeVenteId, id -> {
+                try {
+                    return pointDeVenteRepository.findById(id)
+                            .map(PointDeVente::getNomPointDeVente)
+                            .orElse("Point de Vente #" + id);
+                } catch (Exception e) {
+                    return "Point de Vente #" + id;
+                }
+            }));
+        } else {
+            stats.setNomPointDeVente("Tous les Points de Vente");
+        }
+
+        Pageable unpaged = PageRequest.of(0, 2000);
+        Page<AuditLog> page = auditLogRepository.rechercher(pointDeVenteId, null, null, null, dateDebut, dateFin, unpaged);
+        List<AuditLog> logs = page.getContent();
+
+        stats.setTotalActions(page.getTotalElements());
+
+        Map<String, CollaborateurAuditStatDTO> collabMap = new HashMap<>();
+        Map<String, Long> entiteMap = new HashMap<>();
+
+        for (AuditLog l : logs) {
+            if (l.getEntite() != null) {
+                entiteMap.merge(l.getEntite(), 1L, Long::sum);
+            }
+
+            if (l.getAction() != null) {
+                switch (l.getAction()) {
+                    case CREATION -> stats.setTotalCreations(stats.getTotalCreations() + 1);
+                    case MODIFICATION -> stats.setTotalModifications(stats.getTotalModifications() + 1);
+                    case SUPPRESSION -> stats.setTotalSuppressions(stats.getTotalSuppressions() + 1);
+                    case VALIDATION -> stats.setTotalValidations(stats.getTotalValidations() + 1);
+                    case ANNULATION -> stats.setTotalAnnulations(stats.getTotalAnnulations() + 1);
+                    default -> {}
+                }
+            }
+
+            String user = l.getUtilisateur() != null ? l.getUtilisateur() : "Système";
+            CollaborateurAuditStatDTO cStat = collabMap.computeIfAbsent(user, CollaborateurAuditStatDTO::new);
+            cStat.setTotalActions(cStat.getTotalActions() + 1);
+
+            if (cStat.getDerniereDateAction() == null || (l.getDateAction() != null && l.getDateAction().isAfter(cStat.getDerniereDateAction()))) {
+                cStat.setDerniereDateAction(l.getDateAction());
+                cStat.setDerniereEntite(l.getEntite());
+            }
+
+            if (l.getAction() != null) {
+                switch (l.getAction()) {
+                    case CREATION -> cStat.setCreations(cStat.getCreations() + 1);
+                    case MODIFICATION -> cStat.setModifications(cStat.getModifications() + 1);
+                    case SUPPRESSION -> cStat.setSuppressions(cStat.getSuppressions() + 1);
+                    case VALIDATION -> cStat.setValidations(cStat.getValidations() + 1);
+                    case ANNULATION -> cStat.setAnnulations(cStat.getAnnulations() + 1);
+                    default -> {}
+                }
+            }
+        }
+
+        List<CollaborateurAuditStatDTO> collabList = new ArrayList<>(collabMap.values());
+        collabList.sort((a, b) -> Long.compare(b.getTotalActions(), a.getTotalActions()));
+        stats.setCollaborateurs(collabList);
+        stats.setRepartitionParEntite(entiteMap);
+
+        return stats;
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> getCollaborateursPointDeVente(Long pointDeVenteId) {
+        Pageable pageable = PageRequest.of(0, 500);
+        return auditLogRepository.findByPointDeVenteIdOrAllOrderByDateActionDesc(pointDeVenteId, pageable)
+                .getContent().stream()
+                .map(AuditLog::getUtilisateur)
+                .filter(u -> u != null && !u.isBlank())
+                .distinct()
+                .collect(Collectors.toList());
     }
 
     // =========================================================================

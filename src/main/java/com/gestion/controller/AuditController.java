@@ -2,6 +2,7 @@ package com.gestion.controller;
 
 import com.acommon.persistant.model.User;
 import com.gestion.persistent.dto.AuditLogDTO;
+import com.gestion.persistent.dto.AuditStatsResponseDTO;
 import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.service.AuditService;
 import org.springframework.data.domain.Page;
@@ -94,4 +95,27 @@ public class AuditController {
         Long effectivePdv = resolveEffectivePointDeVenteId(pointDeVenteId);
         return ResponseEntity.ok(auditService.rechercher(effectivePdv, entite, action, utilisateur, dateDebut, dateFin, page, size));
     }
+
+    /**
+     * Statistiques consolidées des activités collaborateurs par Point de Vente
+     */
+    @GetMapping("/statistiques")
+    public ResponseEntity<AuditStatsResponseDTO> getStatistiques(
+            @RequestParam(required = false) Long pointDeVenteId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dateFin) {
+        Long effectivePdv = resolveEffectivePointDeVenteId(pointDeVenteId);
+        return ResponseEntity.ok(auditService.getStatistiquesPointDeVente(effectivePdv, dateDebut, dateFin));
+    }
+
+    /**
+     * Liste des collaborateurs ayant une activité enregistrée sur ce Point de Vente
+     */
+    @GetMapping("/collaborateurs")
+    public ResponseEntity<List<String>> getCollaborateurs(
+            @RequestParam(required = false) Long pointDeVenteId) {
+        Long effectivePdv = resolveEffectivePointDeVenteId(pointDeVenteId);
+        return ResponseEntity.ok(auditService.getCollaborateursPointDeVente(effectivePdv));
+    }
+
 }

@@ -5,6 +5,7 @@ import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
 import com.gestion.mapper.VenteMapper;
+import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.persistent.dto.LigneVenteDTO;
 import com.gestion.persistent.dto.VenteDTO;
 import com.gestion.persistent.enums.StatutVente;
@@ -39,6 +40,7 @@ public class VenteService {
     private final StockService stockService;
     private final UserRepository userRepository;
     private final VenteMapper venteMapper;
+    private final AuditService auditService;
 
     public VenteService(VenteRepository venteRepository,
                         LigneVenteRepository ligneVenteRepository,
@@ -47,7 +49,9 @@ public class VenteService {
                         ClientRepository clientRepository,
                         StockService stockService,
                         UserRepository userRepository,
-                        VenteMapper venteMapper) {
+                        VenteMapper venteMapper,
+                        AuditService auditService) {
+        this.auditService = auditService;
         this.venteRepository = venteRepository;
         this.ligneVenteRepository = ligneVenteRepository;
         this.produitRepository = produitRepository;

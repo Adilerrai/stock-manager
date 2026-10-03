@@ -5,6 +5,7 @@ public enum ActionAudit {
     MODIFICATION,
     SUPPRESSION,
     VALIDATION,
+    ANNULATION,
     ANNULATION_LETTRAGE,
     LETTRAGE,
     CLOTURE,
