@@ -5,6 +5,10 @@ import com.gestion.persistent.dto.BonLivraisonClientDTO;
 import com.gestion.persistent.dto.BonLivraisonClientSearchCriteria;
 import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.service.BonLivraisonClientService;
+import com.gestion.service.LivraisonRetardService;
+import com.gestion.persistent.dto.LivraisonRetardDTO;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +24,16 @@ public class BonLivraisonClientController {
     private final BonLivraisonClientService bonLivraisonClientService;
     private final com.gestion.service.ImpressionService impressionService;
     private final BonLivraisonClientMapper bonLivraisonClientMapper;
+    private final LivraisonRetardService livraisonRetardService;
 
     public BonLivraisonClientController(BonLivraisonClientService bonLivraisonClientService,
                                         com.gestion.service.ImpressionService impressionService,
-                                        BonLivraisonClientMapper bonLivraisonClientMapper) {
+                                        BonLivraisonClientMapper bonLivraisonClientMapper,
+                                        LivraisonRetardService livraisonRetardService) {
         this.bonLivraisonClientService = bonLivraisonClientService;
         this.impressionService = impressionService;
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
+        this.livraisonRetardService = livraisonRetardService;
     }
 
     @PostMapping("/search")
@@ -79,4 +86,21 @@ public class BonLivraisonClientController {
     public ResponseEntity<List<BonLivraisonClientDTO>> getBonsLivraisonNonFactures(@RequestParam(required = false) Long clientId) {
         return ResponseEntity.ok(bonLivraisonClientService.getBonsLivraisonNonFactures(clientId));
     }
+
+    @GetMapping("/retards")
+    public ResponseEntity<List<LivraisonRetardDTO>> getRetardsClients(
+            @RequestParam(value = "pointDeVenteId", required = false) Long pointDeVenteId) {
+        return ResponseEntity.ok(livraisonRetardService.getRetardsClients(pointDeVenteId));
+    }
+
+    @GetMapping("/retards/export-excel")
+    public ResponseEntity<byte[]> exporterExcelRetardsClients(
+            @RequestParam(value = "pointDeVenteId", required = false) Long pointDeVenteId) {
+        byte[] bytes = livraisonRetardService.genererExcelRetardsClients(pointDeVenteId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Livraisons_Clients_En_Retard.xlsx")
+                .body(bytes);
+    }
+
 }

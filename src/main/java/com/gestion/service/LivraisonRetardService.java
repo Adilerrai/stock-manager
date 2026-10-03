@@ -325,7 +325,7 @@ public class LivraisonRetardService {
             // Cellule Montant
             CellStyle amountStyle = wb.createCellStyle();
             amountStyle.cloneStyleFrom(cellStyle);
-            amountStyle.setDataFormat(createHelper.createDataFormat().getFormat("#,##0.00 "MAD""));
+            amountStyle.setDataFormat(createHelper.createDataFormat().getFormat("#,##0.00 \"MAD\""));
             amountStyle.setAlignment(HorizontalAlignment.RIGHT);
 
             // Cellule Retard Critique (> 7j)
@@ -363,7 +363,7 @@ public class LivraisonRetardService {
 
             CellStyle totalAmountStyle = wb.createCellStyle();
             totalAmountStyle.cloneStyleFrom(totalStyle);
-            totalAmountStyle.setDataFormat(createHelper.createDataFormat().getFormat("#,##0.00 "MAD""));
+            totalAmountStyle.setDataFormat(createHelper.createDataFormat().getFormat("#,##0.00 \"MAD\""));
             totalAmountStyle.setAlignment(HorizontalAlignment.RIGHT);
 
             // --- ÉCRITURE DES LIGNES ---

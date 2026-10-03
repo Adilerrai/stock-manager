@@ -4,6 +4,10 @@ import com.gestion.persistent.dto.LivraisonDTO;
 import com.gestion.persistent.dto.LivraisonSearchCriteria;
 import com.gestion.persistent.model.Livraison;
 import com.gestion.service.LivraisonService;
+import com.gestion.service.LivraisonRetardService;
+import com.gestion.persistent.dto.LivraisonRetardDTO;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import com.gestion.mapper.LivraisonMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +27,12 @@ public class LivraisonController {
 
     private final LivraisonService livraisonService;
     private final LivraisonMapper livraisonMapper;
+    private final LivraisonRetardService livraisonRetardService;
 
-    public LivraisonController(LivraisonService livraisonService, LivraisonMapper livraisonMapper) {
+    public LivraisonController(LivraisonService livraisonService, LivraisonMapper livraisonMapper, LivraisonRetardService livraisonRetardService) {
         this.livraisonService = livraisonService;
         this.livraisonMapper = livraisonMapper;
+        this.livraisonRetardService = livraisonRetardService;
     }
 
     @PostMapping("/add")
@@ -98,5 +104,21 @@ public class LivraisonController {
         Livraison livraison = livraisonService.getLivraisonWithDetails(id);
         return ResponseEntity.ok(livraisonMapper.toDto(livraison));
     }
-}
 
+    @GetMapping("/retards")
+    public ResponseEntity<List<LivraisonRetardDTO>> getRetardsFournisseurs(
+            @RequestParam(value = "pointDeVenteId", required = false) Long pointDeVenteId) {
+        return ResponseEntity.ok(livraisonRetardService.getRetardsFournisseurs(pointDeVenteId));
+    }
+
+    @GetMapping("/retards/export-excel")
+    public ResponseEntity<byte[]> exporterExcelRetardsFournisseurs(
+            @RequestParam(value = "pointDeVenteId", required = false) Long pointDeVenteId) {
+        byte[] bytes = livraisonRetardService.genererExcelRetardsFournisseurs(pointDeVenteId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Livraisons_Fournisseurs_En_Retard.xlsx")
+                .body(bytes);
+    }
+
+}

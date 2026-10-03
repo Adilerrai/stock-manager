@@ -188,6 +188,11 @@ public class LivraisonService {
         // Mettre à jour le statut de la commande si elle existe
         if (livraison.getCommande() != null) {
             mettreAJourStatutLivraisonCommande(livraison.getCommande());
+            if (livraison.getCommande().getStatutLivraison() == StatutLivraison.PARTIELLE) {
+                livraison.setStatut(StatutLivraison.PARTIELLE);
+            } else {
+                livraison.setStatut(StatutLivraison.LIVREE);
+            }
         }
 
         return livraisonRepository.save(livraison);

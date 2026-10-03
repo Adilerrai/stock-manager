@@ -286,8 +286,10 @@ public class BonLivraisonClientService {
                 }
 
                 if (toutLivre) {
+                    bl.setStatut(StatutLivraison.LIVREE);
                     commande.setStatut(StatutCommandeClient.LIVREE);
                 } else if (auMoinsUneLivraison) {
+                    bl.setStatut(StatutLivraison.PARTIELLE);
                     commande.setStatut(StatutCommandeClient.LIVREE_PARTIELLE);
                 }
             } else {
