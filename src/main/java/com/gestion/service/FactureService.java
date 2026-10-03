@@ -12,6 +12,7 @@ import com.gestion.persistent.dto.FacturationBLRequest;
 import com.gestion.persistent.dto.FactureDTO;
 import com.gestion.persistent.dto.FactureSearchCriteria;
 import com.gestion.persistent.enums.StatutFacture;
+import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.BonLivraisonClientRepository;
 import com.gestion.repository.ClientRepository;
@@ -42,6 +43,7 @@ public class FactureService {
     private final BonLivraisonClientMapper bonLivraisonClientMapper;
     private final ComptabiliteService comptabiliteService;
     private final CodificationService codificationService;
+    private final AuditService auditService;
 
     public FactureService(FactureRepository factureRepository,
                           LigneFactureRepository ligneFactureRepository,
@@ -51,7 +53,8 @@ public class FactureService {
                           FactureMapper factureMapper,
                           BonLivraisonClientMapper bonLivraisonClientMapper,
                           @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService,
-                          CodificationService codificationService) {
+                          CodificationService codificationService,
+                          AuditService auditService) {
         this.factureRepository = factureRepository;
         this.ligneFactureRepository = ligneFactureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -61,6 +64,7 @@ public class FactureService {
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
         this.comptabiliteService = comptabiliteService;
         this.codificationService = codificationService;
+        this.auditService = auditService;
     }
 
     public Page<Facture> searchFactures(FactureSearchCriteria criteria, Pageable pageable) {

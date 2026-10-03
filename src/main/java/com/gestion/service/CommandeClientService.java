@@ -9,6 +9,7 @@ import com.gestion.persistent.dto.CommandeClientDTO;
 import com.gestion.persistent.dto.CommandeClientSearchCriteria;
 import com.gestion.persistent.dto.LigneCommandeClientDTO;
 import com.gestion.persistent.enums.StatutCommandeClient;
+import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.persistent.model.CommandeClient;
@@ -43,6 +44,7 @@ public class CommandeClientService {
     private final BonLivraisonClientRepository bonLivraisonClientRepository;
     private final CodificationService codificationService;
     private final StockService stockService;
+    private final AuditService auditService;
 
     public CommandeClientService(CommandeClientRepository commandeClientRepository,
                                 LigneCommandeClientRepository ligneCommandeClientRepository,
@@ -51,7 +53,8 @@ public class CommandeClientService {
                                 CommandeClientMapper commandeClientMapper,
                                 BonLivraisonClientRepository bonLivraisonClientRepository,
                                 CodificationService codificationService,
-                                StockService stockService) {
+                                StockService stockService,
+                                AuditService auditService) {
         this.commandeClientRepository = commandeClientRepository;
         this.ligneCommandeClientRepository = ligneCommandeClientRepository;
         this.produitRepository = produitRepository;
@@ -60,6 +63,7 @@ public class CommandeClientService {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.codificationService = codificationService;
         this.stockService = stockService;
+        this.auditService = auditService;
     }
 
     private Long getTenantId() {

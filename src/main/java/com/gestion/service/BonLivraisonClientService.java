@@ -7,6 +7,7 @@ import com.gestion.mapper.BonLivraisonClientMapper;
 import com.gestion.persistent.dto.BonLivraisonClientDTO;
 import com.gestion.persistent.dto.BonLivraisonClientSearchCriteria;
 import com.gestion.persistent.enums.StatutLivraison;
+import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.TypeMouvement;
 import com.gestion.persistent.enums.QualiteProduit;
@@ -45,6 +46,7 @@ public class BonLivraisonClientService {
     private final BonLivraisonClientMapper bonLivraisonClientMapper;
     private final CodificationService codificationService;
     private final com.gestion.repository.StockRepository stockRepository;
+    private final AuditService auditService;
 
     public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
                                      ClientRepository clientRepository,
@@ -54,7 +56,8 @@ public class BonLivraisonClientService {
                                      MouvementStockService mouvementStockService,
                                      BonLivraisonClientMapper bonLivraisonClientMapper,
                                      CodificationService codificationService,
-                                     com.gestion.repository.StockRepository stockRepository) {
+                                     com.gestion.repository.StockRepository stockRepository,
+                                     AuditService auditService) {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.clientRepository = clientRepository;
         this.commandeClientRepository = commandeClientRepository;
@@ -64,6 +67,7 @@ public class BonLivraisonClientService {
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
         this.codificationService = codificationService;
         this.stockRepository = stockRepository;
+        this.auditService = auditService;
     }
 
     public Page<BonLivraisonClient> searchBonsLivraison(BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
