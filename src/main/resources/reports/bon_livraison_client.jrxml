@@ -38,6 +38,7 @@
     <parameter name="clientNom" class="java.lang.String"/>
     <parameter name="clientTelephone" class="java.lang.String"/>
     <parameter name="clientAdresse" class="java.lang.String"/>
+    <parameter name="clientIce" class="java.lang.String"/>
 
     <!-- Totaux -->
     <parameter name="montantTotal" class="java.math.BigDecimal"/>
@@ -193,9 +194,9 @@
                 <textFieldExpression><![CDATA[$P{clientAdresse} != null ? $P{clientAdresse} : ""]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="299" y="117" width="245" height="13" forecolor="#475569"/>
-                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8"/></textElement>
-                <textFieldExpression><![CDATA["Téléphone: " + ($P{clientTelephone} != null ? $P{clientTelephone} : "-")]]></textFieldExpression>
+                <reportElement x="299" y="117" width="245" height="13" forecolor="#0284C7"/>
+                <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[($P{clientIce} != null && !$P{clientIce}.trim().isEmpty() ? "ICE : " + $P{clientIce} : "") + ($P{clientTelephone} != null && !$P{clientTelephone}.trim().isEmpty() && !$P{clientTelephone}.equals("-") ? ($P{clientIce} != null && !$P{clientIce}.trim().isEmpty() ? "   -   " : "") + "Tél : " + $P{clientTelephone} : "")]]></textFieldExpression>
             </textField>
         </band>
     </title>

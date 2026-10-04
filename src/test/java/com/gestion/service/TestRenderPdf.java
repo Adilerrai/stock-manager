@@ -102,8 +102,9 @@ public class TestRenderPdf {
             params.put("numeroCommande", "CC-2026-004");
             params.put("dateCommande", "04/10/2026 00:00");
             params.put("clientNom", "STE MASS CEREALES");
-            params.put("clientAdresse", "PORT CASABLANCA");
-            params.put("clientTelephone", "05 22 20 30 40");
+            params.put("clientAdresse", "20, Rue Mostafa el Maani, CASABLANCA");
+            params.put("clientTelephone", "");
+            params.put("clientIce", "00152677600001");
             params.put("montantTotal", new BigDecimal("15237.48"));
             params.put("acompteVerse", BigDecimal.ZERO);
             params.put("soldeRestant", new BigDecimal("15237.48"));
@@ -123,8 +124,9 @@ public class TestRenderPdf {
             params.put("commandeReference", "CC-2026-004");
             params.put("depotNom", "Dépôt Principal");
             params.put("clientNom", "STE MASS CEREALES");
-            params.put("clientAdresse", "PORT CASABLANCA");
-            params.put("clientTelephone", "05 22 20 30 40");
+            params.put("clientAdresse", "20, Rue Mostafa el Maani, CASABLANCA");
+            params.put("clientTelephone", "");
+            params.put("clientIce", "00152677600001");
             params.put("montantTotal", new BigDecimal("15237.48"));
 
             JasperPrint jp = JasperFillManager.fillReport(jr, params, new JRBeanCollectionDataSource(data));
@@ -143,9 +145,9 @@ public class TestRenderPdf {
             params.put("modePaiement", "Virement Bancaire (30 jours)");
             params.put("bonLivraisonNumeros", "BL-2026-004");
             params.put("clientNom", "STE MASS CEREALES");
-            params.put("clientAdresse", "PORT CASABLANCA");
-            params.put("clientTelephone", "05 22 20 30 40");
-            params.put("clientIce", "001827461000039");
+            params.put("clientAdresse", "20, Rue Mostafa el Maani, CASABLANCA");
+            params.put("clientTelephone", "");
+            params.put("clientIce", "00152677600001");
             params.put("montantHT", new BigDecimal("15237.48"));
             params.put("montantTVA", new BigDecimal("3047.50"));
             params.put("montantTTC", new BigDecimal("18284.98"));

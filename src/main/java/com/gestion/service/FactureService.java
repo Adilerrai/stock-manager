@@ -18,6 +18,7 @@ import com.gestion.repository.BonLivraisonClientRepository;
 import com.gestion.repository.ClientRepository;
 import com.gestion.repository.FactureRepository;
 import com.gestion.repository.LigneFactureRepository;
+import com.gestion.repository.ProduitRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -39,6 +40,7 @@ public class FactureService {
     private final BonLivraisonClientRepository bonLivraisonClientRepository;
     private final ClientRepository clientRepository;
     private final UserRepository userRepository;
+    private final ProduitRepository produitRepository;
     private final FactureMapper factureMapper;
     private final BonLivraisonClientMapper bonLivraisonClientMapper;
     private final ComptabiliteService comptabiliteService;
@@ -50,6 +52,7 @@ public class FactureService {
                           BonLivraisonClientRepository bonLivraisonClientRepository,
                           ClientRepository clientRepository,
                           UserRepository userRepository,
+                          ProduitRepository produitRepository,
                           FactureMapper factureMapper,
                           BonLivraisonClientMapper bonLivraisonClientMapper,
                           @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService,
@@ -60,6 +63,7 @@ public class FactureService {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.clientRepository = clientRepository;
         this.userRepository = userRepository;
+        this.produitRepository = produitRepository;
         this.factureMapper = factureMapper;
         this.bonLivraisonClientMapper = bonLivraisonClientMapper;
         this.comptabiliteService = comptabiliteService;
@@ -329,6 +333,96 @@ public class FactureService {
         facture.calculerMontants();
 
         return factureMapper.toDto(factureRepository.save(facture));
+    }
+
+    public FactureDTO modifierFacture(Long factureId, FactureDTO dto) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) tenantId = 1L;
+
+        Facture facture = factureRepository.findByIdAndPointDeVenteId(factureId, tenantId)
+                .orElseThrow(() -> new CommonException("Facture non trouvée avec l'id: " + factureId, HttpStatus.NOT_FOUND));
+
+        if (Boolean.TRUE.equals(facture.getAnnulee()) || facture.getStatut() == StatutFacture.ANNULEE) {
+            throw new CommonException("Impossible de modifier une facture annulée.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Client
+        if (dto.getClientId() != null && (facture.getClient() == null || !dto.getClientId().equals(facture.getClient().getId()))) {
+            Client client = clientRepository.findById(dto.getClientId())
+                    .orElseThrow(() -> new CommonException("Client non trouvé avec l'id: " + dto.getClientId(), HttpStatus.NOT_FOUND));
+            facture.setClient(client);
+        }
+
+        // Dates
+        if (dto.getDateFacture() != null) {
+            facture.setDateFacture(dto.getDateFacture());
+        }
+        if (dto.getDateEcheance() != null) {
+            facture.setDateEcheance(dto.getDateEcheance());
+        }
+
+        // Notes & Conditions
+        if (dto.getNotes() != null) {
+            facture.setNotes(dto.getNotes());
+        }
+        if (dto.getConditionsReglement() != null) {
+            facture.setConditionsPaiement(dto.getConditionsReglement());
+        }
+
+        // Remise globale
+        if (dto.getRemiseGlobale() != null) {
+            facture.setRemiseGlobale(dto.getRemiseGlobale());
+        }
+
+        // Lignes
+        if (dto.getLignes() != null && !dto.getLignes().isEmpty()) {
+            facture.getLignes().clear();
+            for (com.gestion.persistent.dto.LigneFactureDTO ld : dto.getLignes()) {
+                LigneFacture lf = new LigneFacture();
+                lf.setFacture(facture);
+                if (ld.getProduitId() != null) {
+                    Produit p = produitRepository.findById(ld.getProduitId()).orElse(null);
+                    lf.setProduit(p);
+                    lf.setDesignation(ld.getDesignation() != null && !ld.getDesignation().isBlank()
+                            ? ld.getDesignation()
+                            : (p != null ? p.getNom() : "Article"));
+                    lf.setReference(ld.getReference() != null && !ld.getReference().isBlank()
+                            ? ld.getReference()
+                            : (p != null ? p.getReference() : ""));
+                } else {
+                    lf.setDesignation(ld.getDesignation() != null ? ld.getDesignation() : "Article");
+                    lf.setReference(ld.getReference() != null ? ld.getReference() : "");
+                }
+                lf.setQuantite(ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ONE);
+                lf.setSurfaceM2(ld.getSurfaceM2() != null ? ld.getSurfaceM2() : lf.getQuantite());
+                BigDecimal pu = ld.getPrixUnitaireHT();
+                lf.setPrixUnitaireHT(pu != null ? pu : BigDecimal.ZERO);
+                lf.setTauxTVA(ld.getTauxTVA() != null ? ld.getTauxTVA() : new BigDecimal("20.00"));
+                lf.setRemisePourcentage(ld.getRemisePourcentage() != null ? ld.getRemisePourcentage() : BigDecimal.ZERO);
+                lf.calculerMontants();
+                facture.addLigne(lf);
+            }
+            facture.calculerMontants();
+        } else {
+            facture.calculerMontants();
+        }
+
+        // Recalcul du montant restant
+        BigDecimal paye = facture.getMontantPaye() != null ? facture.getMontantPaye() : BigDecimal.ZERO;
+        BigDecimal finalAmt = facture.getMontantFinal() != null ? facture.getMontantFinal() : BigDecimal.ZERO;
+        BigDecimal restant = finalAmt.subtract(paye);
+        facture.setMontantRestant(restant.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : restant);
+
+        if (paye.compareTo(BigDecimal.ZERO) > 0) {
+            if (paye.compareTo(finalAmt) >= 0) {
+                facture.setStatut(StatutFacture.PAYEE_TOTALEMENT);
+            } else {
+                facture.setStatut(StatutFacture.PAYEE_PARTIELLEMENT);
+            }
+        }
+
+        Facture saved = factureRepository.save(facture);
+        return factureMapper.toDto(saved);
     }
 
     private String genererNumeroFacture() {

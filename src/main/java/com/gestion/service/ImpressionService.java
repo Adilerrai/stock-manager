@@ -137,6 +137,7 @@ public class ImpressionService {
                     c.getAdresse() != null ? c.getAdresse() + " " + (c.getVille() != null ? c.getVille() : "") : "");
             params.put("clientNif", c.getNumeroIdentificationFiscale());
             params.put("clientRc", c.getNumeroRegistreCommerce());
+            params.put("clientIce", c.getIce());
         }
 
         // Totaux
@@ -189,6 +190,7 @@ public class ImpressionService {
             params.put("clientTelephone", c.getTelephone());
             params.put("clientAdresse",
                     c.getAdresse() != null ? c.getAdresse() + " " + (c.getVille() != null ? c.getVille() : "") : "");
+            params.put("clientIce", c.getIce());
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();
@@ -234,6 +236,7 @@ public class ImpressionService {
             params.put("clientNom", c.getNomComplet());
             params.put("clientTelephone", c.getTelephone());
             params.put("clientAdresse", c.getAdresse());
+            params.put("clientIce", c.getIce());
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();
@@ -279,7 +282,9 @@ public class ImpressionService {
             Client c = commande.getClient();
             params.put("clientNom", c.getNomComplet());
             params.put("clientTelephone", c.getTelephone());
-            params.put("clientAdresse", c.getAdresse());
+            params.put("clientAdresse",
+                    c.getAdresse() != null ? c.getAdresse() + " " + (c.getVille() != null ? c.getVille() : "") : "");
+            params.put("clientIce", c.getIce());
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();

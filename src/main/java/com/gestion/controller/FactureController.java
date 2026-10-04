@@ -87,6 +87,12 @@ public class FactureController {
         return ResponseEntity.ok(facture);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<FactureDTO> modifierFacture(@PathVariable Long id, @RequestBody FactureDTO factureDTO) {
+        FactureDTO updated = factureService.modifierFacture(id, factureDTO);
+        return ResponseEntity.ok(updated);
+    }
+
     @GetMapping
     public ResponseEntity<List<FactureDTO>> getAllFactures() {
         List<FactureDTO> factures = factureService.getAllFactures();
