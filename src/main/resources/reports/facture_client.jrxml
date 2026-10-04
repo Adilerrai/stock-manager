@@ -338,12 +338,12 @@
                 <textFieldExpression><![CDATA[$P{ribEntreprise} != null && !$P{ribEntreprise}.trim().isEmpty() ? "RIB : " + $P{ribEntreprise} : ""]]></textFieldExpression>
             </textField>
             <textField isStretchWithOverflow="true" isBlankWhenNull="true">
-                <reportElement x="10" y="55" width="250" height="24" isRemoveLineWhenBlank="true" forecolor="#0F172A"/>
+                <reportElement positionType="Float" x="10" y="54" width="250" height="26" isRemoveLineWhenBlank="true" forecolor="#0F172A"/>
                 <textElement verticalAlignment="Top"><font fontName="SansSerif" size="7" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() ? "ARRÊTÉE LA PRÉSENTE FACTURE À LA SOMME DE :\n" + $P{montantEnLettres}.toUpperCase() : ""]]></textFieldExpression>
             </textField>
-            <textField isBlankWhenNull="true">
-                <reportElement x="10" y="80" width="250" height="18" forecolor="#64748B"/>
+            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
+                <reportElement positionType="Float" x="10" y="81" width="250" height="16" forecolor="#64748B"/>
                 <textElement><font fontName="SansSerif" size="7" isItalic="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{notes} != null && !$P{notes}.trim().isEmpty() ? "Notes : " + $P{notes} : ""]]></textFieldExpression>
             </textField>
