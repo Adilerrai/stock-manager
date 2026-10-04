@@ -116,34 +116,138 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex, HttpServletRequest request) {
         log.warn("Violation d'intégrité de données sur [{}]: {}", request.getRequestURI(), ex.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setStatus(HttpStatus.CONFLICT.value());
-        errorResponse.setError(HttpStatus.CONFLICT.getReasonPhrase());
+        return buildDatabaseErrorResponse(ex, request);
+    }
 
-        String message = "Un enregistrement avec cette valeur unique existe déjà (doublon détecté).";
-        String rootMsg = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
-        if (rootMsg != null) {
-            if (rootMsg.contains("uk_produits_tenant_reference") || rootMsg.contains("uk_rj4mr27ga20ughn6qq6ev2uh0") || rootMsg.toLowerCase().contains("key (reference)")) {
-                message = "La référence de ce produit existe déjà pour cette société. Veuillez saisir une référence différente ou ajuster la codification automatique.";
-            }
+    @ExceptionHandler(java.sql.SQLException.class)
+    public ResponseEntity<ErrorResponse> handleSQLException(java.sql.SQLException ex, HttpServletRequest request) {
+        log.error("Erreur SQL interceptée sur [{}]: {}", request.getRequestURI(), ex.getMessage(), ex);
+        return buildDatabaseErrorResponse(ex, request);
+    }
+
+    @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
+    public ResponseEntity<ErrorResponse> handleTransactionSystemException(org.springframework.transaction.TransactionSystemException ex, HttpServletRequest request) {
+        log.error("Erreur de transaction sur [{}]: {}", request.getRequestURI(), ex.getMessage(), ex);
+        Throwable root = getRootCause(ex);
+        if (root instanceof org.springframework.dao.DataIntegrityViolationException || root instanceof java.sql.SQLException || isSqlRelated(root != null ? root.getMessage() : null)) {
+            return buildDatabaseErrorResponse(root != null ? root : ex, request);
         }
-
-        errorResponse.setMessage(message);
-        errorResponse.setErrorCode("DUPLICATE_KEY");
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        errorResponse.setError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        errorResponse.setMessage("Une erreur est survenue lors de l'enregistrement de l'opération.");
+        errorResponse.setErrorCode("TRANSACTION_ERROR");
         errorResponse.setPath(request.getRequestURI());
-        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request) {
-        log.error("Erreur serveur inattendue sur [{}] : {}", request.getRequestURI(), ex.getMessage());
+        log.error("Erreur serveur inattendue sur [{}] : {}", request.getRequestURI(), ex.getMessage(), ex);
+
+        Throwable root = getRootCause(ex);
+        String raw = (root != null && root.getMessage() != null) ? root.getMessage() : (ex.getMessage() != null ? ex.getMessage() : "");
+
+        if (isSqlRelated(raw)) {
+            return buildDatabaseErrorResponse(root != null ? root : ex, request);
+        }
+
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         errorResponse.setError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
-        errorResponse.setMessage(ex.getMessage() != null && !ex.getMessage().isBlank() ? ex.getMessage() : "Une erreur inattendue s'est produite");
+
+        // Masquage absolu de tout détail technique interne ou SQL vers le front
+        String cleanMessage = "Une erreur inattendue s'est produite lors du traitement.";
+        if (ex.getMessage() != null && !ex.getMessage().isBlank() && !isInternalTechnicalMessage(ex.getMessage())) {
+            cleanMessage = ex.getMessage();
+        }
+
+        errorResponse.setMessage(cleanMessage);
         errorResponse.setErrorCode("INTERNAL_ERROR");
         errorResponse.setPath(request.getRequestURI());
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private ResponseEntity<ErrorResponse> buildDatabaseErrorResponse(Throwable ex, HttpServletRequest request) {
+        Throwable root = getRootCause(ex);
+        String raw = (root != null && root.getMessage() != null) ? root.getMessage().toLowerCase() : (ex.getMessage() != null ? ex.getMessage().toLowerCase() : "");
+
+        String userFriendlyMessage;
+        String errorCode;
+        HttpStatus status = HttpStatus.CONFLICT;
+
+        if (raw.contains("uk_produits_tenant_reference") || raw.contains("uk_rj4mr27ga20ughn6qq6ev2uh0") || (raw.contains("reference") && raw.contains("duplicate key"))) {
+            userFriendlyMessage = "Cette référence produit est déjà attribuée pour cette société. Veuillez saisir une référence unique ou laisser le champ vide.";
+            errorCode = "DUPLICATE_PRODUCT_REFERENCE";
+        } else if (raw.contains("uk_factures_tenant_numero") || (raw.contains("numero_facture") && raw.contains("duplicate key"))) {
+            userFriendlyMessage = "Ce numéro de facture existe déjà pour cette société.";
+            errorCode = "DUPLICATE_FACTURE_NUMBER";
+        } else if (raw.contains("uk_commandes_tenant_numero") || raw.contains("uk_commandes_client_tenant_numero") || (raw.contains("numero_commande") && raw.contains("duplicate key"))) {
+            userFriendlyMessage = "Ce numéro de commande existe déjà pour cette société.";
+            errorCode = "DUPLICATE_COMMANDE_NUMBER";
+        } else if (raw.contains("uk_livraisons_tenant_numero") || raw.contains("uk_bl_client_tenant_numero") || (raw.contains("numero_bl") && raw.contains("duplicate key"))) {
+            userFriendlyMessage = "Ce numéro de bon de livraison existe déjà pour cette société.";
+            errorCode = "DUPLICATE_LIVRAISON_NUMBER";
+        } else if (raw.contains("uk_devis_tenant_numero") || (raw.contains("numero_devis") && raw.contains("duplicate key"))) {
+            userFriendlyMessage = "Ce numéro de devis existe déjà pour cette société.";
+            errorCode = "DUPLICATE_DEVIS_NUMBER";
+        } else if (raw.contains("code_barre") && raw.contains("duplicate key")) {
+            userFriendlyMessage = "Ce code-barres est déjà utilisé pour un autre article.";
+            errorCode = "DUPLICATE_BARCODE";
+        } else if (raw.contains("duplicate key") || raw.contains("unique constraint") || raw.contains("déjà") || raw.contains("unique")) {
+            userFriendlyMessage = "Un enregistrement avec ces informations existe déjà (doublon détecté).";
+            errorCode = "DUPLICATE_ENTRY";
+        } else if (raw.contains("foreign key") || raw.contains("violates foreign key") || raw.contains("still referenced") || raw.contains("is referenced from")) {
+            userFriendlyMessage = "Impossible d'effectuer cette opération car cet élément est lié à d'autres données (ex. commandes, factures, mouvements).";
+            errorCode = "FOREIGN_KEY_VIOLATION";
+            status = HttpStatus.BAD_REQUEST;
+        } else if (raw.contains("not-null") || raw.contains("null value in column")) {
+            userFriendlyMessage = "Un champ obligatoire n'a pas été renseigné.";
+            errorCode = "REQUIRED_FIELD_MISSING";
+            status = HttpStatus.BAD_REQUEST;
+        } else if (raw.contains("check constraint") || raw.contains("violates check")) {
+            userFriendlyMessage = "Une des valeurs saisies ne respecte pas les règles requises.";
+            errorCode = "CHECK_CONSTRAINT_VIOLATION";
+            status = HttpStatus.BAD_REQUEST;
+        } else {
+            userFriendlyMessage = "Une erreur est survenue lors de l'enregistrement en base de données.";
+            errorCode = "DATABASE_OPERATION_FAILED";
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(status.value());
+        errorResponse.setError(status.getReasonPhrase());
+        errorResponse.setMessage(userFriendlyMessage);
+        errorResponse.setErrorCode(errorCode);
+        errorResponse.setPath(request.getRequestURI());
+        return new ResponseEntity<>(errorResponse, status);
+    }
+
+    private Throwable getRootCause(Throwable throwable) {
+        if (throwable == null) return null;
+        Throwable root = throwable;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        return root;
+    }
+
+    private boolean isSqlRelated(String msg) {
+        if (msg == null) return false;
+        String m = msg.toLowerCase();
+        return m.contains("sql") || m.contains("statement") || m.contains("duplicate key")
+                || m.contains("constraint") || m.contains("table") || m.contains("column")
+                || m.contains("hibernate") || m.contains("psqlexception") || m.contains("violates")
+                || m.contains("insert into") || m.contains("update ") || m.contains("delete from")
+                || m.contains("select ") || m.contains("relation ");
+    }
+
+    private boolean isInternalTechnicalMessage(String msg) {
+        if (msg == null) return false;
+        String m = msg.toLowerCase();
+        return isSqlRelated(msg) || m.contains("exception") || m.contains("nullpointer")
+                || m.contains("stacktrace") || m.contains("class") || m.contains(".java");
     }
 
     @Override
