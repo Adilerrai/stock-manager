@@ -37,5 +37,9 @@ public interface ProduitRepository extends JpaRepository<Produit, Long>, Produit
     long countByPointDeVenteId(Long pointDeVenteId);
 
     List<Produit> findByPointDeVenteId(Long pointDeVenteId);
+
+    Optional<Produit> findByReferenceAndPointDeVenteId(String reference, Long pointDeVenteId);
+
+    Optional<Produit> findFirstByReference(String reference);
 }
 

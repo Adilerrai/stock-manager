@@ -17,7 +17,7 @@ public class LigneFacture {
     private Facture facture;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "produit_id", nullable = false)
+    @JoinColumn(name = "produit_id")
     private Produit produit;
 
     private String designation;

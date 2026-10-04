@@ -48,16 +48,16 @@ public class FactureService {
     private final AuditService auditService;
 
     public FactureService(FactureRepository factureRepository,
-                          LigneFactureRepository ligneFactureRepository,
-                          BonLivraisonClientRepository bonLivraisonClientRepository,
-                          ClientRepository clientRepository,
-                          UserRepository userRepository,
-                          ProduitRepository produitRepository,
-                          FactureMapper factureMapper,
-                          BonLivraisonClientMapper bonLivraisonClientMapper,
-                          @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService,
-                          CodificationService codificationService,
-                          AuditService auditService) {
+            LigneFactureRepository ligneFactureRepository,
+            BonLivraisonClientRepository bonLivraisonClientRepository,
+            ClientRepository clientRepository,
+            UserRepository userRepository,
+            ProduitRepository produitRepository,
+            FactureMapper factureMapper,
+            BonLivraisonClientMapper bonLivraisonClientMapper,
+            @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService,
+            CodificationService codificationService,
+            AuditService auditService) {
         this.factureRepository = factureRepository;
         this.ligneFactureRepository = ligneFactureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -76,7 +76,8 @@ public class FactureService {
     }
 
     /**
-     * Crée une facture en regroupant un ou plusieurs Bons de Livraison (BLs) choisis manuellement.
+     * Crée une facture en regroupant un ou plusieurs Bons de Livraison (BLs)
+     * choisis manuellement.
      * Les BLs sont associés à la facture et ne pourront plus être refacturés.
      */
     public FactureDTO creerFactureDepuisBonsLivraison(FacturationBLRequest request) {
@@ -84,11 +85,13 @@ public class FactureService {
             throw new IllegalArgumentException("Le clientId est obligatoire");
         }
         if (request.getBonLivraisonIds() == null || request.getBonLivraisonIds().isEmpty()) {
-            throw new IllegalArgumentException("Au moins un bon de livraison doit être sélectionné pour la facturation");
+            throw new IllegalArgumentException(
+                    "Au moins un bon de livraison doit être sélectionné pour la facturation");
         }
 
         Long tenantId = TenantContext.getCurrentTenant();
-        if (tenantId == null) tenantId = 1L;
+        if (tenantId == null)
+            tenantId = 1L;
 
         Client client = clientRepository.findById(request.getClientId())
                 .orElseThrow(() -> new RuntimeException("Client non trouvé avec l'id: " + request.getClientId()));
@@ -127,15 +130,18 @@ public class FactureService {
                     .orElseThrow(() -> new RuntimeException("Bon de livraison non trouvé avec l'id: " + blId));
 
             if (bl.getFacture() != null) {
-                throw new IllegalStateException("Le bon de livraison " + bl.getNumeroBl() + " est déjà rattaché à la facture " + bl.getFacture().getNumeroFacture());
+                throw new IllegalStateException("Le bon de livraison " + bl.getNumeroBl()
+                        + " est déjà rattaché à la facture " + bl.getFacture().getNumeroFacture());
             }
 
             if (bl.getStatut() != com.gestion.persistent.enums.StatutLivraison.LIVREE) {
-                throw new IllegalStateException("Le bon de livraison " + bl.getNumeroBl() + " n'a pas le statut Livrée (seuls les BL livrés peuvent être facturés)");
+                throw new IllegalStateException("Le bon de livraison " + bl.getNumeroBl()
+                        + " n'a pas le statut Livrée (seuls les BL livrés peuvent être facturés)");
             }
 
             if (!bl.getClient().getId().equals(client.getId())) {
-                throw new IllegalArgumentException("Le bon de livraison " + bl.getNumeroBl() + " n'appartient pas au client " + client.getNomComplet());
+                throw new IllegalArgumentException("Le bon de livraison " + bl.getNumeroBl()
+                        + " n'appartient pas au client " + client.getNomComplet());
             }
 
             blsSelectionnes.add(bl);
@@ -146,17 +152,21 @@ public class FactureService {
                 LigneFacture ligneFacture = new LigneFacture();
                 ligneFacture.setFacture(facture);
                 ligneFacture.setProduit(ligneBl.getProduit());
-                ligneFacture.setDesignation(ligneBl.getProduit() != null ? ligneBl.getProduit().getNom() : "Article BL " + bl.getNumeroBl());
-                ligneFacture.setReference(ligneBl.getProduit() != null ? ligneBl.getProduit().getReference() : bl.getNumeroBl());
-                ligneFacture.setQuantite(ligneBl.getQuantiteLivree() != null ? ligneBl.getQuantiteLivree() : BigDecimal.ONE);
+                ligneFacture.setDesignation(ligneBl.getProduit() != null ? ligneBl.getProduit().getNom()
+                        : "Article BL " + bl.getNumeroBl());
+                ligneFacture.setReference(
+                        ligneBl.getProduit() != null ? ligneBl.getProduit().getReference() : bl.getNumeroBl());
+                ligneFacture.setQuantite(
+                        ligneBl.getQuantiteLivree() != null ? ligneBl.getQuantiteLivree() : BigDecimal.ONE);
                 ligneFacture.setSurfaceM2(ligneBl.getQuantiteLivree());
 
                 BigDecimal pu = ligneBl.getPrixVente();
                 if (pu == null && ligneBl.getProduit() != null) {
-                    pu = ligneBl.getProduit().getPrixVenteHT() != null ? ligneBl.getProduit().getPrixVenteHT() : ligneBl.getProduit().getPrixVenteTTC();
+                    pu = ligneBl.getProduit().getPrixVenteHT() != null ? ligneBl.getProduit().getPrixVenteHT()
+                            : ligneBl.getProduit().getPrixVenteTTC();
                 }
                 ligneFacture.setPrixUnitaireHT(pu != null ? pu : BigDecimal.ZERO);
-                ligneFacture.setTauxTVA(new BigDecimal("19.00"));
+                ligneFacture.setTauxTVA(new BigDecimal("20.00"));
                 ligneFacture.setRemisePourcentage(BigDecimal.ZERO);
                 ligneFacture.calculerMontants();
 
@@ -190,8 +200,10 @@ public class FactureService {
      */
     public List<BonLivraisonClientDTO> getBonsLivraisonNonFacturesByClient(Long clientId) {
         Long tenantId = TenantContext.getCurrentTenant();
-        if (tenantId == null) tenantId = 1L;
-        List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByClientIdAndFactureIsNullAndPointDeVenteId(clientId, tenantId);
+        if (tenantId == null)
+            tenantId = 1L;
+        List<BonLivraisonClient> bls = bonLivraisonClientRepository
+                .findByClientIdAndFactureIsNullAndPointDeVenteId(clientId, tenantId);
         return bls.stream()
                 .filter(b -> b.getStatut() == com.gestion.persistent.enums.StatutLivraison.LIVREE)
                 .map(bonLivraisonClientMapper::toDto)
@@ -203,7 +215,8 @@ public class FactureService {
      */
     public List<BonLivraisonClientDTO> getAllBonsLivraisonNonFactures() {
         Long tenantId = TenantContext.getCurrentTenant();
-        if (tenantId == null) tenantId = 1L;
+        if (tenantId == null)
+            tenantId = 1L;
         List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByFactureIsNullAndPointDeVenteId(tenantId);
         return bls.stream()
                 .filter(b -> b.getStatut() == com.gestion.persistent.enums.StatutLivraison.LIVREE)
@@ -241,7 +254,8 @@ public class FactureService {
 
     public List<FactureDTO> getFacturesEchues() {
         Long tenantId = TenantContext.getCurrentTenant();
-        return factureRepository.findFacturesEchuesByPointDeVenteId(LocalDate.now(), tenantId != null ? tenantId : 1L).stream()
+        return factureRepository.findFacturesEchuesByPointDeVenteId(LocalDate.now(), tenantId != null ? tenantId : 1L)
+                .stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -256,28 +270,34 @@ public class FactureService {
 
         facture.setStatut(StatutFacture.VALIDEE);
         Facture saved = factureRepository.save(facture);
-        // La comptabilisation est désormais gérée manuellement via la Passerelle Comptable (découplage commercial / compta)
+        // La comptabilisation est désormais gérée manuellement via la Passerelle
+        // Comptable (découplage commercial / compta)
         return factureMapper.toDto(saved);
     }
 
     public FactureDTO annulerFacture(Long factureId, String motif, Long userId) {
         Facture facture = factureRepository.findById(factureId)
-                .orElseThrow(() -> new CommonException("Facture non trouvée avec l'id: " + factureId, HttpStatus.NOT_FOUND));
+                .orElseThrow(
+                        () -> new CommonException("Facture non trouvée avec l'id: " + factureId, HttpStatus.NOT_FOUND));
 
         if (Boolean.TRUE.equals(facture.getAnnulee()) || facture.getStatut() == StatutFacture.ANNULEE) {
             throw new CommonException("Cette facture est déjà annulée.", HttpStatus.BAD_REQUEST);
         }
 
-        // RÈGLE : Impossible d'annuler une facture encaissée totalement ou partiellement
-        boolean hasMontantPaye = facture.getMontantPaye() != null && facture.getMontantPaye().compareTo(BigDecimal.ZERO) > 0;
-        boolean isStatutPayee = facture.getStatut() == StatutFacture.PAYEE_PARTIELLEMENT || facture.getStatut() == StatutFacture.PAYEE_TOTALEMENT;
+        // RÈGLE : Impossible d'annuler une facture encaissée totalement ou
+        // partiellement
+        boolean hasMontantPaye = facture.getMontantPaye() != null
+                && facture.getMontantPaye().compareTo(BigDecimal.ZERO) > 0;
+        boolean isStatutPayee = facture.getStatut() == StatutFacture.PAYEE_PARTIELLEMENT
+                || facture.getStatut() == StatutFacture.PAYEE_TOTALEMENT;
         boolean hasPaiements = facture.getPaiements() != null && facture.getPaiements().stream()
                 .anyMatch(p -> !Boolean.TRUE.equals(p.getAnnule()));
 
         if (hasMontantPaye || isStatutPayee || hasPaiements) {
             BigDecimal montant = facture.getMontantPaye() != null ? facture.getMontantPaye() : BigDecimal.ZERO;
-            throw new CommonException("Impossible d'annuler une facture déjà encaissée totalement ou partiellement (" + 
-                    montant + " MAD déjà encaissés). Veuillez d'abord annuler ou supprimer les règlements associés.", HttpStatus.BAD_REQUEST);
+            throw new CommonException("Impossible d'annuler une facture déjà encaissée totalement ou partiellement (" +
+                    montant + " MAD déjà encaissés). Veuillez d'abord annuler ou supprimer les règlements associés.",
+                    HttpStatus.BAD_REQUEST);
         }
 
         User user = null;
@@ -337,19 +357,23 @@ public class FactureService {
 
     public FactureDTO modifierFacture(Long factureId, FactureDTO dto) {
         Long tenantId = TenantContext.getCurrentTenant();
-        if (tenantId == null) tenantId = 1L;
+        if (tenantId == null)
+            tenantId = 1L;
 
         Facture facture = factureRepository.findByIdAndPointDeVenteId(factureId, tenantId)
-                .orElseThrow(() -> new CommonException("Facture non trouvée avec l'id: " + factureId, HttpStatus.NOT_FOUND));
+                .orElseThrow(
+                        () -> new CommonException("Facture non trouvée avec l'id: " + factureId, HttpStatus.NOT_FOUND));
 
         if (Boolean.TRUE.equals(facture.getAnnulee()) || facture.getStatut() == StatutFacture.ANNULEE) {
             throw new CommonException("Impossible de modifier une facture annulée.", HttpStatus.BAD_REQUEST);
         }
 
         // Client
-        if (dto.getClientId() != null && (facture.getClient() == null || !dto.getClientId().equals(facture.getClient().getId()))) {
+        if (dto.getClientId() != null
+                && (facture.getClient() == null || !dto.getClientId().equals(facture.getClient().getId()))) {
             Client client = clientRepository.findById(dto.getClientId())
-                    .orElseThrow(() -> new CommonException("Client non trouvé avec l'id: " + dto.getClientId(), HttpStatus.NOT_FOUND));
+                    .orElseThrow(() -> new CommonException("Client non trouvé avec l'id: " + dto.getClientId(),
+                            HttpStatus.NOT_FOUND));
             facture.setClient(client);
         }
 
@@ -380,25 +404,31 @@ public class FactureService {
             for (com.gestion.persistent.dto.LigneFactureDTO ld : dto.getLignes()) {
                 LigneFacture lf = new LigneFacture();
                 lf.setFacture(facture);
+                Produit p = null;
                 if (ld.getProduitId() != null) {
-                    Produit p = produitRepository.findById(ld.getProduitId()).orElse(null);
-                    lf.setProduit(p);
-                    lf.setDesignation(ld.getDesignation() != null && !ld.getDesignation().isBlank()
-                            ? ld.getDesignation()
-                            : (p != null ? p.getNom() : "Article"));
-                    lf.setReference(ld.getReference() != null && !ld.getReference().isBlank()
-                            ? ld.getReference()
-                            : (p != null ? p.getReference() : ""));
-                } else {
-                    lf.setDesignation(ld.getDesignation() != null ? ld.getDesignation() : "Article");
-                    lf.setReference(ld.getReference() != null ? ld.getReference() : "");
+                    p = produitRepository.findById(ld.getProduitId()).orElse(null);
                 }
+                if (p == null && ld.getReference() != null && !ld.getReference().isBlank()) {
+                    p = produitRepository.findByReferenceAndPointDeVenteId(ld.getReference().trim(), tenantId)
+                            .orElse(null);
+                    if (p == null) {
+                        p = produitRepository.findFirstByReference(ld.getReference().trim()).orElse(null);
+                    }
+                }
+                lf.setProduit(p);
+                lf.setDesignation(ld.getDesignation() != null && !ld.getDesignation().isBlank()
+                        ? ld.getDesignation()
+                        : (p != null ? p.getNom() : "Article"));
+                lf.setReference(ld.getReference() != null && !ld.getReference().isBlank()
+                        ? ld.getReference()
+                        : (p != null ? p.getReference() : ""));
                 lf.setQuantite(ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ONE);
                 lf.setSurfaceM2(ld.getSurfaceM2() != null ? ld.getSurfaceM2() : lf.getQuantite());
                 BigDecimal pu = ld.getPrixUnitaireHT();
                 lf.setPrixUnitaireHT(pu != null ? pu : BigDecimal.ZERO);
                 lf.setTauxTVA(ld.getTauxTVA() != null ? ld.getTauxTVA() : new BigDecimal("20.00"));
-                lf.setRemisePourcentage(ld.getRemisePourcentage() != null ? ld.getRemisePourcentage() : BigDecimal.ZERO);
+                lf.setRemisePourcentage(
+                        ld.getRemisePourcentage() != null ? ld.getRemisePourcentage() : BigDecimal.ZERO);
                 lf.calculerMontants();
                 facture.addLigne(lf);
             }
