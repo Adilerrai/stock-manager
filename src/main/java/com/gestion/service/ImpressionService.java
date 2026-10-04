@@ -507,23 +507,28 @@ public class ImpressionService {
         EntrepriseProfile profile = entrepriseProfileService.getProfileEntityByCurrentTenant();
 
         params.put("nomEntreprise",
-                profile.getNomEntreprise() != null ? profile.getNomEntreprise() : "ENTREPRISE SAAS");
+                profile.getNomEntreprise() != null ? profile.getNomEntreprise() : "");
         params.put("activiteEntreprise", profile.getActivite() != null ? profile.getActivite() : "");
         params.put("adresseEntreprise", (profile.getAdresse() != null ? profile.getAdresse() : "") +
-                (profile.getVille() != null ? " - " + profile.getVille() : ""));
-        params.put("telephoneEntreprise", profile.getTelephone() != null ? profile.getTelephone() : "-");
+                (profile.getVille() != null && !profile.getVille().isEmpty() ? " - " + profile.getVille() : ""));
+        params.put("telephoneEntreprise", profile.getTelephone() != null ? profile.getTelephone() : "");
         params.put("emailEntreprise", profile.getEmail() != null ? profile.getEmail() : "");
-        params.put("rcEntreprise", profile.getRegistreCommerce() != null ? profile.getRegistreCommerce() : "-");
+        params.put("rcEntreprise", profile.getRegistreCommerce() != null ? profile.getRegistreCommerce() : "");
         params.put("nifEntreprise",
-                profile.getNumeroIdentificationFiscale() != null ? profile.getNumeroIdentificationFiscale() : "-");
+                profile.getNumeroIdentificationFiscale() != null ? profile.getNumeroIdentificationFiscale() : "");
         params.put("nisEntreprise",
                 profile.getNumeroIdentificationStatistique() != null ? profile.getNumeroIdentificationStatistique()
-                        : "-");
-        params.put("aiEntreprise", profile.getArticleImposition() != null ? profile.getArticleImposition() : "-");
-        params.put("ribEntreprise", profile.getCompteBancaireRib() != null ? profile.getCompteBancaireRib() : "-");
-        params.put("banqueEntreprise", profile.getNomBanque() != null ? profile.getNomBanque() : "-");
+                        : "");
+        params.put("aiEntreprise", profile.getArticleImposition() != null ? profile.getArticleImposition() : "");
+        params.put("patenteEntreprise", profile.getPatente() != null ? profile.getPatente() : "");
+        params.put("iceEntreprise", profile.getIce() != null ? profile.getIce() : "");
+        params.put("cnssEntreprise", profile.getCnss() != null ? profile.getCnss() : "");
+        params.put("gsmEntreprise", profile.getGsm() != null ? profile.getGsm() : "");
+        params.put("telephoneSecondaire", profile.getGsm() != null ? profile.getGsm() : "");
+        params.put("ribEntreprise", profile.getCompteBancaireRib() != null ? profile.getCompteBancaireRib() : "");
+        params.put("banqueEntreprise", profile.getNomBanque() != null ? profile.getNomBanque() : "");
         params.put("piedPage", profile.getPiedPage() != null ? profile.getPiedPage() : "");
-        params.put("devise", profile.getDevise() != null ? profile.getDevise() : "MAD");
+        params.put("devise", profile.getDevise() != null && !profile.getDevise().trim().isEmpty() ? profile.getDevise() : "MAD");
 
         // Injection du Logo en java.awt.Image
         if (profile.hasLogo()) {

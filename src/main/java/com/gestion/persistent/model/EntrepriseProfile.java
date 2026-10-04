@@ -55,6 +55,18 @@ public class EntrepriseProfile {
     @Column(name = "nom_banque")
     private String nomBanque;
 
+    @Column(name = "patente")
+    private String patente; // Patente (Maroc)
+
+    @Column(name = "ice")
+    private String ice; // Identifiant Commun de l'Entreprise (Maroc)
+
+    @Column(name = "cnss")
+    private String cnss; // CNSS (Maroc)
+
+    @Column(name = "gsm")
+    private String gsm; // GSM / Mobile
+
     @JsonIgnore
     @Column(name = "logo_data", columnDefinition = "bytea")
     private byte[] logoData;
@@ -274,5 +286,46 @@ public class EntrepriseProfile {
 
     public boolean hasLogo() {
         return logoData != null && logoData.length > 0;
+    }
+
+    public String getPatente() {
+        return patente != null ? patente : articleImposition;
+    }
+
+    public void setPatente(String patente) {
+        this.patente = patente;
+        if (this.articleImposition == null) {
+            this.articleImposition = patente;
+        }
+    }
+
+    public String getIce() {
+        return ice != null ? ice : numeroIdentificationStatistique;
+    }
+
+    public void setIce(String ice) {
+        this.ice = ice;
+        if (this.numeroIdentificationStatistique == null) {
+            this.numeroIdentificationStatistique = ice;
+        }
+    }
+
+    public String getCnss() {
+        return cnss;
+    }
+
+    public void setCnss(String cnss) {
+        this.cnss = cnss;
+    }
+
+    public String getGsm() {
+        return gsm != null ? gsm : telephoneSecondaire;
+    }
+
+    public void setGsm(String gsm) {
+        this.gsm = gsm;
+        if (this.telephoneSecondaire == null) {
+            this.telephoneSecondaire = gsm;
+        }
     }
 }

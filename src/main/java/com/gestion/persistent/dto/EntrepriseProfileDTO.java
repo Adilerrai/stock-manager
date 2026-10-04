@@ -18,6 +18,10 @@ public class EntrepriseProfileDTO {
     private String numeroIdentificationFiscale;
     private String numeroIdentificationStatistique;
     private String articleImposition;
+    private String patente;
+    private String ice;
+    private String cnss;
+    private String gsm;
     private String compteBancaireRib;
     private String nomBanque;
     private boolean hasLogo;
@@ -97,4 +101,25 @@ public class EntrepriseProfileDTO {
 
     public LocalDateTime getDateMiseAJour() { return dateMiseAJour; }
     public void setDateMiseAJour(LocalDateTime dateMiseAJour) { this.dateMiseAJour = dateMiseAJour; }
+
+    public String getPatente() { return patente != null ? patente : articleImposition; }
+    public void setPatente(String patente) { 
+        this.patente = patente; 
+        if (this.articleImposition == null) this.articleImposition = patente;
+    }
+
+    public String getIce() { return ice != null ? ice : numeroIdentificationStatistique; }
+    public void setIce(String ice) { 
+        this.ice = ice; 
+        if (this.numeroIdentificationStatistique == null) this.numeroIdentificationStatistique = ice;
+    }
+
+    public String getCnss() { return cnss; }
+    public void setCnss(String cnss) { this.cnss = cnss; }
+
+    public String getGsm() { return gsm != null ? gsm : telephoneSecondaire; }
+    public void setGsm(String gsm) { 
+        this.gsm = gsm; 
+        if (this.telephoneSecondaire == null) this.telephoneSecondaire = gsm;
+    }
 }
