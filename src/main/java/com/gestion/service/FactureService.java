@@ -23,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.Optional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -317,8 +318,8 @@ public class FactureService {
         facture.setStatut(StatutFacture.ANNULEE);
 
         // Libérer le numéro de facture officiel pour qu'il ne bloque pas la séquence des factures valables
-        if (facture.getNumeroFacture() != null && !facture.getNumeroFacture().contains("-ANNUL")) {
-            facture.setNumeroFacture(facture.getNumeroFacture() + "-ANNUL-" + facture.getId());
+        if (facture.getNumeroFacture() != null && !facture.getNumeroFacture().contains("-ANNULE")) {
+            facture.setNumeroFacture(facture.getNumeroFacture() + "-ANNULE");
         }
 
         // Libérer les BLs associés pour qu'ils puissent être refacturés si besoin
@@ -505,7 +506,7 @@ public class FactureService {
         if (opt.isPresent()) {
             Facture f = opt.get();
             if (Boolean.TRUE.equals(f.getAnnulee()) || f.getStatut() == StatutFacture.ANNULEE) {
-                f.setNumeroFacture(f.getNumeroFacture() + "-ANNUL-" + f.getId());
+                f.setNumeroFacture(f.getNumeroFacture() + "-ANNULE");
                 factureRepository.save(f);
             }
         }
