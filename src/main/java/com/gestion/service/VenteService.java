@@ -115,7 +115,7 @@ public class VenteService {
                     }
                 }
 
-                ligne.setTauxTVA(ligneDto.getTauxTVA() != null ? ligneDto.getTauxTVA() : new BigDecimal("19.00"));
+                ligne.setTauxTVA(ligneDto.getTauxTVA() != null ? ligneDto.getTauxTVA() : new BigDecimal("20.00"));
                 ligne.setRemisePourcentage(ligneDto.getRemisePourcentage() != null ? ligneDto.getRemisePourcentage() : BigDecimal.ZERO);
                 ligne.calculerMontants();
 

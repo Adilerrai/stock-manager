@@ -247,7 +247,7 @@ public class ImpressionService {
                 map.put("designation", ld.getProduit() != null ? ld.getProduit().getDesignation() : "Article");
                 map.put("quantite", ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO);
                 map.put("prixUnitaireHT", ld.getPrixUnitaireHT() != null ? ld.getPrixUnitaireHT() : BigDecimal.ZERO);
-                map.put("tauxTVA", ld.getTauxTVA() != null ? ld.getTauxTVA() : new BigDecimal("19.00"));
+                map.put("tauxTVA", ld.getTauxTVA() != null ? ld.getTauxTVA() : new BigDecimal("20.00"));
                 map.put("montantHT", ld.getMontantHT() != null ? ld.getMontantHT() : BigDecimal.ZERO);
                 lignes.add(map);
             }

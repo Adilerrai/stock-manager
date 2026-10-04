@@ -34,7 +34,7 @@ public class LigneVente {
     private BigDecimal prixUnitaireHT;
 
     @Column(name = "taux_tva", precision = 5, scale = 2)
-    private BigDecimal tauxTVA = new BigDecimal("19.00"); // TVA par défaut en Algérie
+    private BigDecimal tauxTVA = new BigDecimal("20.00"); // TVA standard au Maroc
 
     @Column(name = "montant_ht", precision = 15, scale = 2)
     private BigDecimal montantHT;

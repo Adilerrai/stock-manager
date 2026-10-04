@@ -88,7 +88,7 @@ public class FactureAchatService {
 
                 ligne.setQuantite(ligneDto.getQuantite() != null ? ligneDto.getQuantite() : BigDecimal.ONE);
                 ligne.setPrixUnitaireHt(ligneDto.getPrixUnitaireHt() != null ? ligneDto.getPrixUnitaireHt() : BigDecimal.ZERO);
-                ligne.setTauxTva(ligneDto.getTauxTva() != null ? ligneDto.getTauxTva() : BigDecimal.valueOf(19.00));
+                ligne.setTauxTva(ligneDto.getTauxTva() != null ? ligneDto.getTauxTva() : BigDecimal.valueOf(20.00));
 
                 BigDecimal ht = ligne.getPrixUnitaireHt().multiply(ligne.getQuantite());
                 BigDecimal tva = ht.multiply(ligne.getTauxTva()).divide(BigDecimal.valueOf(100));

@@ -34,7 +34,7 @@ public class LigneFacture {
     private BigDecimal prixUnitaireHT;
 
     @Column(name = "taux_tva", precision = 5, scale = 2)
-    private BigDecimal tauxTVA = new BigDecimal("19.00");
+    private BigDecimal tauxTVA = new BigDecimal("20.00");
 
     @Column(name = "montant_ht", precision = 15, scale = 2)
     private BigDecimal montantHT;
