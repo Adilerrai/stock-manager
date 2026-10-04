@@ -390,6 +390,14 @@ public class BonLivraisonClientService {
     }
 
     private String genererNumeroBL() {
-        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.BL_CLIENT);
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        String numero;
+        int attempts = 0;
+        do {
+            numero = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.BL_CLIENT, effectiveTenantId);
+            attempts++;
+        } while (bonLivraisonClientRepository.findByPointDeVenteIdAndNumeroBl(effectiveTenantId, numero).isPresent() && attempts < 1000);
+        return numero;
     }
 }

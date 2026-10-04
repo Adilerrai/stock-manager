@@ -52,6 +52,7 @@
     <parameter name="montantFinal" class="java.math.BigDecimal"/>
     <parameter name="montantPaye" class="java.math.BigDecimal"/>
     <parameter name="montantRestant" class="java.math.BigDecimal"/>
+    <parameter name="montantEnLettres" class="java.lang.String"/>
 
     <!-- Champs des lignes de facture -->
     <field name="reference" class="java.lang.String"/>
@@ -336,8 +337,13 @@
                 <textElement verticalAlignment="Middle"><font fontName="SansSerif" size="8" isBold="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{ribEntreprise} != null && !$P{ribEntreprise}.trim().isEmpty() ? "RIB : " + $P{ribEntreprise} : ""]]></textFieldExpression>
             </textField>
+            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
+                <reportElement x="10" y="55" width="250" height="24" isRemoveLineWhenBlank="true" forecolor="#0F172A"/>
+                <textElement verticalAlignment="Top"><font fontName="SansSerif" size="7" isBold="true"/></textElement>
+                <textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() ? "ARRÊTÉE LA PRÉSENTE FACTURE À LA SOMME DE :\n" + $P{montantEnLettres}.toUpperCase() : ""]]></textFieldExpression>
+            </textField>
             <textField isBlankWhenNull="true">
-                <reportElement x="10" y="56" width="250" height="40" forecolor="#64748B"/>
+                <reportElement x="10" y="80" width="250" height="18" forecolor="#64748B"/>
                 <textElement><font fontName="SansSerif" size="7" isItalic="true"/></textElement>
                 <textFieldExpression><![CDATA[$P{notes} != null && !$P{notes}.trim().isEmpty() ? "Notes : " + $P{notes} : ""]]></textFieldExpression>
             </textField>
@@ -434,12 +440,12 @@
                 <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
-                <textFieldExpression><![CDATA["société " + ($P{nomEntreprise} != null ? $P{nomEntreprise} : "")]]></textFieldExpression>
+                <textFieldExpression><![CDATA["SOCIÉTÉ " + ($P{nomEntreprise} != null ? $P{nomEntreprise}.toUpperCase() : "")]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
                 <reportElement x="0" y="135" width="555" height="11" forecolor="#334155"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="SansSerif" size="7"/></textElement>
-                <textFieldExpression><![CDATA["Siège Social : " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
+                <textFieldExpression><![CDATA["SIÈGE SOCIAL : " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
                 <reportElement x="0" y="146" width="555" height="11" forecolor="#334155"/>

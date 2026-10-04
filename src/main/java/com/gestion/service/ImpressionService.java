@@ -2,6 +2,7 @@ package com.gestion.service;
 
 import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
+import com.gestion.util.FrenchNumberToWords;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.slf4j.Logger;
@@ -148,6 +149,11 @@ public class ImpressionService {
         params.put("montantFinal", facture.getMontantFinal());
         params.put("montantPaye", facture.getMontantPaye());
         params.put("montantRestant", facture.getMontantRestant());
+
+        BigDecimal netFacture = facture.getMontantFinal() != null ? facture.getMontantFinal()
+                : (facture.getMontantTTC() != null ? facture.getMontantTTC() : facture.getMontantHT());
+        String devise = (String) params.getOrDefault("devise", "MAD");
+        params.put("montantEnLettres", FrenchNumberToWords.convertir(netFacture, devise));
 
         // Lignes
         List<Map<String, Object>> lignes = new ArrayList<>();

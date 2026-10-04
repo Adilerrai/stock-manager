@@ -299,7 +299,15 @@ public class CommandeService {
     }
 
     private String generateNumeroCommande() {
-        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.COMMANDE_FOURNISSEUR);
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        String numero;
+        int attempts = 0;
+        do {
+            numero = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.COMMANDE_FOURNISSEUR, effectiveTenantId);
+            attempts++;
+        } while (commandeRepository.findByPointDeVenteIdAndNumeroCommande(effectiveTenantId, numero).isPresent() && attempts < 1000);
+        return numero;
     }
 
     public List<Commande> searchCommandes(CommandeSearchCriteria criteria) {

@@ -182,6 +182,14 @@ public class FactureAchatService {
     }
 
     private String genererNumeroFactureAchat() {
-        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.FACTURE_FOURNISSEUR);
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        String numero;
+        int attempts = 0;
+        do {
+            numero = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.FACTURE_FOURNISSEUR, effectiveTenantId);
+            attempts++;
+        } while (factureAchatRepository.findByNumeroFactureAndPointDeVenteId(numero, effectiveTenantId).isPresent() && attempts < 1000);
+        return numero;
     }
 }

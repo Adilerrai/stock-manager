@@ -27,4 +27,6 @@ public interface DevisRepository extends JpaRepository<Devis, Long>, DevisReposi
 
     @Query("SELECT COUNT(d) FROM Devis d")
     long countAllDevis();
+
+    Optional<Devis> findByPointDeVenteIdAndNumeroDevis(Long pointDeVenteId, String numeroDevis);
 }

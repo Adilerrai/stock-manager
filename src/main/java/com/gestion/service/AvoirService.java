@@ -321,9 +321,17 @@ public class AvoirService {
     }
 
     private String genererNumeroAvoir(String prefixe, TypeAvoir typeAvoir) {
-        if (typeAvoir == TypeAvoir.FOURNISSEUR) {
-            return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.AVOIR_FOURNISSEUR);
-        }
-        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.AVOIR_CLIENT);
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        com.gestion.persistent.enums.TypeDocumentCodification typeDoc = (typeAvoir == TypeAvoir.FOURNISSEUR)
+                ? com.gestion.persistent.enums.TypeDocumentCodification.AVOIR_FOURNISSEUR
+                : com.gestion.persistent.enums.TypeDocumentCodification.AVOIR_CLIENT;
+        String numero;
+        int attempts = 0;
+        do {
+            numero = codificationService.genererNumero(typeDoc, effectiveTenantId);
+            attempts++;
+        } while (avoirRepository.findByPointDeVenteIdAndNumeroAvoir(effectiveTenantId, numero).isPresent() && attempts < 1000);
+        return numero;
     }
 }

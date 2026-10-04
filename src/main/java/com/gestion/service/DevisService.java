@@ -344,7 +344,17 @@ public class DevisService {
         Devis devis = getDevisById(devisId);
 
         Facture facture = new Facture();
-        facture.setNumeroFacture("FAC-" + System.currentTimeMillis());
+        Long tenantId = devis.getPointDeVenteId() != null ? devis.getPointDeVenteId() : (TenantContext.getCurrentTenant() != null ? TenantContext.getCurrentTenant() : 1L);
+        facture.setPointDeVenteId(tenantId);
+
+        String numFacture;
+        int attempts = 0;
+        do {
+            numFacture = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.FACTURE_CLIENT, tenantId);
+            attempts++;
+        } while (factureRepository.findByPointDeVenteIdAndNumeroFacture(tenantId, numFacture).isPresent() && attempts < 1000);
+
+        facture.setNumeroFacture(numFacture);
         facture.setDateFacture(LocalDate.now());
         facture.setDateEcheance(LocalDate.now().plusDays(30));
         facture.setClient(devis.getClient());
@@ -391,6 +401,14 @@ public class DevisService {
     }
 
     private String genererNumeroDevis() {
-        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.DEVIS);
+        Long currentTenant = TenantContext.getCurrentTenant();
+        Long tenantId = currentTenant != null ? currentTenant : 1L;
+        String numero;
+        int attempts = 0;
+        do {
+            numero = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.DEVIS, tenantId);
+            attempts++;
+        } while (devisRepository.findByPointDeVenteIdAndNumeroDevis(tenantId, numero).isPresent() && attempts < 1000);
+        return numero;
     }
 }

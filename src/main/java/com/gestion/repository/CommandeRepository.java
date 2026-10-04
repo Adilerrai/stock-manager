@@ -34,4 +34,5 @@ public interface CommandeRepository extends JpaRepository<Commande, Long>, Comma
                                                   @Param("dateFin") LocalDateTime dateFin);
     
     boolean existsByNumeroCommande(String numeroCommande);
+    Optional<Commande> findByPointDeVenteIdAndNumeroCommande(Long pointDeVenteId, String numeroCommande);
 }

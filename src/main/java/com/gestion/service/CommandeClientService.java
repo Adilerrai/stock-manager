@@ -382,6 +382,13 @@ public class CommandeClientService {
     }
 
     private String generateNumeroCommandeClient() {
-        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.COMMANDE_CLIENT);
+        Long tenantId = getTenantId();
+        String numero;
+        int attempts = 0;
+        do {
+            numero = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.COMMANDE_CLIENT, tenantId);
+            attempts++;
+        } while (commandeClientRepository.findByPointDeVenteIdAndNumeroCommande(tenantId, numero).isPresent() && attempts < 1000);
+        return numero;
     }
 }

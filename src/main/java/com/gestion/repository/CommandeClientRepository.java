@@ -33,4 +33,5 @@ public interface CommandeClientRepository extends JpaRepository<CommandeClient, 
     );
 
     boolean existsByNumeroCommande(String numeroCommande);
+    Optional<CommandeClient> findByPointDeVenteIdAndNumeroCommande(Long pointDeVenteId, String numeroCommande);
 }

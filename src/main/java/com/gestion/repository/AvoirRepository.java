@@ -50,4 +50,6 @@ public interface AvoirRepository extends JpaRepository<Avoir, Long>, AvoirReposi
            "GROUP BY la.motifRetour ORDER BY SUM(la.montantTTC) DESC")
     List<Object[]> findStatsCausesRetour(@Param("dateDebut") LocalDate dateDebut,
                                          @Param("dateFin") LocalDate dateFin);
+
+    Optional<Avoir> findByPointDeVenteIdAndNumeroAvoir(Long pointDeVenteId, String numeroAvoir);
 }
