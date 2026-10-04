@@ -359,6 +359,173 @@ public class BonLivraisonClientService {
         return bonLivraisonClientMapper.toDto(saved);
     }
 
+
+    public BonLivraisonClientDTO remettreEnBrouillon(Long blId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+
+        BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
+                .or(() -> bonLivraisonClientRepository.findById(blId))
+                .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
+
+        if (bl.getFacture() != null || Boolean.TRUE.equals(bl.isFacture())) {
+            String numFacture = bl.getFacture() != null && bl.getFacture().getNumeroFacture() != null
+                    ? " (Facture N° " + bl.getFacture().getNumeroFacture() + ")"
+                    : "";
+            throw new CommonException("Impossible de remettre en brouillon un bon de livraison déjà facturé" + numFacture + ". Vous devez d'abord annuler la facture correspondante.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Si le bon était validé/expédié (LIVREE ou PARTIELLE), réintégrer le stock
+        if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE) {
+            for (LigneBonLivraisonClient ligne : bl.getLignes()) {
+                if (ligne.getProduit() != null) {
+                    try {
+                        mouvementStockService.creerMouvement(
+                                ligne.getProduit().getId(),
+                                ligne.getDepot() != null ? ligne.getDepot().getId() : null,
+                                TypeMouvement.ENTREE_LIVRAISON,
+                                ligne.getQuantiteLivree() != null ? ligne.getQuantiteLivree() : BigDecimal.ONE,
+                                ligne.getLot() != null && ligne.getLot().getQualite() != null ? 
+                                        ligne.getLot().getQualite() : QualiteProduit.PREMIERE_QUALITE,
+                                bl.getNumeroBl(),
+                                "Réintégration stock suite remise en brouillon BL " + bl.getNumeroBl()
+                        );
+                    } catch (Exception ex) {
+                        String nomProd = ligne.getProduit().getNom() != null ? ligne.getProduit().getNom() : String.valueOf(ligne.getProduit().getId());
+                        throw new CommonException("Impossible de réintégrer le stock pour le produit '" + nomProd + "' : " + 
+                                (ex.getMessage() != null ? ex.getMessage() : "erreur inconnue"), HttpStatus.BAD_REQUEST);
+                    }
+                }
+            }
+
+            // Réajuster les quantités livrées sur la commande client liée
+            if (bl.getCommandeClient() != null) {
+                CommandeClient commande = bl.getCommandeClient();
+                if (commande.getLignesCommande() != null) {
+                    for (LigneBonLivraisonClient ligneBl : bl.getLignes()) {
+                        if (ligneBl.getProduit() == null) continue;
+                        for (LigneCommandeClient ligneCmd : commande.getLignesCommande()) {
+                            if (ligneCmd.getProduit() != null && ligneCmd.getProduit().getId().equals(ligneBl.getProduit().getId())) {
+                                BigDecimal dejaLivre = ligneCmd.getQuantiteLivree() != null ? ligneCmd.getQuantiteLivree() : BigDecimal.ZERO;
+                                BigDecimal qteBl = ligneBl.getQuantiteLivree() != null ? ligneBl.getQuantiteLivree() : BigDecimal.ZERO;
+                                BigDecimal newQte = dejaLivre.subtract(qteBl);
+                                if (newQte.compareTo(BigDecimal.ZERO) < 0) newQte = BigDecimal.ZERO;
+                                ligneCmd.setQuantiteLivree(newQte);
+                                ligneCmd.setQuantiteReliquat(ligneCmd.calculerReliquat());
+                                break;
+                            }
+                        }
+                    }
+
+                    boolean auMoinsUneLivraison = false;
+                    for (LigneCommandeClient lc : commande.getLignesCommande()) {
+                        if (Boolean.TRUE.equals(lc.getAnnulee())) continue;
+                        if (lc.getQuantiteLivree() != null && lc.getQuantiteLivree().compareTo(BigDecimal.ZERO) > 0) {
+                            auMoinsUneLivraison = true;
+                        }
+                    }
+
+                    if (auMoinsUneLivraison) {
+                        commande.setStatut(StatutCommandeClient.LIVREE_PARTIELLE);
+                    } else {
+                        commande.setStatut(StatutCommandeClient.CONFIRMEE);
+                    }
+                    commandeClientRepository.save(commande);
+                }
+            }
+        }
+
+        bl.setStatut(StatutLivraison.BROUILLON);
+        BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+        return bonLivraisonClientMapper.toDto(saved);
+    }
+
+    public BonLivraisonClientDTO updateBonLivraisonClient(Long id, BonLivraisonClientDTO dto) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+
+        BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(id, effectiveTenantId)
+                .or(() -> bonLivraisonClientRepository.findById(id))
+                .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + id, HttpStatus.NOT_FOUND));
+
+        if (bl.getFacture() != null || Boolean.TRUE.equals(bl.isFacture())) {
+            throw new CommonException("Impossible de modifier un bon de livraison déjà facturé.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE) {
+            throw new CommonException("Ce bon de livraison est déjà expédié. Veuillez d'abord le remettre en brouillon pour le modifier.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (dto.getClientId() != null && (bl.getClient() == null || !bl.getClient().getId().equals(dto.getClientId()))) {
+            Client client = clientRepository.findById(dto.getClientId())
+                    .orElseThrow(() -> new CommonException("Client non trouvé avec l'id: " + dto.getClientId(), HttpStatus.NOT_FOUND));
+            bl.setClient(client);
+        }
+
+        if (dto.getObservations() != null) {
+            bl.setObservations(dto.getObservations());
+        }
+        if (dto.getRemiseGlobalePourcentage() != null) {
+            bl.setRemiseGlobalePourcentage(dto.getRemiseGlobalePourcentage());
+        }
+        if (dto.getRemiseGlobaleMontant() != null) {
+            bl.setRemiseGlobaleMontant(dto.getRemiseGlobaleMontant());
+        }
+
+        if (dto.getLignes() != null) {
+            if (bl.getLignes() != null) {
+                bl.getLignes().clear();
+            } else {
+                bl.setLignes(new java.util.ArrayList<>());
+            }
+
+            for (var ligneDto : dto.getLignes()) {
+                LigneBonLivraisonClient ligne = new LigneBonLivraisonClient();
+                ligne.setBonLivraisonClient(bl);
+                if (ligneDto.getProduitId() == null) {
+                    throw new CommonException("L'identifiant du produit est obligatoire pour chaque ligne", HttpStatus.BAD_REQUEST);
+                }
+                ligne.setProduit(produitRepository.findById(ligneDto.getProduitId())
+                        .orElseThrow(() -> new CommonException("Produit non trouvé avec l'id: " + ligneDto.getProduitId(), HttpStatus.NOT_FOUND)));
+
+                if (ligneDto.getDepotId() != null) {
+                    depotRepository.findById(ligneDto.getDepotId()).ifPresent(ligne::setDepot);
+                }
+                if (ligne.getDepot() == null && tenantId != null) {
+                    depotRepository.findByPointDeVenteIdAndActifTrue(tenantId).stream().findFirst().ifPresent(ligne::setDepot);
+                }
+
+                ligne.setQuantiteLivree(ligneDto.getQuantiteLivree() != null ? ligneDto.getQuantiteLivree() : BigDecimal.ONE);
+
+                BigDecimal puBrut = ligneDto.getPrixVenteBrut() != null ? ligneDto.getPrixVenteBrut() :
+                        (ligneDto.getPrixVente() != null ? ligneDto.getPrixVente() : BigDecimal.ZERO);
+                BigDecimal remisePct = ligneDto.getRemisePourcentage() != null ? ligneDto.getRemisePourcentage() : BigDecimal.ZERO;
+                BigDecimal remiseMt = ligneDto.getRemiseMontant() != null ? ligneDto.getRemiseMontant() : BigDecimal.ZERO;
+
+                ligne.setPrixVenteBrut(puBrut);
+                ligne.setRemisePourcentage(remisePct);
+                ligne.setRemiseMontant(remiseMt);
+                ligne.calculerMontantLigne();
+
+                Produit produit = ligne.getProduit();
+                if (produit != null && produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal puNet = ligne.getPrixVente() != null ? ligne.getPrixVente() : BigDecimal.ZERO;
+                    if (puNet.compareTo(produit.getPrixVenteMin()) < 0) {
+                        String nomArticle = produit.getDesignation() != null ? produit.getDesignation() : (produit.getNom() != null ? produit.getNom() : ("#" + produit.getId()));
+                        throw new CommonException("Impossible d'enregistrer le bon de livraison : le prix de vente net (" + puNet + " MAD) pour l'article '" +
+                                nomArticle + "' est inférieur au prix de vente minimum autorisé (" + produit.getPrixVenteMin() + " MAD).", HttpStatus.BAD_REQUEST);
+                    }
+                }
+
+                bl.getLignes().add(ligne);
+            }
+        }
+
+        bl.recalculerMontantTotal();
+        BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+        return bonLivraisonClientMapper.toDto(saved);
+    }
+
     public List<BonLivraisonClientDTO> getBonsLivraison() {
         Long tenantId = TenantContext.getCurrentTenant();
         List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);

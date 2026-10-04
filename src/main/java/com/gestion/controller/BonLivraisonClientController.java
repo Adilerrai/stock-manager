@@ -62,6 +62,22 @@ public class BonLivraisonClientController {
         return ResponseEntity.ok(bonLivraisonClientService.validerEtExpedierBL(id));
     }
 
+
+    @PostMapping("/{id}/brouillon")
+    public ResponseEntity<BonLivraisonClientDTO> remettreEnBrouillon(@PathVariable Long id) {
+        return ResponseEntity.ok(bonLivraisonClientService.remettreEnBrouillon(id));
+    }
+
+    @PutMapping("/{id}/brouillon")
+    public ResponseEntity<BonLivraisonClientDTO> remettreEnBrouillonPut(@PathVariable Long id) {
+        return ResponseEntity.ok(bonLivraisonClientService.remettreEnBrouillon(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<BonLivraisonClientDTO> updateBonLivraisonClient(@PathVariable Long id, @RequestBody BonLivraisonClientDTO dto) {
+        return ResponseEntity.ok(bonLivraisonClientService.updateBonLivraisonClient(id, dto));
+    }
+
     @PostMapping("/{id}/annuler")
     public ResponseEntity<BonLivraisonClientDTO> annulerBonLivraisonClient(@PathVariable Long id) {
         return ResponseEntity.ok(bonLivraisonClientService.annulerBonLivraisonClient(id));

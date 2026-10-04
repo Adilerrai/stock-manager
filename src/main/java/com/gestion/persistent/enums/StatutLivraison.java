@@ -1,4 +1,4 @@
-﻿package com.gestion.persistent.enums;
+package com.gestion.persistent.enums;
 
 public enum StatutLivraison {
     BROUILLON("Brouillon"),

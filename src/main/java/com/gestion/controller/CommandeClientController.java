@@ -55,6 +55,19 @@ public class CommandeClientController {
         return ResponseEntity.ok(commandeClientMapper.toDto(commande));
     }
 
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CommandeClientDTO> updateCommandeClient(@PathVariable Long id, @RequestBody CommandeClientDTO commandeDTO) {
+        CommandeClient updated = commandeClientService.updateCommandeClient(id, commandeDTO);
+        return ResponseEntity.ok(commandeClientMapper.toDto(updated));
+    }
+
+    @PutMapping("/{id}/brouillon")
+    public ResponseEntity<CommandeClientDTO> remettreEnBrouillon(@PathVariable Long id) {
+        CommandeClient commande = commandeClientService.updateStatut(id, StatutCommandeClient.BROUILLON);
+        return ResponseEntity.ok(commandeClientMapper.toDto(commande));
+    }
+
     @PutMapping("/{id}/statut")
     public ResponseEntity<CommandeClientDTO> updateStatut(@PathVariable Long id, 
                                                          @RequestParam StatutCommandeClient statut) {

@@ -164,6 +164,73 @@ public class CommandeClientService {
         return commandeClientRepository.findByPointDeVenteId(tenantId);
     }
 
+
+    @Transactional
+    public CommandeClient updateCommandeClient(Long id, CommandeClientDTO dto) {
+        CommandeClient commande = getCommandeClientEntityById(id);
+        if (commande.getStatut() == StatutCommandeClient.FACTUREE) {
+            throw new CommonException("Impossible de modifier une commande déjà facturée.", HttpStatus.BAD_REQUEST);
+        }
+
+        boolean etaitConfirmee = commande.getStatut() == StatutCommandeClient.CONFIRMEE || commande.getStatut() == StatutCommandeClient.BACKORDER;
+        if (etaitConfirmee) {
+            libererStockPourCommande(commande);
+        }
+
+        if (dto.getClientId() != null) {
+            com.gestion.persistent.model.Client client = clientRepository.findById(dto.getClientId())
+                    .orElseThrow(() -> new CommonException("Client non trouvé avec l'id: " + dto.getClientId(), HttpStatus.NOT_FOUND));
+            commande.setClient(client);
+        }
+
+        if (dto.getDateCommande() != null) {
+            commande.setDateCommande(dto.getDateCommande());
+        }
+        if (dto.getDateLivraisonPrevue() != null) {
+            commande.setDateLivraisonPrevue(dto.getDateLivraisonPrevue());
+        }
+        if (dto.getObservations() != null) {
+            commande.setObservations(dto.getObservations());
+        }
+        if (dto.getTauxTVA() != null) {
+            commande.setTauxTVA(dto.getTauxTVA());
+        }
+        if (dto.getRemiseGlobalePourcentage() != null) {
+            commande.setRemiseGlobalePourcentage(dto.getRemiseGlobalePourcentage());
+        }
+        if (dto.getRemiseGlobaleMontant() != null) {
+            commande.setRemiseGlobaleMontant(dto.getRemiseGlobaleMontant());
+        }
+
+        if (dto.getLignesCommande() != null) {
+            if (commande.getLignesCommande() != null && !commande.getLignesCommande().isEmpty()) {
+                ligneCommandeClientRepository.deleteAll(commande.getLignesCommande());
+                commande.getLignesCommande().clear();
+            } else if (commande.getLignesCommande() == null) {
+                commande.setLignesCommande(new java.util.ArrayList<>());
+            }
+
+            for (LigneCommandeClientDTO ligneDTO : dto.getLignesCommande()) {
+                LigneCommandeClient ligne = createLigneCommandeClient(commande, ligneDTO);
+                commande.getLignesCommande().add(ligne);
+            }
+        }
+
+        commande.recalculerMontants();
+
+        if (etaitConfirmee) {
+            validerPrixMinPourCommande(commande, StatutCommandeClient.CONFIRMEE);
+            boolean toutReserve = reserverStockPourCommande(commande);
+            if (!toutReserve) {
+                commande.setStatut(StatutCommandeClient.BACKORDER);
+            } else {
+                commande.setStatut(StatutCommandeClient.CONFIRMEE);
+            }
+        }
+
+        return commandeClientRepository.save(commande);
+    }
+
     public CommandeClient getCommandeClientById(Long commandeId) {
         return getCommandeClientEntityById(commandeId);
     }
@@ -172,6 +239,28 @@ public class CommandeClientService {
     public CommandeClient updateStatut(Long commandeId, StatutCommandeClient nouveauStatut) {
         CommandeClient commande = getCommandeClientEntityById(commandeId);
         StatutCommandeClient ancienStatut = commande.getStatut();
+
+        if (nouveauStatut == StatutCommandeClient.BROUILLON) {
+            if (ancienStatut == StatutCommandeClient.FACTUREE) {
+                throw new CommonException("Impossible de remettre en brouillon une commande déjà facturée.", HttpStatus.BAD_REQUEST);
+            }
+            Long tenantId = getTenantId();
+            List<BonLivraisonClient> bls = bonLivraisonClientRepository.findByCommandeClientIdAndPointDeVenteId(commandeId, tenantId);
+            if (bls != null && !bls.isEmpty()) {
+                boolean hasActiveBl = bls.stream().anyMatch(bl -> bl.getStatut() != StatutLivraison.ANNULEE && bl.getStatut() != StatutLivraison.BROUILLON);
+                if (hasActiveBl) {
+                    String numerosBl = bls.stream()
+                            .filter(bl -> bl.getStatut() != StatutLivraison.ANNULEE && bl.getStatut() != StatutLivraison.BROUILLON)
+                            .map(b -> b.getNumeroBl() != null ? b.getNumeroBl() : ("#" + b.getId()))
+                            .collect(Collectors.joining(", "));
+                    throw new CommonException("Impossible de remettre cette commande en brouillon car elle possède un ou plusieurs bons de livraison actifs (" + 
+                            numerosBl + "). Vous devez d'abord annuler ou remettre en brouillon ces bons de livraison.", HttpStatus.BAD_REQUEST);
+                }
+            }
+            if (ancienStatut == StatutCommandeClient.CONFIRMEE || ancienStatut == StatutCommandeClient.BACKORDER) {
+                libererStockPourCommande(commande);
+            }
+        }
 
         if (nouveauStatut == StatutCommandeClient.ANNULEE) {
             if (ancienStatut == StatutCommandeClient.ANNULEE) {
