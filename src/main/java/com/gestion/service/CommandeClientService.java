@@ -79,7 +79,11 @@ public class CommandeClientService {
     public CommandeClient createCommandeClient(CommandeClientDTO commandeDTO) {
 
         CommandeClient commande = new CommandeClient();
-        commande.setNumeroCommande(generateNumeroCommandeClient());
+        if (commandeDTO.getNumeroCommande() != null && !commandeDTO.getNumeroCommande().isBlank()) {
+            commande.setNumeroCommande(commandeDTO.getNumeroCommande().trim());
+        } else {
+            commande.setNumeroCommande(generateNumeroCommandeClient());
+        }
         commande.setPointDeVenteId(getTenantId());
         if (commandeDTO.getClientId() != null) {
             clientRepository.findById(commandeDTO.getClientId()).ifPresent(commande::setClient);

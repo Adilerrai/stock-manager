@@ -113,6 +113,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex, HttpServletRequest request) {
+        log.warn("Violation d'intégrité de données sur [{}]: {}", request.getRequestURI(), ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setStatus(HttpStatus.CONFLICT.value());
+        errorResponse.setError(HttpStatus.CONFLICT.getReasonPhrase());
+
+        String message = "Un enregistrement avec cette valeur unique existe déjà (doublon détecté).";
+        String rootMsg = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
+        if (rootMsg != null) {
+            if (rootMsg.contains("uk_produits_tenant_reference") || rootMsg.contains("uk_rj4mr27ga20ughn6qq6ev2uh0") || rootMsg.toLowerCase().contains("key (reference)")) {
+                message = "La référence de ce produit existe déjà pour cette société. Veuillez saisir une référence différente ou ajuster la codification automatique.";
+            }
+        }
+
+        errorResponse.setMessage(message);
+        errorResponse.setErrorCode("DUPLICATE_KEY");
+        errorResponse.setPath(request.getRequestURI());
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex, HttpServletRequest request) {
         log.error("Erreur serveur inattendue sur [{}] : {}", request.getRequestURI(), ex.getMessage());

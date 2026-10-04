@@ -48,19 +48,39 @@ public class ProduitService {
 
     @Transactional
     public Produit createProduit(Produit produit) {
+        Long tenantId = produit.getPointDeVenteId();
+        if (tenantId == null) {
+            tenantId = com.acommon.persistant.model.CurrentRequestContext.getSocieteId();
+            if (tenantId == null) {
+                tenantId = TenantContext.getCurrentTenant();
+            }
+            tenantId = (tenantId != null) ? tenantId : 1L;
+            produit.setPointDeVenteId(tenantId);
+        }
+
         if (produit.getReference() == null || produit.getReference().trim().isEmpty()) {
             try {
-                String reference = codificationService.genererNumero(TypeDocumentCodification.PRODUIT);
+                String reference;
+                int attempts = 0;
+                do {
+                    reference = codificationService.genererNumero(TypeDocumentCodification.PRODUIT, tenantId);
+                    attempts++;
+                } while (produitRepository.findByReferenceAndPointDeVenteId(reference, tenantId).isPresent() && attempts < 1000);
+
+                if (produitRepository.findByReferenceAndPointDeVenteId(reference, tenantId).isPresent()) {
+                    reference = "PROD-" + System.currentTimeMillis();
+                }
                 produit.setReference(reference);
             } catch (Exception e) {
                 // Fallback si la codification n'est pas encore configurée pour ce tenant
                 produit.setReference("PROD-" + System.currentTimeMillis());
             }
-        }
-
-        if (produit.getPointDeVenteId() == null) {
-            Long tenantId = TenantContext.getCurrentTenant();
-            produit.setPointDeVenteId(tenantId != null ? tenantId : 1L);
+        } else {
+            String ref = produit.getReference().trim();
+            if (produitRepository.findByReferenceAndPointDeVenteId(ref, tenantId).isPresent()) {
+                throw new IllegalArgumentException("La référence produit '" + ref + "' existe déjà pour cette société. Veuillez saisir une référence unique ou laisser le champ vide pour une génération automatique.");
+            }
+            produit.setReference(ref);
         }
 
         // Gestion et compression de l'image si fournie
@@ -124,6 +144,15 @@ public class ProduitService {
         
         java.math.BigDecimal ancienPrixVente = produit.getPrixVente();
         java.math.BigDecimal ancienPrixMin = produit.getPrixVenteMin();
+
+        if (produitDTO.getReference() != null && !produitDTO.getReference().trim().isEmpty()) {
+            String ref = produitDTO.getReference().trim();
+            Long tenantId = produit.getPointDeVenteId() != null ? produit.getPointDeVenteId() : (TenantContext.getCurrentTenant() != null ? TenantContext.getCurrentTenant() : 1L);
+            java.util.Optional<Produit> existant = produitRepository.findByReferenceAndPointDeVenteId(ref, tenantId);
+            if (existant.isPresent() && !existant.get().getId().equals(produit.getId())) {
+                throw new IllegalArgumentException("La référence produit '" + ref + "' est déjà utilisée par un autre article dans cette société.");
+            }
+        }
 
         produitMapper.updateEntityFromDto(produitDTO, produit);
 

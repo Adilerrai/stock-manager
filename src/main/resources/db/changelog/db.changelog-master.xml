@@ -40,4 +40,7 @@
     <!-- Changeset 010 : Ajout colonne modifie_par_nom dans historique_prix_produit -->
     <include file="changes/010-add-modifie-par-nom-historique-prix.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 011 : Unicité référence produit par point_de_vente_id / tenant -->
+    <include file="changes/011-update-produits-unique-constraint-tenant.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

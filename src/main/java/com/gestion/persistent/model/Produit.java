@@ -11,14 +11,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Entity
-@Table(name = "produits")
+@Table(name = "produits", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_produits_tenant_reference", columnNames = {"point_de_vente_id", "reference"})
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Produit {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String reference;
 
     private String designation;
