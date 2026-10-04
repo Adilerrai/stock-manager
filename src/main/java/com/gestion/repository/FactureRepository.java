@@ -20,7 +20,15 @@ public interface FactureRepository extends JpaRepository<Facture, Long>, Facture
 
     Optional<Facture> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
 
+    Optional<Facture> findByPointDeVenteIdAndNumeroFacture(Long pointDeVenteId, String numeroFacture);
+
     List<Facture> findByPointDeVenteIdOrderByDateFactureDesc(Long pointDeVenteId);
+
+    @Query("SELECT f FROM Facture f WHERE f.pointDeVenteId = :pointDeVenteId AND (f.annulee = false OR f.annulee IS NULL) AND f.statut <> com.gestion.persistent.enums.StatutFacture.ANNULEE ORDER BY f.dateFacture DESC, f.id DESC")
+    List<Facture> findFacturesValablesByPointDeVenteId(@Param("pointDeVenteId") Long pointDeVenteId);
+
+    @Query("SELECT f FROM Facture f WHERE f.client.id = :clientId AND f.pointDeVenteId = :pointDeVenteId AND (f.annulee = false OR f.annulee IS NULL) AND f.statut <> com.gestion.persistent.enums.StatutFacture.ANNULEE ORDER BY f.dateFacture DESC, f.id DESC")
+    List<Facture> findFacturesValablesByClientIdAndPointDeVenteId(@Param("clientId") Long clientId, @Param("pointDeVenteId") Long pointDeVenteId);
 
     List<Facture> findByClientIdAndPointDeVenteId(Long clientId, Long pointDeVenteId);
 

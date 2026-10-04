@@ -24,13 +24,16 @@ public class FactureController {
     private final FactureService factureService;
     private final com.gestion.service.ImpressionService impressionService;
     private final FactureMapper factureMapper;
+    private final com.gestion.repository.FactureRepository factureRepository;
 
     public FactureController(FactureService factureService, 
                              com.gestion.service.ImpressionService impressionService,
-                             FactureMapper factureMapper) {
+                             FactureMapper factureMapper,
+                             com.gestion.repository.FactureRepository factureRepository) {
         this.factureService = factureService;
         this.impressionService = impressionService;
         this.factureMapper = factureMapper;
+        this.factureRepository = factureRepository;
     }
 
     @PostMapping("/search")
@@ -41,10 +44,20 @@ public class FactureController {
 
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> getFacturePdf(@PathVariable Long id) {
+        Facture facture = factureRepository.findById(id).orElse(null);
+        String code = (facture != null && facture.getNumeroFacture() != null) ? facture.getNumeroFacture() : "FACTURE";
+        String rs = (facture != null && facture.getClient() != null) ? facture.getClient().getNomComplet() : "";
+        String fileName = ImpressionController.buildPdfFileName(code, rs);
+
         byte[] pdf = impressionService.genererFacturePdf(id);
+        String cleanAscii = fileName.replaceAll("[^a-zA-Z0-9._-]", "_");
+        String encodedFilename = java.net.URLEncoder.encode(fileName, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
+        String contentDisposition = "inline; filename=\"" + cleanAscii + "\"; filename*=UTF-8''" + encodedFilename;
+
         return ResponseEntity.ok()
                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
-                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"facture-" + id + ".pdf\"")
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, contentDisposition)
+                .header("X-Filename", fileName)
                 .body(pdf);
     }
 

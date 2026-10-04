@@ -93,6 +93,7 @@ public class SecurityConfig {
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Disposition",
+                "X-Filename",
                 "X-Exercice-Year",
                 "X-Exercice-Id",
                 "X-Societe-Id",

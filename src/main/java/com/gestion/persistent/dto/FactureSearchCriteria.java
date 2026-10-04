@@ -15,8 +15,12 @@ public class FactureSearchCriteria {
     private BigDecimal montantMin;
     private BigDecimal montantMax;
     private Long societeId;
+    private Boolean inclureAnnulees;
 
     public FactureSearchCriteria() {}
+
+    public Boolean getInclureAnnulees() { return inclureAnnulees; }
+    public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
 
     public String getNumeroFacture() { return numeroFacture; }
     public void setNumeroFacture(String numeroFacture) { this.numeroFacture = numeroFacture; }

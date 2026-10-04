@@ -94,6 +94,12 @@ public class FactureRepositoryImpl implements FactureRepositoryCustom {
 
         if (criteria.getStatut() != null) {
             predicates.add(cb.equal(root.get("statut"), criteria.getStatut()));
+        } else if (!Boolean.TRUE.equals(criteria.getInclureAnnulees())) {
+            // Ignorer les factures annulées par défaut
+            predicates.add(cb.and(
+                    cb.or(cb.isNull(root.get("annulee")), cb.isFalse(root.get("annulee"))),
+                    cb.notEqual(root.get("statut"), com.gestion.persistent.enums.StatutFacture.ANNULEE)
+            ));
         }
 
         if (Boolean.TRUE.equals(criteria.getEstEchue())) {

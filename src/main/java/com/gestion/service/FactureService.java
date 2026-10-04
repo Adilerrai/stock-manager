@@ -109,8 +109,8 @@ public class FactureService {
         Facture facture = new Facture();
         facture.setClient(client);
         facture.setEmisePar(user);
-        facture.setNumeroFacture(genererNumeroFacture());
         LocalDate dateFacture = request.getDateFacture() != null ? request.getDateFacture() : LocalDate.now();
+        facture.setNumeroFacture(genererNumeroFacture(tenantId, dateFacture));
         facture.setDateFacture(dateFacture);
 
         LocalDate echeance = request.getDateEcheance();
@@ -226,7 +226,8 @@ public class FactureService {
 
     public List<FactureDTO> getAllFactures() {
         Long tenantId = TenantContext.getCurrentTenant();
-        return factureRepository.findByPointDeVenteIdOrderByDateFactureDesc(tenantId != null ? tenantId : 1L).stream()
+        if (tenantId == null) tenantId = 1L;
+        return factureRepository.findFacturesValablesByPointDeVenteId(tenantId).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -240,7 +241,8 @@ public class FactureService {
 
     public List<FactureDTO> getFacturesByClient(Long clientId) {
         Long tenantId = TenantContext.getCurrentTenant();
-        return factureRepository.findByClientIdAndPointDeVenteId(clientId, tenantId != null ? tenantId : 1L).stream()
+        if (tenantId == null) tenantId = 1L;
+        return factureRepository.findFacturesValablesByClientIdAndPointDeVenteId(clientId, tenantId).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -314,6 +316,11 @@ public class FactureService {
         facture.setAnnuleePar(user);
         facture.setStatut(StatutFacture.ANNULEE);
 
+        // Libérer le numéro de facture officiel pour qu'il ne bloque pas la séquence des factures valables
+        if (facture.getNumeroFacture() != null && !facture.getNumeroFacture().contains("-ANNUL")) {
+            facture.setNumeroFacture(facture.getNumeroFacture() + "-ANNUL-" + facture.getId());
+        }
+
         // Libérer les BLs associés pour qu'ils puissent être refacturés si besoin
         if (facture.getBonsLivraison() != null) {
             for (BonLivraisonClient bl : facture.getBonsLivraison()) {
@@ -336,8 +343,9 @@ public class FactureService {
             facture.setClient(client);
         }
         facture.setEmisePar(user);
-        facture.setNumeroFacture(genererNumeroFacture());
         LocalDate dateFacture = dto.getDateFacture() != null ? dto.getDateFacture() : LocalDate.now();
+        Long tenantIdCreer = TenantContext.getCurrentTenant();
+        facture.setNumeroFacture(genererNumeroFacture(tenantIdCreer != null ? tenantIdCreer : 1L, dateFacture));
         facture.setDateFacture(dateFacture);
 
         LocalDate echeance = dto.getDateEcheance();
@@ -455,7 +463,51 @@ public class FactureService {
         return factureMapper.toDto(saved);
     }
 
-    private String genererNumeroFacture() {
-        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.FACTURE_CLIENT);
+    @org.springframework.transaction.annotation.Transactional
+    public synchronized String genererNumeroFacture(Long tenantId, LocalDate dateFacture) {
+        if (tenantId == null) {
+            tenantId = TenantContext.getCurrentTenant();
+            if (tenantId == null)
+                tenantId = 1L;
+        }
+        int annee = (dateFacture != null ? dateFacture : LocalDate.now()).getYear();
+        String prefixe = "FACT-" + annee + "-";
+
+        // Récupérer toutes les factures VALABLES (non annulées) pour ce point de vente
+        List<Facture> facturesValables = factureRepository.findFacturesValablesByPointDeVenteId(tenantId);
+
+        long maxSeq = 0;
+        for (Facture f : facturesValables) {
+            String num = f.getNumeroFacture();
+            if (num != null && num.startsWith(prefixe)) {
+                try {
+                    String seqPart = num.substring(prefixe.length());
+                    long seq = Long.parseLong(seqPart);
+                    if (seq > maxSeq) {
+                        maxSeq = seq;
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+        }
+
+        long prochainNumero = maxSeq + 1;
+        String nouveauCode = String.format("%s%03d", prefixe, prochainNumero);
+
+        // Sécurité : si une facture déjà annulée occupe encore ce numéro dans le tenant, la libérer
+        libererNumeroSiOccupeParAnnulee(nouveauCode, tenantId);
+
+        return nouveauCode;
+    }
+
+    private void libererNumeroSiOccupeParAnnulee(String numero, Long tenantId) {
+        Optional<Facture> opt = factureRepository.findByPointDeVenteIdAndNumeroFacture(tenantId, numero);
+        if (opt.isPresent()) {
+            Facture f = opt.get();
+            if (Boolean.TRUE.equals(f.getAnnulee()) || f.getStatut() == StatutFacture.ANNULEE) {
+                f.setNumeroFacture(f.getNumeroFacture() + "-ANNUL-" + f.getId());
+                factureRepository.save(f);
+            }
+        }
     }
 }
