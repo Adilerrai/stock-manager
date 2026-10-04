@@ -36,7 +36,6 @@
     <parameter name="acompteVerse" class="java.math.BigDecimal"/>
     <parameter name="soldeRestant" class="java.math.BigDecimal"/>
     <parameter name="notes" class="java.lang.String"/>
-    <parameter name="montantEnLettres" class="java.lang.String"/>
 
     <field name="reference" class="java.lang.String"/>
     <field name="designation" class="java.lang.String"/>
@@ -278,22 +277,6 @@
     <!-- Dernière page : LA SYNTHÈSE EST EN BAS (ancrée en bas de page), au-dessus du footer officiel -->
     <lastPageFooter>
         <band height="146">
-            <!-- Bloc Montant en Lettres & Notes (Gauche) -->
-            <rectangle radius="6">
-                <reportElement x="0" y="4" width="275" height="72" backcolor="#F8FAFC"/>
-                <graphicElement><pen lineWidth="0.75" lineColor="#BAE6FD"/></graphicElement>
-            </rectangle>
-            <textField isStretchWithOverflow="true" isBlankWhenNull="true">
-                <reportElement x="8" y="8" width="259" height="36" isRemoveLineWhenBlank="true" forecolor="#0F172A"/>
-                <textElement verticalAlignment="Top"><font fontName="SansSerif" size="7" isBold="true"/></textElement>
-                <textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() ? "ARRÊTÉ LE PRÉSENT BON DE COMMANDE À LA SOMME DE :\n" + $P{montantEnLettres}.toUpperCase() : ""]]></textFieldExpression>
-            </textField>
-            <textField isBlankWhenNull="true">
-                <reportElement x="8" y="46" width="259" height="24" forecolor="#64748B"/>
-                <textElement><font fontName="SansSerif" size="7" isItalic="true"/></textElement>
-                <textFieldExpression><![CDATA[$P{notes} != null && !$P{notes}.trim().isEmpty() ? "Notes : " + $P{notes} : ""]]></textFieldExpression>
-            </textField>
-
             <!-- Bloc Synthèse des Totaux (Ancré en bas) -->
             <rectangle radius="6">
                 <reportElement x="285" y="4" width="270" height="72" backcolor="#F8FAFC"/>
@@ -359,12 +342,12 @@
                 <textElement textAlignment="Center" verticalAlignment="Middle">
                     <font fontName="SansSerif" size="8" isBold="true"/>
                 </textElement>
-                <textFieldExpression><![CDATA["SOCIÉTÉ " + ($P{nomEntreprise} != null ? $P{nomEntreprise}.toUpperCase() : "")]]></textFieldExpression>
+                <textFieldExpression><![CDATA["société " + ($P{nomEntreprise} != null ? $P{nomEntreprise} : "")]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
                 <reportElement x="0" y="109" width="555" height="11" forecolor="#334155"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="SansSerif" size="7"/></textElement>
-                <textFieldExpression><![CDATA["SIÈGE SOCIAL : " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
+                <textFieldExpression><![CDATA["Siège Social : " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
             </textField>
             <textField isBlankWhenNull="true">
                 <reportElement x="0" y="120" width="555" height="11" forecolor="#334155"/>
