@@ -15,6 +15,8 @@ public class BonLivraisonClientDTO {
     private String clientTelephone;
     private Long commandeClientId;
     private String commandeClientNumero;
+    private List<Long> commandeClientIds = new ArrayList<>();
+    private List<String> commandeClientNumeros = new ArrayList<>();
     private StatutLivraison statut;
     private BigDecimal remiseGlobalePourcentage;
     private BigDecimal remiseGlobaleMontant;
@@ -81,4 +83,10 @@ public class BonLivraisonClientDTO {
 
     public List<LigneBonLivraisonClientDTO> getLignes() { return lignes; }
     public void setLignes(List<LigneBonLivraisonClientDTO> lignes) { this.lignes = lignes; }
+
+    public List<Long> getCommandeClientIds() { return commandeClientIds; }
+    public void setCommandeClientIds(List<Long> commandeClientIds) { this.commandeClientIds = commandeClientIds; }
+
+    public List<String> getCommandeClientNumeros() { return commandeClientNumeros; }
+    public void setCommandeClientNumeros(List<String> commandeClientNumeros) { this.commandeClientNumeros = commandeClientNumeros; }
 }

@@ -50,6 +50,14 @@ public class BonLivraisonClient {
     @Column(name = "point_de_vente_id", nullable = false)
     private Long pointDeVenteId;
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "bons_livraison_client_commandes",
+        joinColumns = @JoinColumn(name = "bon_livraison_id"),
+        inverseJoinColumns = @JoinColumn(name = "commande_id")
+    )
+    private List<CommandeClient> commandes = new ArrayList<>();
+
     @OneToMany(mappedBy = "bonLivraisonClient", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneBonLivraisonClient> lignes = new ArrayList<>();
 
@@ -137,5 +145,8 @@ public class BonLivraisonClient {
     public Facture getFacture() { return facture; }
     public void setFacture(Facture facture) { this.facture = facture; }
     public Boolean isFacture() { return facture != null; }
+
+    public List<CommandeClient> getCommandes() { return commandes; }
+    public void setCommandes(List<CommandeClient> commandes) { this.commandes = commandes; }
 }
 

@@ -43,4 +43,7 @@
     <!-- Changeset 011 : Unicité référence produit par point_de_vente_id / tenant -->
     <include file="changes/011-update-produits-unique-constraint-tenant.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 012 : Table de liaison multi-commandes pour bons_livraison_client -->
+    <include file="changes/012-create-bl-client-commandes.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 012 : Table de liaison multi-commandes pour bons_livraison_client
+    -->
+    <changeSet id="012-create-bl-client-commandes" author="erp-pointvente">
+        <sql splitStatements="false">
+            CREATE TABLE IF NOT EXISTS bons_livraison_client_commandes (
+                bon_livraison_id BIGINT NOT NULL REFERENCES bons_livraison_client(id) ON DELETE CASCADE,
+                commande_id BIGINT NOT NULL REFERENCES commandes_client(id) ON DELETE CASCADE,
+                PRIMARY KEY (bon_livraison_id, commande_id)
+            );
+            CREATE INDEX IF NOT EXISTS idx_bl_client_cmd_bl ON bons_livraison_client_commandes(bon_livraison_id);
+            CREATE INDEX IF NOT EXISTS idx_bl_client_cmd_cmd ON bons_livraison_client_commandes(commande_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

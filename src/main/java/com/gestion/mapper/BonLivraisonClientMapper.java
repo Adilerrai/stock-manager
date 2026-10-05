@@ -13,6 +13,8 @@ public interface BonLivraisonClientMapper {
     @Mapping(target = "clientTelephone", source = "client.telephone")
     @Mapping(target = "commandeClientId", source = "commandeClient.id")
     @Mapping(target = "commandeClientNumero", source = "commandeClient.numeroCommande")
+    @Mapping(target = "commandeClientIds", expression = "java(entity.getCommandes() != null ? entity.getCommandes().stream().map(com.gestion.persistent.model.CommandeClient::getId).collect(java.util.stream.Collectors.toList()) : java.util.Collections.emptyList())")
+    @Mapping(target = "commandeClientNumeros", expression = "java(entity.getCommandes() != null ? entity.getCommandes().stream().map(com.gestion.persistent.model.CommandeClient::getNumeroCommande).collect(java.util.stream.Collectors.toList()) : java.util.Collections.emptyList())")
     @Mapping(target = "factureId", source = "facture.id")
     @Mapping(target = "factureNumero", source = "facture.numeroFacture")
     @Mapping(target = "facturé", expression = "java(entity.getFacture() != null)")
@@ -21,6 +23,7 @@ public interface BonLivraisonClientMapper {
 
     @Mapping(target = "client", ignore = true)
     @Mapping(target = "commandeClient", ignore = true)
+    @Mapping(target = "commandes", ignore = true)
     @Mapping(target = "facture", ignore = true)
     @Mapping(target = "lignes", ignore = true)
     BonLivraisonClient toEntity(BonLivraisonClientDTO dto);

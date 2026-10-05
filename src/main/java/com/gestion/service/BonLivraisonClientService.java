@@ -85,18 +85,37 @@ public class BonLivraisonClientService {
         bl.setNumeroBl(genererNumeroBL());
         bl.setStatut(StatutLivraison.EN_ATTENTE);
 
-        // If order linked, load it first
-        CommandeClient commande = null;
-        if (dto.getCommandeClientId() != null) {
-            commande = commandeClientRepository.findById(dto.getCommandeClientId()).orElse(null);
-            if (commande != null) {
-                if (commande.getStatut() == com.gestion.persistent.enums.StatutCommandeClient.BROUILLON) {
-                    String numCmd = commande.getNumeroCommande() != null ? commande.getNumeroCommande() : ("#" + commande.getId());
+        // If order(s) linked, load them
+        List<Long> targetCmdIds = new java.util.ArrayList<>();
+        if (dto.getCommandeClientIds() != null && !dto.getCommandeClientIds().isEmpty()) {
+            for (Long cid : dto.getCommandeClientIds()) {
+                if (cid != null && !targetCmdIds.contains(cid)) {
+                    targetCmdIds.add(cid);
+                }
+            }
+        } else if (dto.getCommandeClientId() != null) {
+            targetCmdIds.add(dto.getCommandeClientId());
+        }
+
+        List<CommandeClient> linkedCommandes = new java.util.ArrayList<>();
+        for (Long cid : targetCmdIds) {
+            CommandeClient cmd = commandeClientRepository.findById(cid).orElse(null);
+            if (cmd != null) {
+                if (cmd.getStatut() == com.gestion.persistent.enums.StatutCommandeClient.BROUILLON) {
+                    String numCmd = cmd.getNumeroCommande() != null ? cmd.getNumeroCommande() : ("#" + cmd.getId());
                     throw new CommonException("Impossible de créer un bon de livraison : la commande client " + numCmd + 
                             " est au statut BROUILLON. Veuillez d'abord la confirmer / valider.", HttpStatus.BAD_REQUEST);
                 }
-                bl.setCommandeClient(commande);
+                linkedCommandes.add(cmd);
             }
+        }
+
+        CommandeClient commande = !linkedCommandes.isEmpty() ? linkedCommandes.get(0) : null;
+        if (commande != null) {
+            bl.setCommandeClient(commande);
+        }
+        if (!linkedCommandes.isEmpty()) {
+            bl.setCommandes(linkedCommandes);
         }
 
         // Load and validate client
@@ -254,24 +273,51 @@ public class BonLivraisonClientService {
 
         bl.setStatut(StatutLivraison.LIVREE);
 
-        // Update linked order status and reliquats if any
+        // Update linked orders status and reliquats if any
+        java.util.Set<CommandeClient> allCommandes = new java.util.LinkedHashSet<>();
         if (bl.getCommandeClient() != null) {
-            CommandeClient commande = bl.getCommandeClient();
+            allCommandes.add(bl.getCommandeClient());
+        }
+        if (bl.getCommandes() != null && !bl.getCommandes().isEmpty()) {
+            allCommandes.addAll(bl.getCommandes());
+        }
+
+        boolean toutLivreGlobal = true;
+        boolean auMoinsUneLivraisonGlobal = false;
+
+        // Calculate total available quantities in this BL per product
+        java.util.Map<Long, BigDecimal> remainingBlQtyPerProduct = new java.util.HashMap<>();
+        for (LigneBonLivraisonClient ligneBl : bl.getLignes()) {
+            if (ligneBl.getProduit() == null || ligneBl.getProduit().getId() == null) continue;
+            Long pid = ligneBl.getProduit().getId();
+            BigDecimal qte = ligneBl.getQuantiteLivree() != null ? ligneBl.getQuantiteLivree() : BigDecimal.ZERO;
+            remainingBlQtyPerProduct.put(pid, remainingBlQtyPerProduct.getOrDefault(pid, BigDecimal.ZERO).add(qte));
+        }
+
+        for (CommandeClient commande : allCommandes) {
             if (commande.getLignesCommande() != null) {
-                for (LigneBonLivraisonClient ligneBl : bl.getLignes()) {
-                    if (ligneBl.getProduit() == null) continue;
-                    for (LigneCommandeClient ligneCmd : commande.getLignesCommande()) {
-                        if (ligneCmd.getProduit() != null && ligneCmd.getProduit().getId().equals(ligneBl.getProduit().getId())) {
-                            BigDecimal dejaLivre = ligneCmd.getQuantiteLivree() != null ? ligneCmd.getQuantiteLivree() : BigDecimal.ZERO;
-                            BigDecimal qteBl = ligneBl.getQuantiteLivree() != null ? ligneBl.getQuantiteLivree() : BigDecimal.ZERO;
-                            ligneCmd.setQuantiteLivree(dejaLivre.add(qteBl));
-                            ligneCmd.setQuantiteReliquat(ligneCmd.calculerReliquat());
-                            break;
+                for (LigneCommandeClient lc : commande.getLignesCommande()) {
+                    if (lc.getProduit() == null || lc.getProduit().getId() == null) continue;
+                    Long pid = lc.getProduit().getId();
+                    BigDecimal avail = remainingBlQtyPerProduct.getOrDefault(pid, BigDecimal.ZERO);
+                    if (avail.compareTo(BigDecimal.ZERO) > 0) {
+                        BigDecimal besoin = lc.getQuantiteReliquat() != null ? lc.getQuantiteReliquat() : lc.calculerReliquat();
+                        if (besoin.compareTo(BigDecimal.ZERO) <= 0) {
+                            BigDecimal cmdQte = lc.getQuantiteCommandee() != null ? lc.getQuantiteCommandee() : (lc.getQuantite() != null ? lc.getQuantite() : BigDecimal.ZERO);
+                            BigDecimal dejaLiv = lc.getQuantiteLivree() != null ? lc.getQuantiteLivree() : BigDecimal.ZERO;
+                            besoin = cmdQte.subtract(dejaLiv);
+                        }
+                        if (besoin.compareTo(BigDecimal.ZERO) > 0) {
+                            BigDecimal toDeliver = avail.min(besoin);
+                            BigDecimal dejaLivre = lc.getQuantiteLivree() != null ? lc.getQuantiteLivree() : BigDecimal.ZERO;
+                            lc.setQuantiteLivree(dejaLivre.add(toDeliver));
+                            lc.setQuantiteReliquat(lc.calculerReliquat());
+                            remainingBlQtyPerProduct.put(pid, avail.subtract(toDeliver));
                         }
                     }
                 }
 
-                // Déterminer si tout est livré ou livraison partielle
+                // Déterminer si tout est livré ou livraison partielle pour cette commande
                 boolean toutLivre = true;
                 boolean auMoinsUneLivraison = false;
                 for (LigneCommandeClient lc : commande.getLignesCommande()) {
@@ -286,16 +332,28 @@ public class BonLivraisonClientService {
                 }
 
                 if (toutLivre) {
-                    bl.setStatut(StatutLivraison.LIVREE);
                     commande.setStatut(StatutCommandeClient.LIVREE);
                 } else if (auMoinsUneLivraison) {
-                    bl.setStatut(StatutLivraison.PARTIELLE);
                     commande.setStatut(StatutCommandeClient.LIVREE_PARTIELLE);
+                    toutLivreGlobal = false;
+                } else {
+                    toutLivreGlobal = false;
+                }
+                if (auMoinsUneLivraison) {
+                    auMoinsUneLivraisonGlobal = true;
                 }
             } else {
                 commande.setStatut(StatutCommandeClient.LIVREE);
             }
             commandeClientRepository.save(commande);
+        }
+
+        if (!allCommandes.isEmpty()) {
+            if (toutLivreGlobal) {
+                bl.setStatut(StatutLivraison.LIVREE);
+            } else if (auMoinsUneLivraisonGlobal) {
+                bl.setStatut(StatutLivraison.PARTIELLE);
+            }
         }
 
         BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
@@ -344,10 +402,13 @@ public class BonLivraisonClientService {
                 }
             }
 
-            // Si lié à une commande client, on repasse la commande en CONFIRMEE
-            if (bl.getCommandeClient() != null) {
-                CommandeClient commande = bl.getCommandeClient();
-                if (commande.getStatut() == StatutCommandeClient.LIVREE) {
+            // Si lié à des commandes client, on repasse les commandes en CONFIRMEE
+            java.util.Set<CommandeClient> allCommandes = new java.util.LinkedHashSet<>();
+            if (bl.getCommandeClient() != null) allCommandes.add(bl.getCommandeClient());
+            if (bl.getCommandes() != null) allCommandes.addAll(bl.getCommandes());
+
+            for (CommandeClient commande : allCommandes) {
+                if (commande.getStatut() == StatutCommandeClient.LIVREE || commande.getStatut() == StatutCommandeClient.LIVREE_PARTIELLE) {
                     commande.setStatut(StatutCommandeClient.CONFIRMEE);
                     commandeClientRepository.save(commande);
                 }
@@ -398,9 +459,12 @@ public class BonLivraisonClientService {
                 }
             }
 
-            // Réajuster les quantités livrées sur la commande client liée
-            if (bl.getCommandeClient() != null) {
-                CommandeClient commande = bl.getCommandeClient();
+            // Réajuster les quantités livrées sur les commandes client liées
+            java.util.Set<CommandeClient> allCommandes = new java.util.LinkedHashSet<>();
+            if (bl.getCommandeClient() != null) allCommandes.add(bl.getCommandeClient());
+            if (bl.getCommandes() != null) allCommandes.addAll(bl.getCommandes());
+
+            for (CommandeClient commande : allCommandes) {
                 if (commande.getLignesCommande() != null) {
                     for (LigneBonLivraisonClient ligneBl : bl.getLignes()) {
                         if (ligneBl.getProduit() == null) continue;
