@@ -46,4 +46,7 @@
     <!-- Changeset 012 : Table de liaison multi-commandes pour bons_livraison_client -->
     <include file="changes/012-create-bl-client-commandes.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 013 : Colonnes Maroc (patente, ice, cnss, gsm) entreprise_profiles -->
+    <include file="changes/013-add-entreprise-profiles-morocco-fields.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

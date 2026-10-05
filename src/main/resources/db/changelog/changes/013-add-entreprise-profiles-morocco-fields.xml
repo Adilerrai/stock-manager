@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 013 : Ajout des colonnes Maroc (patente, ice, cnss, gsm) dans entreprise_profiles
+    -->
+    <changeSet id="013-add-entreprise-profiles-morocco-fields" author="erp-pointvente">
+        <sql splitStatements="false">
+            ALTER TABLE IF EXISTS entreprise_profiles 
+                ADD COLUMN IF NOT EXISTS patente VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS ice VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS cnss VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS gsm VARCHAR(100);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
