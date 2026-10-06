@@ -229,7 +229,7 @@ public class FactureService {
     public List<FactureDTO> getAllFactures() {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId == null) tenantId = 1L;
-        return factureRepository.findFacturesValablesByPointDeVenteId(tenantId).stream()
+        return factureRepository.findByPointDeVenteIdOrderByDateFactureDesc(tenantId).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -244,7 +244,7 @@ public class FactureService {
     public List<FactureDTO> getFacturesByClient(Long clientId) {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId == null) tenantId = 1L;
-        return factureRepository.findFacturesValablesByClientIdAndPointDeVenteId(clientId, tenantId).stream()
+        return factureRepository.findByClientIdAndPointDeVenteId(clientId, tenantId).stream()
                 .map(factureMapper::toDto)
                 .collect(Collectors.toList());
     }
