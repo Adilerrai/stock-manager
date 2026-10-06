@@ -370,6 +370,9 @@ public class CommandeService {
 
     public byte[] generateCommandePdf(Long commandeId) {
         Commande commande = getCommandeById(commandeId);
+        if (commande.getStatut() == StatutCommande.BROUILLON || commande.getStatut() == StatutCommande.ANNULEE) {
+            throw new IllegalStateException("Impossible d'imprimer une commande fournisseur en statut Brouillon ou Annulée. Elle doit être validée.");
+        }
         
         try {
             // Compile main report

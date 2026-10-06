@@ -1,6 +1,7 @@
 package com.gestion.service;
 
 import com.gestion.persistent.model.*;
+import com.gestion.persistent.enums.*;
 import com.gestion.repository.*;
 import com.gestion.util.FrenchNumberToWords;
 import net.sf.jasperreports.engine.*;
@@ -110,6 +111,10 @@ public class ImpressionService {
         Facture facture = factureRepository.findById(factureId)
                 .orElseThrow(() -> new RuntimeException("Facture non trouvée avec l'id: " + factureId));
 
+        if (facture.getStatut() == StatutFacture.BROUILLON || facture.getStatut() == StatutFacture.ANNULEE) {
+            throw new IllegalStateException("Impossible d'imprimer une facture en statut Brouillon ou Annulée. Elle doit être validée.");
+        }
+
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroFacture", facture.getNumeroFacture());
         params.put("dateFacture",
@@ -187,6 +192,10 @@ public class ImpressionService {
         BonLivraisonClient bl = bonLivraisonClientRepository.findById(blId)
                 .orElseThrow(() -> new RuntimeException("Bon de livraison non trouvé avec l'id: " + blId));
 
+        if (bl.getStatut() == StatutLivraison.BROUILLON || bl.getStatut() == StatutLivraison.ANNULEE) {
+            throw new IllegalStateException("Impossible d'imprimer un bon de livraison en statut Brouillon ou Annulé. Il doit être validé.");
+        }
+
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroBl", bl.getNumeroBl());
         params.put("dateBl", bl.getDateBl() != null ? bl.getDateBl().format(DATETIME_FORMATTER) : "-");
@@ -233,6 +242,10 @@ public class ImpressionService {
         Devis devis = devisRepository.findById(devisId)
                 .orElseThrow(() -> new RuntimeException("Devis non trouvé avec l'id: " + devisId));
 
+        if (devis.getStatut() == StatutDevis.BROUILLON || devis.getStatut() == StatutDevis.REFUSE) {
+            throw new IllegalStateException("Impossible d'imprimer un devis en statut Brouillon ou Refusé. Il doit être validé ou envoyé.");
+        }
+
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroDevis", devis.getNumeroDevis());
         params.put("dateDevis", devis.getDateDevis() != null ? devis.getDateDevis().format(DATE_FORMATTER) : "-");
@@ -274,6 +287,10 @@ public class ImpressionService {
     public byte[] genererCommandeClientPdf(Long commandeClientId) {
         CommandeClient commande = commandeClientRepository.findById(commandeClientId)
                 .orElseThrow(() -> new RuntimeException("Commande client non trouvée avec l'id: " + commandeClientId));
+
+        if (commande.getStatut() == StatutCommandeClient.BROUILLON || commande.getStatut() == StatutCommandeClient.ANNULEE) {
+            throw new IllegalStateException("Impossible d'imprimer une commande client en statut Brouillon ou Annulée. Elle doit être confirmée.");
+        }
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroCommande", commande.getNumeroCommande());
@@ -322,6 +339,10 @@ public class ImpressionService {
         Commande commande = commandeRepository.findById(commandeId)
                 .orElseThrow(() -> new RuntimeException("Commande fournisseur non trouvée avec l'id: " + commandeId));
 
+        if (commande.getStatut() == StatutCommande.BROUILLON || commande.getStatut() == StatutCommande.ANNULEE) {
+            throw new IllegalStateException("Impossible d'imprimer une commande fournisseur en statut Brouillon ou Annulée. Elle doit être validée.");
+        }
+
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroCommande", commande.getNumeroCommande());
         params.put("dateCommande",
@@ -363,6 +384,10 @@ public class ImpressionService {
     public byte[] genererBonReceptionPdf(Long livraisonId) {
         Livraison livraison = livraisonRepository.findById(livraisonId)
                 .orElseThrow(() -> new RuntimeException("Livraison / Réception non trouvée avec l'id: " + livraisonId));
+
+        if (livraison.getStatut() == StatutLivraison.BROUILLON || livraison.getStatut() == StatutLivraison.ANNULEE) {
+            throw new IllegalStateException("Impossible d'imprimer un bon de réception en statut Brouillon ou Annulé.");
+        }
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroReception", livraison.getNumeroLivraison() != null ? livraison.getNumeroLivraison() : "REC-" + livraisonId);
@@ -408,6 +433,10 @@ public class ImpressionService {
     public byte[] genererFactureAchatPdf(Long factureAchatId) {
         FactureAchat facture = factureAchatRepository.findById(factureAchatId)
                 .orElseThrow(() -> new RuntimeException("Facture d'achat non trouvée avec l'id: " + factureAchatId));
+
+        if (facture.getStatut() == StatutFacture.BROUILLON || facture.getStatut() == StatutFacture.ANNULEE) {
+            throw new IllegalStateException("Impossible d'imprimer une facture d'achat en statut Brouillon ou Annulée. Elle doit être validée.");
+        }
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroFacture", facture.getNumeroFacture());
@@ -457,6 +486,10 @@ public class ImpressionService {
         Avoir avoir = avoirRepository.findById(avoirId)
                 .orElseThrow(() -> new RuntimeException("Avoir non trouvé avec l'id: " + avoirId));
 
+        if (avoir.getStatut() == StatutAvoir.BROUILLON || avoir.getStatut() == StatutAvoir.ANNULE) {
+            throw new IllegalStateException("Impossible d'imprimer un avoir en statut Brouillon ou Annulé. Il doit être validé.");
+        }
+
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroAvoir", avoir.getNumeroAvoir());
         params.put("dateAvoir", avoir.getDateAvoir() != null ? avoir.getDateAvoir().format(DATE_FORMATTER) : "-");
@@ -496,6 +529,10 @@ public class ImpressionService {
     public byte[] genererTicketVentePdf(Long venteId) {
         Vente vente = venteRepository.findById(venteId)
                 .orElseThrow(() -> new RuntimeException("Vente non trouvée avec l'id: " + venteId));
+
+        if (vente.getStatut() == StatutVente.ANNULEE) {
+            throw new IllegalStateException("Impossible d'imprimer le ticket d'une vente annulée.");
+        }
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroTicket", vente.getNumeroTicket());
