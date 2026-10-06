@@ -31,6 +31,13 @@ public class DepenseController {
         return new ResponseEntity<>(cree, HttpStatus.CREATED);
     }
 
+    @PostMapping("/search")
+    public ResponseEntity<org.springframework.data.domain.Page<DepenseDTO>> searchDepenses(
+            @RequestBody(required = false) com.gestion.persistent.dto.DepenseSearchCriteria criteria,
+            org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(depenseService.searchDepenses(criteria, pageable));
+    }
+
     @GetMapping
     public ResponseEntity<List<DepenseDTO>> getDepenses(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,

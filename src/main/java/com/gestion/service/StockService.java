@@ -9,14 +9,24 @@ import com.gestion.persistent.model.StockQualite;
 import com.gestion.repository.ProduitRepository;
 import com.gestion.repository.StockQualiteRepository;
 import com.gestion.repository.StockRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.gestion.mapper.StockMapper;
+import com.gestion.persistent.dto.StockDTO;
+import com.gestion.persistent.dto.StockSearchCriteria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -26,15 +36,26 @@ public class StockService {
     private final StockQualiteRepository stockQualiteRepository;
     private final ProduitRepository produitRepository;
     private final EntrepriseProfileService entrepriseProfileService;
+    private final StockMapper stockMapper;
 
     public StockService(StockRepository stockRepository,
                         StockQualiteRepository stockQualiteRepository,
                         ProduitRepository produitRepository,
                         EntrepriseProfileService entrepriseProfileService) {
+        this(stockRepository, stockQualiteRepository, produitRepository, entrepriseProfileService, null);
+    }
+
+    @Autowired
+    public StockService(StockRepository stockRepository,
+                        StockQualiteRepository stockQualiteRepository,
+                        ProduitRepository produitRepository,
+                        EntrepriseProfileService entrepriseProfileService,
+                        StockMapper stockMapper) {
         this.stockRepository = stockRepository;
         this.stockQualiteRepository = stockQualiteRepository;
         this.produitRepository = produitRepository;
         this.entrepriseProfileService = entrepriseProfileService;
+        this.stockMapper = stockMapper;
     }
 
     // =========================================================================
@@ -272,5 +293,24 @@ public class StockService {
             return stockQualiteRepository.findStocksEnAlerteByTenant(tenantId);
         }
         return List.of();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<StockDTO> searchStocks(StockSearchCriteria criteria, Pageable pageable) {
+        Page<Stock> stockPage = stockRepository.findByCriteria(criteria, pageable);
+
+        return stockPage.map(s -> {
+            StockDTO dto = stockMapper != null ? stockMapper.toDto(s) : new StockDTO();
+            BigDecimal dispo = s.getQuantiteDisponible() != null ? s.getQuantiteDisponible() : BigDecimal.ZERO;
+            BigDecimal seuil = s.getSeuilAlerte() != null ? s.getSeuilAlerte() : BigDecimal.ZERO;
+            if (dispo.compareTo(BigDecimal.ZERO) <= 0) {
+                dto.setStatutStock("RUPTURE");
+            } else if (seuil.compareTo(BigDecimal.ZERO) > 0 && dispo.compareTo(seuil) <= 0) {
+                dto.setStatutStock("ALERTE");
+            } else {
+                dto.setStatutStock("OK");
+            }
+            return dto;
+        });
     }
 }

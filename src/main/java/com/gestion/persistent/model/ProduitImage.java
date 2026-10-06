@@ -1,10 +1,13 @@
 package com.gestion.persistent.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "produit_images")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ProduitImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,11 +15,13 @@ public class ProduitImage {
     
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "produit_id", nullable = false)
+    @JsonIgnore
     private Produit produit;
     
     private String fileName;
     
     @Column(columnDefinition = "bytea") // Utiliser bytea au lieu de @Lob
+    @JsonIgnore
     private byte[] imageData;
     
     private String contentType;
@@ -28,6 +33,7 @@ public class ProduitImage {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     
+    @JsonIgnore
     public Produit getProduit() { return produit; }
     public void setProduit(Produit produit) {
         this.produit = produit;
@@ -36,6 +42,7 @@ public class ProduitImage {
     public String getFileName() { return fileName; }
     public void setFileName(String fileName) { this.fileName = fileName; }
     
+    @JsonIgnore
     public byte[] getImageData() { return imageData; }
     public void setImageData(byte[] imageData) { this.imageData = imageData; }
     

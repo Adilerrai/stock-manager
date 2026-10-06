@@ -15,9 +15,9 @@
 
     <detail>
         <band height="25">
-            <!-- Alternance de couleurs -->
+            <!-- Alternance de couleurs subtile -->
             <rectangle>
-                <reportElement x="0" y="0" width="555" height="25" backcolor="#F8F9FA">
+                <reportElement x="0" y="0" width="555" height="25" backcolor="#F8FAFC">
                     <printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></printWhenExpression>
                 </reportElement>
                 <graphicElement>
@@ -25,47 +25,47 @@
                 </graphicElement>
             </rectangle>
             
-            <!-- Bordures -->
+            <!-- Bordures fines -->
             <line>
                 <reportElement x="0" y="24" width="555" height="1"/>
                 <graphicElement>
-                    <pen lineWidth="0.5" lineColor="#DEE2E6"/>
+                    <pen lineWidth="0.5" lineColor="#E2E8F0"/>
                 </graphicElement>
             </line>
             
             <!-- Données -->
             <textField>
-                <reportElement x="10" y="5" width="80" height="15"/>
+                <reportElement x="10" y="5" width="80" height="15" forecolor="#2C3D52"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9"/>
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{produitReference}]]></textFieldExpression>
             </textField>
             <textField>
-                <reportElement x="100" y="5" width="200" height="15"/>
+                <reportElement x="100" y="5" width="200" height="15" forecolor="#1E293B"/>
                 <textElement verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9"/>
+                    <font fontName="DejaVu Sans" size="9"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{produitDescription}]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00">
-                <reportElement x="310" y="5" width="60" height="15"/>
+                <reportElement x="310" y="5" width="60" height="15" forecolor="#1E293B"/>
                 <textElement textAlignment="Center" verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9"/>
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{quantiteCommandee}]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00">
-                <reportElement x="380" y="5" width="80" height="15"/>
+                <reportElement x="380" y="5" width="80" height="15" forecolor="#475569"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9"/>
+                    <font fontName="DejaVu Sans" size="9"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{prixUnitaire} + " DH"]]></textFieldExpression>
             </textField>
             <textField pattern="#,##0.00">
-                <reportElement x="470" y="5" width="80" height="15"/>
+                <reportElement x="470" y="5" width="75" height="15" forecolor="#1E293B"/>
                 <textElement textAlignment="Right" verticalAlignment="Middle">
-                    <font fontName="SansSerif" size="9" isBold="true"/>
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
                 </textElement>
                 <textFieldExpression><![CDATA[$F{montantLigne} + " DH"]]></textFieldExpression>
             </textField>

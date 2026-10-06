@@ -1,10 +1,12 @@
 package com.acommon.persistant.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "point_de_vente")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class PointDeVente {
 
     @Id

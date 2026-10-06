@@ -19,6 +19,8 @@ public interface DepenseRepository extends JpaRepository<Depense, Long> {
 
     Optional<Depense> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
 
+    List<Depense> findByPointDeVenteId(Long pointDeVenteId);
+
     List<Depense> findByPointDeVenteIdOrderByDateDepenseDesc(Long pointDeVenteId);
 
     @Query("SELECT d FROM Depense d WHERE d.pointDeVenteId = :pointDeVenteId AND d.dateDepense BETWEEN :debut AND :fin ORDER BY d.dateDepense DESC")

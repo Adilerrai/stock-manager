@@ -10,7 +10,17 @@ import java.util.List;
 public class StockDTO {
     private Long id;
     private Long produitId;
+    private String produitNom;
+    private String produitReference;
+    private String produitCodeBarre;
     private String produitDescription;
+    private Long categorieId;
+    private String categorieNom;
+    private BigDecimal prixVente;
+    private BigDecimal prixVenteTtc;
+    private BigDecimal prixAchatHt;
+    private String uniteMesure;
+    private String statutStock; // "OK", "ALERTE", "RUPTURE"
     private BigDecimal quantiteDisponible = BigDecimal.ZERO;
     private BigDecimal quantiteReservee = BigDecimal.ZERO;
     private BigDecimal quantiteTotale = BigDecimal.ZERO;
@@ -25,6 +35,36 @@ public class StockDTO {
 
     public Long getProduitId() { return produitId; }
     public void setProduitId(Long produitId) { this.produitId = produitId; }
+
+    public String getProduitNom() { return produitNom; }
+    public void setProduitNom(String produitNom) { this.produitNom = produitNom; }
+
+    public String getProduitReference() { return produitReference; }
+    public void setProduitReference(String produitReference) { this.produitReference = produitReference; }
+
+    public String getProduitCodeBarre() { return produitCodeBarre; }
+    public void setProduitCodeBarre(String produitCodeBarre) { this.produitCodeBarre = produitCodeBarre; }
+
+    public Long getCategorieId() { return categorieId; }
+    public void setCategorieId(Long categorieId) { this.categorieId = categorieId; }
+
+    public String getCategorieNom() { return categorieNom; }
+    public void setCategorieNom(String categorieNom) { this.categorieNom = categorieNom; }
+
+    public BigDecimal getPrixVente() { return prixVente; }
+    public void setPrixVente(BigDecimal prixVente) { this.prixVente = prixVente; }
+
+    public BigDecimal getPrixVenteTtc() { return prixVenteTtc; }
+    public void setPrixVenteTtc(BigDecimal prixVenteTtc) { this.prixVenteTtc = prixVenteTtc; }
+
+    public BigDecimal getPrixAchatHt() { return prixAchatHt; }
+    public void setPrixAchatHt(BigDecimal prixAchatHt) { this.prixAchatHt = prixAchatHt; }
+
+    public String getUniteMesure() { return uniteMesure; }
+    public void setUniteMesure(String uniteMesure) { this.uniteMesure = uniteMesure; }
+
+    public String getStatutStock() { return statutStock; }
+    public void setStatutStock(String statutStock) { this.statutStock = statutStock; }
 
     public String getProduitDescription() { return produitDescription; }
     public void setProduitDescription(String produitDescription) { this.produitDescription = produitDescription; }

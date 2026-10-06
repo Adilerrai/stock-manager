@@ -23,6 +23,9 @@ public class ImpressionController {
     private final CommandeRepository commandeRepository;
     private final AvoirRepository avoirRepository;
     private final ClientRepository clientRepository;
+    private final FournisseurRepository fournisseurRepository;
+    private final LivraisonRepository livraisonRepository;
+    private final FactureAchatRepository factureAchatRepository;
 
     public ImpressionController(ImpressionService impressionService,
                                 FactureRepository factureRepository,
@@ -31,7 +34,10 @@ public class ImpressionController {
                                 CommandeClientRepository commandeClientRepository,
                                 CommandeRepository commandeRepository,
                                 AvoirRepository avoirRepository,
-                                ClientRepository clientRepository) {
+                                ClientRepository clientRepository,
+                                FournisseurRepository fournisseurRepository,
+                                LivraisonRepository livraisonRepository,
+                                FactureAchatRepository factureAchatRepository) {
         this.impressionService = impressionService;
         this.factureRepository = factureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -40,6 +46,9 @@ public class ImpressionController {
         this.commandeRepository = commandeRepository;
         this.avoirRepository = avoirRepository;
         this.clientRepository = clientRepository;
+        this.fournisseurRepository = fournisseurRepository;
+        this.livraisonRepository = livraisonRepository;
+        this.factureAchatRepository = factureAchatRepository;
     }
 
     @GetMapping("/factures/{id}")
@@ -97,6 +106,32 @@ public class ImpressionController {
         return createPdfResponse(pdf, fileName);
     }
 
+    @GetMapping("/bons-reception/{id}")
+    public ResponseEntity<byte[]> imprimerBonReception(@PathVariable Long id) {
+        Livraison liv = livraisonRepository.findById(id).orElse(null);
+        String rs = (liv != null && liv.getCommande() != null && liv.getCommande().getFournisseur() != null)
+                ? (liv.getCommande().getFournisseur().getRaisonSociale() != null ? liv.getCommande().getFournisseur().getRaisonSociale() : liv.getCommande().getFournisseur().getNom())
+                : "";
+        String code = (liv != null && liv.getNumeroLivraison() != null) ? liv.getNumeroLivraison() : "BR-" + id;
+        String fileName = buildPdfFileName(code, rs);
+
+        byte[] pdf = impressionService.genererBonReceptionPdf(id);
+        return createPdfResponse(pdf, fileName);
+    }
+
+    @GetMapping("/factures-achat/{id}")
+    public ResponseEntity<byte[]> imprimerFactureAchat(@PathVariable Long id) {
+        FactureAchat f = factureAchatRepository.findById(id).orElse(null);
+        String rs = (f != null && f.getFournisseur() != null)
+                ? (f.getFournisseur().getRaisonSociale() != null ? f.getFournisseur().getRaisonSociale() : f.getFournisseur().getNom())
+                : "";
+        String code = (f != null && f.getNumeroFacture() != null) ? f.getNumeroFacture() : "FA-" + id;
+        String fileName = buildPdfFileName(code, rs);
+
+        byte[] pdf = impressionService.genererFactureAchatPdf(id);
+        return createPdfResponse(pdf, fileName);
+    }
+
     @GetMapping("/avoirs/{id}")
     public ResponseEntity<byte[]> imprimerAvoir(@PathVariable Long id) {
         Avoir avoir = avoirRepository.findById(id).orElse(null);
@@ -130,6 +165,19 @@ public class ImpressionController {
         String fileName = buildPdfFileName("RELEVE-" + clientId, rs);
 
         byte[] pdf = impressionService.genererReleveClientPdf(clientId, dateDebut, dateFin);
+        return createPdfResponse(pdf, fileName);
+    }
+
+    @GetMapping("/releve-fournisseur/{fournisseurId}")
+    public ResponseEntity<byte[]> imprimerReleveFournisseur(
+            @PathVariable Long fournisseurId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateDebut,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateFin) {
+        Fournisseur f = fournisseurRepository.findById(fournisseurId).orElse(null);
+        String rs = f != null ? (f.getRaisonSociale() != null ? f.getRaisonSociale() : f.getNom()) : "";
+        String fileName = buildPdfFileName("RELEVE-FOUR-" + fournisseurId, rs);
+
+        byte[] pdf = impressionService.genererReleveFournisseurPdf(fournisseurId, dateDebut, dateFin);
         return createPdfResponse(pdf, fileName);
     }
 

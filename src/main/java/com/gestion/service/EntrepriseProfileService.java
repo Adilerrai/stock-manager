@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service
@@ -84,6 +85,33 @@ public class EntrepriseProfileService {
         if (dto.getVenteStockNegatif() != null) {
             profile.setVenteStockNegatif(dto.getVenteStockNegatif());
         }
+
+        // === 5 RÈGLES MÉTIER ERP CONFIGURABLES ===
+        if (dto.getApprobationAchatActive() != null) {
+            profile.setApprobationAchatActive(dto.getApprobationAchatActive());
+        }
+        if (dto.getSeuilApprobationAchat() != null) {
+            profile.setSeuilApprobationAchat(dto.getSeuilApprobationAchat());
+        }
+        if (dto.getBlocageEncoursClientActif() != null) {
+            profile.setBlocageEncoursClientActif(dto.getBlocageEncoursClientActif());
+        }
+        if (dto.getValidationRemiseMaxActive() != null) {
+            profile.setValidationRemiseMaxActive(dto.getValidationRemiseMaxActive());
+        }
+        if (dto.getSeuilRemiseMaxPourcentage() != null) {
+            profile.setSeuilRemiseMaxPourcentage(dto.getSeuilRemiseMaxPourcentage());
+        }
+        if (dto.getInterdictionAutoApprobation() != null) {
+            profile.setInterdictionAutoApprobation(dto.getInterdictionAutoApprobation());
+        }
+        if (dto.getToleranceEcartReceptionActive() != null) {
+            profile.setToleranceEcartReceptionActive(dto.getToleranceEcartReceptionActive());
+        }
+        if (dto.getToleranceEcartPourcentage() != null) {
+            profile.setToleranceEcartPourcentage(dto.getToleranceEcartPourcentage());
+        }
+
         profile.setDateMiseAJour(LocalDateTime.now());
 
         EntrepriseProfile saved = entrepriseProfileRepository.save(profile);
@@ -97,6 +125,83 @@ public class EntrepriseProfileService {
             return Boolean.TRUE.equals(profile.getVenteStockNegatif());
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    // === Helpers pour les 5 Règles Métier ===
+
+    @Transactional(readOnly = true)
+    public boolean isApprobationAchatActive() {
+        try {
+            return Boolean.TRUE.equals(getProfileEntityByCurrentTenant().getApprobationAchatActive());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getSeuilApprobationAchat() {
+        try {
+            BigDecimal seuil = getProfileEntityByCurrentTenant().getSeuilApprobationAchat();
+            return seuil != null ? seuil : new BigDecimal("10000.00");
+        } catch (Exception e) {
+            return new BigDecimal("10000.00");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isBlocageEncoursClientActif() {
+        try {
+            return Boolean.TRUE.equals(getProfileEntityByCurrentTenant().getBlocageEncoursClientActif());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isValidationRemiseMaxActive() {
+        try {
+            return Boolean.TRUE.equals(getProfileEntityByCurrentTenant().getValidationRemiseMaxActive());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getSeuilRemiseMaxPourcentage() {
+        try {
+            BigDecimal seuil = getProfileEntityByCurrentTenant().getSeuilRemiseMaxPourcentage();
+            return seuil != null ? seuil : new BigDecimal("10.00");
+        } catch (Exception e) {
+            return new BigDecimal("10.00");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isInterdictionAutoApprobation() {
+        try {
+            return Boolean.TRUE.equals(getProfileEntityByCurrentTenant().getInterdictionAutoApprobation());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isToleranceEcartReceptionActive() {
+        try {
+            return Boolean.TRUE.equals(getProfileEntityByCurrentTenant().getToleranceEcartReceptionActive());
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal getToleranceEcartPourcentage() {
+        try {
+            BigDecimal tol = getProfileEntityByCurrentTenant().getToleranceEcartPourcentage();
+            return tol != null ? tol : new BigDecimal("5.00");
+        } catch (Exception e) {
+            return new BigDecimal("5.00");
         }
     }
 
@@ -179,6 +284,14 @@ public class EntrepriseProfileService {
         defaultProfile.setPiedPage("");
         defaultProfile.setDevise("MAD");
         defaultProfile.setVenteStockNegatif(false);
+        defaultProfile.setApprobationAchatActive(false);
+        defaultProfile.setSeuilApprobationAchat(new BigDecimal("10000.00"));
+        defaultProfile.setBlocageEncoursClientActif(false);
+        defaultProfile.setValidationRemiseMaxActive(false);
+        defaultProfile.setSeuilRemiseMaxPourcentage(new BigDecimal("10.00"));
+        defaultProfile.setInterdictionAutoApprobation(false);
+        defaultProfile.setToleranceEcartReceptionActive(false);
+        defaultProfile.setToleranceEcartPourcentage(new BigDecimal("5.00"));
         defaultProfile.setDateMiseAJour(LocalDateTime.now());
         return defaultProfile;
     }

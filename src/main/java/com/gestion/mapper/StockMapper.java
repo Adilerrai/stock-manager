@@ -10,7 +10,17 @@ import org.mapstruct.MappingTarget;
 public interface StockMapper {
 
     @Mapping(target = "produitId", source = "produit.id")
+    @Mapping(target = "produitNom", source = "produit.designation")
+    @Mapping(target = "produitReference", source = "produit.reference")
+    @Mapping(target = "produitCodeBarre", source = "produit.codeBarre")
     @Mapping(target = "produitDescription", source = "produit.description")
+    @Mapping(target = "categorieId", source = "produit.categorie.id")
+    @Mapping(target = "categorieNom", source = "produit.categorie.nom")
+    @Mapping(target = "prixVente", source = "produit.prixVenteHt")
+    @Mapping(target = "prixVenteTtc", source = "produit.prixVenteTtc")
+    @Mapping(target = "prixAchatHt", source = "produit.prixAchatHt")
+    @Mapping(target = "uniteMesure", source = "produit.uniteMesureStock")
+    @Mapping(target = "statutStock", ignore = true)
     @Mapping(target = "stocksQualite", source = "stocksQualite")
     StockDTO toDto(Stock stock);
 

@@ -1,5 +1,6 @@
 package com.gestion.persistent.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gestion.persistent.enums.UniteMesure;
 import jakarta.persistence.*;
@@ -63,6 +64,7 @@ public class Produit {
     private BigDecimal prixVenteMin;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "produit")
+    @JsonIgnore
     private ProduitImage image;
 
     @Column(name = "date_creation")
@@ -141,6 +143,7 @@ public class Produit {
         this.prixVente = prixVente;
     }
 
+    @JsonIgnore
     public ProduitImage getImage() {
         return image;
     }

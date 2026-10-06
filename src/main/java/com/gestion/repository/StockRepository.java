@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface StockRepository extends JpaRepository<Stock, Long> {
+public interface StockRepository extends JpaRepository<Stock, Long>, StockRepositoryCustom {
 
     // Liste des stocks par point de vente via produit.pointDeVente
 

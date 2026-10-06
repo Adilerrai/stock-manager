@@ -9,8 +9,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "inventaires")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Inventaire {
 
     @Id

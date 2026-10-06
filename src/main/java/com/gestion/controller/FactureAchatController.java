@@ -13,9 +13,12 @@ import java.util.List;
 public class FactureAchatController {
 
     private final FactureAchatService factureAchatService;
+    private final com.gestion.service.ImpressionService impressionService;
 
-    public FactureAchatController(FactureAchatService factureAchatService) {
+    public FactureAchatController(FactureAchatService factureAchatService,
+                                  com.gestion.service.ImpressionService impressionService) {
         this.factureAchatService = factureAchatService;
+        this.impressionService = impressionService;
     }
 
     @PostMapping
@@ -36,5 +39,14 @@ public class FactureAchatController {
     @GetMapping("/{id}")
     public ResponseEntity<FactureAchatDTO> getFactureAchatById(@PathVariable Long id) {
         return ResponseEntity.ok(factureAchatService.getFactureAchatById(id));
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> imprimerFactureAchatPdf(@PathVariable Long id) {
+        byte[] pdf = impressionService.genererFactureAchatPdf(id);
+        return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"facture_achat_" + id + ".pdf\"")
+                .body(pdf);
     }
 }

@@ -71,6 +71,8 @@ public class ImpressionService {
     private final VenteRepository venteRepository;
     private final BordereauRemiseRepository bordereauRemiseRepository;
     private final ChequeEffetRepository chequeEffetRepository;
+    private final LivraisonRepository livraisonRepository;
+    private final FactureAchatRepository factureAchatRepository;
     private final TresorerieService tresorerieService;
 
     public ImpressionService(EntrepriseProfileService entrepriseProfileService,
@@ -83,6 +85,8 @@ public class ImpressionService {
             VenteRepository venteRepository,
             BordereauRemiseRepository bordereauRemiseRepository,
             ChequeEffetRepository chequeEffetRepository,
+            LivraisonRepository livraisonRepository,
+            FactureAchatRepository factureAchatRepository,
             @org.springframework.context.annotation.Lazy TresorerieService tresorerieService) {
         this.entrepriseProfileService = entrepriseProfileService;
         this.factureRepository = factureRepository;
@@ -94,6 +98,8 @@ public class ImpressionService {
         this.venteRepository = venteRepository;
         this.bordereauRemiseRepository = bordereauRemiseRepository;
         this.chequeEffetRepository = chequeEffetRepository;
+        this.livraisonRepository = livraisonRepository;
+        this.factureAchatRepository = factureAchatRepository;
         this.tresorerieService = tresorerieService;
     }
 
@@ -352,6 +358,99 @@ public class ImpressionService {
     }
 
     // ==========================================
+    // 5b. Impression Bon de Réception Fournisseur (Achat)
+    // ==========================================
+    public byte[] genererBonReceptionPdf(Long livraisonId) {
+        Livraison livraison = livraisonRepository.findById(livraisonId)
+                .orElseThrow(() -> new RuntimeException("Livraison / Réception non trouvée avec l'id: " + livraisonId));
+
+        Map<String, Object> params = initCommonTenantParams();
+        params.put("numeroReception", livraison.getNumeroLivraison() != null ? livraison.getNumeroLivraison() : "REC-" + livraisonId);
+        params.put("dateReception", livraison.getDateLivraison() != null ? livraison.getDateLivraison().format(DATETIME_FORMATTER) : "-");
+        params.put("statut", livraison.getStatut() != null ? livraison.getStatut().toString() : "VALIDÉE");
+        params.put("commandeReference", (livraison.getCommande() != null && livraison.getCommande().getNumeroCommande() != null)
+                ? livraison.getCommande().getNumeroCommande() : "Direct");
+        params.put("transporteur", livraison.getTransporteur() != null ? livraison.getTransporteur() : "-");
+        params.put("numeroSuivi", livraison.getNumeroSuivi() != null ? livraison.getNumeroSuivi() : "");
+        params.put("observations", livraison.getObservations() != null ? livraison.getObservations() : "");
+        params.put("montantTotal", livraison.getMontantTotal() != null ? livraison.getMontantTotal() : BigDecimal.ZERO);
+
+        Fournisseur f = (livraison.getCommande() != null) ? livraison.getCommande().getFournisseur() : null;
+        if (f != null) {
+            params.put("fournisseurNom", f.getRaisonSociale() != null ? f.getRaisonSociale() : f.getNom());
+            params.put("fournisseurTelephone", f.getTelephone());
+            params.put("fournisseurAdresse", f.getAdresse());
+            params.put("fournisseurIce", f.getIce());
+        }
+
+        List<Map<String, Object>> lignes = new ArrayList<>();
+        if (livraison.getLignesLivraison() != null) {
+            for (LigneLivraison ll : livraison.getLignesLivraison()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("reference", ll.getProduit() != null ? ll.getProduit().getReference() : "");
+                map.put("designation", ll.getProduit() != null ? ll.getProduit().getDesignation() : "Article");
+                map.put("quantiteCommandee", BigDecimal.valueOf(ll.getQuantiteLivree() != null ? ll.getQuantiteLivree() : 0));
+                map.put("quantiteRecue", BigDecimal.valueOf(ll.getQuantiteLivree() != null ? ll.getQuantiteLivree() : 0));
+                map.put("prixUnitaire", ll.getPrixProduit() != null ? ll.getPrixProduit() : BigDecimal.ZERO);
+                BigDecimal total = (ll.getPrixProduit() != null && ll.getQuantiteLivree() != null)
+                        ? ll.getPrixProduit().multiply(BigDecimal.valueOf(ll.getQuantiteLivree())) : BigDecimal.ZERO;
+                map.put("montantTotal", total);
+                lignes.add(map);
+            }
+        }
+
+        return exportToPdf("bon_reception", params, lignes);
+    }
+
+    // ==========================================
+    // 5c. Impression Facture d'Achat Fournisseur
+    // ==========================================
+    public byte[] genererFactureAchatPdf(Long factureAchatId) {
+        FactureAchat facture = factureAchatRepository.findById(factureAchatId)
+                .orElseThrow(() -> new RuntimeException("Facture d'achat non trouvée avec l'id: " + factureAchatId));
+
+        Map<String, Object> params = initCommonTenantParams();
+        params.put("numeroFacture", facture.getNumeroFacture());
+        params.put("dateFacture", facture.getDateFacture() != null ? facture.getDateFacture().format(DATE_FORMATTER) : "-");
+        params.put("dateEcheance", facture.getDateEcheance() != null ? facture.getDateEcheance().format(DATE_FORMATTER) : "À réception");
+        params.put("statutFacture", facture.getStatut() != null ? facture.getStatut().toString() : "EN_ATTENTE");
+        params.put("observations", facture.getObservations() != null ? facture.getObservations() : "");
+        params.put("montantHT", facture.getMontantHt() != null ? facture.getMontantHt() : BigDecimal.ZERO);
+        params.put("montantTVA", facture.getMontantTva() != null ? facture.getMontantTva() : BigDecimal.ZERO);
+        params.put("montantTTC", facture.getMontantTtc() != null ? facture.getMontantTtc() : BigDecimal.ZERO);
+
+        String devise = (String) params.getOrDefault("devise", "MAD");
+        params.put("montantEnLettres", FrenchNumberToWords.convertir(facture.getMontantTtc() != null ? facture.getMontantTtc() : BigDecimal.ZERO, devise));
+
+        if (facture.getFournisseur() != null) {
+            Fournisseur f = facture.getFournisseur();
+            params.put("fournisseurNom", f.getRaisonSociale() != null ? f.getRaisonSociale() : f.getNom());
+            params.put("fournisseurTelephone", f.getTelephone());
+            params.put("fournisseurAdresse", f.getAdresse());
+            params.put("fournisseurIce", f.getIce());
+            params.put("fournisseurNif", f.getNumeroIdentificationFiscale());
+            params.put("fournisseurRc", f.getNumeroRegistreCommerce());
+        }
+
+        List<Map<String, Object>> lignes = new ArrayList<>();
+        if (facture.getLignes() != null) {
+            for (LigneFactureAchat lfa : facture.getLignes()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("reference", lfa.getProduit() != null ? lfa.getProduit().getReference() : "");
+                map.put("designation", lfa.getProduit() != null ? lfa.getProduit().getDesignation() : "Article");
+                map.put("quantite", lfa.getQuantite() != null ? lfa.getQuantite() : BigDecimal.ZERO);
+                map.put("prixUnitaireHT", lfa.getPrixUnitaireHt() != null ? lfa.getPrixUnitaireHt() : BigDecimal.ZERO);
+                map.put("tauxTVA", lfa.getTauxTva() != null ? lfa.getTauxTva() : BigDecimal.ZERO);
+                map.put("montantHT", lfa.getMontantHt() != null ? lfa.getMontantHt() : BigDecimal.ZERO);
+                map.put("montantTTC", lfa.getMontantTtc() != null ? lfa.getMontantTtc() : BigDecimal.ZERO);
+                lignes.add(map);
+            }
+        }
+
+        return exportToPdf("facture_achat", params, lignes);
+    }
+
+    // ==========================================
     // 6. Impression Avoir Client
     // ==========================================
     public byte[] genererAvoirPdf(Long avoirId) {
@@ -508,6 +607,47 @@ public class ImpressionService {
         }
 
         return exportToPdf("releve_compte_client", params, lignes);
+    }
+
+    // ==========================================
+    // 9b. Impression Relevé de Compte Fournisseur (Achat)
+    // ==========================================
+    public byte[] genererReleveFournisseurPdf(Long fournisseurId, java.time.LocalDate dateDebut, java.time.LocalDate dateFin) {
+        com.gestion.persistent.dto.ReleveFournisseurDTO releve = tresorerieService.genererReleveFournisseur(fournisseurId, dateDebut,
+                dateFin);
+
+        Map<String, Object> params = initCommonTenantParams();
+        params.put("fournisseurNom", releve.getFournisseurNom() != null ? releve.getFournisseurNom() : "Fournisseur");
+        params.put("fournisseurTelephone", releve.getTelephone() != null ? releve.getTelephone() : "-");
+        params.put("fournisseurAdresse", releve.getEmail() != null ? releve.getEmail() : "-");
+        params.put("fournisseurIce", releve.getIce() != null ? releve.getIce() : "-");
+
+        String periodeStr = "Au " + java.time.LocalDate.now().format(DATE_FORMATTER);
+        if (dateDebut != null && dateFin != null) {
+            periodeStr = "Du " + dateDebut.format(DATE_FORMATTER) + " au " + dateFin.format(DATE_FORMATTER);
+        } else if (dateDebut != null) {
+            periodeStr = "À partir du " + dateDebut.format(DATE_FORMATTER);
+        }
+        params.put("periode", periodeStr);
+        params.put("totalDebit", releve.getTotalReglements() != null ? releve.getTotalReglements() : BigDecimal.ZERO);
+        params.put("totalCredit", releve.getTotalAchats() != null ? releve.getTotalAchats() : BigDecimal.ZERO);
+        params.put("soldeFinal", releve.getSoldeActuel() != null ? releve.getSoldeActuel() : BigDecimal.ZERO);
+
+        List<Map<String, Object>> lignes = new ArrayList<>();
+        if (releve.getOperations() != null) {
+            for (com.gestion.persistent.dto.ReleveFournisseurDTO.LigneReleveDTO op : releve.getOperations()) {
+                Map<String, Object> m = new HashMap<>();
+                m.put("datePiece", op.getDate() != null ? op.getDate().format(DATE_FORMATTER) : "-");
+                m.put("referencePiece", op.getReference() != null ? op.getReference() : "-");
+                m.put("libelle", op.getLibelle() != null ? op.getLibelle() : "-");
+                m.put("debit", op.getDebit() != null ? op.getDebit() : BigDecimal.ZERO);
+                m.put("credit", op.getCredit() != null ? op.getCredit() : BigDecimal.ZERO);
+                m.put("soldeProgressif", op.getSoldeProgressif() != null ? op.getSoldeProgressif() : BigDecimal.ZERO);
+                lignes.add(m);
+            }
+        }
+
+        return exportToPdf("releve_compte_fournisseur", params, lignes);
     }
 
     // ==========================================

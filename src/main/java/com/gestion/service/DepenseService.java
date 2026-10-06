@@ -182,6 +182,65 @@ public class DepenseService {
         return resultat;
     }
 
+    public org.springframework.data.domain.Page<DepenseDTO> searchDepenses(com.gestion.persistent.dto.DepenseSearchCriteria criteria, org.springframework.data.domain.Pageable pageable) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Depense> list = tenantId != null ? depenseRepository.findByPointDeVenteId(tenantId) : depenseRepository.findAll();
+
+        List<DepenseDTO> filtered = list.stream()
+                .filter(d -> {
+                    if (criteria == null) return true;
+                    if (criteria.getReference() != null && !criteria.getReference().trim().isEmpty()) {
+                        if (d.getReference() == null || !d.getReference().toLowerCase().contains(criteria.getReference().toLowerCase())) return false;
+                    }
+                    if (criteria.getDesignation() != null && !criteria.getDesignation().trim().isEmpty()) {
+                        if (d.getDesignation() == null || !d.getDesignation().toLowerCase().contains(criteria.getDesignation().toLowerCase())) return false;
+                    }
+                    if (criteria.getBeneficiaire() != null && !criteria.getBeneficiaire().trim().isEmpty()) {
+                        String b = d.getBeneficiaire();
+                        String fn = d.getFournisseur() != null ? d.getFournisseur().getRaisonSociale() : null;
+                        String q = criteria.getBeneficiaire().toLowerCase();
+                        boolean matchB = b != null && b.toLowerCase().contains(q);
+                        boolean matchFn = fn != null && fn.toLowerCase().contains(q);
+                        if (!matchB && !matchFn) return false;
+                    }
+                    if (criteria.getCategorie() != null && d.getCategorie() != criteria.getCategorie()) {
+                        return false;
+                    }
+                    if (criteria.getModePaiement() != null && d.getModePaiement() != criteria.getModePaiement()) {
+                        return false;
+                    }
+                    if (criteria.getDateDebut() != null && d.getDateDepense() != null && d.getDateDepense().isBefore(criteria.getDateDebut())) {
+                        return false;
+                    }
+                    if (criteria.getDateFin() != null && d.getDateDepense() != null && d.getDateDepense().isAfter(criteria.getDateFin())) {
+                        return false;
+                    }
+                    if (criteria.getMontantMin() != null && d.getMontant() != null && d.getMontant().compareTo(criteria.getMontantMin()) < 0) {
+                        return false;
+                    }
+                    if (criteria.getMontantMax() != null && d.getMontant() != null && d.getMontant().compareTo(criteria.getMontantMax()) > 0) {
+                        return false;
+                    }
+                    if (criteria.getFournisseurId() != null) {
+                        if (d.getFournisseur() == null || !d.getFournisseur().getId().equals(criteria.getFournisseurId())) return false;
+                    }
+                    if (criteria.getDeverseeCompta() != null) {
+                        boolean dev = Boolean.TRUE.equals(d.getDeverseeCompta());
+                        if (dev != criteria.getDeverseeCompta()) return false;
+                    }
+                    return true;
+                })
+                .sorted(Comparator.comparing(Depense::getDateDepense, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(Depense::getId, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::toDto)
+                .collect(Collectors.toList());
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), filtered.size());
+        List<DepenseDTO> pageContent = (start <= end && start < filtered.size()) ? filtered.subList(start, end) : Collections.emptyList();
+        return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, filtered.size());
+    }
+
     private DepenseDTO toDto(Depense d) {
         DepenseDTO dto = new DepenseDTO();
         dto.setId(d.getId());

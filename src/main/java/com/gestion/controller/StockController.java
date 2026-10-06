@@ -30,6 +30,13 @@ public class StockController {
         this.stockQualiteMapper = stockQualiteMapper;
     }
 
+    @PostMapping("/search")
+    public ResponseEntity<org.springframework.data.domain.Page<StockDTO>> searchStocks(
+            @RequestBody(required = false) com.gestion.persistent.dto.StockSearchCriteria criteria,
+            org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(stockService.searchStocks(criteria, pageable));
+    }
+
     @PostMapping("/initialize-with-qualities")
     public ResponseEntity<StockDTO> initializeStockWithQualities(
             @RequestParam Long produitId,

@@ -42,6 +42,7 @@ public class CommandeService {
     private final LivraisonMapper livraisonMapper;
     private final ProduitMapper produitMapper;
     private final CodificationService codificationService;
+    private final EntrepriseProfileService entrepriseProfileService;
 
     public CommandeService(CommandeRepository commandeRepository,
                           LigneCommandeRepository ligneCommandeRepository,
@@ -52,6 +53,21 @@ public class CommandeService {
                           LivraisonMapper livraisonMapper,
                           ProduitMapper produitMapper,
                           CodificationService codificationService) {
+        this(commandeRepository, ligneCommandeRepository, fournisseurRepository, produitRepository,
+             livraisonService, livraisonRepository, livraisonMapper, produitMapper, codificationService, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public CommandeService(CommandeRepository commandeRepository,
+                          LigneCommandeRepository ligneCommandeRepository,
+                          FournisseurRepository fournisseurRepository,
+                          ProduitRepository produitRepository,
+                          LivraisonService livraisonService,
+                          LivraisonRepository livraisonRepository,
+                          LivraisonMapper livraisonMapper,
+                          ProduitMapper produitMapper,
+                          CodificationService codificationService,
+                          EntrepriseProfileService entrepriseProfileService) {
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.fournisseurRepository = fournisseurRepository;
@@ -61,6 +77,7 @@ public class CommandeService {
         this.livraisonMapper = livraisonMapper;
         this.produitMapper = produitMapper;
         this.codificationService = codificationService;
+        this.entrepriseProfileService = entrepriseProfileService;
     }
 
     private Long getTenantId() {
@@ -135,6 +152,24 @@ public class CommandeService {
     @Transactional
     public Commande updateStatutCommande(Long commandeId, StatutCommande nouveauStatut) {
         Commande commande = getCommandeById(commandeId);
+
+        // RÈGLE MÉTIER 1 : Approbation d'achat par seuil de montant (> 10 000 MAD par défaut)
+        if (nouveauStatut == StatutCommande.VALIDEE) {
+            if (entrepriseProfileService != null && entrepriseProfileService.isApprobationAchatActive()) {
+                BigDecimal seuil = entrepriseProfileService.getSeuilApprobationAchat();
+                if (commande.getMontantTotal() != null && commande.getMontantTotal().compareTo(seuil) > 0) {
+                    org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                    boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_SUPERADMIN") || a.getAuthority().equals("ADMIN"));
+                    if (!isAdmin) {
+                        throw new CommonException("Validation d'Achat Bloquée (Règle Métier active) : Le montant total (" + 
+                                commande.getMontantTotal() + " MAD) dépasse le seuil d'autorisation de " + seuil + " MAD. " +
+                                "Seul un Administrateur est habilité à valider cette commande.", HttpStatus.FORBIDDEN, "SEUIL_ACHAT_DEPASSE");
+                    }
+                }
+            }
+        }
+
         commande.setStatut(nouveauStatut);
         
         if (nouveauStatut == StatutCommande.LIVREE) {
@@ -249,10 +284,25 @@ public class CommandeService {
 
                 double dejaLivre = qteDejaLivreeParProduit.getOrDefault(lc.getProduit().getId(), 0.0);
                 double restant = lc.getQuantiteCommandee() - dejaLivre;
-                if (item.getQuantiteRecue() > restant) {
-                    throw new IllegalArgumentException(String.format(
-                            "La quantité reçue (%d) dépasse la quantité restante (%d) pour le produit %s",
-                            item.getQuantiteRecue(), (int) restant, lc.getProduit().getNom()));
+                double qteRecue = item.getQuantiteRecue();
+                if (qteRecue > restant) {
+                    boolean toleranceActive = entrepriseProfileService != null && entrepriseProfileService.isToleranceEcartReceptionActive();
+                    double tolerancePct = toleranceActive ? entrepriseProfileService.getToleranceEcartPourcentage().doubleValue() : 0.0;
+                    double maxAutorise = restant * (1.0 + (tolerancePct / 100.0));
+                    if (qteRecue > maxAutorise) {
+                        String nomProd = lc.getProduit().getDesignation() != null ? lc.getProduit().getDesignation() : lc.getProduit().getNom();
+                        if (toleranceActive) {
+                            throw new CommonException(String.format(
+                                    "Écart de Réception (Règle Métier active) : La quantité reçue (%d) dépasse le seuil de tolérance de %.1f%% (max autorisé: %d, restant: %d) pour le produit '%s'.",
+                                    (int) qteRecue, tolerancePct, (int) Math.floor(maxAutorise), (int) restant, nomProd),
+                                    HttpStatus.BAD_REQUEST, "TOLERANCE_RECEPTION_DEPASSEE");
+                        } else {
+                            throw new CommonException(String.format(
+                                    "La quantité reçue (%d) dépasse la quantité restante (%d) pour le produit '%s'. Activez la tolérance de sur-réception dans les paramètres si nécessaire.",
+                                    (int) qteRecue, (int) restant, nomProd),
+                                    HttpStatus.BAD_REQUEST, "SUR_RECEPTION_NON_AUTORISEE");
+                        }
+                    }
                 }
 
                 LigneLivraisonDTO lldto = new LigneLivraisonDTO();

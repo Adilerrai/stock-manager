@@ -28,11 +28,16 @@ public class LivraisonController {
     private final LivraisonService livraisonService;
     private final LivraisonMapper livraisonMapper;
     private final LivraisonRetardService livraisonRetardService;
+    private final com.gestion.service.ImpressionService impressionService;
 
-    public LivraisonController(LivraisonService livraisonService, LivraisonMapper livraisonMapper, LivraisonRetardService livraisonRetardService) {
+    public LivraisonController(LivraisonService livraisonService,
+                               LivraisonMapper livraisonMapper,
+                               LivraisonRetardService livraisonRetardService,
+                               com.gestion.service.ImpressionService impressionService) {
         this.livraisonService = livraisonService;
         this.livraisonMapper = livraisonMapper;
         this.livraisonRetardService = livraisonRetardService;
+        this.impressionService = impressionService;
     }
 
     @PostMapping("/add")
@@ -103,6 +108,15 @@ public class LivraisonController {
     public ResponseEntity<LivraisonDTO> getLivraisonWithDetails(@PathVariable("id") Long id) {
         Livraison livraison = livraisonService.getLivraisonWithDetails(id);
         return ResponseEntity.ok(livraisonMapper.toDto(livraison));
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> imprimerBonReceptionPdf(@PathVariable("id") Long id) {
+        byte[] pdf = impressionService.genererBonReceptionPdf(id);
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"bon_reception_" + id + ".pdf\"")
+                .body(pdf);
     }
 
     @GetMapping("/retards")

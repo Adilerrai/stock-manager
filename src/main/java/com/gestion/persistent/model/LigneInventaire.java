@@ -62,6 +62,7 @@ public class LigneInventaire {
         this.id = id;
     }
 
+    @JsonIgnore
     public Inventaire getInventaire() {
         return inventaire;
     }

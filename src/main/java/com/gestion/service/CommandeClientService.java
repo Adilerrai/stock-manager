@@ -12,6 +12,7 @@ import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.model.BonLivraisonClient;
+import com.gestion.persistent.model.Client;
 import com.gestion.persistent.model.CommandeClient;
 import com.gestion.persistent.model.LigneCommandeClient;
 import com.gestion.persistent.model.Produit;
@@ -45,6 +46,7 @@ public class CommandeClientService {
     private final CodificationService codificationService;
     private final StockService stockService;
     private final AuditService auditService;
+    private final EntrepriseProfileService entrepriseProfileService;
 
     public CommandeClientService(CommandeClientRepository commandeClientRepository,
                                 LigneCommandeClientRepository ligneCommandeClientRepository,
@@ -54,7 +56,8 @@ public class CommandeClientService {
                                 BonLivraisonClientRepository bonLivraisonClientRepository,
                                 CodificationService codificationService,
                                 StockService stockService,
-                                AuditService auditService) {
+                                AuditService auditService,
+                                EntrepriseProfileService entrepriseProfileService) {
         this.commandeClientRepository = commandeClientRepository;
         this.ligneCommandeClientRepository = ligneCommandeClientRepository;
         this.produitRepository = produitRepository;
@@ -64,6 +67,7 @@ public class CommandeClientService {
         this.codificationService = codificationService;
         this.stockService = stockService;
         this.auditService = auditService;
+        this.entrepriseProfileService = entrepriseProfileService;
     }
 
     private Long getTenantId() {
@@ -114,6 +118,43 @@ public class CommandeClientService {
         }
 
         commande.recalculerMontants();
+
+        // RÈGLE MÉTIER 2 : Blocage dépassement plafond de crédit / encours client
+        if (entrepriseProfileService != null && entrepriseProfileService.isBlocageEncoursClientActif() && commande.getClient() != null) {
+            Client client = commande.getClient();
+            BigDecimal creditAutorise = client.getCreditAutorise() != null ? client.getCreditAutorise() : BigDecimal.ZERO;
+            BigDecimal creditUtilise = client.getCreditUtilise() != null ? client.getCreditUtilise() : BigDecimal.ZERO;
+            if (creditAutorise.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal montantTotalTtc = commande.getMontantTTC() != null ? commande.getMontantTTC() : BigDecimal.ZERO;
+                BigDecimal nouvelEncours = creditUtilise.add(montantTotalTtc);
+                if (nouvelEncours.compareTo(creditAutorise) > 0) {
+                    BigDecimal depassement = nouvelEncours.subtract(creditAutorise);
+                    throw new CommonException("Blocage En-cours Client (Règle Métier active) : La commande dépasse le plafond de crédit autorisé de " + 
+                            depassement.setScale(2, java.math.RoundingMode.HALF_UP) + " MAD (Plafond autorisé: " + creditAutorise + " MAD, En-cours actuel: " + creditUtilise + " MAD). " +
+                            "Une validation administrative est requise.", HttpStatus.BAD_REQUEST, "ENCOURS_CLIENT_DEPASSE");
+                }
+            }
+        }
+
+        // RÈGLE MÉTIER 3 : Plafonnement & Validation des remises commerciales exceptionnelles
+        if (entrepriseProfileService != null && entrepriseProfileService.isValidationRemiseMaxActive()) {
+            BigDecimal maxRemise = entrepriseProfileService.getSeuilRemiseMaxPourcentage();
+            if (commande.getRemiseGlobalePourcentage() != null && commande.getRemiseGlobalePourcentage().compareTo(maxRemise) > 0) {
+                throw new CommonException("Plafonnement des Remises (Règle Métier active) : La remise globale de " + 
+                        commande.getRemiseGlobalePourcentage() + "% dépasse le seuil maximal autorisé de " + maxRemise + "%. " +
+                        "Une approbation de la direction est requise.", HttpStatus.BAD_REQUEST, "REMISE_MAX_DEPASSEE");
+            }
+            if (commande.getLignesCommande() != null) {
+                for (LigneCommandeClient l : commande.getLignesCommande()) {
+                    if (l.getRemisePourcentage() != null && l.getRemisePourcentage().compareTo(maxRemise) > 0) {
+                        throw new CommonException("Plafonnement des Remises (Règle Métier active) : La remise de " + 
+                                l.getRemisePourcentage() + "% sur un article dépasse le seuil maximal autorisé de " + maxRemise + "%. " +
+                                "Une approbation de la direction est requise.", HttpStatus.BAD_REQUEST, "REMISE_MAX_DEPASSEE");
+                    }
+                }
+            }
+        }
+
         commande = commandeClientRepository.save(commande);
 
         // Si la commande est créée directement au statut CONFIRMEE, réserver le stock

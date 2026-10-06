@@ -52,4 +52,7 @@
     <!-- Changeset 014 : Liaison Tiers Fournisseur, Articles de charges et Passerelle Comptable dans depenses -->
     <include file="changes/014-add-depenses-fournisseur-articles-passerelle.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 015 : Règles Métier ERP configurables dans entreprise_profiles -->
+    <include file="changes/015-add-entreprise-profiles-business-rules.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

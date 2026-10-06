@@ -1,5 +1,6 @@
 package com.gestion.persistent.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class EntrepriseProfileDTO {
@@ -29,6 +30,17 @@ public class EntrepriseProfileDTO {
     private String piedPage;
     private String devise;
     private Boolean venteStockNegatif = false;
+
+    // === 5 RÈGLES MÉTIER ERP CONFIGURABLES ===
+    private Boolean approbationAchatActive = false;
+    private BigDecimal seuilApprobationAchat = new BigDecimal("10000.00");
+    private Boolean blocageEncoursClientActif = false;
+    private Boolean validationRemiseMaxActive = false;
+    private BigDecimal seuilRemiseMaxPourcentage = new BigDecimal("10.00");
+    private Boolean interdictionAutoApprobation = false;
+    private Boolean toleranceEcartReceptionActive = false;
+    private BigDecimal toleranceEcartPourcentage = new BigDecimal("5.00");
+
     private LocalDateTime dateMiseAJour;
 
     public EntrepriseProfileDTO() {}
@@ -122,4 +134,29 @@ public class EntrepriseProfileDTO {
         this.gsm = gsm; 
         if (this.telephoneSecondaire == null) this.telephoneSecondaire = gsm;
     }
+
+    // === Getters & Setters des 5 Règles Métier ===
+    public Boolean getApprobationAchatActive() { return approbationAchatActive != null && approbationAchatActive; }
+    public void setApprobationAchatActive(Boolean approbationAchatActive) { this.approbationAchatActive = approbationAchatActive; }
+
+    public BigDecimal getSeuilApprobationAchat() { return seuilApprobationAchat != null ? seuilApprobationAchat : new BigDecimal("10000.00"); }
+    public void setSeuilApprobationAchat(BigDecimal seuilApprobationAchat) { this.seuilApprobationAchat = seuilApprobationAchat; }
+
+    public Boolean getBlocageEncoursClientActif() { return blocageEncoursClientActif != null && blocageEncoursClientActif; }
+    public void setBlocageEncoursClientActif(Boolean blocageEncoursClientActif) { this.blocageEncoursClientActif = blocageEncoursClientActif; }
+
+    public Boolean getValidationRemiseMaxActive() { return validationRemiseMaxActive != null && validationRemiseMaxActive; }
+    public void setValidationRemiseMaxActive(Boolean validationRemiseMaxActive) { this.validationRemiseMaxActive = validationRemiseMaxActive; }
+
+    public BigDecimal getSeuilRemiseMaxPourcentage() { return seuilRemiseMaxPourcentage != null ? seuilRemiseMaxPourcentage : new BigDecimal("10.00"); }
+    public void setSeuilRemiseMaxPourcentage(BigDecimal seuilRemiseMaxPourcentage) { this.seuilRemiseMaxPourcentage = seuilRemiseMaxPourcentage; }
+
+    public Boolean getInterdictionAutoApprobation() { return interdictionAutoApprobation != null && interdictionAutoApprobation; }
+    public void setInterdictionAutoApprobation(Boolean interdictionAutoApprobation) { this.interdictionAutoApprobation = interdictionAutoApprobation; }
+
+    public Boolean getToleranceEcartReceptionActive() { return toleranceEcartReceptionActive != null && toleranceEcartReceptionActive; }
+    public void setToleranceEcartReceptionActive(Boolean toleranceEcartReceptionActive) { this.toleranceEcartReceptionActive = toleranceEcartReceptionActive; }
+
+    public BigDecimal getToleranceEcartPourcentage() { return toleranceEcartPourcentage != null ? toleranceEcartPourcentage : new BigDecimal("5.00"); }
+    public void setToleranceEcartPourcentage(BigDecimal toleranceEcartPourcentage) { this.toleranceEcartPourcentage = toleranceEcartPourcentage; }
 }
