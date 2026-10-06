@@ -148,6 +148,7 @@ public class LivraisonRetardService {
                     dto.setNombreArticlesTotal(1);
                     dto.setNombreArticlesRestants(1);
                     dto.setPointDeVenteId(c.getPointDeVenteId());
+                    dto.setEntrepotNom(getNomPointDeVente(c.getPointDeVenteId()));
 
                     items.add(dto);
                 }
@@ -179,6 +180,7 @@ public class LivraisonRetardService {
                 dto.setNombreArticlesTotal(1);
                 dto.setNombreArticlesRestants(1);
                 dto.setPointDeVenteId(c.getPointDeVenteId());
+                dto.setEntrepotNom(getNomPointDeVente(c.getPointDeVenteId()));
                 items.add(dto);
             }
         }
@@ -204,12 +206,10 @@ public class LivraisonRetardService {
         String nomPdv = getNomPointDeVente(pdvId);
 
         return buildWorkbook(
-                "SUIVI DES ARTICLES FOURNISSEURS NON LIVRÉS & RELIQUATS",
+                "Commandes fournisseurs à recevoir",
                 "Fournisseur",
                 items,
-                nomPdv,
-                IndexedColors.DARK_BLUE.getIndex(),
-                IndexedColors.WHITE.getIndex()
+                nomPdv
         );
     }
 
@@ -307,6 +307,7 @@ public class LivraisonRetardService {
                     dto.setNombreArticlesTotal(1);
                     dto.setNombreArticlesRestants(1);
                     dto.setPointDeVenteId(c.getPointDeVenteId());
+                    dto.setEntrepotNom(getNomPointDeVente(c.getPointDeVenteId()));
 
                     items.add(dto);
                 }
@@ -337,6 +338,7 @@ public class LivraisonRetardService {
                 dto.setNombreArticlesTotal(1);
                 dto.setNombreArticlesRestants(1);
                 dto.setPointDeVenteId(c.getPointDeVenteId());
+                dto.setEntrepotNom(getNomPointDeVente(c.getPointDeVenteId()));
                 items.add(dto);
             }
         }
@@ -362,12 +364,10 @@ public class LivraisonRetardService {
         String nomPdv = getNomPointDeVente(pdvId);
 
         return buildWorkbook(
-                "SUIVI DES ARTICLES CLIENTS NON LIVRÉS & RELIQUATS D'EXPÉDITION",
+                "Commandes clients à livrer",
                 "Client",
                 items,
-                nomPdv,
-                IndexedColors.TEAL.getIndex(),
-                IndexedColors.WHITE.getIndex()
+                nomPdv
         );
     }
 
@@ -378,33 +378,31 @@ public class LivraisonRetardService {
     private byte[] buildWorkbook(String titreRapport,
                                  String labelTiers,
                                  List<LivraisonRetardDTO> items,
-                                 String nomPointDeVente,
-                                 short headerBgColor,
-                                 short headerTextColor) {
+                                 String nomPointDeVente) {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            Sheet sheet = workbook.createSheet("Lignes Non Livrées");
+            String sheetName = labelTiers.equalsIgnoreCase("Client") ? "Commandes clients à livrer" : "Commandes fourn. à recevoir";
+            Sheet sheet = workbook.createSheet(sheetName);
             sheet.setDisplayGridlines(true);
 
-            // Formats
+            // Formats numériques
             DataFormat dataFormat = workbook.createDataFormat();
-            short currencyFormat = dataFormat.getFormat("#,##0.00 \"MAD\"");
             short integerFormat = dataFormat.getFormat("#,##0");
 
             // Fonts
             Font fontTitre = workbook.createFont();
-            fontTitre.setFontHeightInPoints((short) 15);
+            fontTitre.setFontHeightInPoints((short) 14);
             fontTitre.setBold(true);
-            fontTitre.setColor(IndexedColors.DARK_BLUE.getIndex());
+            fontTitre.setColor(IndexedColors.ROYAL_BLUE.getIndex());
 
             Font fontSubtitle = workbook.createFont();
-            fontSubtitle.setFontHeightInPoints((short) 10);
+            fontSubtitle.setFontHeightInPoints((short) 9);
             fontSubtitle.setItalic(true);
             fontSubtitle.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
 
             Font fontHeader = workbook.createFont();
             fontHeader.setFontHeightInPoints((short) 10);
             fontHeader.setBold(true);
-            fontHeader.setColor(headerTextColor);
+            fontHeader.setColor(IndexedColors.WHITE.getIndex());
 
             Font fontData = workbook.createFont();
             fontData.setFontHeightInPoints((short) 10);
@@ -413,28 +411,23 @@ public class LivraisonRetardService {
             fontBold.setFontHeightInPoints((short) 10);
             fontBold.setBold(true);
 
-            Font fontCritique = workbook.createFont();
-            fontCritique.setFontHeightInPoints((short) 10);
-            fontCritique.setBold(true);
-            fontCritique.setColor(IndexedColors.RED.getIndex());
-
-            Font fontSuccess = workbook.createFont();
-            fontSuccess.setFontHeightInPoints((short) 10);
-            fontSuccess.setBold(true);
-            fontSuccess.setColor(IndexedColors.GREEN.getIndex());
+            Font fontRetard = workbook.createFont();
+            fontRetard.setFontHeightInPoints((short) 10);
+            fontRetard.setBold(true);
+            fontRetard.setColor(IndexedColors.RED.getIndex());
 
             // Styles
             CellStyle styleTitle = workbook.createCellStyle();
             styleTitle.setFont(fontTitre);
-            styleTitle.setAlignment(HorizontalAlignment.LEFT);
             styleTitle.setVerticalAlignment(VerticalAlignment.CENTER);
 
             CellStyle styleSub = workbook.createCellStyle();
             styleSub.setFont(fontSubtitle);
+            styleSub.setVerticalAlignment(VerticalAlignment.CENTER);
 
             CellStyle styleHeader = workbook.createCellStyle();
             styleHeader.setFont(fontHeader);
-            styleHeader.setFillForegroundColor(headerBgColor);
+            styleHeader.setFillForegroundColor(IndexedColors.ROYAL_BLUE.getIndex());
             styleHeader.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             styleHeader.setAlignment(HorizontalAlignment.CENTER);
             styleHeader.setVerticalAlignment(VerticalAlignment.CENTER);
@@ -442,214 +435,166 @@ public class LivraisonRetardService {
             styleHeader.setBorderBottom(BorderStyle.MEDIUM);
             styleHeader.setBorderLeft(BorderStyle.THIN);
             styleHeader.setBorderRight(BorderStyle.THIN);
-            styleHeader.setWrapText(true);
 
             CellStyle styleText = createBorderedStyle(workbook, fontData, HorizontalAlignment.LEFT);
             CellStyle styleCenter = createBorderedStyle(workbook, fontData, HorizontalAlignment.CENTER);
-            CellStyle styleRight = createBorderedStyle(workbook, fontData, HorizontalAlignment.RIGHT);
 
             CellStyle styleQty = createBorderedStyle(workbook, fontData, HorizontalAlignment.RIGHT);
             styleQty.setDataFormat(integerFormat);
 
-            CellStyle styleCurrency = createBorderedStyle(workbook, fontData, HorizontalAlignment.RIGHT);
-            styleCurrency.setDataFormat(currencyFormat);
+            CellStyle styleQtyRestante = createBorderedStyle(workbook, fontBold, HorizontalAlignment.RIGHT);
+            styleQtyRestante.setDataFormat(integerFormat);
 
-            CellStyle styleRetardCritique = createBorderedStyle(workbook, fontCritique, HorizontalAlignment.CENTER);
+            CellStyle styleRetardCritique = createBorderedStyle(workbook, fontRetard, HorizontalAlignment.CENTER);
             CellStyle styleRetardNormal = createBorderedStyle(workbook, fontData, HorizontalAlignment.CENTER);
-            CellStyle styleDansDelais = createBorderedStyle(workbook, fontSuccess, HorizontalAlignment.CENTER);
 
             CellStyle styleTotal = workbook.createCellStyle();
             styleTotal.setFont(fontBold);
-            styleTotal.setBorderTop(BorderStyle.DOUBLE);
+            styleTotal.setBorderTop(BorderStyle.THIN);
             styleTotal.setBorderBottom(BorderStyle.DOUBLE);
             styleTotal.setBorderLeft(BorderStyle.THIN);
             styleTotal.setBorderRight(BorderStyle.THIN);
             styleTotal.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             styleTotal.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             styleTotal.setAlignment(HorizontalAlignment.RIGHT);
-
-            CellStyle styleTotalCurrency = workbook.createCellStyle();
-            styleTotalCurrency.cloneStyleFrom(styleTotal);
-            styleTotalCurrency.setDataFormat(currencyFormat);
+            styleTotal.setVerticalAlignment(VerticalAlignment.CENTER);
 
             CellStyle styleTotalQty = workbook.createCellStyle();
             styleTotalQty.cloneStyleFrom(styleTotal);
             styleTotalQty.setDataFormat(integerFormat);
 
-            // Dates format
             DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-            // 1. Titre
+            // 1. Titre (Ligne 0)
             int rowIdx = 0;
             Row rowTitle = sheet.createRow(rowIdx++);
-            rowTitle.setHeightInPoints(24);
+            rowTitle.setHeightInPoints(26);
             Cell cellTitle = rowTitle.createCell(0);
             cellTitle.setCellValue(titreRapport);
             cellTitle.setCellStyle(styleTitle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 5));
 
-            // 2. Métadonnées
+            // 2. Sous-titre / Métadonnées (Ligne 1)
             Row rowMeta = sheet.createRow(rowIdx++);
+            rowMeta.setHeightInPoints(18);
             Cell cellMeta = rowMeta.createCell(0);
-            cellMeta.setCellValue("Point de Vente : " + nomPointDeVente + "  |  Date de génération : " +
-                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) +
-                    "  |  Total lignes non livrées : " + items.size());
+            cellMeta.setCellValue("Entrepôt : " + nomPointDeVente + "   |   Date : " +
+                    LocalDate.now().format(dtf) + "   |   Total lignes : " + items.size());
             cellMeta.setCellStyle(styleSub);
-            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 12));
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 5));
 
-            rowIdx++; // Ligne vide
+            // Ligne vide d'espacement (Ligne 2)
+            Row rowSpacer = sheet.createRow(rowIdx++);
+            rowSpacer.setHeightInPoints(8);
 
-            // 3. En-tête des colonnes
+            // 3. En-têtes (Ligne 3) - 6 colonnes optimisées pour l'impression
             String[] headers = {
-                    "N° Commande",
-                    "Date Commande",
                     labelTiers,
-                    "Contact",
-                    "Réf Article",
-                    "Désignation Article (Item)",
-                    "Qté Commandée",
-                    "Qté Livrée",
-                    "Qté Restante (Non Livrée)",
-                    "Prix Unit. HT",
-                    "Montant Restant",
-                    "Date Prévue",
-                    "Statut Ligne",
-                    "Échéance / Retard"
+                    "Commande",
+                    "Produit",
+                    "Qté commandée",
+                    "Qté restante",
+                    "Date (Retard)"
             };
 
-            Row headerRow = sheet.createRow(rowIdx++);
-            headerRow.setHeightInPoints(28);
+            int headerRowIndex = rowIdx++;
+            Row headerRow = sheet.createRow(headerRowIndex);
+            headerRow.setHeightInPoints(26);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
                 cell.setCellStyle(styleHeader);
             }
 
-            // 4. Données
-            BigDecimal grandTotalMontant = BigDecimal.ZERO;
+            // 4. Lignes de données
+            BigDecimal grandTotalQteCmd = BigDecimal.ZERO;
             BigDecimal grandTotalQteRestante = BigDecimal.ZERO;
 
             for (LivraisonRetardDTO it : items) {
                 Row row = sheet.createRow(rowIdx++);
                 row.setHeightInPoints(20);
 
-                // Col 0: N° Commande
+                // Col 0: Client / Fournisseur
                 Cell c0 = row.createCell(0);
-                c0.setCellValue(it.getNumeroCommande() != null ? it.getNumeroCommande() : "-");
-                c0.setCellStyle(styleCenter);
+                c0.setCellValue(it.getNomTiers() != null ? it.getNomTiers() : "-");
+                c0.setCellStyle(styleText);
 
-                // Col 1: Date Commande
+                // Col 1: Commande
                 Cell c1 = row.createCell(1);
-                c1.setCellValue(it.getDateCommande() != null ? it.getDateCommande().format(dtf) : "-");
+                c1.setCellValue(it.getNumeroCommande() != null ? it.getNumeroCommande() : "-");
                 c1.setCellStyle(styleCenter);
 
-                // Col 2: Tiers
+                // Col 2: Produit
                 Cell c2 = row.createCell(2);
-                c2.setCellValue(it.getNomTiers() != null ? it.getNomTiers() : "-");
+                c2.setCellValue(it.getProduitNom() != null ? it.getProduitNom() : "-");
                 c2.setCellStyle(styleText);
 
-                // Col 3: Contact
+                // Col 3: Qté commandée
                 Cell c3 = row.createCell(3);
-                String contact = it.getTelephoneTiers() != null ? it.getTelephoneTiers() : "";
-                if (it.getEmailTiers() != null) {
-                    contact = contact.isEmpty() ? it.getEmailTiers() : (contact + " / " + it.getEmailTiers());
-                }
-                c3.setCellValue(contact.isEmpty() ? "-" : contact);
-                c3.setCellStyle(styleText);
-
-                // Col 4: Réf Article
-                Cell c4 = row.createCell(4);
-                c4.setCellValue(it.getProduitReference() != null ? it.getProduitReference() : "-");
-                c4.setCellStyle(styleCenter);
-
-                // Col 5: Désignation Article
-                Cell c5 = row.createCell(5);
-                c5.setCellValue(it.getProduitNom() != null ? it.getProduitNom() : "-");
-                c5.setCellStyle(styleText);
-
-                // Col 6: Qté Commandée
-                Cell c6 = row.createCell(6);
                 double qCmd = it.getQuantiteCommandee() != null ? it.getQuantiteCommandee().doubleValue() : 0.0;
-                c6.setCellValue(qCmd);
-                c6.setCellStyle(styleQty);
+                c3.setCellValue(qCmd);
+                c3.setCellStyle(styleQty);
+                grandTotalQteCmd = grandTotalQteCmd.add(it.getQuantiteCommandee() != null ? it.getQuantiteCommandee() : BigDecimal.ZERO);
 
-                // Col 7: Qté Livrée
-                Cell c7 = row.createCell(7);
-                double qLiv = it.getQuantiteLivree() != null ? it.getQuantiteLivree().doubleValue() : 0.0;
-                c7.setCellValue(qLiv);
-                c7.setCellStyle(styleQty);
-
-                // Col 8: Qté Restante
-                Cell c8 = row.createCell(8);
+                // Col 4: Qté restante
+                Cell c4 = row.createCell(4);
                 double qReste = it.getQuantiteRestante() != null ? it.getQuantiteRestante().doubleValue() : 0.0;
-                c8.setCellValue(qReste);
-                c8.setCellStyle(styleQty);
-                grandTotalQteRestante = grandTotalQteRestante.add(BigDecimal.valueOf(qReste));
+                c4.setCellValue(qReste);
+                c4.setCellStyle(styleQtyRestante);
+                grandTotalQteRestante = grandTotalQteRestante.add(it.getQuantiteRestante() != null ? it.getQuantiteRestante() : BigDecimal.ZERO);
 
-                // Col 9: Prix Unitaire
-                Cell c9 = row.createCell(9);
-                double pu = it.getPrixUnitaire() != null ? it.getPrixUnitaire().doubleValue() : 0.0;
-                c9.setCellValue(pu);
-                c9.setCellStyle(styleCurrency);
-
-                // Col 10: Montant Restant
-                Cell c10 = row.createCell(10);
-                BigDecimal mnt = it.getMontantRestant() != null ? it.getMontantRestant()
-                        : (it.getMontantTotal() != null ? it.getMontantTotal() : BigDecimal.ZERO);
-                c10.setCellValue(mnt.doubleValue());
-                c10.setCellStyle(styleCurrency);
-                grandTotalMontant = grandTotalMontant.add(mnt);
-
-                // Col 11: Date Prévue
-                Cell c11 = row.createCell(11);
-                c11.setCellValue(it.getDateLivraisonPrevue() != null ? it.getDateLivraisonPrevue().format(dtf) : "Non planifiée");
-                c11.setCellStyle(styleCenter);
-
-                // Col 12: Statut Ligne
-                Cell c12 = row.createCell(12);
-                c12.setCellValue(it.getStatut() != null ? it.getStatut() : "Non livrée");
-                c12.setCellStyle(styleCenter);
-
-                // Col 13: Échéance / Retard
-                Cell c13 = row.createCell(13);
+                // Col 5: Date commande & Retard combinés
+                Cell c5 = row.createCell(5);
+                String dateCmd = it.getDateCommande() != null ? it.getDateCommande().format(dtf) : "-";
                 long jr = it.getJoursRetard() != null ? it.getJoursRetard() : 0L;
                 if (jr > 0) {
-                    c13.setCellValue("Retard: +" + jr + " j");
-                    c13.setCellStyle(jr >= 15 ? styleRetardCritique : styleRetardNormal);
-                } else if (it.getDateLivraisonPrevue() != null) {
-                    c13.setCellValue("Dans les délais");
-                    c13.setCellStyle(styleDansDelais);
+                    c5.setCellValue(dateCmd + " (" + jr + " j)");
+                    c5.setCellStyle(styleRetardCritique);
                 } else {
-                    c13.setCellValue("En attente");
-                    c13.setCellStyle(styleCenter);
+                    c5.setCellValue(dateCmd);
+                    c5.setCellStyle(styleRetardNormal);
                 }
             }
 
-            // 5. Ligne Totaux
-            Row totalRow = sheet.createRow(rowIdx);
+            // 5. Ligne de Totaux
+            Row totalRow = sheet.createRow(rowIdx++);
             totalRow.setHeightInPoints(22);
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = totalRow.createCell(i);
                 cell.setCellStyle(styleTotal);
             }
-            totalRow.getCell(0).setCellValue("TOTAL GLOBAL");
+            totalRow.getCell(0).setCellValue("Total");
             totalRow.getCell(0).setCellStyle(styleTotal);
 
-            // Total Qte Restante
-            Cell totalQteCell = totalRow.getCell(8);
-            totalQteCell.setCellValue(grandTotalQteRestante.doubleValue());
-            totalQteCell.setCellStyle(styleTotalQty);
+            totalRow.getCell(3).setCellValue(grandTotalQteCmd.doubleValue());
+            totalRow.getCell(3).setCellStyle(styleTotalQty);
 
-            // Total Montant Restant
-            Cell totalMntCell = totalRow.getCell(10);
-            totalMntCell.setCellValue(grandTotalMontant.doubleValue());
-            totalMntCell.setCellStyle(styleTotalCurrency);
+            totalRow.getCell(4).setCellValue(grandTotalQteRestante.doubleValue());
+            totalRow.getCell(4).setCellStyle(styleTotalQty);
 
-            // Ajustement automatique des largeurs de colonnes
+            // 6. Filtres automatiques Excel (sur les 6 colonnes)
+            int lastDataRowIndex = Math.max(headerRowIndex, rowIdx - 2);
+            sheet.setAutoFilter(new CellRangeAddress(headerRowIndex, lastDataRowIndex, 0, headers.length - 1));
+
+            // 7. Configuration d'impression (Optimisée A4 portrait/paysage pour 6 colonnes)
+            PrintSetup printSetup = sheet.getPrintSetup();
+            printSetup.setLandscape(false); // 6 colonnes tiennent parfaitement en Portrait A4
+            printSetup.setPaperSize(PrintSetup.A4_PAPERSIZE);
+            sheet.setFitToPage(true);
+            printSetup.setFitWidth((short) 1);
+            printSetup.setFitHeight((short) 0);
+            sheet.setRepeatingRows(new CellRangeAddress(headerRowIndex, headerRowIndex, 0, headers.length - 1));
+            sheet.setMargin(Sheet.TopMargin, 0.4);
+            sheet.setMargin(Sheet.BottomMargin, 0.4);
+            sheet.setMargin(Sheet.LeftMargin, 0.4);
+            sheet.setMargin(Sheet.RightMargin, 0.4);
+            sheet.setPrintGridlines(true);
+
+            // 8. Largeurs de colonnes auto-ajustées
             for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
                 int currentWidth = sheet.getColumnWidth(i);
-                sheet.setColumnWidth(i, Math.max(currentWidth + 1200, 3200));
+                sheet.setColumnWidth(i, Math.max(currentWidth + 1200, 3600));
             }
 
             workbook.write(out);

@@ -49,4 +49,7 @@
     <!-- Changeset 013 : Colonnes Maroc (patente, ice, cnss, gsm) entreprise_profiles -->
     <include file="changes/013-add-entreprise-profiles-morocco-fields.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 014 : Liaison Tiers Fournisseur, Articles de charges et Passerelle Comptable dans depenses -->
+    <include file="changes/014-add-depenses-fournisseur-articles-passerelle.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

@@ -76,6 +76,14 @@ public class PasserelleComptableController {
         return ResponseEntity.ok(passerelleService.deverserReglementsFournisseurs(dateDebut, dateFin, reglementIds));
     }
 
+    @PostMapping("/deverser-depenses")
+    public ResponseEntity<RapportDeversementDTO> deverserDepenses(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+            @RequestBody(required = false) List<Long> depenseIds) {
+        return ResponseEntity.ok(passerelleService.deverserDepenses(dateDebut, dateFin, depenseIds));
+    }
+
     @GetMapping("/modules")
     public ResponseEntity<ModulesAbonnementDTO> getModulesAbonnement() {
         return ResponseEntity.ok(passerelleService.getModulesAbonnement());

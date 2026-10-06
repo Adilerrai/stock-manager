@@ -4,6 +4,7 @@ import com.acommon.persistant.model.CurrentRequestContext;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.*;
 import com.gestion.persistent.enums.ActionAudit;
+import com.gestion.persistent.enums.CategorieDepense;
 import com.gestion.persistent.enums.ModePaiement;
 import com.gestion.persistent.enums.SensCompte;
 import com.gestion.persistent.enums.TypeJournal;
@@ -773,6 +774,132 @@ public class ComptabiliteService {
 
         EcritureComptable saved = ecritureRepository.save(ecriture);
         auditService.logCreation("ECRITURE", saved.getId(), "Génération auto décaissement N° " + saved.getNumeroPiece() + " (" + ref + ")");
+        return toEcritureDto(saved);
+    }
+
+    public EcritureComptableDTO genererEcritureDepense(Depense depense) {
+        if (depense == null || depense.getMontant() == null || depense.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
+            return null;
+        }
+
+        Long tenantId = depense.getPointDeVenteId() != null ? depense.getPointDeVenteId() : getTenantId();
+        String ref = depense.getReference();
+
+        Optional<EcritureComptable> existante = ecritureRepository.findByReferencePieceAndPointDeVenteId(ref, tenantId);
+        if (existante.isPresent()) {
+            return toEcritureDto(existante.get());
+        }
+
+        String codeJournal;
+        if (depense.getModePaiement() == ModePaiement.ESPECES) {
+            codeJournal = "CA";
+        } else if (depense.getModePaiement() == ModePaiement.VIREMENT || depense.getModePaiement() == ModePaiement.CHEQUE || depense.getModePaiement() == ModePaiement.CARTE_BANCAIRE) {
+            codeJournal = "BQ";
+        } else {
+            codeJournal = "OD";
+        }
+
+        JournalComptable journal = journalRepository.findByCodeAndPointDeVenteId(codeJournal, tenantId)
+            .orElseGet(() -> {
+                initJournauxParDefaut(tenantId);
+                return journalRepository.findByCodeAndPointDeVenteId(codeJournal, tenantId).orElse(null);
+            });
+
+        if (journal == null) {
+            journal = journalRepository.findByCodeAndPointDeVenteId("OD", tenantId).orElse(null);
+        }
+        if (journal == null) return null;
+
+        String numCompteCharge = "61810000";
+        String libCompteCharge = "Autres charges d'exploitation";
+        if (depense.getCategorie() != null) {
+            switch (depense.getCategorie()) {
+                case SALAIRES:
+                    numCompteCharge = "61710000";
+                    libCompteCharge = "Rémunérations du personnel";
+                    break;
+                case LOYER:
+                    numCompteCharge = "61310000";
+                    libCompteCharge = "Locations et charges locatives";
+                    break;
+                case ELECTRICITE_EAU:
+                    numCompteCharge = "61220000";
+                    libCompteCharge = "Achats de matières et fournitures consommables (eau, électricité)";
+                    break;
+                case TRANSPORT_CARBURANT:
+                    numCompteCharge = "61420000";
+                    libCompteCharge = "Transports et déplacements";
+                    break;
+                case COMMUNICATION_INTERNET:
+                    numCompteCharge = "61450000";
+                    libCompteCharge = "Frais postaux et télécommunications";
+                    break;
+                case FOURNITURES_BUREAU:
+                    numCompteCharge = "61250000";
+                    libCompteCharge = "Achats de fournitures de bureau & petits équipements";
+                    break;
+                case ENTRETIEN_MAINTENANCE:
+                    numCompteCharge = "61330000";
+                    libCompteCharge = "Entretien et réparations";
+                    break;
+                case FRAIS_BANCAIRES:
+                    numCompteCharge = "61470000";
+                    libCompteCharge = "Services bancaires";
+                    break;
+                case IMPOTS_TAXES:
+                    numCompteCharge = "61610000";
+                    libCompteCharge = "Impôts et taxes";
+                    break;
+                case MARKETING_PUBLICITE:
+                    numCompteCharge = "61440000";
+                    libCompteCharge = "Publicité et relations publiques";
+                    break;
+                case AUTRES_CHARGES:
+                default:
+                    numCompteCharge = "61810000";
+                    libCompteCharge = "Autres charges d'exploitation";
+                    break;
+            }
+        }
+
+        CompteComptable compteCharge = findOrCreateCompte(numCompteCharge, libCompteCharge, 6, SensCompte.DEBIT, tenantId);
+
+        CompteComptable compteContrepartie;
+        if (depense.getModePaiement() == ModePaiement.ESPECES) {
+            compteContrepartie = findOrCreateCompte("51610000", "Caisse centrale", 5, SensCompte.CREDIT, tenantId);
+        } else if (depense.getModePaiement() == ModePaiement.VIREMENT || depense.getModePaiement() == ModePaiement.CHEQUE || depense.getModePaiement() == ModePaiement.CARTE_BANCAIRE) {
+            compteContrepartie = findOrCreateCompte("51410000", "Banques", 5, SensCompte.CREDIT, tenantId);
+        } else if (depense.getFournisseur() != null) {
+            compteContrepartie = findOrCreateCompte("44110000", "Fournisseurs", 4, SensCompte.CREDIT, tenantId);
+        } else {
+            compteContrepartie = findOrCreateCompte("44880000", "Divers créanciers", 4, SensCompte.CREDIT, tenantId);
+        }
+
+        EcritureComptable ecriture = new EcritureComptable();
+        ecriture.setJournal(journal);
+        LocalDate date = depense.getDateDepense() != null ? depense.getDateDepense() : LocalDate.now();
+        ecriture.setDateEcriture(date);
+
+        if (exerciceRepository.isDateInExerciceCloture(ecriture.getDateEcriture(), tenantId)) {
+            throw new IllegalStateException("L'exercice comptable contenant le " + ecriture.getDateEcriture() + " est clôturé. Impossible d'enregistrer l'écriture.");
+        }
+
+        String tiers = depense.getFournisseur() != null ? depense.getFournisseur().getRaisonSociale()
+                     : (depense.getBeneficiaire() != null ? depense.getBeneficiaire() : "Fournisseur de frais");
+        String detail = depense.getArticlesDetail() != null && !depense.getArticlesDetail().trim().isEmpty()
+                      ? (" (" + depense.getArticlesDetail() + ")") : "";
+
+        ecriture.setLibelle("Charge " + depense.getDesignation() + " - " + tiers + detail);
+        ecriture.setReferencePiece(ref);
+        ecriture.setPointDeVenteId(tenantId);
+        ecriture.setNumeroPiece(genererNumeroPiece(journal, ecriture.getDateEcriture(), tenantId));
+        ecriture.setValidee(true);
+
+        ecriture.addLigne(new LigneEcriture(compteCharge, depense.getMontant(), BigDecimal.ZERO, "Charge : " + depense.getDesignation() + detail, tenantId));
+        ecriture.addLigne(new LigneEcriture(compteContrepartie, BigDecimal.ZERO, depense.getMontant(), "Règlement charge à " + tiers, tenantId));
+
+        EcritureComptable saved = ecritureRepository.save(ecriture);
+        auditService.logCreation("ECRITURE", saved.getId(), "Génération auto écriture dépense N° " + saved.getNumeroPiece() + " (" + ref + ")");
         return toEcritureDto(saved);
     }
 

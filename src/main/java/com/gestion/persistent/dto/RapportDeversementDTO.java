@@ -10,6 +10,7 @@ public class RapportDeversementDTO {
     private int nombreAchatsDeversees = 0;
     private int nombrePaiementsClientsDeversees = 0;
     private int nombreReglementsFournisseursDeversees = 0;
+    private int nombreDepensesDeversees = 0;
     private int totalPiecesDeversees = 0;
 
     private BigDecimal totalDebit = BigDecimal.ZERO;
@@ -31,6 +32,9 @@ public class RapportDeversementDTO {
 
     public int getNombreReglementsFournisseursDeversees() { return nombreReglementsFournisseursDeversees; }
     public void setNombreReglementsFournisseursDeversees(int nombreReglementsFournisseursDeversees) { this.nombreReglementsFournisseursDeversees = nombreReglementsFournisseursDeversees; }
+
+    public int getNombreDepensesDeversees() { return nombreDepensesDeversees; }
+    public void setNombreDepensesDeversees(int nombreDepensesDeversees) { this.nombreDepensesDeversees = nombreDepensesDeversees; }
 
     public int getTotalPiecesDeversees() { return totalPiecesDeversees; }
     public void setTotalPiecesDeversees(int totalPiecesDeversees) { this.totalPiecesDeversees = totalPiecesDeversees; }

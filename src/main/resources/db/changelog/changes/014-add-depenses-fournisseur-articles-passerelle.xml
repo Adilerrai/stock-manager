@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 014 : Liaison Tiers Fournisseur, Articles de charges et Passerelle Comptable dans depenses
+    -->
+    <changeSet id="014-add-depenses-fournisseur-articles-passerelle" author="erp-pointvente">
+        <sql splitStatements="false">
+            ALTER TABLE IF EXISTS depenses 
+                ADD COLUMN IF NOT EXISTS fournisseur_id BIGINT,
+                ADD COLUMN IF NOT EXISTS articles_detail TEXT,
+                ADD COLUMN IF NOT EXISTS deversee_compta BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS date_deversement TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS ecriture_id BIGINT;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'fk_depenses_fournisseur'
+                ) THEN
+                    ALTER TABLE depenses
+                        ADD CONSTRAINT fk_depenses_fournisseur
+                        FOREIGN KEY (fournisseur_id) REFERENCES fournisseurs(id)
+                        ON DELETE SET NULL;
+                END IF;
+            END $$;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

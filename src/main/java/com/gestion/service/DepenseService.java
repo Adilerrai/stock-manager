@@ -28,13 +28,16 @@ public class DepenseService {
     private final DepenseRepository depenseRepository;
     private final UserRepository userRepository;
     private final MargeService margeService;
+    private final com.gestion.repository.FournisseurRepository fournisseurRepository;
 
     public DepenseService(DepenseRepository depenseRepository,
                           UserRepository userRepository,
-                          MargeService margeService) {
+                          MargeService margeService,
+                          com.gestion.repository.FournisseurRepository fournisseurRepository) {
         this.depenseRepository = depenseRepository;
         this.userRepository = userRepository;
         this.margeService = margeService;
+        this.fournisseurRepository = fournisseurRepository;
     }
 
     public DepenseDTO creerDepense(DepenseDTO dto, Long userId) {
@@ -50,7 +53,20 @@ public class DepenseService {
         depense.setDateDepense(dto.getDateDepense() != null ? dto.getDateDepense() : LocalDate.now());
         depense.setCategorie(dto.getCategorie() != null ? dto.getCategorie() : CategorieDepense.AUTRES_CHARGES);
         depense.setModePaiement(dto.getModePaiement() != null ? dto.getModePaiement() : ModePaiement.ESPECES);
-        depense.setBeneficiaire(dto.getBeneficiaire());
+
+        if (dto.getFournisseurId() != null) {
+            com.gestion.persistent.model.Fournisseur f = fournisseurRepository.findById(dto.getFournisseurId()).orElse(null);
+            depense.setFournisseur(f);
+            if ((dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty()) && f != null) {
+                depense.setBeneficiaire(f.getRaisonSociale());
+            } else {
+                depense.setBeneficiaire(dto.getBeneficiaire());
+            }
+        } else {
+            depense.setBeneficiaire(dto.getBeneficiaire());
+        }
+
+        depense.setArticlesDetail(dto.getArticlesDetail());
         depense.setNumeroFactureJustificatif(dto.getNumeroFactureJustificatif());
         depense.setNotes(dto.getNotes());
         depense.setCreePar(user);
@@ -176,6 +192,16 @@ public class DepenseService {
         dto.setCategorie(d.getCategorie());
         dto.setModePaiement(d.getModePaiement());
         dto.setBeneficiaire(d.getBeneficiaire());
+        if (d.getFournisseur() != null) {
+            dto.setFournisseurId(d.getFournisseur().getId());
+            dto.setFournisseurNom(d.getFournisseur().getRaisonSociale());
+            dto.setFournisseurTelephone(d.getFournisseur().getTelephone());
+            dto.setFournisseurIce(d.getFournisseur().getIce());
+        }
+        dto.setArticlesDetail(d.getArticlesDetail());
+        dto.setDeverseeCompta(Boolean.TRUE.equals(d.getDeverseeCompta()));
+        dto.setDateDeversement(d.getDateDeversement());
+        dto.setEcritureId(d.getEcritureId());
         dto.setNumeroFactureJustificatif(d.getNumeroFactureJustificatif());
         dto.setNotes(d.getNotes());
         if (d.getCreePar() != null) {

@@ -33,8 +33,12 @@ public class LivraisonRetardDTO {
     private BigDecimal quantiteRestante;
     private BigDecimal prixUnitaire;
     private BigDecimal montantRestant;
+    private String entrepotNom;
 
     public LivraisonRetardDTO() {}
+
+    public String getEntrepotNom() { return entrepotNom; }
+    public void setEntrepotNom(String entrepotNom) { this.entrepotNom = entrepotNom; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

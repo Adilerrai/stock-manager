@@ -32,6 +32,12 @@ public class StatutPasserelleDTO {
     private int reglementsFournisseursEnAttente = 0;
     private BigDecimal montantReglementsEnAttente = BigDecimal.ZERO;
 
+    // Dépenses & Charges
+    private int depensesTotal = 0;
+    private int depensesDeversees = 0;
+    private int depensesEnAttente = 0;
+    private BigDecimal montantDepensesEnAttente = BigDecimal.ZERO;
+
     // Global
     private int totalPiecesEnAttente = 0;
     private boolean toutEstSynchronise = true;
@@ -94,6 +100,18 @@ public class StatutPasserelleDTO {
 
     public int getTotalPiecesEnAttente() { return totalPiecesEnAttente; }
     public void setTotalPiecesEnAttente(int totalPiecesEnAttente) { this.totalPiecesEnAttente = totalPiecesEnAttente; }
+
+    public int getDepensesTotal() { return depensesTotal; }
+    public void setDepensesTotal(int depensesTotal) { this.depensesTotal = depensesTotal; }
+
+    public int getDepensesDeversees() { return depensesDeversees; }
+    public void setDepensesDeversees(int depensesDeversees) { this.depensesDeversees = depensesDeversees; }
+
+    public int getDepensesEnAttente() { return depensesEnAttente; }
+    public void setDepensesEnAttente(int depensesEnAttente) { this.depensesEnAttente = depensesEnAttente; }
+
+    public BigDecimal getMontantDepensesEnAttente() { return montantDepensesEnAttente; }
+    public void setMontantDepensesEnAttente(BigDecimal montantDepensesEnAttente) { this.montantDepensesEnAttente = montantDepensesEnAttente; }
 
     public boolean isToutEstSynchronise() { return toutEstSynchronise; }
     public void setToutEstSynchronise(boolean toutEstSynchronise) { this.toutEstSynchronise = toutEstSynchronise; }

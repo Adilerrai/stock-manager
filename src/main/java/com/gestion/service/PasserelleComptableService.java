@@ -7,7 +7,9 @@ import com.gestion.persistent.dto.ModulesAbonnementDTO;
 import com.gestion.persistent.dto.PieceCommercialeEnAttenteDTO;
 import com.gestion.persistent.dto.RapportDeversementDTO;
 import com.gestion.persistent.dto.StatutPasserelleDTO;
+import com.gestion.persistent.enums.ModePaiement;
 import com.gestion.persistent.enums.StatutFacture;
+import com.gestion.persistent.model.Depense;
 import com.gestion.persistent.model.Facture;
 import com.gestion.persistent.model.FactureAchat;
 import com.gestion.persistent.model.Paiement;
@@ -31,6 +33,7 @@ public class PasserelleComptableService {
     private final FactureAchatRepository factureAchatRepository;
     private final PaiementRepository paiementRepository;
     private final ReglementFournisseurRepository reglementFournisseurRepository;
+    private final DepenseRepository depenseRepository;
     private final EcritureComptableRepository ecritureRepository;
     private final ComptabiliteService comptabiliteService;
     private final PointDeVenteRepository pointDeVenteRepository;
@@ -39,6 +42,7 @@ public class PasserelleComptableService {
                                       FactureAchatRepository factureAchatRepository,
                                       PaiementRepository paiementRepository,
                                       ReglementFournisseurRepository reglementFournisseurRepository,
+                                      DepenseRepository depenseRepository,
                                       EcritureComptableRepository ecritureRepository,
                                       ComptabiliteService comptabiliteService,
                                       PointDeVenteRepository pointDeVenteRepository) {
@@ -46,6 +50,7 @@ public class PasserelleComptableService {
         this.factureAchatRepository = factureAchatRepository;
         this.paiementRepository = paiementRepository;
         this.reglementFournisseurRepository = reglementFournisseurRepository;
+        this.depenseRepository = depenseRepository;
         this.ecritureRepository = ecritureRepository;
         this.comptabiliteService = comptabiliteService;
         this.pointDeVenteRepository = pointDeVenteRepository;
@@ -131,8 +136,23 @@ public class PasserelleComptableService {
             }
         }
 
+        // 5. Dépenses & Charges
+        List<Depense> depenses = depenseRepository.findByPeriodeAndPointDeVenteId(dDebut, dFin, tenantId);
+        statut.setDepensesTotal(depenses.size());
+        for (Depense dep : depenses) {
+            boolean deversee = Boolean.TRUE.equals(dep.getDeverseeCompta()) ||
+                    ecritureRepository.findByReferencePieceAndPointDeVenteId(dep.getReference(), tenantId).isPresent();
+            if (deversee) {
+                statut.setDepensesDeversees(statut.getDepensesDeversees() + 1);
+            } else {
+                statut.setDepensesEnAttente(statut.getDepensesEnAttente() + 1);
+                statut.setMontantDepensesEnAttente(statut.getMontantDepensesEnAttente().add(dep.getMontant() != null ? dep.getMontant() : BigDecimal.ZERO));
+            }
+        }
+
         int totalAttente = statut.getFacturesVentesEnAttente() + statut.getFacturesAchatsEnAttente()
-                + statut.getPaiementsClientsEnAttente() + statut.getReglementsFournisseursEnAttente();
+                + statut.getPaiementsClientsEnAttente() + statut.getReglementsFournisseursEnAttente()
+                + statut.getDepensesEnAttente();
         statut.setTotalPiecesEnAttente(totalAttente);
         statut.setToutEstSynchronise(totalAttente == 0);
 
@@ -244,6 +264,31 @@ public class PasserelleComptableService {
                         r.getMontant(),
                         BigDecimal.ZERO,
                         r.getMontant(),
+                        journal,
+                        deversee
+                ));
+            }
+        }
+
+        // Dépenses & Charges
+        if (typeFiltre == null || typeFiltre.equalsIgnoreCase("TOUT") || typeFiltre.equalsIgnoreCase("DEPENSE") || typeFiltre.equalsIgnoreCase("CHARGE")) {
+            List<Depense> depenses = depenseRepository.findByPeriodeAndPointDeVenteId(dDebut, dFin, tenantId);
+            for (Depense dep : depenses) {
+                boolean deversee = Boolean.TRUE.equals(dep.getDeverseeCompta()) ||
+                        ecritureRepository.findByReferencePieceAndPointDeVenteId(dep.getReference(), tenantId).isPresent();
+                String tiersNom = (dep.getFournisseur() != null) ? dep.getFournisseur().getRaisonSociale()
+                        : (dep.getBeneficiaire() != null ? dep.getBeneficiaire() : "Fournisseur de frais");
+                String journal = (dep.getModePaiement() == ModePaiement.ESPECES) ? "CA"
+                        : (dep.getModePaiement() == ModePaiement.VIREMENT || dep.getModePaiement() == ModePaiement.CHEQUE || dep.getModePaiement() == ModePaiement.CARTE_BANCAIRE ? "BQ" : "OD");
+                pieces.add(new PieceCommercialeEnAttenteDTO(
+                        "DEPENSE",
+                        dep.getId(),
+                        dep.getReference(),
+                        dep.getDateDepense(),
+                        tiersNom,
+                        dep.getMontant(),
+                        BigDecimal.ZERO,
+                        dep.getMontant(),
                         journal,
                         deversee
                 ));
@@ -397,33 +442,79 @@ public class PasserelleComptableService {
         return rapport;
     }
 
+    public RapportDeversementDTO deverserDepenses(LocalDate dateDebut, LocalDate dateFin, List<Long> depenseIds) {
+        Long tenantId = getTenantId();
+        RapportDeversementDTO rapport = new RapportDeversementDTO();
+
+        List<Depense> cibles;
+        if (depenseIds != null && !depenseIds.isEmpty()) {
+            cibles = depenseRepository.findAllById(depenseIds).stream()
+                    .filter(d -> d.getPointDeVenteId().equals(tenantId))
+                    .collect(Collectors.toList());
+        } else {
+            LocalDate dDebut = (dateDebut != null) ? dateDebut : LocalDate.now().withDayOfMonth(1);
+            LocalDate dFin = (dateFin != null) ? dateFin : LocalDate.now();
+            cibles = depenseRepository.findByPeriodeAndPointDeVenteId(dDebut, dFin, tenantId);
+        }
+
+        for (Depense dep : cibles) {
+            boolean existante = Boolean.TRUE.equals(dep.getDeverseeCompta()) ||
+                    ecritureRepository.findByReferencePieceAndPointDeVenteId(dep.getReference(), tenantId).isPresent();
+            if (!existante) {
+                try {
+                    com.gestion.persistent.dto.EcritureComptableDTO ecriture = comptabiliteService.genererEcritureDepense(dep);
+                    dep.setDeverseeCompta(true);
+                    dep.setDateDeversement(LocalDateTime.now());
+                    if (ecriture != null) {
+                        dep.setEcritureId(ecriture.getId());
+                    }
+                    depenseRepository.save(dep);
+
+                    rapport.setNombreDepensesDeversees(rapport.getNombreDepensesDeversees() + 1);
+                    rapport.getPiecesGenerees().add("Charge " + dep.getReference());
+                    rapport.setTotalDebit(rapport.getTotalDebit().add(dep.getMontant()));
+                    rapport.setTotalCredit(rapport.getTotalCredit().add(dep.getMontant()));
+                } catch (Exception e) {
+                    rapport.getErreurs().add("Erreur déversement dépense " + dep.getReference() + " : " + e.getMessage());
+                }
+            }
+        }
+
+        rapport.setTotalPiecesDeversees(rapport.getNombreDepensesDeversees());
+        return rapport;
+    }
+
     public RapportDeversementDTO deverserTout(LocalDate dateDebut, LocalDate dateFin) {
         RapportDeversementDTO rVentes = deverserVentes(dateDebut, dateFin, null);
         RapportDeversementDTO rAchats = deverserAchats(dateDebut, dateFin, null);
         RapportDeversementDTO rPaiements = deverserPaiementsClients(dateDebut, dateFin, null);
         RapportDeversementDTO rReglements = deverserReglementsFournisseurs(dateDebut, dateFin, null);
+        RapportDeversementDTO rDepenses = deverserDepenses(dateDebut, dateFin, null);
 
         RapportDeversementDTO global = new RapportDeversementDTO();
         global.setNombreVentesDeversees(rVentes.getNombreVentesDeversees());
         global.setNombreAchatsDeversees(rAchats.getNombreAchatsDeversees());
         global.setNombrePaiementsClientsDeversees(rPaiements.getNombrePaiementsClientsDeversees());
         global.setNombreReglementsFournisseursDeversees(rReglements.getNombreReglementsFournisseursDeversees());
+        global.setNombreDepensesDeversees(rDepenses.getNombreDepensesDeversees());
 
         global.setTotalPiecesDeversees(rVentes.getTotalPiecesDeversees() + rAchats.getTotalPiecesDeversees()
-                + rPaiements.getTotalPiecesDeversees() + rReglements.getTotalPiecesDeversees());
+                + rPaiements.getTotalPiecesDeversees() + rReglements.getTotalPiecesDeversees() + rDepenses.getTotalPiecesDeversees());
 
-        global.setTotalDebit(rVentes.getTotalDebit().add(rAchats.getTotalDebit()).add(rPaiements.getTotalDebit()).add(rReglements.getTotalDebit()));
-        global.setTotalCredit(rVentes.getTotalCredit().add(rAchats.getTotalCredit()).add(rPaiements.getTotalCredit()).add(rReglements.getTotalCredit()));
+        global.setTotalDebit(rVentes.getTotalDebit().add(rAchats.getTotalDebit()).add(rPaiements.getTotalDebit()).add(rReglements.getTotalDebit()).add(rDepenses.getTotalDebit()));
+        global.setTotalCredit(rVentes.getTotalCredit().add(rAchats.getTotalCredit()).add(rPaiements.getTotalCredit()).add(rReglements.getTotalCredit()).add(rDepenses.getTotalCredit()));
 
         global.getPiecesGenerees().addAll(rVentes.getPiecesGenerees());
         global.getPiecesGenerees().addAll(rAchats.getPiecesGenerees());
         global.getPiecesGenerees().addAll(rPaiements.getPiecesGenerees());
         global.getPiecesGenerees().addAll(rReglements.getPiecesGenerees());
+        global.getPiecesGenerees().addAll(rDepenses.getPiecesGenerees());
 
         global.getErreurs().addAll(rVentes.getErreurs());
         global.getErreurs().addAll(rAchats.getErreurs());
         global.getErreurs().addAll(rPaiements.getErreurs());
         global.getErreurs().addAll(rReglements.getErreurs());
+        global.getErreurs().addAll(rDepenses.getErreurs());
 
         return global;
     }

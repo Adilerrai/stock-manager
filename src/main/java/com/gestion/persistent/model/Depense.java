@@ -47,6 +47,22 @@ public class Depense {
     private String notes;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fournisseur_id")
+    private Fournisseur fournisseur;
+
+    @Column(name = "articles_detail", columnDefinition = "TEXT")
+    private String articlesDetail;
+
+    @Column(name = "deversee_compta")
+    private Boolean deverseeCompta = false;
+
+    @Column(name = "date_deversement")
+    private LocalDateTime dateDeversement;
+
+    @Column(name = "ecriture_id")
+    private Long ecritureId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cree_par_user_id")
     private User creePar;
 
@@ -96,4 +112,19 @@ public class Depense {
 
     public LocalDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
+
+    public Fournisseur getFournisseur() { return fournisseur; }
+    public void setFournisseur(Fournisseur fournisseur) { this.fournisseur = fournisseur; }
+
+    public String getArticlesDetail() { return articlesDetail; }
+    public void setArticlesDetail(String articlesDetail) { this.articlesDetail = articlesDetail; }
+
+    public Boolean getDeverseeCompta() { return deverseeCompta; }
+    public void setDeverseeCompta(Boolean deverseeCompta) { this.deverseeCompta = deverseeCompta; }
+
+    public LocalDateTime getDateDeversement() { return dateDeversement; }
+    public void setDateDeversement(LocalDateTime dateDeversement) { this.dateDeversement = dateDeversement; }
+
+    public Long getEcritureId() { return ecritureId; }
+    public void setEcritureId(Long ecritureId) { this.ecritureId = ecritureId; }
 }

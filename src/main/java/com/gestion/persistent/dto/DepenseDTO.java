@@ -17,8 +17,16 @@ public class DepenseDTO {
     private String categorieLibelle;
     private ModePaiement modePaiement;
     private String beneficiaire;
+    private Long fournisseurId;
+    private String fournisseurNom;
+    private String fournisseurTelephone;
+    private String fournisseurIce;
+    private String articlesDetail;
     private String numeroFactureJustificatif;
     private String notes;
+    private Boolean deverseeCompta = false;
+    private LocalDateTime dateDeversement;
+    private Long ecritureId;
     private Long creeParUserId;
     private String creeParNom;
     private Long pointDeVenteId;
@@ -75,4 +83,28 @@ public class DepenseDTO {
 
     public LocalDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
+
+    public Long getFournisseurId() { return fournisseurId; }
+    public void setFournisseurId(Long fournisseurId) { this.fournisseurId = fournisseurId; }
+
+    public String getFournisseurNom() { return fournisseurNom; }
+    public void setFournisseurNom(String fournisseurNom) { this.fournisseurNom = fournisseurNom; }
+
+    public String getFournisseurTelephone() { return fournisseurTelephone; }
+    public void setFournisseurTelephone(String fournisseurTelephone) { this.fournisseurTelephone = fournisseurTelephone; }
+
+    public String getFournisseurIce() { return fournisseurIce; }
+    public void setFournisseurIce(String fournisseurIce) { this.fournisseurIce = fournisseurIce; }
+
+    public String getArticlesDetail() { return articlesDetail; }
+    public void setArticlesDetail(String articlesDetail) { this.articlesDetail = articlesDetail; }
+
+    public Boolean getDeverseeCompta() { return deverseeCompta; }
+    public void setDeverseeCompta(Boolean deverseeCompta) { this.deverseeCompta = deverseeCompta; }
+
+    public LocalDateTime getDateDeversement() { return dateDeversement; }
+    public void setDateDeversement(LocalDateTime dateDeversement) { this.dateDeversement = dateDeversement; }
+
+    public Long getEcritureId() { return ecritureId; }
+    public void setEcritureId(Long ecritureId) { this.ecritureId = ecritureId; }
 }
