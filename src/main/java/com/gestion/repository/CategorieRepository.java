@@ -28,4 +28,13 @@ public interface CategorieRepository extends JpaRepository<Categorie, Long> {
 
     @Query("SELECT c FROM Categorie c WHERE c.parent.id = :parentId AND c.pointDeVenteId = :pointDeVenteId ORDER BY c.nom ASC")
     List<Categorie> findByParentIdAndPointDeVenteIdOrderByNomAsc(@Param("parentId") Long parentId, @Param("pointDeVenteId") Long pointDeVenteId);
+
+    @Query("SELECT c FROM Categorie c WHERE c.actif = true " +
+           "AND (:tenantId IS NULL OR c.pointDeVenteId = :tenantId) " +
+           "AND NOT EXISTS (SELECT sub FROM Categorie sub WHERE sub.parent = c) " +
+           "ORDER BY c.nom ASC")
+    List<Categorie> findCategoriesFeuillesOrderByNomAsc(@Param("tenantId") Long tenantId);
+
+    @Query("SELECT COUNT(c) > 0 FROM Categorie c WHERE c.parent.id = :parentId")
+    boolean hasSousCategories(@Param("parentId") Long parentId);
 }

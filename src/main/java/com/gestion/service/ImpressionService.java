@@ -34,13 +34,15 @@ public class ImpressionService {
         System.setProperty("net.sf.jasperreports.default.font.name", "SansSerif");
     }
 
-    private static final int MIN_LIGNES_PAR_DEFAUT = 8;
+    public static final int LIGNES_PAR_PAGE = 25;
 
-    private void completerLignesVides(List<Map<String, Object>> lignes, int minLignes) {
+    public void completerLignesVides(List<Map<String, Object>> lignes) {
         if (lignes == null)
             return;
         int act = lignes.size();
-        for (int i = act; i < minLignes; i++) {
+        int reste = act % LIGNES_PAR_PAGE;
+        int manquant = (reste == 0 && act > 0) ? 0 : (LIGNES_PAR_PAGE - reste);
+        for (int i = 0; i < manquant; i++) {
             Map<String, Object> emptyRow = new HashMap<>();
             emptyRow.put("reference", "");
             emptyRow.put("designation", "");
@@ -48,11 +50,14 @@ public class ImpressionService {
             emptyRow.put("produitDesignation", "");
             emptyRow.put("depotNom", "");
             emptyRow.put("quantite", null);
+            emptyRow.put("quantiteCommandee", null);
+            emptyRow.put("quantiteRecue", null);
             emptyRow.put("quantiteLivree", null);
             emptyRow.put("prixUnitaire", null);
             emptyRow.put("prixUnitaireHT", null);
             emptyRow.put("prixVente", null);
             emptyRow.put("tauxTVA", null);
+            emptyRow.put("montantLigne", null);
             emptyRow.put("montantHT", null);
             emptyRow.put("montantTTC", null);
             emptyRow.put("montantTotal", null);
@@ -352,13 +357,20 @@ public class ImpressionService {
                         : "À convenir");
         params.put("statut", commande.getStatut() != null ? commande.getStatut().toString() : "TRANSMISE");
         params.put("observations", commande.getObservations());
-        params.put("montantTotal", commande.getMontantTotal());
+        BigDecimal total = commande.getMontantTotal() != null ? commande.getMontantTotal() : BigDecimal.ZERO;
+        params.put("montantTotal", total);
+        params.put("montantHT", total);
+        params.put("montantTVA", BigDecimal.ZERO);
+        params.put("montantTTC", total);
+        String devise = (String) params.getOrDefault("devise", "MAD");
+        params.put("montantEnLettres", FrenchNumberToWords.convertir(total, devise));
 
         if (commande.getFournisseur() != null) {
             Fournisseur f = commande.getFournisseur();
             params.put("fournisseurNom", f.getRaisonSociale());
             params.put("fournisseurTelephone", f.getTelephone());
             params.put("fournisseurAdresse", f.getAdresse());
+            params.put("fournisseurIce", f.getIce());
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();
@@ -737,6 +749,7 @@ public class ImpressionService {
 
     private byte[] exportToPdf(String reportName, Map<String, Object> params, List<Map<String, Object>> dataList) {
         try {
+            // Seuls les vrais articles sont envoyés au rapport (pas de lignes vides forcées)
             JasperReport report = getCompiledReport(reportName);
             JRDataSource dataSource = (dataList != null && !dataList.isEmpty())
                     ? new JRBeanCollectionDataSource(dataList)

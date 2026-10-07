@@ -43,6 +43,7 @@ public class CommandeService {
     private final ProduitMapper produitMapper;
     private final CodificationService codificationService;
     private final EntrepriseProfileService entrepriseProfileService;
+    private final ImpressionService impressionService;
 
     public CommandeService(CommandeRepository commandeRepository,
                           LigneCommandeRepository ligneCommandeRepository,
@@ -54,7 +55,7 @@ public class CommandeService {
                           ProduitMapper produitMapper,
                           CodificationService codificationService) {
         this(commandeRepository, ligneCommandeRepository, fournisseurRepository, produitRepository,
-             livraisonService, livraisonRepository, livraisonMapper, produitMapper, codificationService, null);
+             livraisonService, livraisonRepository, livraisonMapper, produitMapper, codificationService, null, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -67,7 +68,8 @@ public class CommandeService {
                           LivraisonMapper livraisonMapper,
                           ProduitMapper produitMapper,
                           CodificationService codificationService,
-                          EntrepriseProfileService entrepriseProfileService) {
+                          EntrepriseProfileService entrepriseProfileService,
+                          @org.springframework.context.annotation.Lazy ImpressionService impressionService) {
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.fournisseurRepository = fournisseurRepository;
@@ -78,6 +80,7 @@ public class CommandeService {
         this.produitMapper = produitMapper;
         this.codificationService = codificationService;
         this.entrepriseProfileService = entrepriseProfileService;
+        this.impressionService = impressionService;
     }
 
     private Long getTenantId() {
@@ -369,6 +372,9 @@ public class CommandeService {
     }
 
     public byte[] generateCommandePdf(Long commandeId) {
+        if (this.impressionService != null) {
+            return this.impressionService.genererCommandeFournisseurPdf(commandeId);
+        }
         Commande commande = getCommandeById(commandeId);
         if (commande.getStatut() == StatutCommande.BROUILLON || commande.getStatut() == StatutCommande.ANNULEE) {
             throw new IllegalStateException("Impossible d'imprimer une commande fournisseur en statut Brouillon ou Annulée. Elle doit être validée.");

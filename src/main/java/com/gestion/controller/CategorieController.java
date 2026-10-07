@@ -47,6 +47,14 @@ public class CategorieController {
     }
 
     /**
+     * Retourne uniquement les catégories feuilles (terminales, sans sous-catégories)
+     */
+    @GetMapping({"/feuilles", "/leaves"})
+    public ResponseEntity<List<CategorieDTO>> getCategoriesFeuilles() {
+        return ResponseEntity.ok(categorieService.getCategoriesFeuilles());
+    }
+
+    /**
      * Retourne les sous-catégories directes d'une catégorie
      */
     @GetMapping("/{id}/sous-categories")

@@ -162,4 +162,123 @@ public class TestRenderPdf {
             System.out.println("Generated uploads/test_facture_client_moderne.pdf");
         }
     }
+
+    @Test
+    public void testCommandeFournisseurFixed25Lines() throws Exception {
+        // Test with 3 items padded to 25 items -> exactly 1 page
+        List<Map<String, Object>> threeItems = new ArrayList<>();
+        Map<String, Object> r1 = new HashMap<>();
+        r1.put("reference", "ART-001");
+        r1.put("designation", "DISQUE DUR EXTERNE 1TO USB 3.0");
+        r1.put("quantite", new BigDecimal("5"));
+        r1.put("prixUnitaire", new BigDecimal("650.00"));
+        r1.put("montantTotal", new BigDecimal("3250.00"));
+        threeItems.add(r1);
+
+        Map<String, Object> r2 = new HashMap<>();
+        r2.put("reference", "ART-002");
+        r2.put("designation", "CLAVIER SANS FIL LOGITECH K380");
+        r2.put("quantite", new BigDecimal("10"));
+        r2.put("prixUnitaire", new BigDecimal("350.00"));
+        r2.put("montantTotal", new BigDecimal("3500.00"));
+        threeItems.add(r2);
+
+        Map<String, Object> r3 = new HashMap<>();
+        r3.put("reference", "ART-003");
+        r3.put("designation", "SOURIS OPTIQUE ERGONOMIQUE NOIRE");
+        r3.put("quantite", new BigDecimal("10"));
+        r3.put("prixUnitaire", new BigDecimal("180.00"));
+        r3.put("montantTotal", new BigDecimal("1800.00"));
+        threeItems.add(r3);
+
+        // Pad to 25 lines
+        int count = threeItems.size();
+        for (int i = count; i < 25; i++) {
+            Map<String, Object> empty = new HashMap<>();
+            empty.put("reference", "");
+            empty.put("designation", "");
+            empty.put("quantite", null);
+            empty.put("prixUnitaire", null);
+            empty.put("montantTotal", null);
+            threeItems.add(empty);
+        }
+
+        InputStream is = getClass().getClassLoader().getResourceAsStream("reports/commande_fournisseur.jrxml");
+        JasperReport jr = JasperCompileManager.compileReport(is);
+        Map<String, Object> params = createCommonParams();
+        params.put("numeroCommande", "CF-2026-001");
+        params.put("dateCommande", "07/10/2026 10:00");
+        params.put("dateLivraisonPrevue", "15/10/2026");
+        params.put("statut", "VALIDÉE");
+        params.put("fournisseurNom", "SOPHATEL MAROC SARL");
+        params.put("fournisseurAdresse", "Zone Industrielle Ain Sebaa, Casablanca");
+        params.put("fournisseurTelephone", "05 22 35 44 12");
+        params.put("fournisseurIce", "001234567890001");
+        params.put("montantHT", new BigDecimal("8550.00"));
+        params.put("montantTVA", new BigDecimal("1710.00"));
+        params.put("montantTTC", new BigDecimal("10260.00"));
+        params.put("montantTotal", new BigDecimal("10260.00"));
+        params.put("montantEnLettres", "DIX MILLE DEUX CENT SOIXANTE DIRHAMS");
+        params.put("observations", "Livraison urgente demandée avant le 15 du mois.");
+
+        JasperPrint jp = JasperFillManager.fillReport(jr, params, new JRBeanCollectionDataSource(threeItems));
+        JasperExportManager.exportReportToPdfFile(jp, "uploads/test_commande_fournisseur_25lignes_page1.pdf");
+        java.awt.image.BufferedImage img = (java.awt.image.BufferedImage) JasperPrintManager.printPageToImage(jp, 0, 1.5f);
+        javax.imageio.ImageIO.write(img, "PNG", new File("uploads/test_commande_fournisseur_page1.png"));
+        System.out.println("Generated uploads/test_commande_fournisseur_page1.png");
+        org.junit.jupiter.api.Assertions.assertEquals(1, jp.getPages().size(), "3 items padded to 25 must fit on exactly 1 page!");
+    }
+
+    @Test
+    public void testCommandeFournisseur2Pages25LinesEach() throws Exception {
+        // 29 items padded to 50 items -> exactly 2 pages (25 on page 1, 25 on page 2)
+        List<Map<String, Object>> items = new ArrayList<>();
+        for (int i = 1; i <= 29; i++) {
+            Map<String, Object> r = new HashMap<>();
+            r.put("reference", "ART-" + String.format("%03d", i));
+            r.put("designation", "ARTICLE TEST TECHNIQUE NUMÉRO " + i);
+            r.put("quantite", new BigDecimal(i));
+            r.put("prixUnitaire", new BigDecimal("100.00"));
+            r.put("montantTotal", new BigDecimal(i * 100));
+            items.add(r);
+        }
+
+        // Pad to multiple of 25 (50 items)
+        int count = items.size();
+        int rem = count % 25;
+        int missing = (rem == 0) ? 0 : (25 - rem);
+        for (int i = 0; i < missing; i++) {
+            Map<String, Object> empty = new HashMap<>();
+            empty.put("reference", "");
+            empty.put("designation", "");
+            empty.put("quantite", null);
+            empty.put("prixUnitaire", null);
+            empty.put("montantTotal", null);
+            items.add(empty);
+        }
+        org.junit.jupiter.api.Assertions.assertEquals(50, items.size());
+
+        InputStream is = getClass().getClassLoader().getResourceAsStream("reports/commande_fournisseur.jrxml");
+        JasperReport jr = JasperCompileManager.compileReport(is);
+        Map<String, Object> params = createCommonParams();
+        params.put("numeroCommande", "CF-2026-002");
+        params.put("dateCommande", "07/10/2026 11:30");
+        params.put("dateLivraisonPrevue", "20/10/2026");
+        params.put("statut", "VALIDÉE");
+        params.put("fournisseurNom", "SOPHATEL MAROC SARL");
+        params.put("fournisseurAdresse", "Zone Industrielle Ain Sebaa, Casablanca");
+        params.put("fournisseurTelephone", "05 22 35 44 12");
+        params.put("fournisseurIce", "001234567890001");
+        params.put("montantHT", new BigDecimal("43500.00"));
+        params.put("montantTVA", new BigDecimal("8700.00"));
+        params.put("montantTTC", new BigDecimal("52200.00"));
+        params.put("montantTotal", new BigDecimal("52200.00"));
+        params.put("montantEnLettres", "CINQUANTE-DEUX MILLE DEUX CENTS DIRHAMS");
+        params.put("observations", "Livraison échelonnée en 2 fois.");
+
+        JasperPrint jp = JasperFillManager.fillReport(jr, params, new JRBeanCollectionDataSource(items));
+        JasperExportManager.exportReportToPdfFile(jp, "uploads/test_commande_fournisseur_25lignes_page2.pdf");
+        System.out.println("Generated uploads/test_commande_fournisseur_25lignes_page2.pdf with page count: " + jp.getPages().size());
+        org.junit.jupiter.api.Assertions.assertEquals(2, jp.getPages().size(), "50 items (2x25) must produce exactly 2 pages!");
+    }
 }

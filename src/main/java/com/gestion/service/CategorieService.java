@@ -65,6 +65,16 @@ public class CategorieService {
     }
 
     /**
+     * Retourne uniquement les catégories feuilles (terminales, sans sous-catégories)
+     */
+    @Transactional(readOnly = true)
+    public List<CategorieDTO> getCategoriesFeuilles() {
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Categorie> feuilles = categorieRepository.findCategoriesFeuillesOrderByNomAsc(tenantId);
+        return feuilles.stream().map(this::toDto).collect(Collectors.toList());
+    }
+
+    /**
      * Retourne les sous-catégories directes d'une catégorie
      */
     @Transactional(readOnly = true)

@@ -30,6 +30,7 @@ public class ProduitService {
     private final ProduitImageRepository produitImageRepository;
     private final CodificationService codificationService;
     private final com.gestion.repository.HistoriquePrixProduitRepository historiquePrixProduitRepository;
+    private final com.gestion.repository.CategorieRepository categorieRepository;
     @Autowired
     private ImageCompressionService imageCompressionService;
 
@@ -38,12 +39,30 @@ public class ProduitService {
             ProduitMapper produitMapper,
             ProduitImageRepository produitImageRepository,
             CodificationService codificationService,
-            com.gestion.repository.HistoriquePrixProduitRepository historiquePrixProduitRepository) {
+            com.gestion.repository.HistoriquePrixProduitRepository historiquePrixProduitRepository,
+            com.gestion.repository.CategorieRepository categorieRepository) {
         this.produitRepository = produitRepository;
         this.produitMapper = produitMapper;
         this.produitImageRepository = produitImageRepository;
         this.codificationService = codificationService;
         this.historiquePrixProduitRepository = historiquePrixProduitRepository;
+        this.categorieRepository = categorieRepository;
+    }
+
+    /**
+     * Valide qu'une catégorie est une feuille (ne possède aucune sous-catégorie).
+     * Les produits ne peuvent être rattachés qu'à des sous-catégories terminales.
+     */
+    public void validerCategorieFeuille(com.gestion.persistent.model.Categorie categorie) {
+        if (categorie == null || categorie.getId() == null) {
+            return;
+        }
+        boolean estParente = categorieRepository.hasSousCategories(categorie.getId());
+        if (estParente) {
+            String nomCat = categorie.getNom() != null ? categorie.getNom() : ("#" + categorie.getId());
+            throw new IllegalArgumentException("Impossible d'associer un produit à la catégorie parente '" 
+                + nomCat + "'. Veuillez choisir une sous-catégorie terminale (feuille).");
+        }
     }
 
     @Transactional
@@ -56,6 +75,16 @@ public class ProduitService {
             }
             tenantId = (tenantId != null) ? tenantId : 1L;
             produit.setPointDeVenteId(tenantId);
+        }
+
+        // Validation stricte : la catégorie choisie doit être une feuille
+        if (produit.getCategorie() != null) {
+            com.gestion.persistent.model.Categorie cat = produit.getCategorie();
+            if (cat.getId() != null) {
+                cat = categorieRepository.findById(cat.getId()).orElse(cat);
+                produit.setCategorie(cat);
+            }
+            validerCategorieFeuille(cat);
         }
 
         if (produit.getReference() == null || produit.getReference().trim().isEmpty()) {
@@ -155,6 +184,16 @@ public class ProduitService {
         }
 
         produitMapper.updateEntityFromDto(produitDTO, produit);
+
+        // Validation stricte et association de la catégorie feuille
+        if (produitDTO.getCategorieId() != null) {
+            com.gestion.persistent.model.Categorie cat = categorieRepository.findById(produitDTO.getCategorieId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Catégorie", "id", produitDTO.getCategorieId()));
+            validerCategorieFeuille(cat);
+            produit.setCategorie(cat);
+        } else if (produit.getCategorie() != null) {
+            validerCategorieFeuille(produit.getCategorie());
+        }
 
         // Traçabilité historique des prix de vente si le prix normal ou le prix min a changé
         java.math.BigDecimal nouveauPrixVente = produit.getPrixVente();

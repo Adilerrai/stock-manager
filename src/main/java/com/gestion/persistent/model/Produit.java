@@ -214,6 +214,22 @@ public class Produit {
         this.categorieArticle = categorieArticle;
     }
 
+    public Long getCategorieId() {
+        return categorie != null ? categorie.getId() : null;
+    }
+
+    public void setCategorieId(Long categorieId) {
+        if (categorieId != null) {
+            if (this.categorie == null || !categorieId.equals(this.categorie.getId())) {
+                Categorie cat = new Categorie();
+                cat.setId(categorieId);
+                this.categorie = cat;
+            }
+        } else {
+            this.categorie = null;
+        }
+    }
+
     // Dynamic attributes
     public Map<String, Object> getAttributes() {
         return attributes;
