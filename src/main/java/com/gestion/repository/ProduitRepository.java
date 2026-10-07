@@ -28,11 +28,14 @@ public interface ProduitRepository extends JpaRepository<Produit, Long>, Produit
     @Query("SELECT p FROM Produit p LEFT JOIN FETCH p.image WHERE p.id = :id AND p.pointDeVenteId = :pointDeVenteId")
     Optional<Produit> findWithImageByIdAndPointDeVenteId(@Param("id") Long id, @Param("pointDeVenteId") Long pointDeVenteId);
 
-    List<Produit> findByCategorieId(Long categorieId);
+    @Query("SELECT p FROM Produit p WHERE p.categorie.id = :categorieId")
+    List<Produit> findByCategorieId(@Param("categorieId") Long categorieId);
 
-    List<Produit> findByCategorieIdIn(List<Long> categorieIds);
+    @Query("SELECT p FROM Produit p WHERE p.categorie.id IN :categorieIds")
+    List<Produit> findByCategorieIdIn(@Param("categorieIds") List<Long> categorieIds);
 
-    long countByCategorieId(Long categorieId);
+    @Query("SELECT COUNT(p) FROM Produit p WHERE p.categorie.id = :categorieId")
+    long countByCategorieId(@Param("categorieId") Long categorieId);
 
     long countByPointDeVenteId(Long pointDeVenteId);
 
