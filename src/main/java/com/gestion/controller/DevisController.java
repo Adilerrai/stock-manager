@@ -44,7 +44,8 @@ public class DevisController {
     @PostMapping
     public ResponseEntity<DevisDTO> creerDevis(@RequestBody DevisDTO devisDTO,
                                                @RequestParam(required = false) Long userId) {
-        Devis nouveauDevis = devisService.creerDevis(devisDTO, userId);
+        Long effectiveUserId = userId != null ? userId : devisDTO.getUserId();
+        Devis nouveauDevis = devisService.creerDevis(devisDTO, effectiveUserId);
         return new ResponseEntity<>(devisMapper.toDto(nouveauDevis), HttpStatus.CREATED);
     }
 

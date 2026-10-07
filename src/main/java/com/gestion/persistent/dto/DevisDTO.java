@@ -1,14 +1,17 @@
 package com.gestion.persistent.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gestion.persistent.enums.StatutDevis;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DevisDTO {
     private Long id;
     private String numeroDevis;
@@ -19,6 +22,7 @@ public class DevisDTO {
     private String clientTelephone;
     private Long creeParId;
     private String creeParNom;
+    private Long userId;
     private List<LigneDevisDTO> lignes = new ArrayList<>();
     private BigDecimal montantHT;
     private BigDecimal montantTVA;
@@ -132,12 +136,50 @@ public class DevisDTO {
         }
     }
 
+    public Long getUserId() {
+        return userId != null ? userId : creeParId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+        if (this.creeParId == null) {
+            this.creeParId = userId;
+        }
+    }
+
     @JsonProperty("client")
-    public void unpackClient(Map<String, Object> client) {
-        if (client != null && client.get("id") != null) {
+    public void unpackClient(Object client) {
+        if (client instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) client;
+            if (map.get("id") != null) {
+                try {
+                    this.clientId = Long.valueOf(map.get("id").toString());
+                } catch (Exception ignored) {}
+            }
+            if (map.get("nom") != null && this.clientNom == null) {
+                this.clientNom = map.get("nom").toString();
+            } else if (map.get("nomComplet") != null && this.clientNom == null) {
+                this.clientNom = map.get("nomComplet").toString();
+            }
+            if (map.get("telephone") != null && this.clientTelephone == null) {
+                this.clientTelephone = map.get("telephone").toString();
+            }
+        } else if (client instanceof Number) {
+            this.clientId = ((Number) client).longValue();
+        } else if (client instanceof String) {
             try {
-                this.clientId = Long.valueOf(client.get("id").toString());
+                this.clientId = Long.valueOf((String) client);
             } catch (Exception ignored) {}
         }
+    }
+
+    @JsonProperty("client_id")
+    public void setClient_id(Long clientId) {
+        if (this.clientId == null) this.clientId = clientId;
+    }
+
+    @JsonProperty("idClient")
+    public void setIdClient(Long clientId) {
+        if (this.clientId == null) this.clientId = clientId;
     }
 }

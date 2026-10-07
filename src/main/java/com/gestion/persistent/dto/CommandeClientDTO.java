@@ -1,10 +1,15 @@
 package com.gestion.persistent.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CommandeClientDTO {
     private Long id;
     private String numeroCommande;
@@ -29,6 +34,7 @@ public class CommandeClientDTO {
     private LocalDateTime prochaineDateRecurrence;
     private String observations;
     private Long pointDeVenteId;
+    private Long userId;
     private List<LigneCommandeClientDTO> lignesCommande;
 
     // Constructors
@@ -142,4 +148,53 @@ public class CommandeClientDTO {
 
     public LocalDateTime getProchaineDateRecurrence() { return prochaineDateRecurrence; }
     public void setProchaineDateRecurrence(LocalDateTime prochaineDateRecurrence) { this.prochaineDateRecurrence = prochaineDateRecurrence; }
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    @JsonProperty("client")
+    public void unpackClient(Object client) {
+        if (client instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) client;
+            if (map.get("id") != null) {
+                try {
+                    this.clientId = Long.valueOf(map.get("id").toString());
+                } catch (Exception ignored) {}
+            }
+            if (map.get("nom") != null && this.clientNom == null) {
+                this.clientNom = map.get("nom").toString();
+            } else if (map.get("nomComplet") != null && this.clientNom == null) {
+                this.clientNom = map.get("nomComplet").toString();
+            }
+            if (map.get("telephone") != null && this.clientTelephone == null) {
+                this.clientTelephone = map.get("telephone").toString();
+            }
+            if (map.get("email") != null && this.clientEmail == null) {
+                this.clientEmail = map.get("email").toString();
+            }
+        } else if (client instanceof Number) {
+            this.clientId = ((Number) client).longValue();
+        } else if (client instanceof String) {
+            try {
+                this.clientId = Long.valueOf((String) client);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @JsonProperty("client_id")
+    public void setClient_id(Long id) {
+        if (this.clientId == null) this.clientId = id;
+    }
+
+    @JsonProperty("idClient")
+    public void setIdClient(Long id) {
+        if (this.clientId == null) this.clientId = id;
+    }
+
+    @JsonProperty("lignes")
+    public void setLignes(List<LigneCommandeClientDTO> lignes) {
+        if (this.lignesCommande == null || this.lignesCommande.isEmpty()) {
+            this.lignesCommande = lignes;
+        }
+    }
 }

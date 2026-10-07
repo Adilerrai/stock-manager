@@ -1,7 +1,12 @@
 package com.gestion.persistent.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LigneDevisDTO {
     private Long id;
     private Long produitId;
@@ -14,6 +19,7 @@ public class LigneDevisDTO {
     private BigDecimal montantHT;
     private BigDecimal montantTVA;
     private BigDecimal montantTTC;
+    private BigDecimal montantFinal;
     private String description;
 
     public LigneDevisDTO() {}
@@ -51,8 +57,60 @@ public class LigneDevisDTO {
     public BigDecimal getMontantTTC() { return montantTTC; }
     public void setMontantTTC(BigDecimal montantTTC) { this.montantTTC = montantTTC; }
 
+    public BigDecimal getMontantFinal() {
+        return (montantFinal != null) ? montantFinal : montantTTC;
+    }
+    public void setMontantFinal(BigDecimal montantFinal) {
+        this.montantFinal = montantFinal;
+        if (this.montantTTC == null) {
+            this.montantTTC = montantFinal;
+        }
+    }
+
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    // Support des objets imbriqués pour Jackson
+    @JsonProperty("produit")
+    public void unpackProduit(Object produit) {
+        if (produit instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) produit;
+            if (map.get("id") != null) {
+                try {
+                    this.produitId = Long.valueOf(map.get("id").toString());
+                } catch (Exception ignored) {}
+            }
+            if (map.get("reference") != null && this.produitReference == null) {
+                this.produitReference = map.get("reference").toString();
+            }
+            if (map.get("designation") != null && this.produitDesignation == null) {
+                this.produitDesignation = map.get("designation").toString();
+            } else if (map.get("nom") != null && this.produitDesignation == null) {
+                this.produitDesignation = map.get("nom").toString();
+            }
+        } else if (produit instanceof Number) {
+            this.produitId = ((Number) produit).longValue();
+        } else if (produit instanceof String) {
+            try {
+                this.produitId = Long.valueOf((String) produit);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @JsonProperty("produit_id")
+    public void setProduit_id(Long id) {
+        if (this.produitId == null) this.produitId = id;
+    }
+
+    @JsonProperty("idProduit")
+    public void setIdProduit(Long id) {
+        if (this.produitId == null) this.produitId = id;
+    }
+
+    @JsonProperty("articleId")
+    public void setArticleId(Long id) {
+        if (this.produitId == null) this.produitId = id;
+    }
 
     // Aliases pour compatibilité frontend et Jackson
     public String getDesignation() {
@@ -81,6 +139,12 @@ public class LigneDevisDTO {
         this.prixUnitaireHT = prixUnitaire;
     }
 
+    public void setPrix(BigDecimal prix) {
+        if (this.prixUnitaireHT == null) {
+            this.prixUnitaireHT = prix;
+        }
+    }
+
     public BigDecimal getTauxTva() {
         return tauxTVA;
     }
@@ -95,10 +159,19 @@ public class LigneDevisDTO {
         this.tauxRemise = remisePct;
     }
 
+    public void setRemise(BigDecimal remise) {
+        if (this.tauxRemise == null) {
+            this.tauxRemise = remise;
+        }
+    }
+
     public BigDecimal getMontantTotal() {
-        return montantTTC;
+        return (montantFinal != null) ? montantFinal : montantTTC;
     }
     public void setMontantTotal(BigDecimal montantTotal) {
         this.montantTTC = montantTotal;
+        if (this.montantFinal == null) {
+            this.montantFinal = montantTotal;
+        }
     }
 }

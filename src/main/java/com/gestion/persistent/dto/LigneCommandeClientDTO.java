@@ -1,7 +1,12 @@
 package com.gestion.persistent.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LigneCommandeClientDTO {
     private Long id;
     private Long produitId;
@@ -73,5 +78,86 @@ public class LigneCommandeClientDTO {
 
     public BigDecimal getPrixVenteMin() { return prixVenteMin; }
     public void setPrixVenteMin(BigDecimal prixVenteMin) { this.prixVenteMin = prixVenteMin; }
+
+    @JsonProperty("produit")
+    public void unpackProduit(Object produit) {
+        if (produit instanceof Map) {
+            Map<?, ?> map = (Map<?, ?>) produit;
+            if (map.get("id") != null) {
+                try {
+                    this.produitId = Long.valueOf(map.get("id").toString());
+                } catch (Exception ignored) {}
+            }
+            if (map.get("reference") != null && this.produitReference == null) {
+                this.produitReference = map.get("reference").toString();
+            }
+            if (map.get("designation") != null && this.produitNom == null) {
+                this.produitNom = map.get("designation").toString();
+            } else if (map.get("nom") != null && this.produitNom == null) {
+                this.produitNom = map.get("nom").toString();
+            }
+        } else if (produit instanceof Number) {
+            this.produitId = ((Number) produit).longValue();
+        } else if (produit instanceof String) {
+            try {
+                this.produitId = Long.valueOf((String) produit);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @JsonProperty("produit_id")
+    public void setProduit_id(Long id) {
+        if (this.produitId == null) this.produitId = id;
+    }
+
+    @JsonProperty("idProduit")
+    public void setIdProduit(Long id) {
+        if (this.produitId == null) this.produitId = id;
+    }
+
+    @JsonProperty("articleId")
+    public void setArticleId(Long id) {
+        if (this.produitId == null) this.produitId = id;
+    }
+
+    @JsonProperty("prixUnitaireHT")
+    public void setPrixUnitaireHT(BigDecimal pu) {
+        if (this.prixUnitaire == null) this.prixUnitaire = pu;
+    }
+
+    @JsonProperty("prix")
+    public void setPrix(BigDecimal pu) {
+        if (this.prixUnitaire == null) this.prixUnitaire = pu;
+    }
+
+    @JsonProperty("tauxRemise")
+    public void setTauxRemise(BigDecimal r) {
+        if (this.remisePourcentage == null) this.remisePourcentage = r;
+    }
+
+    @JsonProperty("remise")
+    public void setRemise(BigDecimal r) {
+        if (this.remisePourcentage == null) this.remisePourcentage = r;
+    }
+
+    @JsonProperty("remisePct")
+    public void setRemisePct(BigDecimal r) {
+        if (this.remisePourcentage == null) this.remisePourcentage = r;
+    }
+
+    @JsonProperty("montantTotal")
+    public void setMontantTotal(BigDecimal mt) {
+        if (this.montantLigne == null) this.montantLigne = mt;
+    }
+
+    @JsonProperty("montantFinal")
+    public void setMontantFinal(BigDecimal mf) {
+        if (this.montantLigne == null) this.montantLigne = mf;
+    }
+
+    @JsonProperty("montantTTC")
+    public void setMontantTTC(BigDecimal mt) {
+        if (this.montantLigne == null) this.montantLigne = mt;
+    }
 }
 
