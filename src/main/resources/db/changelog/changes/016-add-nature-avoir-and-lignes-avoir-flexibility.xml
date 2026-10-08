@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 016 : Nature de l'avoir (Retour vs Commercial) et flexibilité lignes d'avoir
+    -->
+    <changeSet id="016-add-nature-avoir-and-lignes-avoir-flexibility" author="erp-pointvente">
+        <sql splitStatements="false">
+            -- Colonne nature_avoir dans avoirs
+            ALTER TABLE IF EXISTS avoirs 
+                ADD COLUMN IF NOT EXISTS nature_avoir VARCHAR(50) DEFAULT 'RETOUR_MARCHANDISE';
+
+            -- Colonne designation dans lignes_avoir
+            ALTER TABLE IF EXISTS lignes_avoir 
+                ADD COLUMN IF NOT EXISTS designation VARCHAR(255);
+
+            -- Rendre produit_id optionnel dans lignes_avoir pour les avoirs commerciaux / remises forfaitaires
+            ALTER TABLE IF EXISTS lignes_avoir 
+                ALTER COLUMN produit_id DROP NOT NULL;
+
+            -- Index sur facture_origine_id pour optimiser les contrôles anti-dépassement
+            CREATE INDEX IF NOT EXISTS idx_avoirs_facture_origine ON avoirs(facture_origine_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

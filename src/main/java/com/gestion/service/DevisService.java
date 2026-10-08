@@ -94,9 +94,16 @@ public class DevisService {
         if (dto.getLignes() != null) {
             for (LigneDevisDTO ligneDTO : dto.getLignes()) {
                 LigneDevis ligne = new LigneDevis();
-                if (ligneDTO.getProduitId() != null) {
-                    Produit p = produitRepository.findById(ligneDTO.getProduitId())
-                            .orElseThrow(() -> new RuntimeException("Produit non trouvé: " + ligneDTO.getProduitId()));
+                Long tempId = ligneDTO.getProduitId();
+                if (tempId == null && ligneDTO.getProduit() != null && ligneDTO.getProduit().get("id") != null) {
+                    try {
+                        tempId = Long.valueOf(ligneDTO.getProduit().get("id").toString());
+                    } catch (Exception ignored) {}
+                }
+                final Long pId = tempId;
+                if (pId != null) {
+                    Produit p = produitRepository.findById(pId)
+                            .orElseThrow(() -> new RuntimeException("Produit non trouvé: " + pId));
                     ligne.setProduit(p);
                     if (ligneDTO.getPrixUnitaireHT() == null || ligneDTO.getPrixUnitaireHT().compareTo(BigDecimal.ZERO) == 0) {
                         ligne.setPrixUnitaireHT(p.getPrixVenteHt() != null ? p.getPrixVenteHt() : p.getPrixVente());
@@ -142,9 +149,16 @@ public class DevisService {
             existant.getLignes().clear();
             for (LigneDevisDTO l : maj.getLignes()) {
                 LigneDevis ligne = new LigneDevis();
-                if (l.getProduitId() != null) {
-                    Produit p = produitRepository.findById(l.getProduitId())
-                            .orElseThrow(() -> new RuntimeException("Produit non trouvé"));
+                Long tempId = l.getProduitId();
+                if (tempId == null && l.getProduit() != null && l.getProduit().get("id") != null) {
+                    try {
+                        tempId = Long.valueOf(l.getProduit().get("id").toString());
+                    } catch (Exception ignored) {}
+                }
+                final Long pId = tempId;
+                if (pId != null) {
+                    Produit p = produitRepository.findById(pId)
+                            .orElseThrow(() -> new RuntimeException("Produit non trouvé: " + pId));
                     ligne.setProduit(p);
                     if (l.getPrixUnitaireHT() == null || l.getPrixUnitaireHT().compareTo(BigDecimal.ZERO) == 0) {
                         ligne.setPrixUnitaireHT(p.getPrixVenteHt() != null ? p.getPrixVenteHt() : p.getPrixVente());

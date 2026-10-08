@@ -1,6 +1,7 @@
 package com.gestion.persistent.model;
 
 import com.acommon.persistant.model.User;
+import com.gestion.persistent.enums.NatureAvoir;
 import com.gestion.persistent.enums.StatutAvoir;
 import com.gestion.persistent.enums.TypeAvoir;
 import jakarta.persistence.*;
@@ -26,6 +27,10 @@ public class Avoir {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TypeAvoir typeAvoir = TypeAvoir.CLIENT;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "nature_avoir")
+    private NatureAvoir natureAvoir = NatureAvoir.RETOUR_MARCHANDISE;
 
     @Column(name = "facture_origine_id")
     private Long factureOrigineId;
@@ -136,6 +141,14 @@ public class Avoir {
 
     public void setTypeAvoir(TypeAvoir typeAvoir) {
         this.typeAvoir = typeAvoir;
+    }
+
+    public NatureAvoir getNatureAvoir() {
+        return natureAvoir;
+    }
+
+    public void setNatureAvoir(NatureAvoir natureAvoir) {
+        this.natureAvoir = natureAvoir;
     }
 
     public Long getFactureOrigineId() {

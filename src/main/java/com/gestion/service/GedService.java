@@ -76,6 +76,33 @@ public class GedService {
             Long factureAchatId,
             Long factureVenteId,
             Long paiementId) throws IOException {
+        return stockerDocument(file, typePiece, description, ecritureId, factureAchatId, factureVenteId, paiementId, null, null);
+    }
+
+    public DocumentComptableDTO stockerDocument(
+            MultipartFile file,
+            String typePiece,
+            String description,
+            Long ecritureId,
+            Long factureAchatId,
+            Long factureVenteId,
+            Long paiementId,
+            Long commandeClientId,
+            Long livraisonId) throws IOException {
+        return stockerDocument(file, typePiece, description, ecritureId, factureAchatId, factureVenteId, paiementId, commandeClientId, livraisonId, null);
+    }
+
+    public DocumentComptableDTO stockerDocument(
+            MultipartFile file,
+            String typePiece,
+            String description,
+            Long ecritureId,
+            Long factureAchatId,
+            Long factureVenteId,
+            Long paiementId,
+            Long commandeClientId,
+            Long livraisonId,
+            Long chequeEffetId) throws IOException {
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Le fichier à téléverser ne peut pas être vide.");
@@ -137,6 +164,9 @@ public class GedService {
         doc.setFactureAchatId(factureAchatId);
         doc.setFactureVenteId(factureVenteId);
         doc.setPaiementId(paiementId);
+        doc.setCommandeClientId(commandeClientId);
+        doc.setLivraisonId(livraisonId);
+        doc.setChequeEffetId(chequeEffetId);
         doc.setUploadedBy(getUsername());
         doc.setDateUpload(LocalDateTime.now());
 
@@ -190,6 +220,30 @@ public class GedService {
     }
 
     @Transactional(readOnly = true)
+    public List<DocumentComptableDTO> getDocumentsParCommandeClient(Long commandeClientId) {
+        Long tenantId = getTenantId();
+        return documentRepository.findByPointDeVenteIdAndCommandeClientIdOrderByDateUploadDesc(tenantId, commandeClientId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<DocumentComptableDTO> getDocumentsParLivraison(Long livraisonId) {
+        Long tenantId = getTenantId();
+        return documentRepository.findByPointDeVenteIdAndLivraisonIdOrderByDateUploadDesc(tenantId, livraisonId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<DocumentComptableDTO> getDocumentsParChequeEffet(Long chequeEffetId) {
+        Long tenantId = getTenantId();
+        return documentRepository.findByPointDeVenteIdAndChequeEffetIdOrderByDateUploadDesc(tenantId, chequeEffetId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public DocumentComptableDTO getDocument(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
@@ -230,6 +284,21 @@ public class GedService {
         return toDto(saved);
     }
 
+    public DocumentComptableDTO lierDocument(Long documentId, Long factureAchatId, Long commandeClientId, Long livraisonId, Long paiementId, Long chequeEffetId) {
+        Long tenantId = getTenantId();
+        DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(documentId, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId));
+
+        if (factureAchatId != null) doc.setFactureAchatId(factureAchatId);
+        if (commandeClientId != null) doc.setCommandeClientId(commandeClientId);
+        if (livraisonId != null) doc.setLivraisonId(livraisonId);
+        if (paiementId != null) doc.setPaiementId(paiementId);
+        if (chequeEffetId != null) doc.setChequeEffetId(chequeEffetId);
+
+        DocumentComptable saved = documentRepository.save(doc);
+        return toDto(saved);
+    }
+
     public void supprimerDocument(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
@@ -263,6 +332,9 @@ public class GedService {
         dto.setFactureAchatId(doc.getFactureAchatId());
         dto.setFactureVenteId(doc.getFactureVenteId());
         dto.setPaiementId(doc.getPaiementId());
+        dto.setCommandeClientId(doc.getCommandeClientId());
+        dto.setLivraisonId(doc.getLivraisonId());
+        dto.setChequeEffetId(doc.getChequeEffetId());
         dto.setUploadedBy(doc.getUploadedBy());
         dto.setDateUpload(doc.getDateUpload());
         dto.setUrlVisualisation("/api/v1/ged/documents/" + doc.getId() + "/visualiser");

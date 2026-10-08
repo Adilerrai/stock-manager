@@ -29,6 +29,10 @@ public class DocumentOcrAnalysisResultDTO {
     private String statut; // PRET_A_ENREGISTRER, ATTENTION, ENREGISTRE
     private String message;
     private Long savedEntityId;
+    private Long documentId;
+    private String urlVisualisation;
+    private String nomBanque;
+    private String numeroCheque;
 
     public DocumentOcrAnalysisResultDTO() {}
 
@@ -190,5 +194,37 @@ public class DocumentOcrAnalysisResultDTO {
 
     public void setSavedEntityId(Long savedEntityId) {
         this.savedEntityId = savedEntityId;
+    }
+
+    public Long getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(Long documentId) {
+        this.documentId = documentId;
+    }
+
+    public String getUrlVisualisation() {
+        return urlVisualisation;
+    }
+
+    public void setUrlVisualisation(String urlVisualisation) {
+        this.urlVisualisation = urlVisualisation;
+    }
+
+    public String getNomBanque() {
+        return nomBanque;
+    }
+
+    public void setNomBanque(String nomBanque) {
+        this.nomBanque = nomBanque;
+    }
+
+    public String getNumeroCheque() {
+        return numeroCheque;
+    }
+
+    public void setNumeroCheque(String numeroCheque) {
+        this.numeroCheque = numeroCheque;
     }
 }

@@ -55,4 +55,13 @@
     <!-- Changeset 015 : Règles Métier ERP configurables dans entreprise_profiles -->
     <include file="changes/015-add-entreprise-profiles-business-rules.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 016 : Nature de l'avoir et flexibilité lignes_avoir -->
+    <include file="changes/016-add-nature-avoir-and-lignes-avoir-flexibility.xml" relativeToChangelogFile="true"/>
+
+    <!-- Changeset 017 : Support de l'attachement documentaire (PDF/Images) pour Commandes Clients et BL Fournisseur -->
+    <include file="changes/017-add-documents-comptables-commande-and-livraison.xml" relativeToChangelogFile="true"/>
+
+    <!-- Changeset 018 : Support de l'attachement documentaire (PDF/Images) pour Chèques, Traites et Effets -->
+    <include file="changes/018-add-documents-comptables-cheque-effet.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

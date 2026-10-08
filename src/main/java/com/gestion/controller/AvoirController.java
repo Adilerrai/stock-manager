@@ -1,6 +1,8 @@
 package com.gestion.controller;
 
 import com.gestion.persistent.dto.AvoirSearchCriteria;
+import com.gestion.persistent.dto.CreerAvoirPartielDTO;
+import com.gestion.persistent.dto.FactureLignesAvoiriablesDTO;
 import com.gestion.persistent.dto.StatistiqueMotifRetourDTO;
 import com.gestion.persistent.enums.TypeAvoir;
 import com.gestion.persistent.model.Avoir;
@@ -31,6 +33,23 @@ public class AvoirController {
                                            @RequestParam(required = false) Long userId) {
         Avoir nouvelAvoir = avoirService.creerAvoir(avoir, userId);
         return new ResponseEntity<>(nouvelAvoir, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/partiel")
+    public ResponseEntity<Avoir> creerAvoirPartiel(@RequestBody CreerAvoirPartielDTO dto,
+                                                   @RequestParam(required = false) Long userId) {
+        Avoir nouvelAvoir = avoirService.creerAvoirPartiel(dto, userId);
+        return new ResponseEntity<>(nouvelAvoir, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/factures/{factureId}/lignes-disponibles")
+    public ResponseEntity<FactureLignesAvoiriablesDTO> getLignesAvoirablesFacture(@PathVariable Long factureId) {
+        return ResponseEntity.ok(avoirService.calculerLignesAvoirablesFacture(factureId));
+    }
+
+    @GetMapping("/factures-achat/{factureAchatId}/lignes-disponibles")
+    public ResponseEntity<FactureLignesAvoiriablesDTO> getLignesAvoirablesFactureAchat(@PathVariable Long factureAchatId) {
+        return ResponseEntity.ok(avoirService.calculerLignesAvoirablesFactureAchat(factureAchatId));
     }
 
     @PostMapping("/depuis-facture/{factureId}")

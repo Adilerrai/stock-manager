@@ -21,6 +21,12 @@ public interface DocumentComptableRepository extends JpaRepository<DocumentCompt
 
     List<DocumentComptable> findByPointDeVenteIdAndPaiementIdOrderByDateUploadDesc(Long pointDeVenteId, Long paiementId);
 
+    List<DocumentComptable> findByPointDeVenteIdAndCommandeClientIdOrderByDateUploadDesc(Long pointDeVenteId, Long commandeClientId);
+
+    List<DocumentComptable> findByPointDeVenteIdAndLivraisonIdOrderByDateUploadDesc(Long pointDeVenteId, Long livraisonId);
+
+    List<DocumentComptable> findByPointDeVenteIdAndChequeEffetIdOrderByDateUploadDesc(Long pointDeVenteId, Long chequeEffetId);
+
     List<DocumentComptable> findByPointDeVenteIdAndTypePieceOrderByDateUploadDesc(Long pointDeVenteId, String typePiece);
 
     Optional<DocumentComptable> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);

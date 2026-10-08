@@ -133,10 +133,29 @@ public class DevisDTO {
     }
 
     @JsonProperty("client")
-    public void unpackClient(Map<String, Object> client) {
-        if (client != null && client.get("id") != null) {
+    public void unpackClient(Object client) {
+        if (client instanceof Map<?, ?> map) {
+            Object idVal = map.get("id");
+            if (idVal != null) {
+                try {
+                    this.clientId = Long.valueOf(idVal.toString());
+                } catch (Exception ignored) {}
+            }
+            if (this.clientNom == null) {
+                if (map.get("nomComplet") != null) {
+                    this.clientNom = map.get("nomComplet").toString();
+                } else if (map.get("nom") != null) {
+                    this.clientNom = map.get("nom").toString();
+                }
+            }
+            if (this.clientTelephone == null && map.get("telephone") != null) {
+                this.clientTelephone = map.get("telephone").toString();
+            }
+        } else if (client instanceof Number num) {
+            this.clientId = num.longValue();
+        } else if (client instanceof String str && !str.trim().isEmpty()) {
             try {
-                this.clientId = Long.valueOf(client.get("id").toString());
+                this.clientId = Long.valueOf(str.trim());
             } catch (Exception ignored) {}
         }
     }

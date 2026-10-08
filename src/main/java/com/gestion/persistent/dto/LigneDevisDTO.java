@@ -1,6 +1,9 @@
 package com.gestion.persistent.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LigneDevisDTO {
     private Long id;
@@ -100,5 +103,50 @@ public class LigneDevisDTO {
     }
     public void setMontantTotal(BigDecimal montantTotal) {
         this.montantTTC = montantTotal;
+    }
+
+    public String getProduitNom() {
+        return getDesignation();
+    }
+
+    @JsonProperty("produit")
+    public void unpackProduit(Object produit) {
+        if (produit instanceof Map<?, ?> map) {
+            Object idVal = map.get("id");
+            if (idVal != null) {
+                try {
+                    this.produitId = Long.valueOf(idVal.toString());
+                } catch (Exception ignored) {}
+            }
+            if (this.produitDesignation == null) {
+                if (map.get("designation") != null) {
+                    this.produitDesignation = map.get("designation").toString();
+                } else if (map.get("nom") != null) {
+                    this.produitDesignation = map.get("nom").toString();
+                }
+            }
+            if (this.produitReference == null && map.get("reference") != null) {
+                this.produitReference = map.get("reference").toString();
+            }
+        } else if (produit instanceof Number num) {
+            this.produitId = num.longValue();
+        } else if (produit instanceof String str && !str.trim().isEmpty()) {
+            try {
+                this.produitId = Long.valueOf(str.trim());
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @JsonProperty("produit")
+    public Map<String, Object> getProduit() {
+        if (this.produitId == null && this.produitDesignation == null) {
+            return null;
+        }
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", this.produitId);
+        map.put("designation", getDesignation());
+        map.put("nom", getDesignation());
+        map.put("reference", this.produitReference);
+        return map;
     }
 }

@@ -3,13 +3,8 @@ package com.gestion.service;
 import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
-import com.gestion.persistent.dto.AvoirSearchCriteria;
-import com.gestion.persistent.dto.StatistiqueMotifRetourDTO;
-import com.gestion.persistent.enums.MotifRetour;
-import com.gestion.persistent.enums.QualiteProduit;
-import com.gestion.persistent.enums.StatutAvoir;
-import com.gestion.persistent.enums.TypeAvoir;
-import com.gestion.persistent.enums.TypeMouvement;
+import com.gestion.persistent.dto.*;
+import com.gestion.persistent.enums.*;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
 import org.springframework.data.domain.Page;
@@ -83,7 +78,9 @@ public class AvoirService {
             Client client = clientRepository.findById(avoir.getClient().getId())
                     .orElseThrow(() -> new RuntimeException("Client non trouvé"));
             avoir.setClient(client);
-            avoir.setNumeroAvoir(genererNumeroAvoir("AVR-CLI-", TypeAvoir.CLIENT));
+            if (avoir.getNumeroAvoir() == null || avoir.getNumeroAvoir().isBlank()) {
+                avoir.setNumeroAvoir(genererNumeroAvoir("AVR-CLI-", TypeAvoir.CLIENT));
+            }
         } else {
             if (avoir.getFournisseur() == null || avoir.getFournisseur().getId() == null) {
                 throw new RuntimeException("Le fournisseur est obligatoire pour un avoir fournisseur");
@@ -91,7 +88,9 @@ public class AvoirService {
             Fournisseur fournisseur = fournisseurRepository.findById(avoir.getFournisseur().getId())
                     .orElseThrow(() -> new RuntimeException("Fournisseur non trouvé"));
             avoir.setFournisseur(fournisseur);
-            avoir.setNumeroAvoir(genererNumeroAvoir("AVR-FRS-", TypeAvoir.FOURNISSEUR));
+            if (avoir.getNumeroAvoir() == null || avoir.getNumeroAvoir().isBlank()) {
+                avoir.setNumeroAvoir(genererNumeroAvoir("AVR-FRS-", TypeAvoir.FOURNISSEUR));
+            }
         }
 
         if (avoir.getDateAvoir() == null) {
@@ -99,6 +98,9 @@ public class AvoirService {
         }
         if (avoir.getStatut() == null) {
             avoir.setStatut(StatutAvoir.BROUILLON);
+        }
+        if (avoir.getNatureAvoir() == null) {
+            avoir.setNatureAvoir(NatureAvoir.RETOUR_MARCHANDISE);
         }
         avoir.setDateCreation(LocalDateTime.now());
 
@@ -108,6 +110,13 @@ public class AvoirService {
                     Produit p = produitRepository.findById(ligne.getProduit().getId())
                             .orElseThrow(() -> new RuntimeException("Produit non trouvé: " + ligne.getProduit().getId()));
                     ligne.setProduit(p);
+                    if (ligne.getDesignation() == null || ligne.getDesignation().isBlank()) {
+                        ligne.setDesignation(p.getNom() != null ? p.getNom() : p.getDesignation());
+                    }
+                }
+                // Si avoir purement commercial, aucun retour physique en stock
+                if (avoir.getNatureAvoir() == NatureAvoir.AVOIR_COMMERCIAL) {
+                    ligne.setRemettreEnStock(false);
                 }
                 ligne.setAvoir(avoir);
                 ligne.calculerMontants();
@@ -115,6 +124,10 @@ public class AvoirService {
         }
 
         avoir.calculerTotaux();
+
+        // Contrôle anti-dépassement par rapport à la facture d'origine (si renseignée)
+        validerAntiDepassement(avoir);
+
         return avoirRepository.save(avoir);
     }
 
@@ -124,8 +137,8 @@ public class AvoirService {
             throw new RuntimeException("Cet avoir est déjà validé");
         }
 
-        // Mouvements de stock si restitution de marchandises
-        if (avoir.getLignes() != null) {
+        // Mouvements de stock si restitution physique de marchandises (exclus pour avoirs commerciaux)
+        if (avoir.getNatureAvoir() != NatureAvoir.AVOIR_COMMERCIAL && avoir.getLignes() != null) {
             for (LigneAvoir ligne : avoir.getLignes()) {
                 if (Boolean.TRUE.equals(ligne.getRemettreEnStock()) && ligne.getProduit() != null) {
                     if (avoir.getTypeAvoir() == TypeAvoir.CLIENT) {
@@ -157,8 +170,8 @@ public class AvoirService {
         Avoir saved = avoirRepository.save(avoir);
 
         // Déduction financière sur la dette et la facture
+        BigDecimal montantAvoir = saved.getMontantTTC() != null ? saved.getMontantTTC() : BigDecimal.ZERO;
         if (saved.getTypeAvoir() == TypeAvoir.CLIENT && saved.getClient() != null) {
-            BigDecimal montantAvoir = saved.getMontantTTC() != null ? saved.getMontantTTC() : BigDecimal.ZERO;
             if (montantAvoir.compareTo(BigDecimal.ZERO) > 0) {
                 // Diminuer le crédit utilisé du client
                 clientService.diminuerCreditUtilise(saved.getClient().getId(), montantAvoir);
@@ -177,6 +190,17 @@ public class AvoirService {
                         f.setStatut(com.gestion.persistent.enums.StatutFacture.PAYEE_PARTIELLEMENT);
                     }
                     factureRepository.save(f);
+                });
+            }
+        } else if (saved.getTypeAvoir() == TypeAvoir.FOURNISSEUR) {
+            // Ajustement facture d'achat si spécifiée
+            if (saved.getFactureOrigineId() != null) {
+                factureAchatRepository.findById(saved.getFactureOrigineId()).ifPresent(fa -> {
+                    // Maintien de cohérence sur facture d'achat
+                    if (fa.getStatut() == com.gestion.persistent.enums.StatutFacture.EN_ATTENTE && montantAvoir.compareTo(fa.getMontantTtc()) >= 0) {
+                        fa.setStatut(com.gestion.persistent.enums.StatutFacture.ANNULEE);
+                        factureAchatRepository.save(fa);
+                    }
                 });
             }
         }
@@ -245,6 +269,418 @@ public class AvoirService {
             }
         }
         avoir.setLignes(lignesAvoir);
+        avoir.calculerTotaux();
+
+        return creerAvoir(avoir, userId);
+    }
+
+    /**
+     * Contrôle anti-dépassement strict des quantités et montants par rapport à la facture d'origine.
+     */
+    public void validerAntiDepassement(Avoir avoir) {
+        if (avoir.getFactureOrigineId() == null) {
+            return;
+        }
+
+        if (avoir.getTypeAvoir() == TypeAvoir.CLIENT) {
+            Facture facture = factureRepository.findById(avoir.getFactureOrigineId())
+                    .orElseThrow(() -> new RuntimeException("Facture d'origine non trouvée: " + avoir.getFactureOrigineId()));
+
+            List<Avoir> avoirsExistants = avoirRepository.findByFactureOrigineIdAndTypeAvoirAndStatutNot(
+                    facture.getId(), TypeAvoir.CLIENT, StatutAvoir.ANNULE);
+
+            if (avoir.getId() != null) {
+                avoirsExistants = avoirsExistants.stream()
+                        .filter(a -> !a.getId().equals(avoir.getId()))
+                        .toList();
+            }
+
+            // 1. Contrôle montant global TTC
+            BigDecimal totalFactureTTC = facture.getMontantTTC() != null ? facture.getMontantTTC()
+                    : (facture.getMontantFinal() != null ? facture.getMontantFinal() : BigDecimal.ZERO);
+            BigDecimal totalDejaAvoirTTC = avoirsExistants.stream()
+                    .map(a -> a.getMontantTTC() != null ? a.getMontantTTC() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal montantNouvelAvoirTTC = avoir.getMontantTTC() != null ? avoir.getMontantTTC() : BigDecimal.ZERO;
+
+            if (totalDejaAvoirTTC.add(montantNouvelAvoirTTC).compareTo(totalFactureTTC) > 0) {
+                BigDecimal resteAvoiriable = totalFactureTTC.subtract(totalDejaAvoirTTC);
+                if (resteAvoiriable.compareTo(BigDecimal.ZERO) < 0) resteAvoiriable = BigDecimal.ZERO;
+                throw new IllegalArgumentException(String.format(
+                        "Dépassement du montant de la facture %s : Total facture = %s DH, Déjà avoirié = %s DH, Demandé = %s DH. Reste maximum avoiriable = %s DH",
+                        facture.getNumeroFacture(), totalFactureTTC, totalDejaAvoirTTC, montantNouvelAvoirTTC, resteAvoiriable));
+            }
+
+            // 2. Contrôle des quantités par produit
+            if (avoir.getLignes() != null) {
+                for (LigneAvoir la : avoir.getLignes()) {
+                    if (la.getProduit() != null && la.getProduit().getId() != null) {
+                        Long prodId = la.getProduit().getId();
+                        String nomProd = la.getProduit().getNom() != null ? la.getProduit().getNom() : la.getDesignation();
+
+                        BigDecimal qFacturee = BigDecimal.ZERO;
+                        if (facture.getLignes() != null) {
+                            for (LigneFacture lf : facture.getLignes()) {
+                                if (lf.getProduit() != null && prodId.equals(lf.getProduit().getId())) {
+                                    qFacturee = qFacturee.add(lf.getQuantite() != null ? lf.getQuantite() : BigDecimal.ZERO);
+                                }
+                            }
+                        }
+
+                        if (qFacturee.compareTo(BigDecimal.ZERO) <= 0) {
+                            throw new IllegalArgumentException(String.format(
+                                    "Le produit '%s' ne figure pas sur la facture d'origine %s",
+                                    nomProd, facture.getNumeroFacture()));
+                        }
+
+                        BigDecimal qDejaAvoir = BigDecimal.ZERO;
+                        for (Avoir a : avoirsExistants) {
+                            if (a.getLignes() != null) {
+                                for (LigneAvoir ela : a.getLignes()) {
+                                    if (ela.getProduit() != null && prodId.equals(ela.getProduit().getId())) {
+                                        qDejaAvoir = qDejaAvoir.add(ela.getQuantite() != null ? ela.getQuantite() : BigDecimal.ZERO);
+                                    }
+                                }
+                            }
+                        }
+
+                        BigDecimal qDispo = qFacturee.subtract(qDejaAvoir);
+                        if (qDispo.compareTo(BigDecimal.ZERO) < 0) qDispo = BigDecimal.ZERO;
+
+                        BigDecimal qDemandee = la.getQuantite() != null ? la.getQuantite() : BigDecimal.ZERO;
+                        if (qDemandee.compareTo(qDispo) > 0) {
+                            throw new IllegalArgumentException(String.format(
+                                    "Dépassement de quantité pour le produit '%s' sur la facture %s : Facturé = %s, Déjà avoirié = %s, Demandé = %s. Maximum disponible = %s",
+                                    nomProd, facture.getNumeroFacture(), qFacturee, qDejaAvoir, qDemandee, qDispo));
+                        }
+                    }
+                }
+            }
+        } else if (avoir.getTypeAvoir() == TypeAvoir.FOURNISSEUR) {
+            FactureAchat factureAchat = factureAchatRepository.findById(avoir.getFactureOrigineId())
+                    .orElseThrow(() -> new RuntimeException("Facture d'achat d'origine non trouvée: " + avoir.getFactureOrigineId()));
+
+            List<Avoir> avoirsExistants = avoirRepository.findByFactureOrigineIdAndTypeAvoirAndStatutNot(
+                    factureAchat.getId(), TypeAvoir.FOURNISSEUR, StatutAvoir.ANNULE);
+
+            if (avoir.getId() != null) {
+                avoirsExistants = avoirsExistants.stream()
+                        .filter(a -> !a.getId().equals(avoir.getId()))
+                        .toList();
+            }
+
+            BigDecimal totalFactureTTC = factureAchat.getMontantTtc() != null ? factureAchat.getMontantTtc() : BigDecimal.ZERO;
+            BigDecimal totalDejaAvoirTTC = avoirsExistants.stream()
+                    .map(a -> a.getMontantTTC() != null ? a.getMontantTTC() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal montantNouvelAvoirTTC = avoir.getMontantTTC() != null ? avoir.getMontantTTC() : BigDecimal.ZERO;
+
+            if (totalDejaAvoirTTC.add(montantNouvelAvoirTTC).compareTo(totalFactureTTC) > 0) {
+                BigDecimal resteAvoiriable = totalFactureTTC.subtract(totalDejaAvoirTTC);
+                if (resteAvoiriable.compareTo(BigDecimal.ZERO) < 0) resteAvoiriable = BigDecimal.ZERO;
+                throw new IllegalArgumentException(String.format(
+                        "Dépassement du montant de la facture d'achat %s : Total facture = %s DH, Déjà avoirié = %s DH, Demandé = %s DH. Reste maximum avoiriable = %s DH",
+                        factureAchat.getNumeroFacture(), totalFactureTTC, totalDejaAvoirTTC, montantNouvelAvoirTTC, resteAvoiriable));
+            }
+
+            if (avoir.getLignes() != null) {
+                for (LigneAvoir la : avoir.getLignes()) {
+                    if (la.getProduit() != null && la.getProduit().getId() != null) {
+                        Long prodId = la.getProduit().getId();
+                        String nomProd = la.getProduit().getNom() != null ? la.getProduit().getNom() : la.getDesignation();
+
+                        BigDecimal qFacturee = BigDecimal.ZERO;
+                        if (factureAchat.getLignes() != null) {
+                            for (LigneFactureAchat lf : factureAchat.getLignes()) {
+                                if (lf.getProduit() != null && prodId.equals(lf.getProduit().getId())) {
+                                    qFacturee = qFacturee.add(lf.getQuantite() != null ? lf.getQuantite() : BigDecimal.ZERO);
+                                }
+                            }
+                        }
+
+                        if (qFacturee.compareTo(BigDecimal.ZERO) <= 0) {
+                            throw new IllegalArgumentException(String.format(
+                                    "Le produit '%s' ne figure pas sur la facture d'achat %s",
+                                    nomProd, factureAchat.getNumeroFacture()));
+                        }
+
+                        BigDecimal qDejaAvoir = BigDecimal.ZERO;
+                        for (Avoir a : avoirsExistants) {
+                            if (a.getLignes() != null) {
+                                for (LigneAvoir ela : a.getLignes()) {
+                                    if (ela.getProduit() != null && prodId.equals(ela.getProduit().getId())) {
+                                        qDejaAvoir = qDejaAvoir.add(ela.getQuantite() != null ? ela.getQuantite() : BigDecimal.ZERO);
+                                    }
+                                }
+                            }
+                        }
+
+                        BigDecimal qDispo = qFacturee.subtract(qDejaAvoir);
+                        if (qDispo.compareTo(BigDecimal.ZERO) < 0) qDispo = BigDecimal.ZERO;
+
+                        BigDecimal qDemandee = la.getQuantite() != null ? la.getQuantite() : BigDecimal.ZERO;
+                        if (qDemandee.compareTo(qDispo) > 0) {
+                            throw new IllegalArgumentException(String.format(
+                                    "Dépassement de quantité pour le produit '%s' sur la facture d'achat %s : Facturé = %s, Déjà avoirié = %s, Demandé = %s. Maximum disponible = %s",
+                                    nomProd, factureAchat.getNumeroFacture(), qFacturee, qDejaAvoir, qDemandee, qDispo));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Calcule pour chaque ligne d'une facture client les quantités facturées, déjà avoiriées et restant disponibles.
+     */
+    @Transactional(readOnly = true)
+    public FactureLignesAvoiriablesDTO calculerLignesAvoirablesFacture(Long factureId) {
+        Facture facture = factureRepository.findById(factureId)
+                .orElseThrow(() -> new RuntimeException("Facture non trouvée: " + factureId));
+
+        FactureLignesAvoiriablesDTO dto = new FactureLignesAvoiriablesDTO();
+        dto.setFactureId(facture.getId());
+        dto.setNumeroFacture(facture.getNumeroFacture());
+        dto.setDateFacture(facture.getDateFacture());
+        dto.setTypeAvoir(TypeAvoir.CLIENT);
+        if (facture.getClient() != null) {
+            dto.setTiersId(facture.getClient().getId());
+            dto.setTiersNom(facture.getClient().getNomComplet() != null ? facture.getClient().getNomComplet() : facture.getClient().getNom());
+        }
+
+        BigDecimal totalFactureHT = facture.getMontantHT() != null ? facture.getMontantHT() : BigDecimal.ZERO;
+        BigDecimal totalFactureTTC = facture.getMontantTTC() != null ? facture.getMontantTTC()
+                : (facture.getMontantFinal() != null ? facture.getMontantFinal() : BigDecimal.ZERO);
+        dto.setMontantFactureHT(totalFactureHT);
+        dto.setMontantFactureTTC(totalFactureTTC);
+
+        List<Avoir> avoirsExistants = avoirRepository.findByFactureOrigineIdAndTypeAvoirAndStatutNot(
+                facture.getId(), TypeAvoir.CLIENT, StatutAvoir.ANNULE);
+
+        BigDecimal montantDejaAvoirTTC = avoirsExistants.stream()
+                .map(a -> a.getMontantTTC() != null ? a.getMontantTTC() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        dto.setMontantDejaAvoirTTC(montantDejaAvoirTTC);
+
+        BigDecimal montantRestant = totalFactureTTC.subtract(montantDejaAvoirTTC);
+        dto.setMontantRestantAvoirTTC(montantRestant.compareTo(BigDecimal.ZERO) > 0 ? montantRestant : BigDecimal.ZERO);
+
+        List<LigneAvoiriableDTO> lignesDTO = new ArrayList<>();
+        if (facture.getLignes() != null) {
+            for (LigneFacture lf : facture.getLignes()) {
+                LigneAvoiriableDTO lDto = new LigneAvoiriableDTO();
+                lDto.setLigneFactureId(lf.getId());
+                if (lf.getProduit() != null) {
+                    lDto.setProduitId(lf.getProduit().getId());
+                    lDto.setReference(lf.getProduit().getReference());
+                    lDto.setDesignation(lf.getProduit().getNom() != null ? lf.getProduit().getNom() : lf.getDesignation());
+                } else {
+                    lDto.setDesignation(lf.getDesignation());
+                    lDto.setReference(lf.getReference());
+                }
+
+                BigDecimal qFact = lf.getQuantite() != null ? lf.getQuantite() : BigDecimal.ZERO;
+                lDto.setQuantiteFacturee(qFact);
+                lDto.setPrixUnitaireHT(lf.getPrixUnitaireHT() != null ? lf.getPrixUnitaireHT() : BigDecimal.ZERO);
+                lDto.setTauxTVA(lf.getTauxTVA() != null ? lf.getTauxTVA() : BigDecimal.valueOf(20));
+                lDto.setMontantTTCFacture(lf.getMontantTTC() != null ? lf.getMontantTTC() : BigDecimal.ZERO);
+
+                BigDecimal qDejaAvoir = BigDecimal.ZERO;
+                if (lf.getProduit() != null) {
+                    Long pid = lf.getProduit().getId();
+                    for (Avoir ea : avoirsExistants) {
+                        if (ea.getLignes() != null) {
+                            for (LigneAvoir ela : ea.getLignes()) {
+                                if (ela.getProduit() != null && pid.equals(ela.getProduit().getId())) {
+                                    qDejaAvoir = qDejaAvoir.add(ela.getQuantite() != null ? ela.getQuantite() : BigDecimal.ZERO);
+                                }
+                            }
+                        }
+                    }
+                }
+                lDto.setQuantiteDejaAvoiriee(qDejaAvoir);
+
+                BigDecimal qDispo = qFact.subtract(qDejaAvoir);
+                if (qDispo.compareTo(BigDecimal.ZERO) < 0) qDispo = BigDecimal.ZERO;
+                lDto.setQuantiteDisponible(qDispo);
+                lDto.setEntierementAvoiriee(qDispo.compareTo(BigDecimal.ZERO) <= 0);
+
+                lignesDTO.add(lDto);
+            }
+        }
+        dto.setLignes(lignesDTO);
+        return dto;
+    }
+
+    /**
+     * Calcule pour chaque ligne d'une facture d'achat fournisseur les quantités facturées, déjà avoiriées et restant disponibles.
+     */
+    @Transactional(readOnly = true)
+    public FactureLignesAvoiriablesDTO calculerLignesAvoirablesFactureAchat(Long factureAchatId) {
+        FactureAchat facture = factureAchatRepository.findById(factureAchatId)
+                .orElseThrow(() -> new RuntimeException("Facture d'achat non trouvée: " + factureAchatId));
+
+        FactureLignesAvoiriablesDTO dto = new FactureLignesAvoiriablesDTO();
+        dto.setFactureId(facture.getId());
+        dto.setNumeroFacture(facture.getNumeroFacture());
+        dto.setDateFacture(facture.getDateFacture() != null ? facture.getDateFacture().toLocalDate() : LocalDate.now());
+        dto.setTypeAvoir(TypeAvoir.FOURNISSEUR);
+        if (facture.getFournisseur() != null) {
+            dto.setTiersId(facture.getFournisseur().getId());
+            dto.setTiersNom(facture.getFournisseur().getNom());
+        }
+
+        BigDecimal totalFactureHT = facture.getMontantHt() != null ? facture.getMontantHt() : BigDecimal.ZERO;
+        BigDecimal totalFactureTTC = facture.getMontantTtc() != null ? facture.getMontantTtc() : BigDecimal.ZERO;
+        dto.setMontantFactureHT(totalFactureHT);
+        dto.setMontantFactureTTC(totalFactureTTC);
+
+        List<Avoir> avoirsExistants = avoirRepository.findByFactureOrigineIdAndTypeAvoirAndStatutNot(
+                facture.getId(), TypeAvoir.FOURNISSEUR, StatutAvoir.ANNULE);
+
+        BigDecimal montantDejaAvoirTTC = avoirsExistants.stream()
+                .map(a -> a.getMontantTTC() != null ? a.getMontantTTC() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        dto.setMontantDejaAvoirTTC(montantDejaAvoirTTC);
+
+        BigDecimal montantRestant = totalFactureTTC.subtract(montantDejaAvoirTTC);
+        dto.setMontantRestantAvoirTTC(montantRestant.compareTo(BigDecimal.ZERO) > 0 ? montantRestant : BigDecimal.ZERO);
+
+        List<LigneAvoiriableDTO> lignesDTO = new ArrayList<>();
+        if (facture.getLignes() != null) {
+            for (LigneFactureAchat lf : facture.getLignes()) {
+                LigneAvoiriableDTO lDto = new LigneAvoiriableDTO();
+                lDto.setLigneFactureId(lf.getId());
+                if (lf.getProduit() != null) {
+                    lDto.setProduitId(lf.getProduit().getId());
+                    lDto.setReference(lf.getProduit().getReference());
+                    lDto.setDesignation(lf.getProduit().getNom());
+                }
+
+                BigDecimal qFact = lf.getQuantite() != null ? lf.getQuantite() : BigDecimal.ZERO;
+                lDto.setQuantiteFacturee(qFact);
+                lDto.setPrixUnitaireHT(lf.getPrixUnitaireHt() != null ? lf.getPrixUnitaireHt() : BigDecimal.ZERO);
+                lDto.setTauxTVA(lf.getTauxTva() != null ? lf.getTauxTva() : BigDecimal.valueOf(20));
+                lDto.setMontantTTCFacture(lf.getMontantTtc() != null ? lf.getMontantTtc() : BigDecimal.ZERO);
+
+                BigDecimal qDejaAvoir = BigDecimal.ZERO;
+                if (lf.getProduit() != null) {
+                    Long pid = lf.getProduit().getId();
+                    for (Avoir ea : avoirsExistants) {
+                        if (ea.getLignes() != null) {
+                            for (LigneAvoir ela : ea.getLignes()) {
+                                if (ela.getProduit() != null && pid.equals(ela.getProduit().getId())) {
+                                    qDejaAvoir = qDejaAvoir.add(ela.getQuantite() != null ? ela.getQuantite() : BigDecimal.ZERO);
+                                }
+                            }
+                        }
+                    }
+                }
+                lDto.setQuantiteDejaAvoiriee(qDejaAvoir);
+
+                BigDecimal qDispo = qFact.subtract(qDejaAvoir);
+                if (qDispo.compareTo(BigDecimal.ZERO) < 0) qDispo = BigDecimal.ZERO;
+                lDto.setQuantiteDisponible(qDispo);
+                lDto.setEntierementAvoiriee(qDispo.compareTo(BigDecimal.ZERO) <= 0);
+
+                lignesDTO.add(lDto);
+            }
+        }
+        dto.setLignes(lignesDTO);
+        return dto;
+    }
+
+    /**
+     * Crée un avoir partiel (sélection de lignes / quantités) ou un avoir commercial (remise financière).
+     */
+    public Avoir creerAvoirPartiel(CreerAvoirPartielDTO dto, Long userId) {
+        if (dto == null) {
+            throw new IllegalArgumentException("La requête de création d'avoir partiel est obligatoire");
+        }
+
+        Avoir avoir = new Avoir();
+        avoir.setTypeAvoir(dto.getTypeAvoir() != null ? dto.getTypeAvoir() : TypeAvoir.CLIENT);
+        avoir.setNatureAvoir(dto.getNatureAvoir() != null ? dto.getNatureAvoir() : NatureAvoir.RETOUR_MARCHANDISE);
+        avoir.setDateAvoir(dto.getDateAvoir() != null ? dto.getDateAvoir() : LocalDate.now());
+        avoir.setMotif(dto.getMotif());
+        avoir.setNotes(dto.getNotes());
+        avoir.setStatut(StatutAvoir.BROUILLON);
+
+        // Rattachement facture origine
+        if (dto.getFactureId() != null) {
+            avoir.setFactureOrigineId(dto.getFactureId());
+            if (avoir.getTypeAvoir() == TypeAvoir.CLIENT) {
+                Facture f = factureRepository.findById(dto.getFactureId())
+                        .orElseThrow(() -> new RuntimeException("Facture non trouvée: " + dto.getFactureId()));
+                avoir.setNumeroFactureOrigine(f.getNumeroFacture());
+                avoir.setClient(f.getClient());
+                if (avoir.getMotif() == null || avoir.getMotif().isBlank()) {
+                    avoir.setMotif("Avoir partiel sur facture " + f.getNumeroFacture());
+                }
+            } else {
+                FactureAchat fa = factureAchatRepository.findById(dto.getFactureId())
+                        .orElseThrow(() -> new RuntimeException("Facture d'achat non trouvée: " + dto.getFactureId()));
+                avoir.setNumeroFactureOrigine(fa.getNumeroFacture());
+                avoir.setFournisseur(fa.getFournisseur());
+                if (avoir.getMotif() == null || avoir.getMotif().isBlank()) {
+                    avoir.setMotif("Avoir partiel sur facture achat " + fa.getNumeroFacture());
+                }
+            }
+        }
+
+        List<LigneAvoir> lignes = new ArrayList<>();
+
+        // Cas 1 : Lignes d'articles partielles spécifiées
+        if (dto.getLignes() != null && !dto.getLignes().isEmpty()) {
+            for (LigneAvoirPartielDTO lp : dto.getLignes()) {
+                if (lp.getQuantite() == null || lp.getQuantite().compareTo(BigDecimal.ZERO) <= 0) {
+                    continue;
+                }
+                LigneAvoir la = new LigneAvoir();
+                la.setAvoir(avoir);
+                if (lp.getProduitId() != null) {
+                    Produit p = produitRepository.findById(lp.getProduitId())
+                            .orElseThrow(() -> new RuntimeException("Produit non trouvé: " + lp.getProduitId()));
+                    la.setProduit(p);
+                    la.setDesignation(p.getNom() != null ? p.getNom() : p.getDesignation());
+                } else {
+                    la.setDesignation(lp.getDesignation());
+                }
+                la.setQuantite(lp.getQuantite());
+                la.setPrixUnitaireHT(lp.getPrixUnitaireHT() != null ? lp.getPrixUnitaireHT() : BigDecimal.ZERO);
+                la.setTauxTVA(lp.getTauxTVA() != null ? lp.getTauxTVA() : BigDecimal.valueOf(20));
+
+                if (avoir.getNatureAvoir() == NatureAvoir.AVOIR_COMMERCIAL) {
+                    la.setRemettreEnStock(false);
+                } else {
+                    la.setRemettreEnStock(lp.getRemettreEnStock() != null ? lp.getRemettreEnStock() : true);
+                }
+
+                la.setMotifRetour(lp.getMotifRetour() != null ? lp.getMotifRetour() : MotifRetour.AUTRE);
+                la.setMotif(lp.getMotif());
+                la.calculerMontants();
+                lignes.add(la);
+            }
+        } else if (dto.getMontantHTForfaitaire() != null && dto.getMontantHTForfaitaire().compareTo(BigDecimal.ZERO) > 0) {
+            // Cas 2 : Avoir commercial forfaitaire sur montant global (sans article spécifique)
+            avoir.setNatureAvoir(NatureAvoir.AVOIR_COMMERCIAL);
+            LigneAvoir la = new LigneAvoir();
+            la.setAvoir(avoir);
+            la.setDesignation(dto.getLibelleForfaitaire() != null && !dto.getLibelleForfaitaire().isBlank()
+                    ? dto.getLibelleForfaitaire() : "Geste commercial / Remise exceptionnelle");
+            la.setQuantite(BigDecimal.ONE);
+            la.setPrixUnitaireHT(dto.getMontantHTForfaitaire());
+            la.setTauxTVA(dto.getTauxTVAForfaitaire() != null ? dto.getTauxTVAForfaitaire() : BigDecimal.valueOf(20));
+            la.setRemettreEnStock(false);
+            la.setMotifRetour(MotifRetour.AUTRE);
+            la.setMotif(dto.getMotif());
+            la.calculerMontants();
+            lignes.add(la);
+        } else {
+            throw new IllegalArgumentException("L'avoir doit contenir au moins une ligne d'article avec une quantité > 0 ou un montant forfaitaire.");
+        }
+
+        avoir.setLignes(lignes);
         avoir.calculerTotaux();
 
         return creerAvoir(avoir, userId);

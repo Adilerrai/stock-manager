@@ -19,8 +19,11 @@ public class LigneAvoir {
     private Avoir avoir;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "produit_id", nullable = false)
+    @JoinColumn(name = "produit_id")
     private Produit produit;
+
+    @Column(name = "designation")
+    private String designation;
 
     @Column(nullable = false, precision = 12, scale = 3)
     private BigDecimal quantite = BigDecimal.ONE;
@@ -156,5 +159,19 @@ public class LigneAvoir {
 
     public void setMotifRetour(com.gestion.persistent.enums.MotifRetour motifRetour) {
         this.motifRetour = motifRetour;
+    }
+
+    public String getDesignation() {
+        if (designation != null && !designation.isBlank()) {
+            return designation;
+        }
+        if (produit != null) {
+            return produit.getNom() != null ? produit.getNom() : produit.getDesignation();
+        }
+        return null;
+    }
+
+    public void setDesignation(String designation) {
+        this.designation = designation;
     }
 }
