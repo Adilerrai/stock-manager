@@ -12,6 +12,9 @@
       Si la base est neuve, le script db.sql complet est exécuté automatiquement.
     -->
     <changeSet id="001-initial-schema-and-seed" author="erp-pointvente">
+        <validCheckSum>9:d918f41d2f4c6b1ab2ea134d6cfc53a5</validCheckSum>
+        <validCheckSum>9:2b3ca8bfadd7bd679a6b250c2565946b</validCheckSum>
+        <validCheckSum>ANY</validCheckSum>
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="users"/>
