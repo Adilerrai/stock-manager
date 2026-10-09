@@ -48,7 +48,10 @@ pipeline {
 
     post {
         failure {
-            sh 'docker compose down || true'
+            echo "Le déploiement a échoué. L'ancien conteneur reste en fonctionnement pour éviter toute interruption."
+        }
+        success {
+            echo "Déploiement réussi avec succès !"
         }
     }
 }

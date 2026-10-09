@@ -1,10 +1,16 @@
 group "default" {
-  targets = ["omega", "saas"]
+  targets = ["pointvente", "omega", "saas"]
 }
 
 target "base" {
   context    = "."
   dockerfile = "Dockerfile"
+}
+
+# Image pour Point de Vente
+target "pointvente" {
+  inherits = ["base"]
+  tags     = ["pointvente-app-api:latest"]
 }
 
 # Image pour Omega Brand
