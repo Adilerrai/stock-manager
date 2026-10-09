@@ -206,14 +206,16 @@ public class UserService {
         user.setGenre(request.getGenre());
         user.setRole(role);
         user.setTenantId(targetTenantId);
-        user.setMereId(targetPointDeVente != null && targetPointDeVente.getMereId() != null
+        Long explicitMereId = (targetPointDeVente != null && targetPointDeVente.getMereId() != null && !targetPointDeVente.getMereId().equals(targetTenantId))
                 ? targetPointDeVente.getMereId()
-                : targetTenantId);
+                : null;
+        user.setMereId(explicitMereId);
         user.setPointDeVente(targetPointDeVente);
         user.setEnabled(true);
         user.setAccountNonExpired(true);
         user.setAccountNonLocked(true);
         user.setCredentialsNonExpired(true);
+        user.setMustChangePassword(true);
 
         return mapToResponse(userRepository.save(user));
     }
@@ -335,8 +337,10 @@ public class UserService {
             user.setPointDeVente(pdv);
             if (superAdmin) {
                 user.setTenantId(pdv.getTenantId() != null && pdv.getTenantId() > 0 ? pdv.getTenantId() : pdv.getId());
-                if (pdv.getMereId() != null) {
+                if (pdv.getMereId() != null && !pdv.getMereId().equals(user.getTenantId())) {
                     user.setMereId(pdv.getMereId());
+                } else {
+                    user.setMereId(null);
                 }
             }
         }
@@ -372,6 +376,7 @@ public class UserService {
     public void resetPassword(Long id, ResetPasswordRequest request) {
         User user = findAndValidateAccess(id);
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(true);
         userRepository.save(user);
     }
 
@@ -386,6 +391,7 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
     }
 
@@ -439,6 +445,7 @@ public class UserService {
             response.setNomPointDeVente(user.getPointDeVente().getNomPointDeVente());
         }
         response.setEnabled(user.isEnabled());
+        response.setMustChangePassword(user.getMustChangePassword());
         return response;
     }
 }

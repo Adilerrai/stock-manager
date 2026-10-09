@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Size;
 
 public class ChangePasswordRequest {
 
+    @com.fasterxml.jackson.annotation.JsonAlias({"currentPassword"})
     @NotBlank(message = "L'ancien mot de passe est obligatoire")
     private String oldPassword;
 
@@ -25,6 +26,16 @@ public class ChangePasswordRequest {
 
     public void setOldPassword(String oldPassword) {
         this.oldPassword = oldPassword;
+    }
+
+    public String getCurrentPassword() {
+        return this.oldPassword;
+    }
+
+    public void setCurrentPassword(String currentPassword) {
+        if (this.oldPassword == null || this.oldPassword.isBlank()) {
+            this.oldPassword = currentPassword;
+        }
     }
 
     public String getNewPassword() {

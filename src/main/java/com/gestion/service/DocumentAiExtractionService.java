@@ -1,8 +1,15 @@
 package com.gestion.service;
 
 import com.acommon.persistant.model.TenantContext;
+import com.acommon.persistant.model.User;
+import com.acommon.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gestion.persistent.enums.ModePaiement;
+import com.gestion.persistent.enums.SensEffet;
+import com.gestion.persistent.enums.StatutEffet;
+import com.gestion.persistent.enums.TypeEffet;
+import com.gestion.persistent.dto.DocumentComptableDTO;
 import com.gestion.persistent.dto.DocumentOcrAnalysisResultDTO;
 import com.gestion.persistent.dto.LigneDocumentOcrDTO;
 import com.gestion.persistent.enums.StatutCommandeClient;
@@ -67,6 +74,11 @@ public class DocumentAiExtractionService {
     private final CommandeClientRepository commandeClientRepository;
     private final LivraisonRepository livraisonRepository;
     private final DepotRepository depotRepository;
+    private final GedService gedService;
+    private final DocumentComptableRepository documentComptableRepository;
+    private final PaiementRepository paiementRepository;
+    private final ChequeEffetRepository chequeEffetRepository;
+    private final UserRepository userRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
@@ -80,7 +92,12 @@ public class DocumentAiExtractionService {
                                        FactureAchatRepository factureAchatRepository,
                                        CommandeClientRepository commandeClientRepository,
                                        LivraisonRepository livraisonRepository,
-                                       DepotRepository depotRepository) {
+                                       DepotRepository depotRepository,
+                                       GedService gedService,
+                                       DocumentComptableRepository documentComptableRepository,
+                                       PaiementRepository paiementRepository,
+                                       ChequeEffetRepository chequeEffetRepository,
+                                       UserRepository userRepository) {
         this.openOcrService = openOcrService;
         this.fournisseurRepository = fournisseurRepository;
         this.clientRepository = clientRepository;
@@ -89,6 +106,11 @@ public class DocumentAiExtractionService {
         this.commandeClientRepository = commandeClientRepository;
         this.livraisonRepository = livraisonRepository;
         this.depotRepository = depotRepository;
+        this.gedService = gedService;
+        this.documentComptableRepository = documentComptableRepository;
+        this.paiementRepository = paiementRepository;
+        this.chequeEffetRepository = chequeEffetRepository;
+        this.userRepository = userRepository;
     }
 
     private Long getTenantId() {
@@ -114,6 +136,19 @@ public class DocumentAiExtractionService {
                 throw new RuntimeException("Aucun texte lisible n'a pu être extrait du document.");
             }
 
+            // 1b. Sauvegarde probante du fichier dans la GED avec hash SHA-256
+            DocumentComptableDTO docGed = null;
+            try {
+                docGed = gedService.stockerDocument(
+                        file,
+                        typeDocumentAttendu != null ? typeDocumentAttendu : "OCR_SCAN",
+                        "Pièce justificative numérisée pour analyse OCR",
+                        null, null, null, null, null, null
+                );
+            } catch (Exception exGed) {
+                log.warn("Stockage GED préliminaire non bloquant: {}", exGed.getMessage());
+            }
+
             // 2. Préparation du contexte de matching avec la base de données
             Long tenantId = getTenantId();
             List<Fournisseur> fournisseurs = fournisseurRepository.findByPointDeVenteIdAndActifTrue(tenantId);
@@ -123,6 +158,10 @@ public class DocumentAiExtractionService {
             // 3. Appel Groq AI pour analyse structurée et matching
             DocumentOcrAnalysisResultDTO dto = appelerGroqPourMatching(ocrText, typeDocumentAttendu, fournisseurs, clients, produits);
             dto.setRawOcrText(ocrText);
+            if (docGed != null) {
+                dto.setDocumentId(docGed.getId());
+                dto.setUrlVisualisation(docGed.getUrlVisualisation());
+            }
 
             // 4. Post-validation et consolidation côté Java
             consoliderMatching(dto, fournisseurs, clients, produits);
@@ -166,21 +205,22 @@ public class DocumentAiExtractionService {
 
         String systemPrompt = """
             Tu es un moteur d'intelligence artificielle expert en comptabilité et gestion commerciale B2B au Maroc.
-            Ta mission est d'analyser le texte extrait par OCR d'un document scanné ou PDF (Facture Fournisseur, Bon de Livraison Fournisseur, ou Commande Client).
+            Ta mission est d'analyser le texte extrait par OCR d'un document scanné ou PDF (Facture Fournisseur, Bon de Livraison Fournisseur, Commande Client, Chèque, Traite ou Effet de commerce).
             Tu dois extraire fidèlement les informations et les faire correspondre (MATCHING) avec les fournisseurs, clients et produits de la base de données.
             
             Règles strictes :
-            1. Détecte le typeDocument : 'FACTURE_ACHAT', 'COMMANDE_CLIENT', ou 'BON_LIVRAISON_FOURNISSEUR'.
-            2. Extrait le numeroPiece (numéro de facture, BL ou commande).
-            3. Extrait les dates au format YYYY-MM-DD (datePiece et dateEcheance).
-            4. Identifie le tiers :
-               - Si c'est une facture achat ou BL : c'est un FOURNISSEUR. Compare son nom, ICE ou RC avec la liste FOURNISSEURS. Si trouvé, mets son tierId, sinon tierId = null.
-               - Si c'est une commande client : c'est un CLIENT. Compare avec la liste CLIENTS. Si trouvé, mets son tierId, sinon tierId = null.
-            5. Extrait les montants globaux : montantHT, montantTVA, montantTTC.
-            6. Pour chaque ligne d'article :
-               - reference, designation, quantite, prixUnitaireHT, tauxTVA, montantHT, montantTTC.
-               - Fais correspondre avec la liste PRODUITS (par référence ou désignation). Si correspondance trouvée, renseigne 'produitId', sinon null.
-            7. Retourne UNIQUEMENT un objet JSON valide conforme au schéma demandé.
+            1. Détecte le typeDocument : 'FACTURE_ACHAT', 'COMMANDE_CLIENT', 'BON_LIVRAISON_FOURNISSEUR', 'CHEQUE', 'TRAITE' ou 'EFFET'.
+            2. Si c'est un chèque, une traite ou un effet bancaire :
+               - Extrait le numéro de chèque/effet dans 'numeroPiece' et 'numeroCheque'.
+               - Extrait la banque marocaine dans 'nomBanque' (ex: Attijariwafa Bank, Banque Populaire, Bank of Africa / BMCE, CIH Bank, Société Générale, Crédit du Maroc, Al Barid Bank, etc.).
+               - Extrait le montant en dirhams (MAD) dans 'montantTTC' et 'montantHT'.
+               - Extrait la date d'émission dans 'datePiece' et la date d'échéance d'encaissement dans 'dateEcheance'.
+               - Identifie le tireur/émetteur ou bénéficiaire dans 'tierNom' (compare avec CLIENTS ou FOURNISSEURS).
+            3. Si c'est une facture, BL ou commande :
+               - Extrait le numeroPiece (numéro de facture, BL ou commande).
+               - Extrait les dates au format YYYY-MM-DD (datePiece et dateEcheance).
+               - Identifie le tiers (Fournisseur ou Client selon le document) et extrait montants et lignes.
+            4. Retourne UNIQUEMENT un objet JSON valide conforme au schéma demandé.
             """;
 
         String userPrompt = String.format("""
@@ -210,6 +250,8 @@ public class DocumentAiExtractionService {
             {
               "typeDocument": "FACTURE_ACHAT",
               "numeroPiece": "FAC-2025-001",
+              "numeroCheque": null,
+              "nomBanque": null,
               "datePiece": "2025-01-15",
               "dateEcheance": "2025-02-15",
               "tierType": "FOURNISSEUR",
@@ -283,6 +325,12 @@ public class DocumentAiExtractionService {
             dto.setNumeroPiece(n.path("numeroPiece").asText(null));
             dto.setDatePiece(n.path("datePiece").asText(LocalDate.now().toString()));
             dto.setDateEcheance(n.path("dateEcheance").asText(null));
+            if (n.hasNonNull("nomBanque")) {
+                dto.setNomBanque(n.path("nomBanque").asText(null));
+            }
+            if (n.hasNonNull("numeroCheque")) {
+                dto.setNumeroCheque(n.path("numeroCheque").asText(null));
+            }
 
             dto.setTierType(n.path("tierType").asText("FOURNISSEUR"));
             if (n.hasNonNull("tierId") && n.path("tierId").asLong(0) > 0) {
@@ -356,6 +404,72 @@ public class DocumentAiExtractionService {
                             dto.setTierNom(c.getNomComplet() != null ? c.getNomComplet() : c.getNom());
                             dto.setTierMatched(true);
                         });
+            }
+        } else if ("CHEQUE".equalsIgnoreCase(dto.getTypeDocument())
+                || "TRAITE".equalsIgnoreCase(dto.getTypeDocument())
+                || "EFFET".equalsIgnoreCase(dto.getTypeDocument())
+                || "PAIEMENT".equalsIgnoreCase(dto.getTypeDocument())) {
+            // Pour un chèque ou un effet, vérifier si le tiers identifié correspond à un client ou à un fournisseur
+            if (dto.getTierId() != null) {
+                boolean clientExists = clients.stream().anyMatch(c -> c.getId().equals(dto.getTierId()));
+                if (clientExists) {
+                    dto.setTierType("CLIENT");
+                    dto.setTierMatched(true);
+                } else {
+                    boolean frnExists = fournisseurs.stream().anyMatch(f -> f.getId().equals(dto.getTierId()));
+                    if (frnExists) {
+                        dto.setTierType("FOURNISSEUR");
+                        dto.setTierMatched(true);
+                    }
+                }
+            }
+            if (!dto.isTierMatched() && dto.getTierIce() != null && !dto.getTierIce().isBlank()) {
+                clients.stream()
+                        .filter(c -> c.getIce() != null && c.getIce().trim().equalsIgnoreCase(dto.getTierIce().trim()))
+                        .findFirst()
+                        .ifPresent(c -> {
+                            dto.setTierId(c.getId());
+                            dto.setTierNom(c.getNomComplet() != null ? c.getNomComplet() : c.getNom());
+                            dto.setTierType("CLIENT");
+                            dto.setTierMatched(true);
+                        });
+                if (!dto.isTierMatched()) {
+                    fournisseurs.stream()
+                            .filter(f -> f.getIce() != null && f.getIce().trim().equalsIgnoreCase(dto.getTierIce().trim()))
+                            .findFirst()
+                            .ifPresent(f -> {
+                                dto.setTierId(f.getId());
+                                dto.setTierNom(f.getRaisonSociale());
+                                dto.setTierType("FOURNISSEUR");
+                                dto.setTierMatched(true);
+                            });
+                }
+            }
+            if (!dto.isTierMatched() && dto.getTierNom() != null && !dto.getTierNom().isBlank()) {
+                String nomRech = dto.getTierNom().toLowerCase().trim();
+                Optional<Client> clientOpt = clients.stream()
+                        .filter(c -> (c.getNomComplet() != null && c.getNomComplet().toLowerCase().contains(nomRech))
+                                || (c.getNom() != null && c.getNom().toLowerCase().contains(nomRech)))
+                        .findFirst();
+                if (clientOpt.isPresent()) {
+                    dto.setTierId(clientOpt.get().getId());
+                    dto.setTierNom(clientOpt.get().getNomComplet() != null ? clientOpt.get().getNomComplet() : clientOpt.get().getNom());
+                    dto.setTierType("CLIENT");
+                    dto.setTierMatched(true);
+                } else {
+                    Optional<Fournisseur> frnOpt = fournisseurs.stream()
+                            .filter(f -> f.getRaisonSociale() != null && f.getRaisonSociale().toLowerCase().contains(nomRech))
+                            .findFirst();
+                    if (frnOpt.isPresent()) {
+                        dto.setTierId(frnOpt.get().getId());
+                        dto.setTierNom(frnOpt.get().getRaisonSociale());
+                        dto.setTierType("FOURNISSEUR");
+                        dto.setTierMatched(true);
+                    }
+                }
+            }
+            if (dto.getTierType() == null || dto.getTierType().isBlank()) {
+                dto.setTierType("CLIENT");
             }
         } else {
             dto.setTierType("FOURNISSEUR");
@@ -443,6 +557,11 @@ public class DocumentAiExtractionService {
             return enregistrerCommandeClient(dto, tenantId);
         } else if ("BON_LIVRAISON_FOURNISSEUR".equalsIgnoreCase(dto.getTypeDocument())) {
             return enregistrerLivraisonFournisseur(dto, tenantId);
+        } else if ("CHEQUE".equalsIgnoreCase(dto.getTypeDocument())
+                || "TRAITE".equalsIgnoreCase(dto.getTypeDocument())
+                || "EFFET".equalsIgnoreCase(dto.getTypeDocument())
+                || "PAIEMENT".equalsIgnoreCase(dto.getTypeDocument())) {
+            return enregistrerPaiement(dto, tenantId);
         } else {
             throw new IllegalArgumentException("Type de document non pris en charge pour l'enregistrement : " + dto.getTypeDocument());
         }
@@ -501,6 +620,8 @@ public class DocumentAiExtractionService {
         }
 
         FactureAchat saved = factureAchatRepository.save(f);
+        lierDocumentSiPresent(dto.getDocumentId(), saved.getId(), null, null, null, null);
+
         dto.setSavedEntityId(saved.getId());
         dto.setStatut("ENREGISTRE");
         dto.setMessage("Facture d'achat enregistrée avec succès (ID: " + saved.getId() + ")");
@@ -553,6 +674,8 @@ public class DocumentAiExtractionService {
         }
 
         CommandeClient saved = commandeClientRepository.save(c);
+        lierDocumentSiPresent(dto.getDocumentId(), null, saved.getId(), null, null, null);
+
         dto.setSavedEntityId(saved.getId());
         dto.setStatut("ENREGISTRE");
         dto.setMessage("Commande client enregistrée avec succès (ID: " + saved.getId() + ")");
@@ -586,10 +709,115 @@ public class DocumentAiExtractionService {
         }
 
         Livraison saved = livraisonRepository.save(liv);
+        lierDocumentSiPresent(dto.getDocumentId(), null, null, saved.getId(), null, null);
+
         dto.setSavedEntityId(saved.getId());
         dto.setStatut("ENREGISTRE");
         dto.setMessage("Bon de livraison fournisseur enregistré avec succès (ID: " + saved.getId() + ")");
         return dto;
+    }
+
+    private DocumentOcrAnalysisResultDTO enregistrerPaiement(DocumentOcrAnalysisResultDTO dto, Long tenantId) {
+        ModePaiement mode = ModePaiement.CHEQUE;
+        TypeEffet typeEffet = TypeEffet.CHEQUE;
+        String typeDoc = dto.getTypeDocument() != null ? dto.getTypeDocument().toUpperCase() : "CHEQUE";
+        if (typeDoc.contains("TRAITE")) {
+            mode = ModePaiement.TRAITE;
+            typeEffet = TypeEffet.TRAITE;
+        } else if (typeDoc.contains("EFFET")) {
+            mode = ModePaiement.EFFET;
+            typeEffet = TypeEffet.TRAITE;
+        }
+
+        User encaissePar = userRepository.findByTenantId(tenantId).stream().findFirst()
+                .orElseGet(() -> userRepository.findAll().stream().findFirst().orElse(null));
+
+        if (encaissePar == null) {
+            throw new IllegalStateException("Aucun utilisateur disponible pour enregistrer l'encaissement.");
+        }
+
+        Client client = null;
+        Fournisseur fournisseur = null;
+        if ("CLIENT".equalsIgnoreCase(dto.getTierType()) && dto.getTierId() != null) {
+            client = clientRepository.findById(dto.getTierId()).orElse(null);
+        } else if ("FOURNISSEUR".equalsIgnoreCase(dto.getTierType()) && dto.getTierId() != null) {
+            fournisseur = fournisseurRepository.findById(dto.getTierId()).orElse(null);
+        }
+
+        BigDecimal montant = dto.getMontantTTC() != null && dto.getMontantTTC().compareTo(BigDecimal.ZERO) > 0
+                ? dto.getMontantTTC()
+                : (dto.getMontantHT() != null ? dto.getMontantHT() : BigDecimal.ZERO);
+
+        LocalDateTime datePaiement = LocalDateTime.now();
+        if (dto.getDatePiece() != null && !dto.getDatePiece().isBlank()) {
+            try {
+                datePaiement = LocalDate.parse(dto.getDatePiece()).atStartOfDay();
+            } catch (Exception ignored) {}
+        }
+
+        LocalDateTime dateEcheance = datePaiement;
+        if (dto.getDateEcheance() != null && !dto.getDateEcheance().isBlank()) {
+            try {
+                dateEcheance = LocalDate.parse(dto.getDateEcheance()).atStartOfDay();
+            } catch (Exception ignored) {}
+        }
+
+        Paiement p = new Paiement();
+        p.setNumeroPaiement("PAY-OCR-" + System.currentTimeMillis());
+        p.setModePaiement(mode);
+        p.setMontant(montant);
+        p.setDatePaiement(datePaiement);
+        p.setDateEcheance(dateEcheance);
+        p.setNomBanque(dto.getNomBanque());
+        p.setNumeroCheque(dto.getNumeroCheque() != null ? dto.getNumeroCheque() : dto.getNumeroPiece());
+        p.setReferencePaiement(dto.getNumeroPiece());
+        p.setClient(client);
+        p.setEncaissePar(encaissePar);
+        p.setPointDeVenteId(tenantId);
+        p.setNotes("Importé automatiquement via OCR & Groq AI (" + typeDoc + ")");
+
+        Paiement savedPaiement = paiementRepository.save(p);
+
+        ChequeEffet cheque = new ChequeEffet();
+        cheque.setNumeroPiece(dto.getNumeroCheque() != null ? dto.getNumeroCheque() : (dto.getNumeroPiece() != null ? dto.getNumeroPiece() : savedPaiement.getNumeroPaiement()));
+        cheque.setTypeEffet(typeEffet);
+        cheque.setSens(fournisseur != null ? SensEffet.DECAISSEMENT_FOURNISSEUR : SensEffet.ENCAISSEMENT_CLIENT);
+        cheque.setStatut(StatutEffet.EN_PORTEFEUILLE);
+        cheque.setMontant(montant);
+        cheque.setDateEmission(datePaiement.toLocalDate());
+        cheque.setDateEcheance(dateEcheance.toLocalDate());
+        cheque.setBanqueEmettrice(dto.getNomBanque());
+        cheque.setTireur(dto.getTierNom() != null ? dto.getTierNom() : (client != null ? (client.getNomComplet() != null ? client.getNomComplet() : client.getNom()) : "Inconnu"));
+        cheque.setBeneficiaire(fournisseur != null ? fournisseur.getRaisonSociale() : "Entreprise");
+        cheque.setReferencePaiement(savedPaiement.getNumeroPaiement());
+        cheque.setClient(client);
+        cheque.setFournisseur(fournisseur);
+        cheque.setPointDeVenteId(tenantId);
+        cheque.setDateCreation(LocalDateTime.now());
+        cheque.setNotes("Importé via OCR & Groq AI");
+
+        ChequeEffet savedCheque = chequeEffetRepository.save(cheque);
+
+        lierDocumentSiPresent(dto.getDocumentId(), null, null, null, savedPaiement.getId(), savedCheque.getId());
+
+        dto.setSavedEntityId(savedPaiement.getId());
+        dto.setStatut("ENREGISTRE");
+        dto.setMessage("Paiement " + mode.getLibelle() + " et effet de trésorerie enregistrés avec succès (Paiement ID: " 
+                + savedPaiement.getId() + ", Effet ID: " + savedCheque.getId() + ")");
+
+        return dto;
+    }
+
+    private void lierDocumentSiPresent(Long documentId, Long factureAchatId, Long commandeClientId, Long livraisonId, Long paiementId, Long chequeEffetId) {
+        if (documentId != null && documentId > 0) {
+            try {
+                gedService.lierDocument(documentId, factureAchatId, commandeClientId, livraisonId, paiementId, chequeEffetId);
+                log.info(">> Pièce justificative GED #{} liée avec succès à l'entité (facture={}, commande={}, bl={}, paiement={}, cheque={})",
+                        documentId, factureAchatId, commandeClientId, livraisonId, paiementId, chequeEffetId);
+            } catch (Exception e) {
+                log.warn("Impossible de lier le document GED #{} : {}", documentId, e.getMessage());
+            }
+        }
     }
 
     private String escape(String s) {

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 018 : Support de l'attachement documentaire (PDF/Images) pour Chèques, Traites et Effets
+    -->
+    <changeSet id="018-add-documents-comptables-cheque-effet" author="erp-pointvente">
+        <sql splitStatements="false">
+            -- Ajout de cheque_effet_id dans documents_comptables
+            ALTER TABLE IF EXISTS documents_comptables 
+                ADD COLUMN IF NOT EXISTS cheque_effet_id BIGINT;
+
+            -- Index pour recherche rapide
+            CREATE INDEX IF NOT EXISTS idx_documents_comptables_cheque_effet ON documents_comptables(cheque_effet_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

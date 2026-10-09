@@ -36,10 +36,13 @@ public class GedController {
             @RequestParam(value = "ecritureId", required = false) Long ecritureId,
             @RequestParam(value = "factureAchatId", required = false) Long factureAchatId,
             @RequestParam(value = "factureVenteId", required = false) Long factureVenteId,
-            @RequestParam(value = "paiementId", required = false) Long paiementId) throws IOException {
+            @RequestParam(value = "paiementId", required = false) Long paiementId,
+            @RequestParam(value = "commandeClientId", required = false) Long commandeClientId,
+            @RequestParam(value = "livraisonId", required = false) Long livraisonId,
+            @RequestParam(value = "chequeEffetId", required = false) Long chequeEffetId) throws IOException {
 
         DocumentComptableDTO dto = gedService.stockerDocument(
-                file, typePiece, description, ecritureId, factureAchatId, factureVenteId, paiementId
+                file, typePiece, description, ecritureId, factureAchatId, factureVenteId, paiementId, commandeClientId, livraisonId, chequeEffetId
         );
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
@@ -76,6 +79,21 @@ public class GedController {
     @GetMapping("/documents/paiement/{paiementId}")
     public ResponseEntity<List<DocumentComptableDTO>> getDocumentsParPaiement(@PathVariable Long paiementId) {
         return ResponseEntity.ok(gedService.getDocumentsParPaiement(paiementId));
+    }
+
+    @GetMapping("/documents/commande-client/{commandeClientId}")
+    public ResponseEntity<List<DocumentComptableDTO>> getDocumentsParCommandeClient(@PathVariable Long commandeClientId) {
+        return ResponseEntity.ok(gedService.getDocumentsParCommandeClient(commandeClientId));
+    }
+
+    @GetMapping("/documents/livraison/{livraisonId}")
+    public ResponseEntity<List<DocumentComptableDTO>> getDocumentsParLivraison(@PathVariable Long livraisonId) {
+        return ResponseEntity.ok(gedService.getDocumentsParLivraison(livraisonId));
+    }
+
+    @GetMapping("/documents/cheque-effet/{chequeEffetId}")
+    public ResponseEntity<List<DocumentComptableDTO>> getDocumentsParChequeEffet(@PathVariable Long chequeEffetId) {
+        return ResponseEntity.ok(gedService.getDocumentsParChequeEffet(chequeEffetId));
     }
 
     // =========================================================================
@@ -120,6 +138,17 @@ public class GedController {
             @PathVariable Long id,
             @PathVariable Long ecritureId) {
         return ResponseEntity.ok(gedService.lierAEcriture(id, ecritureId));
+    }
+
+    @PostMapping("/documents/{id}/lier")
+    public ResponseEntity<DocumentComptableDTO> lierDocument(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long factureAchatId,
+            @RequestParam(required = false) Long commandeClientId,
+            @RequestParam(required = false) Long livraisonId,
+            @RequestParam(required = false) Long paiementId,
+            @RequestParam(required = false) Long chequeEffetId) {
+        return ResponseEntity.ok(gedService.lierDocument(id, factureAchatId, commandeClientId, livraisonId, paiementId, chequeEffetId));
     }
 
     @DeleteMapping("/documents/{id}")

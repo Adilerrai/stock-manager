@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 017 : Support de l'attachement documentaire (PDF/Images) pour Commandes Clients et BL Fournisseur
+    -->
+    <changeSet id="017-add-documents-comptables-commande-and-livraison" author="erp-pointvente">
+        <sql splitStatements="false">
+            -- Ajout de commande_client_id dans documents_comptables
+            ALTER TABLE IF EXISTS documents_comptables 
+                ADD COLUMN IF NOT EXISTS commande_client_id BIGINT;
+
+            -- Ajout de livraison_id (BL Fournisseur) dans documents_comptables
+            ALTER TABLE IF EXISTS documents_comptables 
+                ADD COLUMN IF NOT EXISTS livraison_id BIGINT;
+
+            -- Index pour les recherches instantanées des pièces jointes
+            CREATE INDEX IF NOT EXISTS idx_documents_comptables_cmd_client ON documents_comptables(commande_client_id);
+            CREATE INDEX IF NOT EXISTS idx_documents_comptables_livraison ON documents_comptables(livraison_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

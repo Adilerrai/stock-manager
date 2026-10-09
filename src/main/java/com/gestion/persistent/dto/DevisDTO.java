@@ -149,6 +149,7 @@ public class DevisDTO {
 
     @JsonProperty("client")
     public void unpackClient(Object client) {
+<<<<<<< HEAD
         if (client instanceof Map) {
             Map<?, ?> map = (Map<?, ?>) client;
             if (map.get("id") != null) {
@@ -169,6 +170,30 @@ public class DevisDTO {
         } else if (client instanceof String) {
             try {
                 this.clientId = Long.valueOf((String) client);
+=======
+        if (client instanceof Map<?, ?> map) {
+            Object idVal = map.get("id");
+            if (idVal != null) {
+                try {
+                    this.clientId = Long.valueOf(idVal.toString());
+                } catch (Exception ignored) {}
+            }
+            if (this.clientNom == null) {
+                if (map.get("nomComplet") != null) {
+                    this.clientNom = map.get("nomComplet").toString();
+                } else if (map.get("nom") != null) {
+                    this.clientNom = map.get("nom").toString();
+                }
+            }
+            if (this.clientTelephone == null && map.get("telephone") != null) {
+                this.clientTelephone = map.get("telephone").toString();
+            }
+        } else if (client instanceof Number num) {
+            this.clientId = num.longValue();
+        } else if (client instanceof String str && !str.trim().isEmpty()) {
+            try {
+                this.clientId = Long.valueOf(str.trim());
+>>>>>>> 8f3c0aa7c4693c128e9662f7400319ccb13d7be4
             } catch (Exception ignored) {}
         }
     }

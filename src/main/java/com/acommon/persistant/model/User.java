@@ -57,14 +57,14 @@ public class User implements UserDetails {
     @JoinColumn(name = "point_de_vente_id", nullable = true)
     private PointDeVente pointDeVente;
 
+    @Column(name = "must_change_password")
+    private Boolean mustChangePassword = false;
+
     @PrePersist
     public void prePersist() {
         if (this.tenantId == null) {
             Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
-            this.tenantId = (tenant != null) ? tenant : 1L;
-        }
-        if (this.mereId == null) {
-            this.mereId = this.tenantId;
+            this.tenantId = (tenant != null && tenant > 0) ? tenant : 1L;
         }
     }
 
@@ -218,5 +218,13 @@ public class User implements UserDetails {
             pdv.setId(pointDeVenteId);
             this.pointDeVente = pdv;
         }
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword != null ? mustChangePassword : false;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 }

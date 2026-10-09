@@ -51,6 +51,15 @@ public class DocumentComptable {
     @Column(name = "paiement_id")
     private Long paiementId;
 
+    @Column(name = "commande_client_id")
+    private Long commandeClientId;
+
+    @Column(name = "livraison_id")
+    private Long livraisonId;
+
+    @Column(name = "cheque_effet_id")
+    private Long chequeEffetId;
+
     @Column(name = "uploaded_by", length = 150)
     private String uploadedBy;
 
@@ -107,6 +116,15 @@ public class DocumentComptable {
 
     public Long getPaiementId() { return paiementId; }
     public void setPaiementId(Long paiementId) { this.paiementId = paiementId; }
+
+    public Long getCommandeClientId() { return commandeClientId; }
+    public void setCommandeClientId(Long commandeClientId) { this.commandeClientId = commandeClientId; }
+
+    public Long getLivraisonId() { return livraisonId; }
+    public void setLivraisonId(Long livraisonId) { this.livraisonId = livraisonId; }
+
+    public Long getChequeEffetId() { return chequeEffetId; }
+    public void setChequeEffetId(Long chequeEffetId) { this.chequeEffetId = chequeEffetId; }
 
     public String getUploadedBy() { return uploadedBy; }
     public void setUploadedBy(String uploadedBy) { this.uploadedBy = uploadedBy; }

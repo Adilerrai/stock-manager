@@ -1,5 +1,7 @@
 package com.gestion.controller;
 
+import com.gestion.persistent.dto.CockpitRentabiliteDTO;
+import com.gestion.persistent.dto.EvolutionMargeDTO;
 import com.gestion.persistent.dto.MargeDTO;
 import com.gestion.persistent.dto.MargeDTO.LigneMargeDTO;
 import com.gestion.service.MargeService;
@@ -27,6 +29,21 @@ public class MargeController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
         MargeDTO dto = margeService.calculerMargeGlobale(dateDebut, dateFin);
         return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/cockpit")
+    public ResponseEntity<CockpitRentabiliteDTO> getCockpitRentabilite(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
+        CockpitRentabiliteDTO cockpit = margeService.calculerCockpitRentabilite(dateDebut, dateFin);
+        return ResponseEntity.ok(cockpit);
+    }
+
+    @GetMapping("/evolution-mensuelle")
+    public ResponseEntity<List<EvolutionMargeDTO>> getEvolutionMensuelle(
+            @RequestParam(defaultValue = "6") int nbMois) {
+        List<EvolutionMargeDTO> list = margeService.calculerEvolutionMensuelle(nbMois);
+        return ResponseEntity.ok(list);
     }
 
     @GetMapping("/produits")

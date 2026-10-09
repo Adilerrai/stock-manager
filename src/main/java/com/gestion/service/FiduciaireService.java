@@ -209,6 +209,7 @@ public class FiduciaireService {
                 .tenantId(rootCabinetId)
                 .pointDeVenteId(user.getPointDeVenteId() != null ? user.getPointDeVenteId() : rootCabinetId)
                 .nomPointDeVente(targetSociete.getRaisonSociale())
+                .mustChangePassword(Boolean.TRUE.equals(user.getMustChangePassword()))
                 .tokenType("Bearer")
                 .build();
     }

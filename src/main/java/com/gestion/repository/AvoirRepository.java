@@ -23,6 +23,10 @@ public interface AvoirRepository extends JpaRepository<Avoir, Long>, AvoirReposi
 
     List<Avoir> findByFournisseurIdOrderByDateAvoirDesc(Long fournisseurId);
 
+    List<Avoir> findByFactureOrigineIdAndStatutNot(Long factureOrigineId, StatutAvoir statut);
+
+    List<Avoir> findByFactureOrigineIdAndTypeAvoirAndStatutNot(Long factureOrigineId, TypeAvoir typeAvoir, StatutAvoir statut);
+
     List<Avoir> findByStatutOrderByDateAvoirDesc(StatutAvoir statut);
 
     List<Avoir> findByPointDeVenteIdOrderByDateAvoirDesc(Long pointDeVenteId);

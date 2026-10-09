@@ -30,4 +30,14 @@ public interface MouvementStockRepository extends JpaRepository<MouvementStock, 
     
     @Query("SELECT m FROM MouvementStock m WHERE (m.pointDeVenteId = :tenantId OR (m.pointDeVenteId IS NULL AND m.produit.pointDeVenteId = :tenantId)) ORDER BY m.dateMouvement DESC")
     List<MouvementStock> findOrderByDateMouvementDesc(@Param("tenantId") Long tenantId);
+
+    @Query("SELECT m.produit.id, COALESCE(SUM(m.quantite), 0) FROM MouvementStock m " +
+           "WHERE m.typeMouvement IN (com.gestion.persistent.enums.TypeMouvement.SORTIE_VENTE, " +
+           "com.gestion.persistent.enums.TypeMouvement.SORTIE_COMMANDE, " +
+           "com.gestion.persistent.enums.TypeMouvement.TRANSFERT_SORTIE, " +
+           "com.gestion.persistent.enums.TypeMouvement.AJUSTEMENT_NEGATIF) " +
+           "AND m.dateMouvement >= :dateDebut " +
+           "AND (:tenantId IS NULL OR m.pointDeVenteId = :tenantId OR (m.pointDeVenteId IS NULL AND m.produit.pointDeVenteId = :tenantId)) " +
+           "GROUP BY m.produit.id")
+    List<Object[]> findSortiesQuantitesParProduitDepuis(@Param("dateDebut") LocalDateTime dateDebut, @Param("tenantId") Long tenantId);
 }

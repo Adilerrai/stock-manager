@@ -94,15 +94,7 @@ public class SuperAdminInitializer implements CommandLineRunner {
     private void initRoles() {
         List<String> requiredRoles = Arrays.asList(
                 "ROLE_SUPERADMIN",
-                "ROLE_ADMIN",
-                "ROLE_POINT_DE_VENTE_MANAGER",
-                "ROLE_CAISSIER",
-                "ROLE_VENDEUR",
-                "ROLE_MAGASINIER",
-                "ROLE_GESTIONNAIRE",
-                "ROLE_RESPONSABLE_COMMERCIAL",
-                "ROLE_COMMERCIAL",
-                "ROLE_COMPTABLE"
+                "ROLE_ADMIN"
         );
 
         for (String roleNom : requiredRoles) {
@@ -212,53 +204,7 @@ public class SuperAdminInitializer implements CommandLineRunner {
             "ADMIN_ENTREPRISE", "ADMIN_ROLES", "ADMIN_HABILITATIONS"
         ));
         roleHabilitations.put("ROLE_ADMIN", adminHabs);
-        roleHabilitations.put("ROLE_POINT_DE_VENTE_MANAGER", Arrays.asList(
-            "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE",
-            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
-            "VENTE_READ", "VENTE_CREATE",
-            "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
-            "FACTURE_READ", "FACTURE_CREATE", "FACTURE_VALIDER",
-            "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE",
-            "FOURNISSEUR_READ", "PAIEMENT_READ", "PAIEMENT_CREATE",
-            "TRESORERIE_READ", "RAPPORT_READ",
-            "USER_READ", "USER_CREATE", "USER_UPDATE"
-        ));
-        roleHabilitations.put("ROLE_COMMERCIAL", Arrays.asList(
-            "VENTE_READ", "VENTE_CREATE",
-            "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
-            "FACTURE_READ", "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE",
-            "PRODUIT_READ", "RAPPORT_READ"
-        ));
-        roleHabilitations.put("ROLE_RESPONSABLE_COMMERCIAL", Arrays.asList(
-            "VENTE_READ", "VENTE_CREATE", "VENTE_DELETE",
-            "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
-            "FACTURE_READ", "FACTURE_CREATE",
-            "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE", "CLIENT_DELETE",
-            "PRODUIT_READ", "PAIEMENT_READ", "RAPPORT_READ", "RAPPORT_EXPORT"
-        ));
-        roleHabilitations.put("ROLE_COMPTABLE", Arrays.asList(
-            "COMPTA_READ", "COMPTA_ECRITURE", "COMPTA_CLOTURE",
-            "TRESORERIE_READ", "TRESORERIE_MOUVEMENT",
-            "FACTURE_READ", "FACTURE_CREATE", "FACTURE_VALIDER", "FACTURE_ANNULER",
-            "PAIEMENT_READ", "PAIEMENT_CREATE", "RAPPORT_READ", "RAPPORT_EXPORT"
-        ));
-        roleHabilitations.put("ROLE_CAISSIER", Arrays.asList(
-            "VENTE_CREATE", "PAIEMENT_READ", "PAIEMENT_CREATE",
-            "CLIENT_READ", "FACTURE_READ"
-        ));
-        roleHabilitations.put("ROLE_VENDEUR", Arrays.asList(
-            "VENTE_READ", "VENTE_CREATE", "CLIENT_READ", "PRODUIT_READ", "FACTURE_READ"
-        ));
-        roleHabilitations.put("ROLE_MAGASINIER", Arrays.asList(
-            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
-            "PRODUIT_READ", "COMMANDE_READ", "FOURNISSEUR_READ"
-        ));
-        roleHabilitations.put("ROLE_GESTIONNAIRE", Arrays.asList(
-            "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE", "PRODUIT_DELETE",
-            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
-            "FOURNISSEUR_READ", "FOURNISSEUR_CREATE", "FOURNISSEUR_UPDATE",
-            "COMMANDE_READ", "COMMANDE_CREATE", "RAPPORT_READ"
-        ));
+
 
         for (Map.Entry<String, List<String>> entry : roleHabilitations.entrySet()) {
             roleRepository.findByNom(entry.getKey()).ifPresent(role -> {

@@ -15,6 +15,7 @@ public class UserResponse {
     private Long pointDeVenteId;
     private String nomPointDeVente;
     private Boolean enabled;
+    private Boolean mustChangePassword;
 
     public UserResponse() {}
 
@@ -105,5 +106,13 @@ public class UserResponse {
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 }

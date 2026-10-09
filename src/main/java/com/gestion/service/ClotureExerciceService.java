@@ -43,8 +43,15 @@ public class ClotureExerciceService {
     }
 
     private Long getTenantId() {
+        Long ctxSociete = CurrentRequestContext.getSocieteId();
+        if (ctxSociete != null && ctxSociete > 0) {
+            return ctxSociete;
+        }
         Long t = TenantContext.getCurrentTenant();
-        return t != null ? t : 1L;
+        if (t != null && t > 0) {
+            return t;
+        }
+        return 1L;
     }
 
     public List<ExerciceComptableDTO> getExercices() {
@@ -134,7 +141,9 @@ public class ClotureExerciceService {
     }
 
     public ExerciceComptableDTO creerExercice(ExerciceComptableDTO dto) {
-        Long tenantId = getTenantId();
+        Long tenantId = (dto.getPointDeVenteId() != null && dto.getPointDeVenteId() > 0)
+                ? dto.getPointDeVenteId()
+                : getTenantId();
         if (dto.getDateDebut() == null || dto.getDateFin() == null) {
             throw new IllegalArgumentException("Les dates de début et de fin d'exercice sont obligatoires.");
         }
@@ -436,6 +445,7 @@ public class ClotureExerciceService {
         dto.setResultatNet(e.getResultatNet());
         dto.setDateCloture(e.getDateCloture());
         dto.setCloturePar(e.getCloturePar());
+        dto.setPointDeVenteId(e.getPointDeVenteId());
         return dto;
     }
 }
