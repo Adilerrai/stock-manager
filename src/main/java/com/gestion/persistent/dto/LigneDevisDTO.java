@@ -1,9 +1,6 @@
 package com.gestion.persistent.dto;
 
-<<<<<<< HEAD
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-=======
->>>>>>> 8f3c0aa7c4693c128e9662f7400319ccb13d7be4
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.util.HashMap;
