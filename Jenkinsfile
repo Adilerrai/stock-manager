@@ -42,6 +42,7 @@ pipeline {
         stage('Deploy Application') {
             steps {
                 sh 'docker compose up -d web'
+                sh 'docker exec nginx.prod nginx -s reload || true'
             }
         }
     }

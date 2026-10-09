@@ -34,14 +34,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             FilterChain filterChain) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
+        String jwt = null;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+        } else {
+            String tokenParam = request.getParameter("token");
+            if (tokenParam != null && !tokenParam.isBlank()) {
+                jwt = tokenParam;
+            }
+        }
+
+        if (jwt == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
         try {
-            final String jwt = authHeader.substring(7);
             final String userEmail = jwtUtil.extractUsername(jwt);
             final Long tenantId = jwtUtil.extractTenantId(jwt);
 
@@ -62,6 +71,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     String headerSociete = request.getHeader("X-Societe-Id");
                     if (headerSociete == null || headerSociete.isBlank()) {
                         headerSociete = request.getHeader("X-Tenant-Id");
+                    }
+                    if (headerSociete == null || headerSociete.isBlank()) {
+                        headerSociete = request.getParameter("societeId");
                     }
                     if (headerSociete != null && !headerSociete.isBlank()) {
                         try {
