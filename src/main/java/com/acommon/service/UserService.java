@@ -214,6 +214,7 @@ public class UserService {
         user.setAccountNonExpired(true);
         user.setAccountNonLocked(true);
         user.setCredentialsNonExpired(true);
+        user.setMustChangePassword(true);
 
         return mapToResponse(userRepository.save(user));
     }
@@ -372,6 +373,7 @@ public class UserService {
     public void resetPassword(Long id, ResetPasswordRequest request) {
         User user = findAndValidateAccess(id);
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(true);
         userRepository.save(user);
     }
 
@@ -386,6 +388,7 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setMustChangePassword(false);
         userRepository.save(user);
     }
 
@@ -439,6 +442,7 @@ public class UserService {
             response.setNomPointDeVente(user.getPointDeVente().getNomPointDeVente());
         }
         response.setEnabled(user.isEnabled());
+        response.setMustChangePassword(user.getMustChangePassword());
         return response;
     }
 }

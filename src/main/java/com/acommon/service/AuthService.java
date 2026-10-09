@@ -146,6 +146,7 @@ public class AuthService {
                 .tenantId(tenantId)
                 .pointDeVenteId(authenticatedUser.getPointDeVenteId())
                 .nomPointDeVente(nomPdv)
+                .mustChangePassword(Boolean.TRUE.equals(authenticatedUser.getMustChangePassword()))
                 .tokenType("Bearer")
                 .build();
     }

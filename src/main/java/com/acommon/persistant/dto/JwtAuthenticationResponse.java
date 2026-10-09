@@ -16,6 +16,7 @@ public class JwtAuthenticationResponse {
     private Long tenantId;
     private Long pointDeVenteId;
     private String nomPointDeVente;
+    private Boolean mustChangePassword;
 
     public JwtAuthenticationResponse() {
     }
@@ -35,6 +36,7 @@ public class JwtAuthenticationResponse {
         this.tenantId = builder.tenantId;
         this.pointDeVenteId = builder.pointDeVenteId;
         this.nomPointDeVente = builder.nomPointDeVente;
+        this.mustChangePassword = builder.mustChangePassword;
     }
 
     // Static builder method
@@ -57,6 +59,7 @@ public class JwtAuthenticationResponse {
         private Long tenantId;
         private Long pointDeVenteId;
         private String nomPointDeVente;
+        private Boolean mustChangePassword;
 
         public Builder token(String token) {
             this.token = token;
@@ -120,6 +123,11 @@ public class JwtAuthenticationResponse {
 
         public Builder nomPointDeVente(String nomPointDeVente) {
             this.nomPointDeVente = nomPointDeVente;
+            return this;
+        }
+
+        public Builder mustChangePassword(Boolean mustChangePassword) {
+            this.mustChangePassword = mustChangePassword;
             return this;
         }
 
@@ -231,6 +239,14 @@ public class JwtAuthenticationResponse {
 
     public void setTokenType(String tokenType) {
         this.tokenType = tokenType;
+    }
+
+    public Boolean getMustChangePassword() {
+        return mustChangePassword;
+    }
+
+    public void setMustChangePassword(Boolean mustChangePassword) {
+        this.mustChangePassword = mustChangePassword;
     }
 
 }
