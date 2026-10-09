@@ -70,32 +70,6 @@ public class LigneDevisDTO {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    // Support des objets imbriqués pour Jackson
-    @JsonProperty("produit")
-    public void unpackProduit(Object produit) {
-        if (produit instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) produit;
-            if (map.get("id") != null) {
-                try {
-                    this.produitId = Long.valueOf(map.get("id").toString());
-                } catch (Exception ignored) {}
-            }
-            if (map.get("reference") != null && this.produitReference == null) {
-                this.produitReference = map.get("reference").toString();
-            }
-            if (map.get("designation") != null && this.produitDesignation == null) {
-                this.produitDesignation = map.get("designation").toString();
-            } else if (map.get("nom") != null && this.produitDesignation == null) {
-                this.produitDesignation = map.get("nom").toString();
-            }
-        } else if (produit instanceof Number) {
-            this.produitId = ((Number) produit).longValue();
-        } else if (produit instanceof String) {
-            try {
-                this.produitId = Long.valueOf((String) produit);
-            } catch (Exception ignored) {}
-        }
-    }
 
     @JsonProperty("produit_id")
     public void setProduit_id(Long id) {
