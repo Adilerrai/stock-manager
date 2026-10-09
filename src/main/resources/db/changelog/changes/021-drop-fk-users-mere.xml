@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 021 : Assouplissement de la contrainte fk_users_mere pour supporter les utilisateurs sans holding mère
+    -->
+    <changeSet id="021-drop-fk-users-mere" author="erp-pointvente">
+        <sql splitStatements="false">
+            ALTER TABLE IF EXISTS users DROP CONSTRAINT IF EXISTS fk_users_mere;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

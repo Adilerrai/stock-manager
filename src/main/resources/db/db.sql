@@ -176,6 +176,7 @@ CREATE TABLE IF NOT EXISTS users (
     account_non_locked             BOOLEAN DEFAULT TRUE,
     credentials_non_expired        BOOLEAN DEFAULT TRUE,
     enabled                        BOOLEAN DEFAULT TRUE,
+    must_change_password           BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_users_role FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT,
     CONSTRAINT fk_users_mere FOREIGN KEY (mere_id) REFERENCES meres(id) ON DELETE SET NULL,
     CONSTRAINT fk_users_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE SET NULL
@@ -1013,6 +1014,7 @@ CREATE TABLE IF NOT EXISTS lignes_avoir (
     montant_tva                    NUMERIC(15, 2) DEFAULT 0.00,
     montant_ttc                    NUMERIC(15, 2) DEFAULT 0.00,
     remettre_en_stock              BOOLEAN DEFAULT FALSE,
+    motif_retour                   VARCHAR(50) DEFAULT 'AUTRE',
     motif                          TEXT,
     CONSTRAINT fk_lignes_avoir_avoir FOREIGN KEY (avoir_id) REFERENCES avoirs(id) ON DELETE CASCADE,
     CONSTRAINT fk_lignes_avoir_produit FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE RESTRICT

@@ -64,10 +64,7 @@ public class User implements UserDetails {
     public void prePersist() {
         if (this.tenantId == null) {
             Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
-            this.tenantId = (tenant != null) ? tenant : 1L;
-        }
-        if (this.mereId == null) {
-            this.mereId = this.tenantId;
+            this.tenantId = (tenant != null && tenant > 0) ? tenant : 1L;
         }
     }
 

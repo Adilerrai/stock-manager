@@ -206,9 +206,10 @@ public class UserService {
         user.setGenre(request.getGenre());
         user.setRole(role);
         user.setTenantId(targetTenantId);
-        user.setMereId(targetPointDeVente != null && targetPointDeVente.getMereId() != null
+        Long explicitMereId = (targetPointDeVente != null && targetPointDeVente.getMereId() != null && !targetPointDeVente.getMereId().equals(targetTenantId))
                 ? targetPointDeVente.getMereId()
-                : targetTenantId);
+                : null;
+        user.setMereId(explicitMereId);
         user.setPointDeVente(targetPointDeVente);
         user.setEnabled(true);
         user.setAccountNonExpired(true);
@@ -336,8 +337,10 @@ public class UserService {
             user.setPointDeVente(pdv);
             if (superAdmin) {
                 user.setTenantId(pdv.getTenantId() != null && pdv.getTenantId() > 0 ? pdv.getTenantId() : pdv.getId());
-                if (pdv.getMereId() != null) {
+                if (pdv.getMereId() != null && !pdv.getMereId().equals(user.getTenantId())) {
                     user.setMereId(pdv.getMereId());
+                } else {
+                    user.setMereId(null);
                 }
             }
         }

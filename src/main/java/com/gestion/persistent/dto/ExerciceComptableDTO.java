@@ -16,6 +16,7 @@ public class ExerciceComptableDTO {
     private LocalDateTime dateCloture;
     private String cloturePar;
     private int nombreEcritures;
+    private Long pointDeVenteId;
 
     public ExerciceComptableDTO() {}
 
@@ -97,5 +98,13 @@ public class ExerciceComptableDTO {
 
     public void setNombreEcritures(int nombreEcritures) {
         this.nombreEcritures = nombreEcritures;
+    }
+
+    public Long getPointDeVenteId() {
+        return pointDeVenteId;
+    }
+
+    public void setPointDeVenteId(Long pointDeVenteId) {
+        this.pointDeVenteId = pointDeVenteId;
     }
 }

@@ -64,4 +64,13 @@
     <!-- Changeset 018 : Support de l'attachement documentaire (PDF/Images) pour Chèques, Traites et Effets -->
     <include file="changes/018-add-documents-comptables-cheque-effet.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 019 : Ajout colonne motif_retour dans lignes_avoir -->
+    <include file="changes/019-add-motif-retour-to-lignes-avoir.xml" relativeToChangelogFile="true"/>
+
+    <!-- Changeset 020 : Ajout colonne must_change_password dans users -->
+    <include file="changes/020-add-must-change-password-to-users.xml" relativeToChangelogFile="true"/>
+
+    <!-- Changeset 021 : Assouplissement contrainte fk_users_mere -->
+    <include file="changes/021-drop-fk-users-mere.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
