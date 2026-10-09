@@ -1,20 +1,29 @@
 pipeline {
     agent any
 
+    environment {
+        CONTAINER_NAME = "${env.CONTAINER_NAME ?: 'pointvente-app-api'}"
+    }
+
     stages {
-        stage('Cleanup') {
+        stage('Cleanup Old Container') {
             steps {
                 sh '''
-                    # Arrêter et supprimer l'ancien conteneur s'il existe
-                    docker stop pointvente-app-api || true
-                    docker rm -f pointvente-app-api || true
+                    docker stop ${CONTAINER_NAME} || true
+                    docker rm -f ${CONTAINER_NAME} || true
                 '''
             }
         }
 
-        stage('Build & Test') {
+        stage('Build & Test JAR') {
             steps {
                 sh 'mvn clean package -DskipTests=true'
+            }
+        }
+
+        stage('Build Docker Image (Bake)') {
+            steps {
+                sh 'docker buildx bake --load'
             }
         }
 
@@ -25,21 +34,21 @@ pipeline {
                     docker network inspect apps.prod >/dev/null 2>&1 || docker network create apps.prod
 
                     # Vérifier si le conteneur PostgreSQL existe
-                    docker inspect pgsql.prod >/dev/null 2>&1 || echo "ATTENTION: Le conteneur PostgreSQL 'pgsql.prod' n'existe pas. Veuillez vous assurer qu'il est démarré."
+                    docker inspect pgsql.prod >/dev/null 2>&1 || echo "ATTENTION: Le conteneur PostgreSQL 'pgsql.prod' n'existe pas."
                 '''
             }
         }
 
         stage('Deploy Application') {
             steps {
-                sh 'docker compose -f docker-compose.yml up -d --build web'
+                sh 'docker compose up -d web'
             }
         }
     }
 
     post {
         failure {
-            sh 'docker compose -f docker-compose.yml down || true'
+            sh 'docker compose down || true'
         }
     }
 }

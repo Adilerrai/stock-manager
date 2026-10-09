@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web:
+    container_name: omega-app-api
+    image: omega-app-api:latest
+    restart: unless-stopped
+    environment:
+      - SERVER_PORT=8009
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://pgsql.prod:5432/pointvente_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=89RQ7kaF7770Qy4343_t8hcjCfsqsKs
+    ports:
+      - "127.0.0.1:8009:8009"
+    networks:
+      - apps.prod
+
+networks:
+  apps.prod:
+    external: true

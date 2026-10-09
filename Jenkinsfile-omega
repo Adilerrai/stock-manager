@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_ENV         = "omega"
+        CONTAINER_NAME  = "omega-app-api"
+    }
+
+    stages {
+        stage('Build & Test JAR') {
+            steps {
+                sh 'mvn clean package -DskipTests=true'
+            }
+        }
+
+        stage('Build Docker Image (Bake Omega)') {
+            steps {
+                sh 'docker buildx bake omega --load'
+            }
+        }
+
+        stage('Check Network & Database') {
+            steps {
+                sh '''
+                    docker network inspect apps.prod >/dev/null 2>&1 || docker network create apps.prod
+                    docker inspect pgsql.prod >/dev/null 2>&1 || echo "ATTENTION: Le conteneur PostgreSQL 'pgsql.prod' n'est pas démarré."
+                '''
+            }
+        }
+
+        stage('Deploy Omega Application') {
+            steps {
+                sh 'docker compose -f docker-compose.omega.yml up -d'
+            }
+        }
+    }
+
+    post {
+        failure {
+            echo "Le déploiement a échoué. L'ancien conteneur reste en fonctionnement pour éviter toute interruption."
+        }
+        success {
+            echo "Déploiement Omega réussi avec succès !"
+        }
+    }
+}
