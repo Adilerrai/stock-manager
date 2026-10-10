@@ -5,6 +5,9 @@ import com.acommon.persistant.model.TenantContext;
 import com.gestion.mapper.EntrepriseProfileMapper;
 import com.gestion.persistent.dto.EntrepriseProfileDTO;
 import com.gestion.persistent.model.EntrepriseProfile;
+import com.gestion.persistent.enums.StatutCommandeClient;
+import com.gestion.persistent.model.CommandeClient;
+import com.gestion.repository.CommandeClientRepository;
 import com.gestion.repository.EntrepriseProfileRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class EntrepriseProfileService {
@@ -20,13 +24,16 @@ public class EntrepriseProfileService {
     private final EntrepriseProfileRepository entrepriseProfileRepository;
     private final EntrepriseProfileMapper entrepriseProfileMapper;
     private final ImageCompressionService imageCompressionService;
+    private final CommandeClientRepository commandeClientRepository;
 
     public EntrepriseProfileService(EntrepriseProfileRepository entrepriseProfileRepository,
             EntrepriseProfileMapper entrepriseProfileMapper,
-            ImageCompressionService imageCompressionService) {
+            ImageCompressionService imageCompressionService,
+            CommandeClientRepository commandeClientRepository) {
         this.entrepriseProfileRepository = entrepriseProfileRepository;
         this.entrepriseProfileMapper = entrepriseProfileMapper;
         this.imageCompressionService = imageCompressionService;
+        this.commandeClientRepository = commandeClientRepository;
     }
 
     @Transactional(readOnly = true)
@@ -115,6 +122,17 @@ public class EntrepriseProfileService {
         profile.setDateMiseAJour(LocalDateTime.now());
 
         EntrepriseProfile saved = entrepriseProfileRepository.save(profile);
+        if (Boolean.TRUE.equals(saved.getVenteStockNegatif())) {
+            Long pvId = saved.getPointDeVenteId() != null ? saved.getPointDeVenteId() : TenantContext.getCurrentTenant();
+            if (pvId == null) pvId = 1L;
+            List<CommandeClient> backorders = commandeClientRepository.findByStatutAndPointDeVenteId(StatutCommandeClient.BACKORDER, pvId);
+            if (backorders != null && !backorders.isEmpty()) {
+                for (CommandeClient cmd : backorders) {
+                    cmd.setStatut(StatutCommandeClient.CONFIRMEE);
+                    commandeClientRepository.save(cmd);
+                }
+            }
+        }
         return entrepriseProfileMapper.toDto(saved);
     }
 
