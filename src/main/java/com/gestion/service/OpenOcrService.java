@@ -18,11 +18,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-
 @Service
 public class OpenOcrService {
 
     private static final Logger log = LoggerFactory.getLogger(OpenOcrService.class);
+
+    @Value("${doctr.api.url:${DOCTR_API_URL:http://5.189.162.46:8002}}")
+    private String doctrApiUrl;
 
     @Value("${openocr.api.url:https://api.open-ocr.com/v1}")
     private String apiUrl;
@@ -39,7 +41,8 @@ public class OpenOcrService {
             .build();
 
     /**
-     * Extrait le texte d'un fichier (PDF, JPG, PNG) via OpenOCR.
+     * Extrait le texte d'un fichier (PDF, JPG, PNG) en priorité absolue via docTR OCR,
+     * avec basculement automatique sur OpenOCR en cas d'indisponibilité.
      */
     public String extraireTexte(byte[] fileBytes, String fileName, String contentType) {
         if (fileBytes == null || fileBytes.length == 0) {
@@ -47,6 +50,17 @@ public class OpenOcrService {
         }
 
         String mimeType = determinerMimeType(fileName, contentType);
+
+        // 1. Tenter en priorité le microservice docTR OCR (ultra-rapide, privé, 100% local)
+        String doctrText = extraireTexteViaDocTr(fileBytes, fileName, mimeType);
+        if (doctrText != null && !doctrText.isBlank()) {
+            log.info("docTR OCR utilisé avec succès pour {} (longueur texte : {})", fileName, doctrText.length());
+            return doctrText;
+        }
+
+        log.info("docTR non disponible ou réponse vide. Basculement sur le moteur secondaire OpenOCR...");
+
+        // 2. Fallback OpenOCR
         String base64Data = Base64.getEncoder().encodeToString(fileBytes);
         String engine = (defaultEngine != null && !defaultEngine.isBlank()) 
                 ? defaultEngine.trim() 
@@ -75,7 +89,7 @@ public class OpenOcrService {
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(endpoint))
-                    .timeout(Duration.ofSeconds(90))
+                    .timeout(Duration.ofSeconds(60))
                     .header("Content-Type", "application/json")
                     .header("Authorization", "Bearer " + apiKey.trim())
                     .header("Idempotency-Key", idempotencyKey)
@@ -84,9 +98,6 @@ public class OpenOcrService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             String responseBody = response.body();
-
-            log.info("==================== [OPENOCR REPONSE BRUTE HTTP {}] ====================\n{}\n=========================================================================", 
-                    response.statusCode(), responseBody);
 
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
                 String extracted = extraireContenuTexte(responseBody);
@@ -103,7 +114,64 @@ public class OpenOcrService {
     }
 
     /**
-     * Analyse flexible de la réponse JSON retournée par OpenOCR selon le modèle utilisé (OCR classique ou LLM Vision)
+     * Appel multipart/form-data vers le microservice docTR OCR (FastAPI).
+     */
+    private String extraireTexteViaDocTr(byte[] fileBytes, String fileName, String mimeType) {
+        if (doctrApiUrl == null || doctrApiUrl.isBlank()) {
+            return null;
+        }
+
+        try {
+            String baseUrl = doctrApiUrl.trim();
+            if (baseUrl.endsWith("/")) {
+                baseUrl = baseUrl.substring(0, baseUrl.length() - 1);
+            }
+            String endpoint = baseUrl + "/ocr";
+
+            log.info(">> Appel docTR OCR sur {} pour le fichier: {} (taille: {} octets)", 
+                    endpoint, fileName, fileBytes.length);
+
+            String boundary = "DocTrBoundary" + UUID.randomUUID().toString().replace("-", "");
+            String safeFileName = (fileName != null && !fileName.isBlank()) ? fileName : "document.pdf";
+
+            byte[] header = ("--" + boundary + "\r\n" +
+                    "Content-Disposition: form-data; name=\"file\"; filename=\"" + safeFileName + "\"\r\n" +
+                    "Content-Type: " + mimeType + "\r\n\r\n").getBytes(StandardCharsets.UTF_8);
+            byte[] footer = ("\r\n--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8);
+
+            byte[] payload = new byte[header.length + fileBytes.length + footer.length];
+            System.arraycopy(header, 0, payload, 0, header.length);
+            System.arraycopy(fileBytes, 0, payload, header.length, fileBytes.length);
+            System.arraycopy(footer, 0, payload, header.length + fileBytes.length, footer.length);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(endpoint))
+                    .timeout(Duration.ofSeconds(120))
+                    .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                    .POST(HttpRequest.BodyPublishers.ofByteArray(payload))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                JsonNode root = objectMapper.readTree(response.body());
+                if (root.hasNonNull("text")) {
+                    String text = root.get("text").asText();
+                    long processingTime = root.has("processingTimeMs") ? root.get("processingTimeMs").asLong() : 0;
+                    log.info("<< docTR OCR succès pour {} : {} caractères extraits en {} ms", 
+                            safeFileName, text.length(), processingTime);
+                    return text;
+                }
+            } else {
+                log.warn("docTR OCR a retourné le code HTTP {}: {}", response.statusCode(), response.body());
+            }
+        } catch (Exception e) {
+            log.warn("Échec de l'appel au service docTR OCR ({}): {}", doctrApiUrl, e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Analyse flexible de la réponse JSON retournée par OpenOCR selon le modèle utilisé.
      */
     private String extraireContenuTexte(String json) {
         try {
@@ -156,7 +224,7 @@ public class OpenOcrService {
     }
 
     /**
-     * Fallback de secours si OpenOCR n'est pas joignable (ex: tests hors ligne)
+     * Fallback de secours si docTR et OpenOCR ne sont pas joignables.
      */
     private String fallbackExtraction(byte[] fileBytes, String fileName, String mimeType, String errorReason) {
         if ("application/pdf".equals(mimeType)) {
@@ -183,6 +251,6 @@ public class OpenOcrService {
             }
         }
 
-        throw new RuntimeException("Impossible d'extraire le texte du relevé bancaire via OpenOCR (" + errorReason + "). Veuillez vérifier la connexion ou le document.");
+        throw new RuntimeException("Impossible d'extraire le texte du document (" + errorReason + "). Veuillez vérifier la connexion ou le document.");
     }
 }
