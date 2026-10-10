@@ -348,13 +348,7 @@ public class BonLivraisonClientService {
             commandeClientRepository.save(commande);
         }
 
-        if (!allCommandes.isEmpty()) {
-            if (toutLivreGlobal) {
-                bl.setStatut(StatutLivraison.LIVREE);
-            } else if (auMoinsUneLivraisonGlobal) {
-                bl.setStatut(StatutLivraison.PARTIELLE);
-            }
-        }
+        bl.setStatut(StatutLivraison.LIVREE);
 
         BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
         return bonLivraisonClientMapper.toDto(saved);
