@@ -7,7 +7,8 @@ public enum ModePaiement {
     VIREMENT("Virement"),
     CREDIT("Crédit"),
     TRAITE("Traite"),
-    EFFET("Effet");
+    EFFET("Effet"),
+    LCN("LCN");
 
     private final String libelle;
 
@@ -19,5 +20,3 @@ public enum ModePaiement {
         return libelle;
     }
 }
-
-
