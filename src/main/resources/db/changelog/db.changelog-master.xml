@@ -73,4 +73,7 @@
     <!-- Changeset 021 : Assouplissement contrainte fk_users_mere -->
     <include file="changes/021-drop-fk-users-mere.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 022 : Support EFFET, TRAITE et LCN dans paiements_mode_paiement_check -->
+    <include file="changes/022-fix-paiements-mode-paiement-check.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

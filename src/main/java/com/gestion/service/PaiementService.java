@@ -312,12 +312,20 @@ public class PaiementService {
         BigDecimal montantReductionDette = totalAffecte.compareTo(BigDecimal.ZERO) > 0 ? totalAffecte : req.getMontant();
         clientService.diminuerCreditUtilise(client.getId(), montantReductionDette);
 
-        // 4. Si Mode de paiement = CHEQUE, créer l'effet dans le portefeuille Trésorerie
-        if (req.getModePaiement() == ModePaiement.CHEQUE) {
+        // 4. Si Mode de paiement = CHEQUE, TRAITE, EFFET ou LCN, créer l'effet dans le portefeuille Trésorerie
+        if (req.getModePaiement() == ModePaiement.CHEQUE || req.getModePaiement() == ModePaiement.TRAITE
+                || req.getModePaiement() == ModePaiement.EFFET || req.getModePaiement() == ModePaiement.LCN) {
             ChequeEffet cheque = new ChequeEffet();
             cheque.setNumeroPiece(req.getNumeroCheque() != null && !req.getNumeroCheque().trim().isEmpty()
                     ? req.getNumeroCheque().trim() : paiement.getNumeroPaiement());
-            cheque.setTypeEffet(TypeEffet.CHEQUE);
+            
+            TypeEffet typeEffet = TypeEffet.CHEQUE;
+            if (req.getModePaiement() == ModePaiement.TRAITE) {
+                typeEffet = TypeEffet.TRAITE;
+            } else if (req.getModePaiement() == ModePaiement.LCN || req.getModePaiement() == ModePaiement.EFFET) {
+                typeEffet = TypeEffet.LCN;
+            }
+            cheque.setTypeEffet(typeEffet);
             cheque.setSens(SensEffet.ENCAISSEMENT_CLIENT);
             cheque.setStatut(req.getStatutCheque() != null ? req.getStatutCheque() : StatutEffet.EN_PORTEFEUILLE);
             cheque.setMontant(req.getMontant());

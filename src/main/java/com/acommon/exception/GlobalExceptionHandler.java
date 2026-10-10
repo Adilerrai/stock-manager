@@ -207,6 +207,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             status = HttpStatus.BAD_REQUEST;
         } else if (raw.contains("check constraint") || raw.contains("violates check")) {
             userFriendlyMessage = "Une des valeurs saisies ne respecte pas les règles requises.";
+            if (raw.contains("check constraint")) {
+                int start = raw.indexOf("check constraint");
+                int quote1 = raw.indexOf('"', start);
+                int quote2 = quote1 != -1 ? raw.indexOf('"', quote1 + 1) : -1;
+                if (quote1 != -1 && quote2 != -1) {
+                    String constraint = raw.substring(quote1 + 1, quote2);
+                    userFriendlyMessage += " (Contrainte : " + constraint + ")";
+                }
+            }
             errorCode = "CHECK_CONSTRAINT_VIOLATION";
             status = HttpStatus.BAD_REQUEST;
         } else {

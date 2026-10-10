@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 022 :
+      Mise à jour des contraintes CHECK sur mode_paiement (paiements, reglements_fournisseur)
+      et type_effet (cheques_effets) pour inclure TRAITE, EFFET et LCN.
+    -->
+    <changeSet id="022-fix-paiements-mode-paiement-check" author="erp-commercial">
+        <sql splitStatements="true">
+            -- 1. Contrainte sur paiements.mode_paiement
+            ALTER TABLE IF EXISTS paiements 
+                DROP CONSTRAINT IF EXISTS paiements_mode_paiement_check;
+
+            ALTER TABLE IF EXISTS paiements 
+                ADD CONSTRAINT paiements_mode_paiement_check 
+                CHECK (mode_paiement IN (
+                    'ESPECES',
+                    'CARTE_BANCAIRE',
+                    'CHEQUE',
+                    'VIREMENT',
+                    'CREDIT',
+                    'TRAITE',
+                    'EFFET',
+                    'LCN'
+                ));
+
+            -- 2. Contrainte sur reglements_fournisseur.mode_paiement (si existante)
+            ALTER TABLE IF EXISTS reglements_fournisseur 
+                DROP CONSTRAINT IF EXISTS reglements_fournisseur_mode_paiement_check;
+
+            ALTER TABLE IF EXISTS reglements_fournisseur 
+                ADD CONSTRAINT reglements_fournisseur_mode_paiement_check 
+                CHECK (mode_paiement IN (
+                    'ESPECES',
+                    'CARTE_BANCAIRE',
+                    'CHEQUE',
+                    'VIREMENT',
+                    'CREDIT',
+                    'TRAITE',
+                    'EFFET',
+                    'LCN'
+                ));
+
+            -- 3. Contrainte sur cheques_effets.type_effet (si existante)
+            ALTER TABLE IF EXISTS cheques_effets 
+                DROP CONSTRAINT IF EXISTS cheques_effets_type_effet_check;
+
+            ALTER TABLE IF EXISTS cheques_effets 
+                ADD CONSTRAINT cheques_effets_type_effet_check 
+                CHECK (type_effet IN (
+                    'CHEQUE',
+                    'TRAITE',
+                    'LCN',
+                    'BILLET_A_ORDRE',
+                    'EFFET'
+                ));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
