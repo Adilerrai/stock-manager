@@ -12,6 +12,7 @@ public interface LigneCommandeMapper {
     @Mapping(target = "commandeId", source = "commande.id")
     @Mapping(target = "produitId", source = "produit.id")
     @Mapping(target = "produitDescription", source = "produit.description")
+    @Mapping(target = "designation", source = "produit.designation")
     @Mapping(target = "produitReference", source = "produit.reference")
     @Mapping(target = "qualiteProduit", source = "qualiteProduit")
     LigneCommandeDTO toDto(LigneCommande ligneCommande);

@@ -79,4 +79,7 @@
     <!-- Changeset 023 : Champs légaux, fiscaux (Maroc) et bancaires dans clients -->
     <include file="changes/023-add-clients-legal-and-banking-fields.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 024 : Champs TVA, HT et TTC dans commandes et lignes_commande -->
+    <include file="changes/024-add-commandes-fournisseur-tva-fields.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

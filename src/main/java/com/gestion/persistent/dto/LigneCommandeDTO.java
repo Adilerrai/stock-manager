@@ -14,6 +14,11 @@ public class LigneCommandeDTO {
     private Integer quantiteCommandee;
     private Integer quantiteLivree;
     private BigDecimal prixUnitaire;
+    private BigDecimal prixUnitaireHT;
+    private BigDecimal tauxTVA;
+    private BigDecimal montantHT;
+    private BigDecimal montantTVA;
+    private BigDecimal montantTTC;
     private BigDecimal montantLigne;
     private QualiteProduit qualiteProduit;
 
@@ -33,6 +38,9 @@ public class LigneCommandeDTO {
     public String getProduitDescription() { return produitDescription; }
     public void setProduitDescription(String produitDescription) { this.produitDescription = produitDescription; }
 
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+
     public QualiteProduit getQualiteProduit() {
         return qualiteProduit;
     }
@@ -51,6 +59,21 @@ public class LigneCommandeDTO {
 
     public BigDecimal getPrixUnitaire() { return prixUnitaire; }
     public void setPrixUnitaire(BigDecimal prixUnitaire) { this.prixUnitaire = prixUnitaire; }
+
+    public BigDecimal getPrixUnitaireHT() { return prixUnitaireHT; }
+    public void setPrixUnitaireHT(BigDecimal prixUnitaireHT) { this.prixUnitaireHT = prixUnitaireHT; }
+
+    public BigDecimal getTauxTVA() { return tauxTVA; }
+    public void setTauxTVA(BigDecimal tauxTVA) { this.tauxTVA = tauxTVA; }
+
+    public BigDecimal getMontantHT() { return montantHT; }
+    public void setMontantHT(BigDecimal montantHT) { this.montantHT = montantHT; }
+
+    public BigDecimal getMontantTVA() { return montantTVA; }
+    public void setMontantTVA(BigDecimal montantTVA) { this.montantTVA = montantTVA; }
+
+    public BigDecimal getMontantTTC() { return montantTTC; }
+    public void setMontantTTC(BigDecimal montantTTC) { this.montantTTC = montantTTC; }
 
     public BigDecimal getMontantLigne() { return montantLigne; }
     public void setMontantLigne(BigDecimal montantLigne) { this.montantLigne = montantLigne; }

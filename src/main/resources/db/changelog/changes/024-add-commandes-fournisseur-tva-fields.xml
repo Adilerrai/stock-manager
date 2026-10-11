@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 024 :
+      - Ajout du support de la TVA et montants HT/TVA/TTC pour les commandes fournisseurs (achats)
+      - Colonnes appliquer_tva, taux_tva, montant_ht, montant_tva, montant_ttc sur commandes
+      - Colonnes prix_unitaire_ht, taux_tva, montant_ht, montant_tva, montant_ttc sur lignes_commande
+    -->
+    <changeSet id="024-add-commandes-fournisseur-tva-fields" author="erp-achats">
+        <sql splitStatements="true">
+            -- 1. Colonnes sur table commandes
+            ALTER TABLE IF EXISTS commandes
+                ADD COLUMN IF NOT EXISTS appliquer_tva BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS taux_tva NUMERIC(5, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_ht NUMERIC(12, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_tva NUMERIC(12, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_ttc NUMERIC(12, 2) DEFAULT 0.00;
+
+            -- Initialisation rétrocompatible pour commandes existantes
+            UPDATE commandes
+            SET montant_ht = COALESCE(montant_total, 0.00),
+                montant_ttc = COALESCE(montant_total, 0.00),
+                montant_tva = 0.00,
+                appliquer_tva = FALSE
+            WHERE montant_ht IS NULL OR montant_ht = 0.00;
+
+            -- 2. Colonnes sur table lignes_commande
+            ALTER TABLE IF EXISTS lignes_commande
+                ADD COLUMN IF NOT EXISTS prix_unitaire_ht NUMERIC(12, 2),
+                ADD COLUMN IF NOT EXISTS taux_tva NUMERIC(5, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_ht NUMERIC(12, 2),
+                ADD COLUMN IF NOT EXISTS montant_tva NUMERIC(12, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_ttc NUMERIC(12, 2);
+
+            -- Initialisation rétrocompatible pour lignes existantes
+            UPDATE lignes_commande
+            SET prix_unitaire_ht = COALESCE(prix_unitaire, 0.00),
+                montant_ht = COALESCE(montant_ligne, 0.00),
+                montant_ttc = COALESCE(montant_ligne, 0.00),
+                montant_tva = 0.00,
+                taux_tva = 0.00
+            WHERE prix_unitaire_ht IS NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

@@ -40,8 +40,23 @@ public class Commande {
     @Column(name = "date_livraison_reelle")
     private LocalDateTime dateLivraisonReelle;
 
-    @Column(name = "montant_total", precision = 10, scale = 2)
+    @Column(name = "montant_total", precision = 12, scale = 2)
     private BigDecimal montantTotal = BigDecimal.ZERO;
+
+    @Column(name = "appliquer_tva")
+    private Boolean appliquerTVA = false;
+
+    @Column(name = "taux_tva", precision = 5, scale = 2)
+    private BigDecimal tauxTVA = BigDecimal.ZERO;
+
+    @Column(name = "montant_ht", precision = 12, scale = 2)
+    private BigDecimal montantHT = BigDecimal.ZERO;
+
+    @Column(name = "montant_tva", precision = 12, scale = 2)
+    private BigDecimal montantTVA = BigDecimal.ZERO;
+
+    @Column(name = "montant_ttc", precision = 12, scale = 2)
+    private BigDecimal montantTTC = BigDecimal.ZERO;
 
     private String observations;
 
@@ -95,6 +110,21 @@ public class Commande {
 
     public BigDecimal getMontantTotal() { return montantTotal; }
     public void setMontantTotal(BigDecimal montantTotal) { this.montantTotal = montantTotal; }
+
+    public Boolean getAppliquerTVA() { return appliquerTVA; }
+    public void setAppliquerTVA(Boolean appliquerTVA) { this.appliquerTVA = appliquerTVA; }
+
+    public BigDecimal getTauxTVA() { return tauxTVA; }
+    public void setTauxTVA(BigDecimal tauxTVA) { this.tauxTVA = tauxTVA; }
+
+    public BigDecimal getMontantHT() { return montantHT; }
+    public void setMontantHT(BigDecimal montantHT) { this.montantHT = montantHT; }
+
+    public BigDecimal getMontantTVA() { return montantTVA; }
+    public void setMontantTVA(BigDecimal montantTVA) { this.montantTVA = montantTVA; }
+
+    public BigDecimal getMontantTTC() { return montantTTC; }
+    public void setMontantTTC(BigDecimal montantTTC) { this.montantTTC = montantTTC; }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }

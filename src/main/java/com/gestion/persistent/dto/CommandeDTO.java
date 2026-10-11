@@ -21,6 +21,11 @@ public class CommandeDTO {
     @JsonFormat(pattern = "yyyy-MM-dd['T'HH:mm[:ss][.SSS]]", timezone = "UTC")
     private LocalDateTime dateLivraisonReelle;
     private BigDecimal montantTotal;
+    private Boolean appliquerTVA;
+    private BigDecimal tauxTVA;
+    private BigDecimal montantHT;
+    private BigDecimal montantTVA;
+    private BigDecimal montantTTC;
     private String observations;
     private List<LigneCommandeDTO> lignesCommande;
 
@@ -57,6 +62,21 @@ public class CommandeDTO {
 
     public BigDecimal getMontantTotal() { return montantTotal; }
     public void setMontantTotal(BigDecimal montantTotal) { this.montantTotal = montantTotal; }
+
+    public Boolean getAppliquerTVA() { return appliquerTVA; }
+    public void setAppliquerTVA(Boolean appliquerTVA) { this.appliquerTVA = appliquerTVA; }
+
+    public BigDecimal getTauxTVA() { return tauxTVA; }
+    public void setTauxTVA(BigDecimal tauxTVA) { this.tauxTVA = tauxTVA; }
+
+    public BigDecimal getMontantHT() { return montantHT; }
+    public void setMontantHT(BigDecimal montantHT) { this.montantHT = montantHT; }
+
+    public BigDecimal getMontantTVA() { return montantTVA; }
+    public void setMontantTVA(BigDecimal montantTVA) { this.montantTVA = montantTVA; }
+
+    public BigDecimal getMontantTTC() { return montantTTC; }
+    public void setMontantTTC(BigDecimal montantTTC) { this.montantTTC = montantTTC; }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }

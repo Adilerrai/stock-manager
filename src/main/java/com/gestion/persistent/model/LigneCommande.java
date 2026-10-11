@@ -26,10 +26,25 @@ public class LigneCommande {
     @Column(name = "quantite_livree")
     private Integer quantiteLivree ;
 
-    @Column(name = "prix_unitaire", precision = 10, scale = 2, nullable = false)
+    @Column(name = "prix_unitaire", precision = 12, scale = 2, nullable = false)
     private BigDecimal prixUnitaire;
 
-    @Column(name = "montant_ligne", precision = 10, scale = 2, nullable = false)
+    @Column(name = "prix_unitaire_ht", precision = 12, scale = 2)
+    private BigDecimal prixUnitaireHT;
+
+    @Column(name = "taux_tva", precision = 5, scale = 2)
+    private BigDecimal tauxTVA = BigDecimal.ZERO;
+
+    @Column(name = "montant_ht", precision = 12, scale = 2)
+    private BigDecimal montantHT;
+
+    @Column(name = "montant_tva", precision = 12, scale = 2)
+    private BigDecimal montantTVA = BigDecimal.ZERO;
+
+    @Column(name = "montant_ttc", precision = 12, scale = 2)
+    private BigDecimal montantTTC;
+
+    @Column(name = "montant_ligne", precision = 12, scale = 2, nullable = false)
     private BigDecimal montantLigne;
 
     @Enumerated(EnumType.STRING)
@@ -55,6 +70,20 @@ public class LigneCommande {
     public BigDecimal getPrixUnitaire() { return prixUnitaire; }
     public void setPrixUnitaire(BigDecimal prixUnitaire) { this.prixUnitaire = prixUnitaire; }
 
+    public BigDecimal getPrixUnitaireHT() { return prixUnitaireHT; }
+    public void setPrixUnitaireHT(BigDecimal prixUnitaireHT) { this.prixUnitaireHT = prixUnitaireHT; }
+
+    public BigDecimal getTauxTVA() { return tauxTVA; }
+    public void setTauxTVA(BigDecimal tauxTVA) { this.tauxTVA = tauxTVA; }
+
+    public BigDecimal getMontantHT() { return montantHT; }
+    public void setMontantHT(BigDecimal montantHT) { this.montantHT = montantHT; }
+
+    public BigDecimal getMontantTVA() { return montantTVA; }
+    public void setMontantTVA(BigDecimal montantTVA) { this.montantTVA = montantTVA; }
+
+    public BigDecimal getMontantTTC() { return montantTTC; }
+    public void setMontantTTC(BigDecimal montantTTC) { this.montantTTC = montantTTC; }
 
     public BigDecimal getMontantLigne() { return montantLigne; }
     public void setMontantLigne(BigDecimal montantLigne) { this.montantLigne = montantLigne; }
