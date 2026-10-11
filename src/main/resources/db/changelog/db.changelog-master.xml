@@ -82,4 +82,7 @@
     <!-- Changeset 024 : Champs TVA, HT et TTC dans commandes et lignes_commande -->
     <include file="changes/024-add-commandes-fournisseur-tva-fields.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 025 : Champs devise et type_fournisseur dans fournisseurs et commandes -->
+    <include file="changes/025-add-fournisseurs-and-commandes-international-fields.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

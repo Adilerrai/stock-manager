@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 025 :
+      - Ajout de la devise et du statut national/international pour fournisseurs et commandes
+      - Colonnes type_fournisseur et devise sur table fournisseurs
+      - Colonne devise sur table commandes
+    -->
+    <changeSet id="025-add-fournisseurs-and-commandes-international-fields" author="erp-achats">
+        <sql splitStatements="true">
+            -- 1. Colonnes sur table fournisseurs
+            ALTER TABLE IF EXISTS fournisseurs
+                ADD COLUMN IF NOT EXISTS type_fournisseur VARCHAR(30) DEFAULT 'NATIONAL',
+                ADD COLUMN IF NOT EXISTS devise VARCHAR(10) DEFAULT 'MAD';
+
+            UPDATE fournisseurs
+            SET type_fournisseur = 'NATIONAL'
+            WHERE type_fournisseur IS NULL;
+
+            UPDATE fournisseurs
+            SET devise = 'MAD'
+            WHERE devise IS NULL;
+
+            -- 2. Colonne sur table commandes
+            ALTER TABLE IF EXISTS commandes
+                ADD COLUMN IF NOT EXISTS devise VARCHAR(10) DEFAULT 'MAD';
+
+            UPDATE commandes
+            SET devise = 'MAD'
+            WHERE devise IS NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
