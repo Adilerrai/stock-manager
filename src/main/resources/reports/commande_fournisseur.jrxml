@@ -67,24 +67,24 @@
 
 			<!-- ── BANDEAU HAUT pleine largeur (couleur primaire) ──────── -->
 			<rectangle>
-				<reportElement x="0" y="0" width="595" height="52" backcolor="#1E3A5F" uuid="hdr-bg-main"/>
+				<reportElement x="0" y="0" width="595" height="52" backcolor="#1E3A5F" uuid="43ab5806-15c6-4db8-8cdb-a05f7556354e"/>
 				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 			<!-- accent strip décoratif -->
 			<rectangle>
-				<reportElement x="0" y="48" width="595" height="4" backcolor="#2563EB" uuid="hdr-accent"/>
+				<reportElement x="0" y="48" width="595" height="4" backcolor="#2563EB" uuid="fd1b96bb-545a-4c2a-8b4d-a92f33dfe867"/>
 				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 
 			<!-- Logo entreprise dans le bandeau -->
 			<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
-				<reportElement x="8" y="4" width="64" height="44" uuid="hdr-logo"/>
+				<reportElement x="8" y="4" width="64" height="44" uuid="05f55de1-08ed-4b66-bbb3-4d5dbbaf482f"/>
 				<imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
 			</image>
 
 			<!-- Nom entreprise (blanc, grand) -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="80" y="8" width="260" height="22" forecolor="#FFFFFF" uuid="hdr-nom-ent"/>
+				<reportElement x="80" y="8" width="260" height="22" forecolor="#FFFFFF" uuid="616d24b3-85cf-4de3-8e39-6467c858810f"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="14" isBold="true"/>
 				</textElement>
@@ -93,7 +93,7 @@
 
 			<!-- Activité / forme juridique sous le nom -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="80" y="30" width="260" height="14" forecolor="#93C5FD" uuid="hdr-activite"/>
+				<reportElement x="80" y="30" width="260" height="14" forecolor="#93C5FD" uuid="39f8a1e0-87e5-449b-879c-7ba3a3f38513"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
@@ -102,21 +102,21 @@
 
 			<!-- Numéro de commande (grand, aligné à droite, dans le bandeau) -->
 			<staticText>
-				<reportElement x="345" y="6" width="110" height="11" forecolor="#93C5FD" uuid="hdr-label-cmd"/>
+				<reportElement x="345" y="6" width="110" height="11" forecolor="#93C5FD" uuid="21350988-4850-4ded-8d64-8241dd0369c6"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7" isBold="true"/>
 				</textElement>
 				<text><![CDATA[BON DE COMMANDE ACHAT]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="345" y="18" width="205" height="18" forecolor="#FFFFFF" uuid="hdr-numero-cmd"/>
+				<reportElement x="345" y="18" width="205" height="18" forecolor="#FFFFFF" uuid="58acd9a5-aa66-44f1-8ec9-706b84bd3671"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="13" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{numeroCommande} != null ? $P{numeroCommande} : "-"]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="345" y="36" width="205" height="11" forecolor="#7DD3FC" uuid="hdr-date-cmd"/>
+				<reportElement x="345" y="36" width="205" height="11" forecolor="#7DD3FC" uuid="379c4654-5c2f-4fdd-b5e7-4d125f751ac1"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
@@ -126,7 +126,7 @@
 			<!-- ── ZONE INFO (sous le bandeau) ──────────────────────────── -->
 			<!-- Adresse entreprise (gauche) -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="58" width="270" height="11" forecolor="#475569" uuid="hdr-adresse-ent"/>
+				<reportElement x="0" y="58" width="270" height="11" forecolor="#475569" uuid="a7abf47e-8599-4bc2-9d28-a54c6a3c2ab4"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
@@ -134,7 +134,7 @@
 			</textField>
 			<!-- Identifiants entreprise -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="69" width="270" height="10" forecolor="#64748B" uuid="hdr-ids-ent"/>
+				<reportElement x="0" y="69" width="270" height="10" forecolor="#64748B" uuid="00559d3f-39da-4d7e-8476-11cf1b64952c"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -145,20 +145,20 @@
 
 			<!-- ── BLOC COMMANDE (centre-gauche) ── -->
 			<rectangle radius="4">
-				<reportElement x="0" y="84" width="270" height="56" backcolor="#F0F9FF" uuid="hdr-cmd-bg"/>
+				<reportElement x="0" y="84" width="270" height="56" backcolor="#F0F9FF" uuid="022dc1d0-e1fe-40e9-a83c-b3640e08ef27"/>
 				<graphicElement><pen lineWidth="0.8" lineColor="#BAE6FD"/></graphicElement>
 			</rectangle>
 
 			<!-- Livraison prévue -->
 			<staticText>
-				<reportElement x="8" y="88" width="90" height="9" forecolor="#0284C7" uuid="hdr-lbl-livr"/>
+				<reportElement x="8" y="88" width="90" height="9" forecolor="#0284C7" uuid="86b51184-28a2-4d62-bb80-d25361aa0998"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5" isBold="true"/>
 				</textElement>
 				<text><![CDATA[LIVRAISON PRÉVUE]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="8" y="98" width="120" height="12" forecolor="#0F172A" uuid="hdr-val-livr"/>
+				<reportElement x="8" y="98" width="120" height="12" forecolor="#0F172A" uuid="b013a87c-ae30-4c53-8ff9-d27bb5203fe4"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
@@ -167,14 +167,14 @@
 
 			<!-- Statut -->
 			<staticText>
-				<reportElement x="145" y="88" width="60" height="9" forecolor="#0284C7" uuid="hdr-lbl-statut"/>
+				<reportElement x="145" y="88" width="60" height="9" forecolor="#0284C7" uuid="b1e1a830-3f64-4a52-8c08-2db5e53a21a7"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5" isBold="true"/>
 				</textElement>
 				<text><![CDATA[STATUT]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="145" y="98" width="115" height="12" forecolor="#0F172A" uuid="hdr-val-statut"/>
+				<reportElement x="145" y="98" width="115" height="12" forecolor="#0F172A" uuid="aadd7780-1802-4358-80d0-a173863a0535"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
@@ -183,7 +183,7 @@
 
 			<!-- Mode livraison (décoratif) -->
 			<staticText>
-				<reportElement x="8" y="116" width="252" height="10" forecolor="#64748B" uuid="hdr-mode-livr"/>
+				<reportElement x="8" y="116" width="252" height="10" forecolor="#64748B" uuid="e9eedb0a-93f8-48f1-a804-5f17322aa43e"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -192,12 +192,12 @@
 
 			<!-- ── BLOC FOURNISSEUR (droite) ── -->
 			<rectangle radius="4">
-				<reportElement x="278" y="58" width="277" height="82" backcolor="#F0F9FF" uuid="hdr-frn-bg"/>
+				<reportElement x="278" y="58" width="277" height="82" backcolor="#F0F9FF" uuid="5d8a136f-a152-4137-9ed0-f0b6d220a620"/>
 				<graphicElement><pen lineWidth="0.9" lineColor="#7DD3FC"/></graphicElement>
 			</rectangle>
 
 			<staticText>
-				<reportElement x="290" y="63" width="100" height="11" forecolor="#0284C7" uuid="hdr-lbl-frn"/>
+				<reportElement x="290" y="63" width="100" height="11" forecolor="#0284C7" uuid="756f9473-04a3-4c53-b1bf-85128c5eab5c"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
@@ -205,7 +205,7 @@
 			</staticText>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="290" y="75" width="255" height="18" forecolor="#0F172A" uuid="hdr-nom-frn"/>
+				<reportElement x="290" y="75" width="255" height="18" forecolor="#0F172A" uuid="e45333df-4036-48c8-9384-4fc28d198ce3"/>
 				<textElement verticalAlignment="Top">
 					<font fontName="DejaVu Sans" size="11" isBold="true"/>
 				</textElement>
@@ -213,7 +213,7 @@
 			</textField>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="290" y="95" width="255" height="13" forecolor="#475569" uuid="hdr-tel-frn"/>
+				<reportElement x="290" y="95" width="255" height="13" forecolor="#475569" uuid="8b58474b-84e2-48f1-9d2a-c3869e10c231"/>
 				<textElement verticalAlignment="Top">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
@@ -221,7 +221,7 @@
 			</textField>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="290" y="108" width="255" height="13" forecolor="#475569" uuid="hdr-adr-frn"/>
+				<reportElement x="290" y="108" width="255" height="13" forecolor="#475569" uuid="08710cbc-90ca-4968-a762-44b8fb1bff29"/>
 				<textElement verticalAlignment="Top">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
@@ -229,7 +229,7 @@
 			</textField>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="290" y="123" width="255" height="11" forecolor="#0F172A" uuid="hdr-ice-frn"/>
+				<reportElement x="290" y="123" width="255" height="11" forecolor="#0F172A" uuid="36ba76d5-0fc5-4f3b-a03d-19fbd8ba678e"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
 				</textElement>
@@ -238,7 +238,7 @@
 
 			<!-- ligne de séparation avant le tableau -->
 			<line>
-				<reportElement x="0" y="147" width="555" height="1" forecolor="#2563EB" uuid="hdr-sep-line"/>
+				<reportElement x="0" y="147" width="555" height="1" forecolor="#2563EB" uuid="ed974a44-3843-4e05-a4ec-735c33907a2b"/>
 				<graphicElement><pen lineWidth="1.5"/></graphicElement>
 			</line>
 		</band>
@@ -250,58 +250,58 @@
 	<columnHeader>
 		<band height="26">
 			<rectangle>
-				<reportElement x="0" y="0" width="555" height="25" backcolor="#1E3A5F" uuid="col-hdr-bg"/>
+				<reportElement x="0" y="0" width="555" height="25" backcolor="#1E3A5F" uuid="316c04f5-c994-4e61-b0e2-9354fb866655"/>
 				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 			<line>
-				<reportElement x="0" y="25" width="555" height="1" forecolor="#2563EB" uuid="col-hdr-line"/>
+				<reportElement x="0" y="25" width="555" height="1" forecolor="#2563EB" uuid="9a5c11ab-6b43-4999-bf6a-38526b62796c"/>
 				<graphicElement><pen lineWidth="1.0"/></graphicElement>
 			</line>
 
 			<staticText>
-				<reportElement x="4" y="0" width="72" height="25" forecolor="#93C5FD" uuid="col-reference"/>
+				<reportElement x="4" y="0" width="72" height="25" forecolor="#93C5FD" uuid="90cd3393-8ef0-49c5-934a-21914af31b77"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
 				<text><![CDATA[RÉFÉRENCE]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="80" y="0" width="156" height="25" forecolor="#FFFFFF" uuid="col-designation"/>
+				<reportElement x="80" y="0" width="156" height="25" forecolor="#FFFFFF" uuid="f538f641-5a29-44d7-b7d6-75fb31c7eb18"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
 				<text><![CDATA[DÉSIGNATION]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="240" y="0" width="55" height="25" forecolor="#FFFFFF" uuid="col-qte"/>
+				<reportElement x="240" y="0" width="55" height="25" forecolor="#FFFFFF" uuid="c7d9722a-56b8-4e56-9aa4-c38f13e2d497"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
 				<text><![CDATA[QTÉ]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="300" y="0" width="60" height="25" forecolor="#FFFFFF" uuid="col-puht"/>
+				<reportElement x="300" y="0" width="60" height="25" forecolor="#FFFFFF" uuid="d8611e56-bed0-498e-96d9-c35602d23666"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
 				<text><![CDATA[P.U. HT]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="365" y="0" width="45" height="25" forecolor="#93C5FD" uuid="col-tva"/>
+				<reportElement x="365" y="0" width="45" height="25" forecolor="#93C5FD" uuid="d80bc563-ebd7-4973-b486-06d26a7a3374"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
 				<text><![CDATA[TVA]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="415" y="0" width="60" height="25" forecolor="#FFFFFF" uuid="col-puttc"/>
+				<reportElement x="415" y="0" width="60" height="25" forecolor="#FFFFFF" uuid="e6993d5b-44fd-4db6-a1a2-b3056201288f"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
 				<text><![CDATA[P.U. TTC]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="480" y="0" width="71" height="25" forecolor="#FFFFFF" uuid="col-total"/>
+				<reportElement x="480" y="0" width="71" height="25" forecolor="#FFFFFF" uuid="b03dee78-4c4a-4306-a121-b8d8306e2049"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
@@ -316,17 +316,17 @@
 	<detail>
 		<band height="26">
 			<rectangle>
-				<reportElement style="zebra" stretchType="RelativeToBandHeight" x="0" y="0" width="555" height="25" uuid="det-bg"/>
+				<reportElement style="zebra" stretchType="RelativeToBandHeight" x="0" y="0" width="555" height="25" uuid="59f98753-0a01-4c01-8eac-045f3e32e62c"/>
 				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 			<line>
-				<reportElement positionType="FixRelativeToBottom" x="0" y="25" width="555" height="1" forecolor="#E2E8F0" uuid="det-line"/>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="25" width="555" height="1" forecolor="#E2E8F0" uuid="328030ee-5d74-4406-aaaa-b9e9d3be7cae"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 
 			<!-- Référence -->
 			<textField isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="4" y="0" width="72" height="25" forecolor="#2563EB" uuid="det-reference"/>
+				<reportElement stretchType="RelativeToBandHeight" x="4" y="0" width="72" height="25" forecolor="#2563EB" uuid="021ea7dd-56ff-475b-b3f9-40347b16f894"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
 				</textElement>
@@ -335,7 +335,7 @@
 
 			<!-- Désignation en MAJUSCULES -->
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="80" y="0" width="156" height="25" forecolor="#0F172A" uuid="det-design"/>
+				<reportElement stretchType="RelativeToBandHeight" x="80" y="0" width="156" height="25" forecolor="#0F172A" uuid="1a78110b-4dfb-4805-98d4-f8391a7ebed2"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
@@ -344,7 +344,7 @@
 
 			<!-- Quantité -->
 			<textField pattern="#,##0.##" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="240" y="0" width="55" height="25" forecolor="#0F172A" uuid="det-qte"/>
+				<reportElement stretchType="RelativeToBandHeight" x="240" y="0" width="55" height="25" forecolor="#0F172A" uuid="2e1886a8-2e2e-46ca-a1d0-e0a001bbde3e"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
@@ -353,7 +353,7 @@
 
 			<!-- P.U. HT -->
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="300" y="0" width="60" height="25" forecolor="#475569" uuid="det-puht"/>
+				<reportElement stretchType="RelativeToBandHeight" x="300" y="0" width="60" height="25" forecolor="#475569" uuid="4158ac86-5571-4eaf-8f3a-91ab30545d5e"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
@@ -362,7 +362,7 @@
 
 			<!-- TVA % -->
 			<textField isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="365" y="0" width="45" height="25" forecolor="#2563EB" uuid="det-tva"/>
+				<reportElement stretchType="RelativeToBandHeight" x="365" y="0" width="45" height="25" forecolor="#2563EB" uuid="757faaad-a48d-4561-b207-2afa17f37bfd"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
@@ -371,7 +371,7 @@
 
 			<!-- P.U. TTC -->
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="415" y="0" width="60" height="25" forecolor="#475569" uuid="det-puttc"/>
+				<reportElement stretchType="RelativeToBandHeight" x="415" y="0" width="60" height="25" forecolor="#475569" uuid="ac975cf0-1595-453d-861c-8c1ff2aa64a4"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
@@ -380,7 +380,7 @@
 
 			<!-- TOTAL ligne -->
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="480" y="0" width="71" height="25" forecolor="#0F172A" uuid="det-total"/>
+				<reportElement stretchType="RelativeToBandHeight" x="480" y="0" width="71" height="25" forecolor="#0F172A" uuid="c2bd1f56-7b91-4722-8185-762824910624"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
@@ -395,12 +395,12 @@
 	<pageFooter>
 		<band height="68">
 			<line>
-				<reportElement x="0" y="0" width="555" height="1" forecolor="#2563EB" uuid="pf-line-top"/>
+				<reportElement x="0" y="0" width="555" height="1" forecolor="#2563EB" uuid="ef3a4d0b-8e3e-4e43-916f-49e71f271488"/>
 				<graphicElement><pen lineWidth="1.5"/></graphicElement>
 			</line>
 			<!-- Nom entreprise + page -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="5" width="420" height="11" forecolor="#0F172A" uuid="pf-nom"/>
+				<reportElement x="0" y="5" width="420" height="11" forecolor="#0F172A" uuid="3e058064-a2af-42db-a685-5b8d17dca992"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
 				</textElement>
@@ -409,14 +409,14 @@
 ($P{capitalSocial} != null && !$P{capitalSocial}.trim().isEmpty() ? " | Capital : " + $P{capitalSocial} : "")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="425" y="5" width="65" height="11" forecolor="#475569" uuid="pf-page-lbl"/>
+				<reportElement x="425" y="5" width="65" height="11" forecolor="#475569" uuid="f250aacd-9fd1-47a6-82e8-02f38227150e"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " / "]]></textFieldExpression>
 			</textField>
 			<textField evaluationTime="Report">
-				<reportElement x="490" y="5" width="65" height="11" forecolor="#475569" uuid="pf-page-tot"/>
+				<reportElement x="490" y="5" width="65" height="11" forecolor="#475569" uuid="f4fe7d6a-9941-4af0-a4bd-8e549364722b"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
@@ -424,7 +424,7 @@
 			</textField>
 			<!-- RC / IF / ICE / CNSS -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="17" width="555" height="10" forecolor="#334155" uuid="pf-ids"/>
+				<reportElement x="0" y="17" width="555" height="10" forecolor="#334155" uuid="3de237c4-a2a7-4246-9d74-7992863211de"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -436,7 +436,7 @@
 			</textField>
 			<!-- Tél / Email -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="28" width="555" height="10" forecolor="#334155" uuid="pf-contact"/>
+				<reportElement x="0" y="28" width="555" height="10" forecolor="#334155" uuid="aae94184-21ad-4737-86b3-e06047391fea"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -446,7 +446,7 @@
 			</textField>
 			<!-- Banque / RIB -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="39" width="555" height="10" forecolor="#334155" uuid="pf-banque"/>
+				<reportElement x="0" y="39" width="555" height="10" forecolor="#334155" uuid="fc40e0fe-7020-44ed-a843-5e8329e6c4e9"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -455,7 +455,7 @@
 			</textField>
 			<!-- Pied de page personnalisé -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="50" width="555" height="10" forecolor="#64748B" uuid="pf-pied"/>
+				<reportElement x="0" y="50" width="555" height="10" forecolor="#64748B" uuid="d7233e51-2e10-4442-aa67-f90bc672a21d"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5" isItalic="true"/>
 				</textElement>
@@ -472,13 +472,13 @@
 
 			<!-- ── CARTE CACHET & SIGNATURE (gauche) ────────────────────── -->
 			<rectangle radius="6">
-				<reportElement x="0" y="6" width="272" height="155" backcolor="#FFFFFF" uuid="card-sig-bg"/>
+				<reportElement x="0" y="6" width="272" height="155" backcolor="#FFFFFF" uuid="279e2cdb-691d-4218-bab0-60e67354e6eb"/>
 				<graphicElement><pen lineWidth="0.8" lineColor="#CBD5E1"/></graphicElement>
 			</rectangle>
 
 			<!-- Titre de la carte -->
 			<staticText>
-				<reportElement x="12" y="14" width="180" height="14" forecolor="#1E3A5F" uuid="card-sig-title"/>
+				<reportElement x="12" y="14" width="180" height="14" forecolor="#1E3A5F" uuid="ce45b729-ea45-4984-9ac6-0dcb97daa3e3"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
@@ -487,20 +487,20 @@
 
 			<!-- Ligne de séparation sous le titre -->
 			<line>
-				<reportElement x="12" y="31" width="248" height="1" forecolor="#E2E8F0" uuid="card-sig-sep"/>
+				<reportElement x="12" y="31" width="248" height="1" forecolor="#E2E8F0" uuid="46d1955a-93ed-4274-85f1-0499cd3828dd"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 
 			<!-- Mentions -->
 			<staticText>
-				<reportElement x="12" y="36" width="248" height="11" forecolor="#64748B" uuid="card-sig-info1"/>
+				<reportElement x="12" y="36" width="248" height="11" forecolor="#64748B" uuid="3c5ec119-364a-49b5-a477-461866c492f3"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7"/>
 				</textElement>
 				<text><![CDATA[Nom & Signature : ...........................................................]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="12" y="49" width="248" height="11" forecolor="#64748B" uuid="card-sig-info2"/>
+				<reportElement x="12" y="49" width="248" height="11" forecolor="#64748B" uuid="508b6660-a0ce-4771-82f9-e0efeca0fffd"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7"/>
 				</textElement>
@@ -509,12 +509,12 @@
 
 			<!-- Cadre en pointillés pour le cachet -->
 			<rectangle radius="4">
-				<reportElement x="12" y="65" width="248" height="88" backcolor="#F8FAFC" uuid="card-sig-zone"/>
+				<reportElement x="12" y="65" width="248" height="88" backcolor="#F8FAFC" uuid="a63162ee-237f-4427-9514-73acf0f62f6f"/>
 				<graphicElement><pen lineWidth="0.75" lineStyle="Dashed" lineColor="#94A3B8"/></graphicElement>
 			</rectangle>
 
 			<staticText>
-				<reportElement x="16" y="136" width="240" height="12" forecolor="#94A3B8" uuid="card-sig-hint"/>
+				<reportElement x="16" y="136" width="240" height="12" forecolor="#94A3B8" uuid="5ce1d663-8b42-418a-8e22-47893c027960"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6" isItalic="true"/>
 				</textElement>
@@ -523,13 +523,13 @@
 
 			<!-- ── CARTE RÉCAPITULATIF / TOTAUX (droite) ───────────────── -->
 			<rectangle radius="6">
-				<reportElement x="283" y="6" width="272" height="155" backcolor="#F8FAFC" uuid="card-tot-bg"/>
+				<reportElement x="283" y="6" width="272" height="155" backcolor="#F8FAFC" uuid="25fd8db3-466c-427f-885c-c9ac58f20588"/>
 				<graphicElement><pen lineWidth="0.8" lineColor="#CBD5E1"/></graphicElement>
 			</rectangle>
 
 			<!-- Titre de la carte -->
 			<staticText>
-				<reportElement x="295" y="14" width="180" height="14" forecolor="#1E3A5F" uuid="card-tot-title"/>
+				<reportElement x="295" y="14" width="180" height="14" forecolor="#1E3A5F" uuid="fc196880-7a89-4d3b-a6f2-c76f3f80e8a1"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
@@ -538,20 +538,20 @@
 
 			<!-- Ligne de séparation sous le titre -->
 			<line>
-				<reportElement x="295" y="31" width="248" height="1" forecolor="#E2E8F0" uuid="card-tot-sep"/>
+				<reportElement x="295" y="31" width="248" height="1" forecolor="#E2E8F0" uuid="3e5ceca3-4d8f-49ed-9a36-a3034fab1b48"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 
 			<!-- Ligne TOTAL HT -->
 			<staticText>
-				<reportElement x="295" y="36" width="100" height="13" forecolor="#475569" uuid="card-tot-ht-lbl"/>
+				<reportElement x="295" y="36" width="100" height="13" forecolor="#475569" uuid="97fb5b9c-0595-4526-b47d-260e6c6ec205"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<text><![CDATA[TOTAL HT]]></text>
 			</staticText>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="395" y="36" width="148" height="13" forecolor="#0F172A" uuid="card-tot-ht-val"/>
+				<reportElement x="395" y="36" width="148" height="13" forecolor="#0F172A" uuid="b92e7f30-4e5a-474b-a244-66ed5ac94f43"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
@@ -560,20 +560,20 @@
 
 			<!-- Séparateur -->
 			<line>
-				<reportElement x="295" y="50" width="248" height="1" forecolor="#E2E8F0" uuid="card-tot-sep-mid"/>
+				<reportElement x="295" y="50" width="248" height="1" forecolor="#E2E8F0" uuid="7e87b13e-0e7d-4d58-85a2-0fe2833d7a05"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 
 			<!-- Ligne TVA -->
 			<staticText>
-				<reportElement x="295" y="53" width="100" height="13" forecolor="#475569" uuid="card-tot-tva-lbl"/>
+				<reportElement x="295" y="53" width="100" height="13" forecolor="#475569" uuid="bf4c0912-7542-4d98-8128-fc25c88c0ad1"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<text><![CDATA[TVA]]></text>
 			</staticText>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="395" y="53" width="148" height="13" forecolor="#0F172A" uuid="card-tot-tva-val"/>
+				<reportElement x="395" y="53" width="148" height="13" forecolor="#0F172A" uuid="81bd1eee-206e-4c19-96c1-2972dac8f7c6"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
@@ -582,18 +582,18 @@
 
 			<!-- Bloc TOTAL TTC mis en valeur -->
 			<rectangle radius="5">
-				<reportElement x="293" y="70" width="252" height="42" backcolor="#1E3A5F" uuid="card-tot-ttc-box"/>
+				<reportElement x="293" y="70" width="252" height="42" backcolor="#1E3A5F" uuid="5962c434-a787-4867-b566-2b9e52addccf"/>
 				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 			<textField isBlankWhenNull="true">
-				<reportElement x="297" y="73" width="244" height="11" forecolor="#93C5FD" uuid="card-tot-ttc-lbl"/>
+				<reportElement x="297" y="73" width="244" height="11" forecolor="#93C5FD" uuid="0b7948f3-d6e1-46a1-be8e-73b08d5951db"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA["TOTAL TTC (" + ($P{devise} != null ? $P{devise} : "MAD") + ")"]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="297" y="85" width="244" height="23" forecolor="#FFFFFF" uuid="card-tot-ttc-val"/>
+				<reportElement x="297" y="85" width="244" height="23" forecolor="#FFFFFF" uuid="929bda99-870c-423a-9a8c-4b725bc1fa40"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="13" isBold="true"/>
 				</textElement>
@@ -602,7 +602,7 @@
 
 			<!-- Montant en toutes lettres -->
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="293" y="116" width="252" height="38" forecolor="#475569" uuid="card-tot-lettres"/>
+				<reportElement x="293" y="116" width="252" height="38" forecolor="#475569" uuid="20bd6b56-a88c-486b-8562-37a2789d4d18"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5" isItalic="true"/>
 				</textElement>
@@ -611,12 +611,12 @@
 
 			<!-- ── PIED DE PAGE DERNIÈRE PAGE ─────────────────────────── -->
 			<line>
-				<reportElement x="0" y="168" width="555" height="1" forecolor="#2563EB" uuid="lpf-line"/>
+				<reportElement x="0" y="168" width="555" height="1" forecolor="#2563EB" uuid="fc37a350-305d-4387-bb2e-74fc7115f4fb"/>
 				<graphicElement><pen lineWidth="1.5"/></graphicElement>
 			</line>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="173" width="420" height="11" forecolor="#0F172A" uuid="lpf-nom"/>
+				<reportElement x="0" y="173" width="420" height="11" forecolor="#0F172A" uuid="83221317-dfc2-4d1a-88c4-bdf7288d446f"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
 				</textElement>
@@ -625,14 +625,14 @@
 ($P{capitalSocial} != null && !$P{capitalSocial}.trim().isEmpty() ? " | Capital : " + $P{capitalSocial} : "")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="425" y="173" width="65" height="11" forecolor="#475569" uuid="lpf-page-lbl"/>
+				<reportElement x="425" y="173" width="65" height="11" forecolor="#475569" uuid="01d89fa3-8f65-47d5-8390-5481594ed1c8"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " / "]]></textFieldExpression>
 			</textField>
 			<textField evaluationTime="Report">
-				<reportElement x="490" y="173" width="65" height="11" forecolor="#475569" uuid="lpf-page-tot"/>
+				<reportElement x="490" y="173" width="65" height="11" forecolor="#475569" uuid="b70cffd1-4dc5-46ed-b01f-98d38cd51ce8"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
@@ -640,7 +640,7 @@
 			</textField>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="185" width="555" height="10" forecolor="#334155" uuid="lpf-ids"/>
+				<reportElement x="0" y="185" width="555" height="10" forecolor="#334155" uuid="c7124f5a-f71a-4a45-8b30-136dc93dbcaa"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -652,7 +652,7 @@
 			</textField>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="196" width="555" height="10" forecolor="#334155" uuid="lpf-contact"/>
+				<reportElement x="0" y="196" width="555" height="10" forecolor="#334155" uuid="b0348bb0-0831-464b-a63f-f7d0141c2b61"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -662,7 +662,7 @@
 			</textField>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="207" width="555" height="10" forecolor="#334155" uuid="lpf-banque"/>
+				<reportElement x="0" y="207" width="555" height="10" forecolor="#334155" uuid="57f8f870-85a8-42f1-a37d-ab222f83b214"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -671,7 +671,7 @@
 			</textField>
 
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="218" width="555" height="10" forecolor="#64748B" uuid="lpf-pied"/>
+				<reportElement x="0" y="218" width="555" height="10" forecolor="#64748B" uuid="e0d3423c-2c54-448f-8aa1-eb1fb8fe9e61"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5" isItalic="true"/>
 				</textElement>
