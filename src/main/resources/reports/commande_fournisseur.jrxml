@@ -470,35 +470,88 @@
 	<lastPageFooter>
 		<band height="258">
 
-			<!-- ── BLOC TOTAUX (droite) ────────────────────────────────── -->
+			<!-- ── CARTE CACHET & SIGNATURE (gauche) ────────────────────── -->
 			<rectangle radius="6">
-				<reportElement x="320" y="0" width="235" height="155" backcolor="#F8FAFC" uuid="tot-bg"/>
-				<graphicElement><pen lineWidth="0.75" lineColor="#94A3B8"/></graphicElement>
+				<reportElement x="0" y="6" width="272" height="155" backcolor="#FFFFFF" uuid="card-sig-bg"/>
+				<graphicElement><pen lineWidth="0.8" lineColor="#CBD5E1"/></graphicElement>
 			</rectangle>
 
-			<!-- Bandeau intérieur du bloc totaux -->
-			<rectangle>
-				<reportElement x="320" y="0" width="235" height="22" backcolor="#1E3A5F" uuid="tot-hdr-bg"/>
-				<graphicElement><pen lineWidth="0.0"/></graphicElement>
-			</rectangle>
+			<!-- Titre de la carte -->
 			<staticText>
-				<reportElement x="328" y="2" width="210" height="18" forecolor="#FFFFFF" uuid="tot-hdr-lbl"/>
+				<reportElement x="12" y="14" width="180" height="14" forecolor="#1E3A5F" uuid="card-sig-title"/>
 				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
+				</textElement>
+				<text><![CDATA[CACHET & SIGNATURE]]></text>
+			</staticText>
+
+			<!-- Ligne de séparation sous le titre -->
+			<line>
+				<reportElement x="12" y="31" width="248" height="1" forecolor="#E2E8F0" uuid="card-sig-sep"/>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+
+			<!-- Mentions -->
+			<staticText>
+				<reportElement x="12" y="36" width="248" height="11" forecolor="#64748B" uuid="card-sig-info1"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7"/>
+				</textElement>
+				<text><![CDATA[Nom & Signature : ...........................................................]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="12" y="49" width="248" height="11" forecolor="#64748B" uuid="card-sig-info2"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7"/>
+				</textElement>
+				<text><![CDATA[Date : ...................................  Visa / Bon pour accord]]></text>
+			</staticText>
+
+			<!-- Cadre en pointillés pour le cachet -->
+			<rectangle radius="4">
+				<reportElement x="12" y="65" width="248" height="88" backcolor="#F8FAFC" uuid="card-sig-zone"/>
+				<graphicElement><pen lineWidth="0.75" lineStyle="Dashed" lineColor="#94A3B8"/></graphicElement>
+			</rectangle>
+
+			<staticText>
+				<reportElement x="16" y="136" width="240" height="12" forecolor="#94A3B8" uuid="card-sig-hint"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="6" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Emplacement réservé au cachet et à la signature]]></text>
+			</staticText>
+
+			<!-- ── CARTE RÉCAPITULATIF / TOTAUX (droite) ───────────────── -->
+			<rectangle radius="6">
+				<reportElement x="283" y="6" width="272" height="155" backcolor="#F8FAFC" uuid="card-tot-bg"/>
+				<graphicElement><pen lineWidth="0.8" lineColor="#CBD5E1"/></graphicElement>
+			</rectangle>
+
+			<!-- Titre de la carte -->
+			<staticText>
+				<reportElement x="295" y="14" width="180" height="14" forecolor="#1E3A5F" uuid="card-tot-title"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
 				<text><![CDATA[RÉCAPITULATIF]]></text>
 			</staticText>
 
-			<!-- Total HT -->
+			<!-- Ligne de séparation sous le titre -->
+			<line>
+				<reportElement x="295" y="31" width="248" height="1" forecolor="#E2E8F0" uuid="card-tot-sep"/>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+
+			<!-- Ligne TOTAL HT -->
 			<staticText>
-				<reportElement x="328" y="26" width="110" height="10" forecolor="#475569" uuid="tot-lbl-ht"/>
+				<reportElement x="295" y="36" width="100" height="13" forecolor="#475569" uuid="card-tot-ht-lbl"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<text><![CDATA[TOTAL HT]]></text>
 			</staticText>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="438" y="26" width="107" height="10" forecolor="#0F172A" uuid="tot-val-ht"/>
+				<reportElement x="395" y="36" width="148" height="13" forecolor="#0F172A" uuid="card-tot-ht-val"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
@@ -507,113 +560,58 @@
 
 			<!-- Séparateur -->
 			<line>
-				<reportElement x="328" y="40" width="217" height="1" forecolor="#E2E8F0" uuid="tot-sep1"/>
+				<reportElement x="295" y="50" width="248" height="1" forecolor="#E2E8F0" uuid="card-tot-sep-mid"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 
-			<!-- TVA -->
+			<!-- Ligne TVA -->
 			<staticText>
-				<reportElement x="328" y="44" width="110" height="10" forecolor="#475569" uuid="tot-lbl-tva"/>
+				<reportElement x="295" y="53" width="100" height="13" forecolor="#475569" uuid="card-tot-tva-lbl"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<text><![CDATA[TVA]]></text>
 			</staticText>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="438" y="44" width="107" height="10" forecolor="#0F172A" uuid="tot-val-tva"/>
+				<reportElement x="395" y="53" width="148" height="13" forecolor="#0F172A" uuid="card-tot-tva-val"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{montantTVA} != null ? $P{montantTVA} : java.math.BigDecimal.ZERO]]></textFieldExpression>
 			</textField>
 
-			<!-- Séparateur + fond TTC -->
-			<line>
-				<reportElement x="328" y="58" width="217" height="1" forecolor="#CBD5E1" uuid="tot-sep2"/>
-				<graphicElement><pen lineWidth="0.5"/></graphicElement>
-			</line>
-
-			<!-- TOTAL TTC — encadré fort -->
-			<rectangle radius="4">
-				<reportElement x="320" y="116" width="235" height="35" backcolor="#1E3A5F" uuid="tot-ttc-bg"/>
+			<!-- Bloc TOTAL TTC mis en valeur -->
+			<rectangle radius="5">
+				<reportElement x="293" y="70" width="252" height="42" backcolor="#1E3A5F" uuid="card-tot-ttc-box"/>
 				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 			<textField isBlankWhenNull="true">
-				<reportElement x="322" y="118" width="229" height="11" forecolor="#93C5FD" uuid="tot-ttc-lbl"/>
+				<reportElement x="297" y="73" width="244" height="11" forecolor="#93C5FD" uuid="card-tot-ttc-lbl"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+					<font fontName="DejaVu Sans" size="7" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA["TOTAL TTC (" + ($P{devise} != null ? $P{devise} : "MAD") + ")"]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="322" y="130" width="229" height="18" forecolor="#FFFFFF" uuid="tot-ttc-val"/>
+				<reportElement x="297" y="85" width="244" height="23" forecolor="#FFFFFF" uuid="card-tot-ttc-val"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="13" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{montantTTC} != null ? $P{montantTTC} : ($P{montantTotal} != null ? $P{montantTotal} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
 			</textField>
 
-			<!-- Montant en lettres -->
-			<textField isBlankWhenNull="true">
-				<reportElement x="320" y="154" width="235" height="18" forecolor="#475569" uuid="tot-lettres"/>
+			<!-- Montant en toutes lettres -->
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="293" y="116" width="252" height="38" forecolor="#475569" uuid="card-tot-lettres"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5" isItalic="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$P{montantEnLettres} != null ? $P{montantEnLettres} : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() ? "Arrêté le présent bon de commande à la somme de :\n" + $P{montantEnLettres} : ""]]></textFieldExpression>
 			</textField>
-
-			<!-- ── BLOC SIGNATURE (gauche) ─────────────────────────────── -->
-			<rectangle radius="5">
-				<reportElement x="0" y="0" width="310" height="170" backcolor="#FFFFFF" uuid="sig-bg"/>
-				<graphicElement><pen lineWidth="0.8" lineColor="#94A3B8"/></graphicElement>
-			</rectangle>
-
-			<!-- Bandeau intérieur signature -->
-			<rectangle>
-				<reportElement x="0" y="0" width="310" height="22" backcolor="#1E3A5F" uuid="sig-hdr-bg"/>
-				<graphicElement><pen lineWidth="0.0"/></graphicElement>
-			</rectangle>
-			<staticText>
-				<reportElement x="8" y="2" width="294" height="18" forecolor="#FFFFFF" uuid="sig-hdr-lbl"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
-				<text><![CDATA[BON POUR ACCORD — FOURNISSEUR]]></text>
-			</staticText>
-
-			<staticText>
-				<reportElement x="8" y="26" width="180" height="10" forecolor="#475569" uuid="sig-lbl1"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="6.5"/>
-				</textElement>
-				<text><![CDATA[Nom & Signature :]]></text>
-			</staticText>
-
-			<staticText>
-				<reportElement x="8" y="40" width="294" height="10" forecolor="#475569" uuid="sig-lbl2"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="6.5"/>
-				</textElement>
-				<text><![CDATA[Date d'accusé de réception : ...................................]]></text>
-			</staticText>
-
-			<!-- zone signature pointillés -->
-			<rectangle radius="3">
-				<reportElement x="8" y="54" width="294" height="108" backcolor="#FFFFFF" uuid="sig-zone"/>
-				<graphicElement><pen lineWidth="0.75" lineStyle="Dashed" lineColor="#CBD5E1"/></graphicElement>
-			</rectangle>
-
-			<staticText>
-				<reportElement x="8" y="145" width="294" height="11" forecolor="#94A3B8" uuid="sig-cachet-lbl"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="6.5" isItalic="true"/>
-				</textElement>
-				<text><![CDATA[CACHET & SIGNATURE ACHETEUR — Direction / Service Achats]]></text>
-			</staticText>
 
 			<!-- ── PIED DE PAGE DERNIÈRE PAGE ─────────────────────────── -->
 			<line>
-				<reportElement x="0" y="175" width="555" height="1" forecolor="#2563EB" uuid="lpf-line"/>
+				<reportElement x="0" y="169" width="555" height="1" forecolor="#2563EB" uuid="lpf-line"/>
 				<graphicElement><pen lineWidth="1.5"/></graphicElement>
 			</line>
 
