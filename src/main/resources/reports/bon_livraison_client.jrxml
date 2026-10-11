@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 6.16.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bon_livraison_client" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="18" bottomMargin="18" uuid="2333debf-dd15-45cf-bba4-494dc8585bb4">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bon_livraison_client" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="0" bottomMargin="18" uuid="e0012496-8e52-4c82-bdf8-caacaeecdaed">
 	<style name="zebra" mode="Opaque" backcolor="#FFFFFF">
 		<conditionalStyle>
 			<conditionExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></conditionExpression>
-			<style mode="Opaque" backcolor="#F1F5F9"/>
+			<style mode="Opaque" backcolor="#FAFAFA"/>
 		</conditionalStyle>
 	</style>
 	<parameter name="logoImage" class="java.awt.Image"/>
@@ -32,19 +31,10 @@
 	<parameter name="numeroBl" class="java.lang.String"/>
 	<parameter name="dateBl" class="java.lang.String"/>
 	<parameter name="statut" class="java.lang.String"/>
-	<parameter name="typeExemplaire" class="java.lang.String"/>
-	<parameter name="commandeReference" class="java.lang.String"/>
-	<parameter name="bonCommandeClient" class="java.lang.String"/>
 	<parameter name="depotNom" class="java.lang.String"/>
 	<parameter name="chauffeurNom" class="java.lang.String"/>
 	<parameter name="vehiculeImmatriculation" class="java.lang.String"/>
-	<parameter name="adresseLivraison" class="java.lang.String"/>
-	<parameter name="nombreColis" class="java.lang.Integer"/>
-	<parameter name="poidsTotal" class="java.math.BigDecimal"/>
 	<parameter name="notes" class="java.lang.String"/>
-	<parameter name="afficherPrix" class="java.lang.Boolean">
-		<defaultValueExpression><![CDATA[Boolean.TRUE]]></defaultValueExpression>
-	</parameter>
 	<parameter name="clientNom" class="java.lang.String"/>
 	<parameter name="clientTelephone" class="java.lang.String"/>
 	<parameter name="clientAdresse" class="java.lang.String"/>
@@ -58,8 +48,6 @@
 	<field name="produitReference" class="java.lang.String"/>
 	<field name="designation" class="java.lang.String"/>
 	<field name="produitDesignation" class="java.lang.String"/>
-	<field name="depotNom" class="java.lang.String"/>
-	<field name="unite" class="java.lang.String"/>
 	<field name="quantiteCommandee" class="java.math.BigDecimal"/>
 	<field name="quantiteLivree" class="java.math.BigDecimal"/>
 	<field name="quantite" class="java.math.BigDecimal"/>
@@ -71,732 +59,349 @@
 	<field name="montantTotal" class="java.math.BigDecimal"/>
 	<field name="montantHT" class="java.math.BigDecimal"/>
 	<field name="montantTTC" class="java.math.BigDecimal"/>
-	<variable name="totalQteLivree" class="java.math.BigDecimal" calculation="Sum">
-		<variableExpression><![CDATA[$F{quantiteLivree} != null ? $F{quantiteLivree} : ($F{quantite} != null ? $F{quantite} : java.math.BigDecimal.ZERO)]]></variableExpression>
-		<initialValueExpression><![CDATA[java.math.BigDecimal.ZERO]]></initialValueExpression>
-	</variable>
+	<background>
+		<band height="824" splitType="Stretch">
+			<rectangle>
+				<reportElement x="0" y="200" width="555" height="430" backcolor="#FFFFFF" uuid="b2bb2ef9-eae6-4efd-b620-4fa904272a87"/>
+				<graphicElement><pen lineWidth="0.8" lineColor="#9CA3AF"/></graphicElement>
+			</rectangle>
+			<line><reportElement x="70" y="200" width="1" height="430" forecolor="#E5E7EB" uuid="d5a0ee6e-c2c7-4448-a224-32e8c0ff5b2c"/><graphicElement><pen lineWidth="0.5"/></graphicElement></line>
+			<line><reportElement x="245" y="200" width="1" height="430" forecolor="#E5E7EB" uuid="7d7d2fac-b4bb-4c48-b7d1-0dc246fd3fc7"/><graphicElement><pen lineWidth="0.5"/></graphicElement></line>
+			<line><reportElement x="295" y="200" width="1" height="430" forecolor="#E5E7EB" uuid="52fbeee6-098e-4a8a-b2a8-6478a2660905"/><graphicElement><pen lineWidth="0.5"/></graphicElement></line>
+			<line><reportElement x="345" y="200" width="1" height="430" forecolor="#E5E7EB" uuid="7ef16434-8379-4029-9e76-14a319c442c7"/><graphicElement><pen lineWidth="0.5"/></graphicElement></line>
+			<line><reportElement x="405" y="200" width="1" height="430" forecolor="#E5E7EB" uuid="def830cd-dbba-4f59-8de5-c86ace2c0d3c"/><graphicElement><pen lineWidth="0.5"/></graphicElement></line>
+			<line><reportElement x="455" y="200" width="1" height="430" forecolor="#E5E7EB" uuid="4ac4ff01-a5b8-4013-8a07-9659a4611a15"/><graphicElement><pen lineWidth="0.5"/></graphicElement></line>
+		</band>
+	</background>
 	<pageHeader>
-		<band height="190">
+		<band height="175">
 			<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
-				<reportElement x="0" y="18" width="78" height="52" uuid="b49905b9-8fda-4198-9297-e3e653e5da0d"/>
+				<reportElement x="0" y="8" width="80" height="65" uuid="dcac4d7a-d1c5-4a35-8caf-f7024ee98b7d"/>
 				<imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
 			</image>
 			<textField isBlankWhenNull="true">
-				<reportElement x="90" y="18" width="275" height="25" forecolor="#0F172A" uuid="ee799a94-9c25-4b9c-b9f7-b8f43a8573a7"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="17" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{nomEntreprise}]]></textFieldExpression>
+				<reportElement x="80" y="8" width="280" height="26" forecolor="#111827" uuid="e9ca5fe9-8837-4fcb-96c0-94d55b976052"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="16" isBold="true"/></textElement>
+				<textFieldExpression><![CDATA[$P{nomEntreprise} != null ? $P{nomEntreprise}.toUpperCase() : ""]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="90" y="44" width="275" height="16" forecolor="#0284C7" uuid="235f6f18-8c77-4d59-a848-ddbea9107f9b"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="9" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{activiteEntreprise}]]></textFieldExpression>
+				<reportElement x="80" y="34" width="280" height="15" forecolor="#6B7280" uuid="8d44b4bf-aa62-44aa-9fd1-2e7c2216b22e"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8.5"/></textElement>
+				<textFieldExpression><![CDATA[($P{activiteEntreprise} != null && !$P{activiteEntreprise}.trim().isEmpty() ? $P{activiteEntreprise} : "") + ($P{formeJuridique} != null && !$P{formeJuridique}.trim().isEmpty() ? ($P{activiteEntreprise} != null && !$P{activiteEntreprise}.trim().isEmpty() ? " — " : "") + $P{formeJuridique} : "")]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="90" y="61" width="275" height="11" forecolor="#64748B" uuid="8b8c4f4a-bc98-4dc7-a558-6aa8514c5697"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
+				<reportElement x="80" y="49" width="280" height="14" forecolor="#6B7280" uuid="c7e932b5-1f7c-491e-9e9b-65b1f38fbb7f"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
 				<textFieldExpression><![CDATA[$P{adresseEntreprise} != null ? $P{adresseEntreprise} : ""]]></textFieldExpression>
 			</textField>
+			<rectangle radius="6">
+				<reportElement x="370" y="8" width="185" height="44" backcolor="#6E997A" uuid="e9ea41d2-a103-4853-957d-ab6b3c5f8365"/>
+				<graphicElement><pen lineWidth="0.0"/></graphicElement>
+			</rectangle>
 			<staticText>
-				<reportElement x="375" y="17" width="180" height="25" forecolor="#0F172A" uuid="b7bf4ec1-26a6-44b4-98fe-d495f332e15c"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="22" isBold="true"/>
-				</textElement>
+				<reportElement x="370" y="11" width="185" height="11" forecolor="#FFFFFF" uuid="5d49380f-6e61-4da5-ab9f-5adeaa19e4b6"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5" isBold="true"/></textElement>
 				<text><![CDATA[BON DE LIVRAISON]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="375" y="43" width="180" height="20" forecolor="#0284C7" uuid="b906f3bb-4b95-464f-abf6-ba642270ed39"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="13" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA["N° " + ($P{numeroBl} != null ? $P{numeroBl} : "-")]]></textFieldExpression>
+				<reportElement x="370" y="21" width="185" height="18" forecolor="#FFFFFF" uuid="0e5fef89-05bf-4c35-a2ba-bf37312f3198"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="13" isBold="true"/></textElement>
+				<textFieldExpression><![CDATA[$P{numeroBl} != null ? $P{numeroBl} : "-"]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="375" y="63" width="180" height="12" forecolor="#64748B" uuid="f9cc6d5d-a126-42c3-b4d0-01914ab23194"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
+				<reportElement x="370" y="38" width="185" height="12" forecolor="#FFFFFF" uuid="25406e63-0bdf-487e-8b40-6c29404706af"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5"/></textElement>
 				<textFieldExpression><![CDATA["Date : " + ($P{dateBl} != null ? $P{dateBl} : "-")]]></textFieldExpression>
 			</textField>
-			<line>
-				<reportElement x="0" y="82" width="555" height="1" forecolor="#CBD5E1" uuid="17b477f3-a698-4d70-b429-31ceb319fc60"/>
-				<graphicElement>
-					<pen lineWidth="0.8"/>
-				</graphicElement>
-			</line>
-			<rectangle radius="5">
-				<reportElement x="0" y="94" width="175" height="76" backcolor="#F8FAFC" uuid="180c1dd3-5e5c-4e81-b507-2b057479f206"/>
-				<graphicElement>
-					<pen lineWidth="0.7" lineColor="#E2E8F0"/>
-				</graphicElement>
-			</rectangle>
-			<rectangle radius="5">
-				<reportElement x="190" y="94" width="175" height="76" backcolor="#F8FAFC" uuid="282c37c7-fbbb-4d4a-ad5f-5fa9cfbef4b3"/>
-				<graphicElement>
-					<pen lineWidth="0.7" lineColor="#E2E8F0"/>
-				</graphicElement>
-			</rectangle>
-			<rectangle radius="5">
-				<reportElement x="380" y="94" width="175" height="76" backcolor="#F0F9FF" uuid="123037a3-4ef1-4f28-9fd9-9dd36fdc7906"/>
-				<graphicElement>
-					<pen lineWidth="0.9" lineColor="#7DD3FC"/>
-				</graphicElement>
-			</rectangle>
-			<staticText>
-				<reportElement x="12" y="102" width="150" height="12" forecolor="#0284C7" uuid="ab8ff779-745b-4128-8b5e-f5be1a8a12cd"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
-				<text><![CDATA[COMMANDE]]></text>
-			</staticText>
+			<!-- Sous-infos BL -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="12" y="120" width="150" height="15" forecolor="#0F172A" uuid="adbdb163-35f2-42b6-be02-cb414079b1a5"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="9" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Réf. : " + ($P{commandeReference} != null && !$P{commandeReference}.isEmpty() ? $P{commandeReference} : "-")]]></textFieldExpression>
+				<reportElement x="0" y="118" width="255" height="14" forecolor="#374151" uuid="f2c5974c-f457-492f-a320-f31b73ec50b0"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
+				<textFieldExpression><![CDATA[($P{depotNom} != null ? "Dépôt : " + $P{depotNom} : "") + ($P{chauffeurNom} != null && !$P{chauffeurNom}.isEmpty() ? " | Chauffeur : " + $P{chauffeurNom} : "")]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="12" y="140" width="150" height="15" forecolor="#475569" uuid="9ff05042-11db-4e3b-b7fe-f978441cbe89"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<textFieldExpression><![CDATA["BC client : " + ($P{bonCommandeClient} != null && !$P{bonCommandeClient}.isEmpty() ? $P{bonCommandeClient} : "-")]]></textFieldExpression>
+				<reportElement x="0" y="133" width="255" height="14" forecolor="#6B7280" uuid="71c1c0c7-c3b4-4153-8715-99a533abdcd3"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5"/></textElement>
+				<textFieldExpression><![CDATA[$P{notes} != null && !$P{notes}.trim().isEmpty() ? "Notes : " + $P{notes} : ($P{statut} != null ? "Statut : " + $P{statut} : "")]]></textFieldExpression>
 			</textField>
+			<!-- Card Client -->
+			<rectangle radius="4">
+				<reportElement x="265" y="60" width="290" height="68" backcolor="#FFFFFF" uuid="b060e817-bfa8-443b-8f00-c2b3f0914e41"/>
+				<graphicElement><pen lineWidth="0.8" lineColor="#9CA3AF"/></graphicElement>
+			</rectangle>
 			<staticText>
-				<reportElement x="202" y="102" width="150" height="12" forecolor="#0284C7" uuid="b4355dc4-c5f1-4b20-a66b-c7e3459b6bfc"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
-				<text><![CDATA[LIVRAISON]]></text>
-			</staticText>
-			<textField isBlankWhenNull="true">
-				<reportElement x="202" y="120" width="150" height="28" forecolor="#0F172A" uuid="f5068f24-6cf3-4f4c-bce6-7bbe14738cc7"/>
-				<textElement verticalAlignment="Top">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{adresseLivraison} != null && !$P{adresseLivraison}.trim().isEmpty() ? $P{adresseLivraison} : ($P{clientAdresse} != null ? $P{clientAdresse} : "")]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="392" y="102" width="150" height="12" forecolor="#0284C7" uuid="f39fa4ab-32d7-498e-8a13-151cad550bec"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
+				<reportElement x="275" y="63" width="270" height="11" forecolor="#6E997A" uuid="a3df2889-fc9a-4101-963f-39ab18abf744"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5" isBold="true"/></textElement>
 				<text><![CDATA[CLIENT]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
-				<reportElement x="392" y="120" width="150" height="20" forecolor="#0F172A" uuid="0655a0d4-d77d-49c9-bf3a-9df8526e6385"/>
-				<textElement verticalAlignment="Top">
-					<font fontName="DejaVu Sans" size="10" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{clientNom}]]></textFieldExpression>
+				<reportElement x="275" y="74" width="270" height="16" forecolor="#111827" uuid="738ec551-e039-445b-8a80-b4b87ddddf10"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="10" isBold="true"/></textElement>
+				<textFieldExpression><![CDATA[$P{clientNom} != null ? $P{clientNom} : "-"]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="392" y="141" width="150" height="16" forecolor="#475569" uuid="e36b89bc-4ce6-4265-9e21-956f73c9f77d"/>
-				<textElement verticalAlignment="Top">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
+				<reportElement x="275" y="89" width="270" height="12" forecolor="#374151" uuid="9e644db3-7164-4c3d-b3d1-790fdae4060d"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5"/></textElement>
+				<textFieldExpression><![CDATA[$P{clientTelephone} != null ? $P{clientTelephone} : ""]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="275" y="100" width="270" height="12" forecolor="#374151" uuid="c8968697-f37a-4634-9a16-22ec1f58adbe"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5"/></textElement>
 				<textFieldExpression><![CDATA[$P{clientAdresse} != null ? $P{clientAdresse} : ""]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="392" y="157" width="150" height="11" forecolor="#0F172A" uuid="320ce8ca-7bda-4e34-9ba9-9a0c33831dcf"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
+				<reportElement x="275" y="112" width="270" height="12" forecolor="#111827" uuid="6b2afd2c-121e-477f-8dfa-8dbd171625c1"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5" isBold="true"/></textElement>
 				<textFieldExpression><![CDATA[$P{clientIce} != null && !$P{clientIce}.trim().isEmpty() ? "ICE : " + $P{clientIce} : ""]]></textFieldExpression>
 			</textField>
 		</band>
 	</pageHeader>
-	<!-- Tableau épuré : DÉSIGNATION, QTÉ CMD, QTÉ LIV., P.U. HT, TVA, P.U. TTC, TOTAL -->
 	<columnHeader>
-		<band height="28">
+		<band height="25">
 			<rectangle>
-				<reportElement x="0" y="2" width="555" height="25" backcolor="#E2E8F0" uuid="6a3f9447-299b-4a17-a6d2-6d8ceb05ed39"/>
-				<graphicElement>
-					<pen lineWidth="0.0"/>
-				</graphicElement>
+				<reportElement x="0" y="0" width="555" height="25" backcolor="#6E997A" uuid="ce75ed07-0a5c-4ce2-9f30-ebbb0dbcd383"/>
+				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
-			<line>
-				<reportElement x="0" y="27" width="555" height="1" forecolor="#0F172A" uuid="3528bcc3-4293-4b68-8c8d-866689996fe3"/>
-				<graphicElement>
-					<pen lineWidth="1.5"/>
-				</graphicElement>
-			</line>
 			<staticText>
-				<reportElement x="6" y="2" width="189" height="25" forecolor="#0F172A" uuid="57835de5-beba-45fc-b8f0-415595dd890c"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
+				<reportElement x="5" y="0" width="63" height="25" forecolor="#FFFFFF" uuid="1179a1ac-dd1e-435a-9456-17e2612c293a"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+				<text><![CDATA[RÉFÉRENCE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="75" y="0" width="165" height="25" forecolor="#FFFFFF" uuid="8026d4e6-604e-4401-b80b-05ee423a799e"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
 				<text><![CDATA[DÉSIGNATION]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="195" y="2" width="50" height="25" forecolor="#0F172A" uuid="74d0de46-52fa-4cca-9443-997f48697786"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
+				<reportElement x="245" y="0" width="45" height="25" forecolor="#FFFFFF" uuid="26ac2a11-cb18-4a51-b919-50dcd00738cb"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
 				<text><![CDATA[QTÉ CMD]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="245" y="2" width="55" height="25" forecolor="#0F172A" uuid="97e3afdd-76cb-4848-be26-2440509c49cf"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
+				<reportElement x="295" y="0" width="45" height="25" forecolor="#FFFFFF" uuid="a26e2815-317e-4c3f-a911-62a68b0ef3b6"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
 				<text><![CDATA[QTÉ LIV.]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="300" y="2" width="60" height="25" forecolor="#0F172A" uuid="7a2b8d39-a91c-4b47-b049-d96dc44da880"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
+				<reportElement x="345" y="0" width="55" height="25" forecolor="#FFFFFF" uuid="20015950-128e-4065-8e90-31ea64e7daaf"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
 				<text><![CDATA[P.U. HT]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="360" y="2" width="45" height="25" forecolor="#0F172A" uuid="1780efde-f3bc-4569-91a5-6ba2684d311b"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
+				<reportElement x="405" y="0" width="45" height="25" forecolor="#FFFFFF" uuid="7f212ddd-a69d-47c4-8985-fd623e31f9b7"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
 				<text><![CDATA[TVA]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="405" y="2" width="65" height="25" forecolor="#0F172A" uuid="017bb499-2d94-4d83-9dc6-302aef1c0b52"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
-				<text><![CDATA[P.U. TTC]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="470" y="2" width="81" height="25" forecolor="#0F172A" uuid="f3fec3c6-8ac3-4fbc-ac14-2afcbfdc213d"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
-				<text><![CDATA[TOTAL]]></text>
+				<reportElement x="455" y="0" width="95" height="25" forecolor="#FFFFFF" uuid="6475f75a-d640-4e31-bb23-ee370e8ab938"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+				<text><![CDATA[TOTAL TTC]]></text>
 			</staticText>
 		</band>
 	</columnHeader>
 	<detail>
 		<band height="20">
 			<rectangle>
-				<reportElement style="zebra" stretchType="RelativeToBandHeight" x="0" y="0" width="555" height="20" uuid="553ac556-483d-46cf-ad52-2819fc82129b"/>
-				<graphicElement>
-					<pen lineWidth="0.0"/>
-				</graphicElement>
+				<reportElement style="zebra" stretchType="RelativeToBandHeight" x="0" y="0" width="555" height="20" uuid="74b6e96c-7a52-48fb-a450-84363640a94c"/>
+				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
-			<line>
-				<reportElement positionType="FixRelativeToBottom" x="0" y="19" width="555" height="1" forecolor="#CBD5E1" uuid="c58a31e9-8870-4e0a-b1e4-7d427fa83ff5"/>
-				<graphicElement>
-					<pen lineWidth="0.5"/>
-				</graphicElement>
-			</line>
-			<!-- 1. DÉSIGNATION (avec réf si existante) -->
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="6" y="0" width="189" height="20" forecolor="#0F172A" uuid="25eef993-f47a-43aa-bffc-9506f123d4d1"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<textFieldExpression><![CDATA[($F{produitReference} != null && !$F{produitReference}.trim().isEmpty() ? "[" + $F{produitReference} + "] " : ($F{reference} != null && !$F{reference}.trim().isEmpty() ? "[" + $F{reference} + "] " : "")) + ($F{produitDesignation} != null && !$F{produitDesignation}.trim().isEmpty() ? $F{produitDesignation} : ($F{designation} != null ? $F{designation} : ""))]]></textFieldExpression>
+				<reportElement stretchType="RelativeToBandHeight" x="5" y="0" width="63" height="20" forecolor="#111827" uuid="84a0b695-2c83-4c03-b830-5c186f672d35"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
+				<textFieldExpression><![CDATA[$F{produitReference} != null && !$F{produitReference}.isEmpty() ? $F{produitReference} : ($F{reference} != null ? $F{reference} : "")]]></textFieldExpression>
 			</textField>
-			<!-- 2. QTÉ CMD -->
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="75" y="0" width="165" height="20" forecolor="#111827" uuid="540126b8-2563-4e19-a92e-277452de583a"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
+				<textFieldExpression><![CDATA[($F{produitDesignation} != null ? $F{produitDesignation}.toUpperCase() : ($F{designation} != null ? $F{designation}.toUpperCase() : ""))]]></textFieldExpression>
+			</textField>
 			<textField pattern="#,##0.##" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="195" y="0" width="50" height="20" forecolor="#475569" uuid="9359698c-fed9-41cb-9ed3-e17654debcae"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
+				<reportElement stretchType="RelativeToBandHeight" x="245" y="0" width="45" height="20" forecolor="#6B7280" uuid="84493cb7-6f20-460e-8d77-b74e38adf3fb"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
 				<textFieldExpression><![CDATA[$F{quantiteCommandee} != null ? $F{quantiteCommandee} : java.math.BigDecimal.ZERO]]></textFieldExpression>
 			</textField>
-			<!-- 3. QTÉ LIVRÉE -->
 			<textField pattern="#,##0.##" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="245" y="0" width="55" height="20" forecolor="#0F172A" uuid="e690e68e-0631-4e42-bd33-f83cbc2be52f"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
+				<reportElement stretchType="RelativeToBandHeight" x="295" y="0" width="45" height="20" forecolor="#111827" uuid="c7aabcea-1e90-4451-b94b-4dbd53df7249"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
 				<textFieldExpression><![CDATA[$F{quantiteLivree} != null ? $F{quantiteLivree} : ($F{quantite} != null ? $F{quantite} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
 			</textField>
-			<!-- 4. P.U. HT -->
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="300" y="0" width="60" height="20" forecolor="#475569" uuid="f363714b-a5c2-4122-949b-23b38528d8b8"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
+				<reportElement stretchType="RelativeToBandHeight" x="345" y="0" width="55" height="20" forecolor="#374151" uuid="e9734e73-9424-416d-b413-cc8618cc00a1"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
 				<textFieldExpression><![CDATA[$F{prixVente} != null ? $F{prixVente} : ($F{prixUnitaireHT} != null ? $F{prixUnitaireHT} : ($F{prixUnitaire} != null ? $F{prixUnitaire} : java.math.BigDecimal.ZERO))]]></textFieldExpression>
 			</textField>
-			<!-- 5. TVA -->
 			<textField isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="360" y="0" width="45" height="20" forecolor="#475569" uuid="3e4a1d5a-f3fa-4258-976a-9942147851bc"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
+				<reportElement stretchType="RelativeToBandHeight" x="405" y="0" width="45" height="20" forecolor="#374151" uuid="fcbbe87e-f72c-4478-8af6-3ada9aefe372"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
 				<textFieldExpression><![CDATA[$F{tauxTVA} != null ? String.valueOf($F{tauxTVA}.setScale(0, java.math.RoundingMode.HALF_UP)) + " %" : "20 %"]]></textFieldExpression>
 			</textField>
-			<!-- 6. P.U. TTC -->
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="405" y="0" width="65" height="20" forecolor="#475569" uuid="c7a6d9e1-5f0f-4652-b4d9-54d5fbcdac04"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<textFieldExpression><![CDATA[($F{prixVente} != null ? $F{prixVente} : ($F{prixUnitaireHT} != null ? $F{prixUnitaireHT} : ($F{prixUnitaire} != null ? $F{prixUnitaire} : java.math.BigDecimal.ZERO))).multiply(java.math.BigDecimal.ONE.add(($F{tauxTVA} != null ? $F{tauxTVA} : new java.math.BigDecimal("20.00")).divide(new java.math.BigDecimal("100.00"), 4, java.math.RoundingMode.HALF_UP)))]]></textFieldExpression>
+				<reportElement stretchType="RelativeToBandHeight" x="455" y="0" width="95" height="20" forecolor="#111827" uuid="bc70986b-d927-40ac-a567-f0553bfd23d8"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+				<textFieldExpression><![CDATA[$F{montantTTC} != null ? $F{montantTTC} : ($F{montantTotal} != null ? $F{montantTotal} : ($F{montantLigne} != null ? $F{montantLigne} : ($F{prixVente} != null ? $F{prixVente} : java.math.BigDecimal.ZERO).multiply($F{quantiteLivree} != null ? $F{quantiteLivree} : java.math.BigDecimal.ZERO)))]]></textFieldExpression>
 			</textField>
-			<!-- 7. TOTAL -->
-			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="470" y="0" width="81" height="20" forecolor="#0F172A" uuid="b1eeb1bb-706c-467b-b98e-e662bfe61ba9"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$F{montantTTC} != null ? $F{montantTTC} : ($F{montantTotal} != null ? $F{montantTotal} : ($F{montantHT} != null ? $F{montantHT} : ($F{montantLigne} != null ? $F{montantLigne} : ($F{prixVente} != null ? $F{prixVente} : ($F{prixUnitaire} != null ? $F{prixUnitaire} : java.math.BigDecimal.ZERO)).multiply($F{quantiteLivree} != null ? $F{quantiteLivree} : ($F{quantite} != null ? $F{quantite} : java.math.BigDecimal.ZERO)))))]]></textFieldExpression>
-			</textField>
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="19" width="555" height="1" forecolor="#F3F4F6" uuid="dc9288bf-42d2-4e05-b8ac-a3e87e609429"/>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
 		</band>
 	</detail>
 	<pageFooter>
-		<band height="76">
-			<line>
-				<reportElement x="0" y="0" width="555" height="1" forecolor="#4338CA" uuid="65fb427f-534b-4258-9116-2fc6f22190fe"/>
-				<graphicElement>
-					<pen lineWidth="1.5"/>
-				</graphicElement>
-			</line>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="6" width="450" height="12" forecolor="#0F172A" uuid="8495d919-10be-4da7-a5d2-774273be8f9e"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[($P{nomEntreprise} != null ? $P{nomEntreprise}.toUpperCase() : "") +
-($P{formeJuridique} != null && !$P{formeJuridique}.trim().isEmpty() ? " - " + $P{formeJuridique} : "") +
-($P{capitalSocial} != null && !$P{capitalSocial}.trim().isEmpty() ? " au capital de " + $P{capitalSocial} : "")]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="455" y="6" width="65" height="12" forecolor="#475569" uuid="8f14bd7d-3cbf-45f9-86d5-f1b6a4008c95"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " / "]]></textFieldExpression>
-			</textField>
-			<textField evaluationTime="Report">
-				<reportElement x="520" y="6" width="35" height="12" forecolor="#475569" uuid="ca31fdce-d267-4345-9ce3-2bc2d345ecd6"/>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<textFieldExpression><![CDATA["" + $V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="19" width="555" height="11" forecolor="#334155" uuid="28272373-f5c7-4033-a7e6-20c29d516de9"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Siège Social : " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="30" width="555" height="11" forecolor="#334155" uuid="24bf0bb3-6190-4d65-ae02-3dc37d949cba"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
-				<textFieldExpression><![CDATA["RC : " + ($P{rcEntreprise} != null && !$P{rcEntreprise}.isEmpty() ? $P{rcEntreprise} : "-") + ($P{tribunalRc} != null && !$P{tribunalRc}.trim().isEmpty() ? " (" + $P{tribunalRc} + ")" : "") +
-"  |  IF : " + ($P{nifEntreprise} != null && !$P{nifEntreprise}.isEmpty() ? $P{nifEntreprise} : "-") +
-"  |  PATENTE : " + ($P{patenteEntreprise} != null && !$P{patenteEntreprise}.isEmpty() ? $P{patenteEntreprise} : "-") +
-"  |  ICE : " + ($P{iceEntreprise} != null && !$P{iceEntreprise}.isEmpty() ? $P{iceEntreprise} : "-") +
-"  |  CNSS : " + ($P{cnssEntreprise} != null && !$P{cnssEntreprise}.isEmpty() ? $P{cnssEntreprise} : "-")]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="41" width="555" height="11" forecolor="#334155" uuid="ad3a2513-1bd3-41c4-8538-c76734405665"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Tél : " + ($P{telephoneEntreprise} != null && !$P{telephoneEntreprise}.isEmpty() ? $P{telephoneEntreprise} : "-") +
-($P{gsmEntreprise} != null && !$P{gsmEntreprise}.trim().isEmpty() ? "  |  GSM : " + $P{gsmEntreprise} : "") +
-($P{emailEntreprise} != null && !$P{emailEntreprise}.trim().isEmpty() ? "  |  Email : " + $P{emailEntreprise} : "")]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="52" width="555" height="11" forecolor="#334155" uuid="0725f521-b15b-4171-820d-86d285eff364"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
-				<textFieldExpression><![CDATA[($P{banqueEntreprise} != null && !$P{banqueEntreprise}.trim().isEmpty() ? "Banque : " + $P{banqueEntreprise} : "") +
-($P{ribEntreprise} != null && !$P{ribEntreprise}.trim().isEmpty() ? "  |  RIB : " + $P{ribEntreprise} : "")]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="63" width="555" height="11" forecolor="#475569" uuid="0373e3b2-026e-4550-aeaf-7f024f4b1aa5"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isItalic="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{piedPage} != null ? $P{piedPage} : ""]]></textFieldExpression>
-			</textField>
+		<band height="35">
+			<line><reportElement x="0" y="5" width="555" height="1" forecolor="#6E997A" uuid="d6d36a69-ec55-44f2-8147-efb1e08c49f4"/><graphicElement><pen lineWidth="1.0"/></graphicElement></line>
+			<textField isBlankWhenNull="true"><reportElement x="0" y="10" width="400" height="12" forecolor="#6B7280" uuid="58dea975-6da2-4118-b60e-0a19cf3c03d3"/><textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5"/></textElement><textFieldExpression><![CDATA[$P{nomEntreprise}]]></textFieldExpression></textField>
+			<textField><reportElement x="430" y="10" width="80" height="12" forecolor="#6B7280" uuid="bf4d50ff-719a-4545-b823-dcd3a39b3027"/><textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5"/></textElement><textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " / "]]></textFieldExpression></textField>
+			<textField evaluationTime="Report"><reportElement x="510" y="10" width="45" height="12" forecolor="#6B7280" uuid="5a2e0b4c-b9da-46a2-8718-617466679b46"/><textElement textAlignment="Left" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5"/></textElement><textFieldExpression><![CDATA["" + $V{PAGE_NUMBER}]]></textFieldExpression></textField>
 		</band>
 	</pageFooter>
 	<lastPageFooter>
-		<band height="312">
-			<rectangle radius="6">
-				<reportElement x="0" y="0" width="555" height="44" backcolor="#F1F5F9" uuid="26607e76-780f-4d0d-9bcf-4dca0c6278d9"/>
-				<graphicElement>
-					<pen lineWidth="0.75" lineColor="#94A3B8"/>
-				</graphicElement>
+		<band height="189">
+			<!-- CARTE GAUCHE -->
+			<rectangle radius="5">
+				<reportElement x="0" y="0" width="272" height="122" backcolor="#FFFFFF" uuid="74408740-0d3d-461a-a3b3-0915152f42eb"/>
+				<graphicElement><pen lineWidth="0.8" lineColor="#CBD5E1"/></graphicElement>
+			</rectangle>
+			<rectangle radius="3">
+				<reportElement x="0" y="0" width="272" height="22" backcolor="#F4F8F5" uuid="c10abe16-c755-44e9-bbb2-ca90a92b2650"/>
+				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 			<staticText>
-				<reportElement x="10" y="6" width="40" height="10" forecolor="#475569" uuid="2d91ef6a-d605-4a9d-9b25-67f2fa946e01"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
-				<text><![CDATA[LIGNES]]></text>
+				<reportElement x="10" y="0" width="252" height="22" forecolor="#2D5A3D" uuid="577990f6-9899-43f6-9365-98a5862e7ca4"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+				<text><![CDATA[RÉCEPTIONNAIRE DU CLIENT]]></text>
 			</staticText>
-			<textField>
-				<reportElement x="10" y="19" width="40" height="18" forecolor="#0F172A" uuid="f13d91bf-628a-4f02-81f6-097ed9d47cdf"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="11" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[String.valueOf($V{REPORT_COUNT})]]></textFieldExpression>
-			</textField>
+			<line>
+				<reportElement x="0" y="22" width="272" height="1" forecolor="#CBD5E1" uuid="43cfe01a-9228-437d-9c25-b9025dd58742"/>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<rectangle radius="4">
+				<reportElement x="10" y="28" width="252" height="84" backcolor="#FFFFFF" uuid="f246bc89-8605-487b-9ba1-1990d442625e"/>
+				<graphicElement><pen lineWidth="0.8" lineStyle="Dashed" lineColor="#94A3B8"/></graphicElement>
+			</rectangle>
 			<staticText>
-				<reportElement x="56" y="6" width="70" height="10" forecolor="#475569" uuid="33028e09-ec3c-41bd-854e-db4757cc90c3"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+				<reportElement x="15" y="94" width="242" height="14" forecolor="#9CA3AF" uuid="c3f40d84-e8ff-43f0-8fbf-7cd5388fd6dd"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7" isItalic="true"/>
 				</textElement>
-				<text><![CDATA[QTÉ LIVRÉE]]></text>
+				<text><![CDATA[Nom, Date, Cachet et Signature de réception]]></text>
 			</staticText>
-			<textField pattern="#,##0.##" isBlankWhenNull="true">
-				<reportElement x="56" y="19" width="70" height="18" forecolor="#0F172A" uuid="f502a629-bdd9-4fc3-9793-1c01b87ee20b"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="11" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$V{totalQteLivree}]]></textFieldExpression>
-			</textField>
+
+			<!-- CARTE DROITE -->
+			<rectangle radius="5">
+				<reportElement x="283" y="0" width="272" height="122" backcolor="#FFFFFF" uuid="94c703d2-b5df-487f-a4fd-9e389d9a38b1"/>
+				<graphicElement><pen lineWidth="0.8" lineColor="#CBD5E1"/></graphicElement>
+			</rectangle>
+			<rectangle radius="3">
+				<reportElement x="283" y="0" width="272" height="22" backcolor="#F4F8F5" uuid="44b9594f-8a87-4631-8521-2d5e05e83baf"/>
+				<graphicElement><pen lineWidth="0.0"/></graphicElement>
+			</rectangle>
 			<staticText>
-				<reportElement x="132" y="6" width="40" height="10" forecolor="#475569" uuid="3cac129c-cf26-4f37-a8dc-94cf5f687d50"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
-				<text><![CDATA[COLIS]]></text>
+				<reportElement x="293" y="0" width="252" height="22" forecolor="#2D5A3D" uuid="3f5446ae-59da-4f64-a32f-86deaa96b719"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8" isBold="true"/></textElement>
+				<text><![CDATA[RÉCAPITULATIF]]></text>
 			</staticText>
-			<textField isBlankWhenNull="true">
-				<reportElement x="132" y="19" width="40" height="18" forecolor="#0F172A" uuid="5d47a6d0-fcf2-46f8-b4c1-03d39dd7904c"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="11" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{nombreColis} != null ? String.valueOf($P{nombreColis}) : "-"]]></textFieldExpression>
-			</textField>
+			<line>
+				<reportElement x="283" y="22" width="272" height="1" forecolor="#CBD5E1" uuid="5d15db1b-7e58-4310-a701-6dcc60484e6b"/>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
 			<staticText>
-				<reportElement x="178" y="6" width="60" height="10" forecolor="#475569" uuid="d1be876c-9a5d-4bc5-a247-31c4510aa5c4"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
-				<text><![CDATA[POIDS (KG)]]></text>
-			</staticText>
-			<textField pattern="#,##0.##" isBlankWhenNull="true">
-				<reportElement x="178" y="19" width="60" height="18" forecolor="#0F172A" uuid="87d5c027-eaf3-4295-8b4a-d2d2b6430162"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="11" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{poidsTotal}]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="252" y="6" width="90" height="10" forecolor="#475569" uuid="7fb9fafb-aeb5-457d-8ff2-b1ec9ccc7e5d"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
+				<reportElement x="293" y="26" width="120" height="14" forecolor="#4B5563" uuid="510d3978-7dd8-4607-b21b-acad5ab2ee77"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
 				<text><![CDATA[TOTAL HT]]></text>
 			</staticText>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="252" y="19" width="90" height="18" forecolor="#0F172A" uuid="ca97dfbe-d372-4abd-9800-2a8eeea7e238"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="10" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{montantHT} != null ? $P{montantHT} : java.math.BigDecimal.ZERO]]></textFieldExpression>
+				<reportElement x="415" y="26" width="130" height="14" forecolor="#111827" uuid="3fc7c808-cea6-461b-9a01-e4deb9352c26"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8.5" isBold="true"/></textElement>
+				<textFieldExpression><![CDATA[$P{montantHT} != null ? $P{montantHT} : ($P{montantTotal} != null ? $P{montantTotal} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
 			</textField>
 			<staticText>
-				<reportElement x="346" y="6" width="80" height="10" forecolor="#475569" uuid="1780efde-f3bc-4569-91a5-6ba2684d311b"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
+				<reportElement x="293" y="42" width="120" height="14" forecolor="#4B5563" uuid="eeaf44d9-00e7-46d2-8c9f-40a9061f756e"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
 				<text><![CDATA[TVA]]></text>
 			</staticText>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="346" y="19" width="80" height="18" forecolor="#0F172A" uuid="306f6694-7cd7-493a-9c20-e18359028df2"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="10" isBold="true"/>
-				</textElement>
+				<reportElement x="415" y="42" width="130" height="14" forecolor="#111827" uuid="7907f4b3-cbff-4cbf-bee1-177f97a7f66e"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8.5" isBold="true"/></textElement>
 				<textFieldExpression><![CDATA[$P{montantTVA} != null ? $P{montantTVA} : java.math.BigDecimal.ZERO]]></textFieldExpression>
 			</textField>
 			<rectangle radius="4">
-				<reportElement x="432" y="4" width="115" height="36" backcolor="#FFFFFF" uuid="5030017d-a84d-48e9-bed4-14eb9782c30f"/>
-				<graphicElement>
-					<pen lineWidth="1.5" lineColor="#0F172A"/>
-				</graphicElement>
+				<reportElement x="291" y="60" width="256" height="34" backcolor="#6E997A" uuid="2ea88a2b-f659-4358-8d08-8b9bba38dbd7"/>
+				<graphicElement><pen lineWidth="0.0"/></graphicElement>
 			</rectangle>
 			<textField isBlankWhenNull="true">
-				<reportElement x="436" y="7" width="107" height="10" forecolor="#475569" uuid="51fc1d37-b4ef-46dd-aff5-4796268d0ad2"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
+				<reportElement x="295" y="62" width="248" height="10" forecolor="#FFFFFF" uuid="2080f739-6241-4097-b863-d568bef039e0"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7" isBold="true"/></textElement>
 				<textFieldExpression><![CDATA["TOTAL TTC (" + ($P{devise} != null ? $P{devise} : "MAD") + ")"]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="436" y="19" width="107" height="18" forecolor="#0F172A" uuid="b78d9840-56c6-4e86-bea8-4c430f48c621"/>
+				<reportElement x="295" y="72" width="248" height="20" forecolor="#FFFFFF" uuid="592a0e06-2195-4d60-b4cd-20e2a9ce363c"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle"><font fontName="DejaVu Sans" size="13" isBold="true"/></textElement>
+				<textFieldExpression><![CDATA[$P{montantTTC} != null ? $P{montantTTC} : ($P{montantTotal} != null ? $P{montantTotal} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="285" y="98" width="268" height="20" forecolor="#374151" uuid="b646bacd-9abb-4b51-b2ce-943b73de7ce3"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="11" isBold="true"/>
+					<font fontName="DejaVu Sans" size="6.5" isItalic="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$P{montantTTC} != null ? $P{montantTTC} : ($P{montantTotal} != null ? $P{montantTotal} : ($P{montantHT} != null ? $P{montantHT} : java.math.BigDecimal.ZERO))]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.isEmpty() ? "Arrêté à la somme de : " + $P{montantEnLettres} : ""]]></textFieldExpression>
 			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="48" width="555" height="22" forecolor="#0F172A" uuid="c39ec8ab-ab5b-424b-89e8-35ba551c7a7e">
-					<printWhenExpression><![CDATA[$P{notes} != null && !$P{notes}.trim().isEmpty()]]></printWhenExpression>
-				</reportElement>
-				<textElement verticalAlignment="Top">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Notes : " + $P{notes}]]></textFieldExpression>
-			</textField>
-			<rectangle radius="6">
-				<reportElement x="0" y="76" width="275" height="150" backcolor="#FFFFFF" uuid="68c4ce26-0da3-4cc6-932c-793d4927b6c6"/>
-				<graphicElement>
-					<pen lineWidth="1.0" lineColor="#94A3B8"/>
-				</graphicElement>
-			</rectangle>
-			<staticText>
-				<reportElement x="10" y="82" width="255" height="16" forecolor="#4338CA" uuid="04607a3a-8369-4b39-b3b3-ddcbf5927163"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
-				</textElement>
-				<text><![CDATA[RÉCEPTION CLIENT]]></text>
-			</staticText>
+
+			<!-- ── PIED DE PAGE ────────────────────────────────────────── -->
 			<line>
-				<reportElement x="10" y="100" width="255" height="1" forecolor="#CBD5E1" uuid="bc3c9865-0fdd-47e3-a9f8-6e775e4293c3"/>
-				<graphicElement>
-					<pen lineWidth="0.5"/>
-				</graphicElement>
-			</line>
-			<staticText>
-				<reportElement x="10" y="105" width="36" height="13" forecolor="#475569" uuid="a317961a-6192-4bb9-a6c4-2ecbe3f6b933"/>
-				<textElement verticalAlignment="Bottom">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Nom :]]></text>
-			</staticText>
-			<line>
-				<reportElement x="46" y="118" width="104" height="1" forecolor="#475569" uuid="2643b333-c766-4c5e-9d93-c2b67326259a"/>
-				<graphicElement>
-					<pen lineWidth="0.75"/>
-				</graphicElement>
-			</line>
-			<staticText>
-				<reportElement x="10" y="120" width="36" height="13" forecolor="#475569" uuid="10c70f42-a5ec-48a2-8c75-7ccd4adc484a"/>
-				<textElement verticalAlignment="Bottom">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Date :]]></text>
-			</staticText>
-			<line>
-				<reportElement x="46" y="133" width="104" height="1" forecolor="#475569" uuid="f0d7ed14-9a71-407d-ac03-727c49d52030"/>
-				<graphicElement>
-					<pen lineWidth="0.75"/>
-				</graphicElement>
-			</line>
-			<staticText>
-				<reportElement x="10" y="135" width="36" height="13" forecolor="#475569" uuid="2fdc1be6-ec7b-4f5f-8fe0-92759ab4f1ec"/>
-				<textElement verticalAlignment="Bottom">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Heure :]]></text>
-			</staticText>
-			<line>
-				<reportElement x="46" y="148" width="104" height="1" forecolor="#475569" uuid="3bdbcac7-58f3-445f-a83f-4cf1a440ed08"/>
-				<graphicElement>
-					<pen lineWidth="0.75"/>
-				</graphicElement>
-			</line>
-			<rectangle>
-				<reportElement x="10" y="155" width="10" height="10" backcolor="#FFFFFF" uuid="6ff3149b-77d1-45ce-8bd8-09b7be29ac91"/>
-				<graphicElement>
-					<pen lineWidth="1.0" lineColor="#0F172A"/>
-				</graphicElement>
-			</rectangle>
-			<staticText>
-				<reportElement x="24" y="154" width="52" height="12" forecolor="#0F172A" uuid="dfb30bcd-e096-4c96-adb0-9035a7b145cd"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Conforme]]></text>
-			</staticText>
-			<rectangle>
-				<reportElement x="82" y="155" width="10" height="10" backcolor="#FFFFFF" uuid="1ae58152-8aac-4e1a-bb62-7953ab46bef9"/>
-				<graphicElement>
-					<pen lineWidth="1.0" lineColor="#0F172A"/>
-				</graphicElement>
-			</rectangle>
-			<staticText>
-				<reportElement x="96" y="154" width="56" height="12" forecolor="#0F172A" uuid="7cceb39d-d95f-4cde-9068-065fe2e3c640"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Réserves]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="10" y="170" width="140" height="12" forecolor="#475569" uuid="40ac08a3-ef00-469a-853f-3c7ff6794f4e"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Observations / réserves :]]></text>
-			</staticText>
-			<line>
-				<reportElement x="10" y="195" width="140" height="1" forecolor="#475569" uuid="3e28d3be-deed-44e1-93f0-01f9d15e4201"/>
-				<graphicElement>
-					<pen lineWidth="0.75"/>
-				</graphicElement>
-			</line>
-			<line>
-				<reportElement x="10" y="206" width="140" height="1" forecolor="#475569" uuid="79c1e909-969d-45cc-8560-f1352b037be4"/>
-				<graphicElement>
-					<pen lineWidth="0.75"/>
-				</graphicElement>
-			</line>
-			<line>
-				<reportElement x="10" y="217" width="140" height="1" forecolor="#475569" uuid="a7446567-b0d7-4fdd-aac6-7c54033b8a0c"/>
-				<graphicElement>
-					<pen lineWidth="0.75"/>
-				</graphicElement>
-			</line>
-			<staticText>
-				<reportElement x="160" y="104" width="105" height="12" forecolor="#475569" uuid="2b493f82-e048-4e0e-b575-9ec715f99d60"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Signature :]]></text>
-			</staticText>
-			<rectangle radius="4">
-				<reportElement x="160" y="118" width="105" height="100" backcolor="#FFFFFF" uuid="e0866623-3028-4c5a-b056-d80ea77833ea"/>
-				<graphicElement>
-					<pen lineWidth="0.75" lineStyle="Dashed" lineColor="#475569"/>
-				</graphicElement>
-			</rectangle>
-			<rectangle radius="6">
-				<reportElement x="283" y="76" width="272" height="150" backcolor="#FFFFFF" uuid="641a6fea-d892-4e73-bf0f-d8fd8dc96128"/>
-				<graphicElement>
-					<pen lineWidth="1.0" lineColor="#94A3B8"/>
-				</graphicElement>
-			</rectangle>
-			<staticText>
-				<reportElement x="293" y="82" width="252" height="16" forecolor="#4338CA" uuid="64e3beac-719e-4a99-936f-2914249f2ff5"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
-				</textElement>
-				<text><![CDATA[CACHET & EXPÉDITION]]></text>
-			</staticText>
-			<line>
-				<reportElement x="293" y="100" width="252" height="1" forecolor="#CBD5E1" uuid="3bff0314-e74c-4840-9adc-02a1cc4b2e2f"/>
-				<graphicElement>
-					<pen lineWidth="0.5"/>
-				</graphicElement>
-			</line>
-			<staticText>
-				<reportElement x="293" y="104" width="130" height="12" forecolor="#475569" uuid="8bc0840f-281e-4374-91e8-34e42c74816b"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Cachet entreprise :]]></text>
-			</staticText>
-			<rectangle radius="4">
-				<reportElement x="293" y="118" width="130" height="100" backcolor="#FFFFFF" uuid="7959f3fb-6469-46ad-a854-78bf462ca892"/>
-				<graphicElement>
-					<pen lineWidth="0.75" lineStyle="Dashed" lineColor="#475569"/>
-				</graphicElement>
-			</rectangle>
-			<staticText>
-				<reportElement x="431" y="104" width="114" height="12" forecolor="#475569" uuid="ddcfb824-c3c8-447d-939a-b7b1c3066eb0"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Livreur / Magasinier :]]></text>
-			</staticText>
-			<textField isBlankWhenNull="true">
-				<reportElement x="431" y="118" width="114" height="24" forecolor="#0F172A" uuid="a2d4a1a6-8c99-4da5-ad9b-a340190677da"/>
-				<textElement verticalAlignment="Top">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[($P{chauffeurNom} != null && !$P{chauffeurNom}.isEmpty() ? $P{chauffeurNom} : "-") + ($P{vehiculeImmatriculation} != null && !$P{vehiculeImmatriculation}.isEmpty() ? " (" + $P{vehiculeImmatriculation} + ")" : "")]]></textFieldExpression>
-			</textField>
-			<staticText>
-				<reportElement x="431" y="146" width="114" height="12" forecolor="#475569" uuid="93357ddf-d169-4933-b434-5ba942a0b4e2"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
-				</textElement>
-				<text><![CDATA[Signature :]]></text>
-			</staticText>
-			<rectangle radius="4">
-				<reportElement x="431" y="160" width="114" height="58" backcolor="#FFFFFF" uuid="266eac9b-217e-46b7-8bd7-a7ed490e1fea"/>
-				<graphicElement>
-					<pen lineWidth="0.75" lineStyle="Dashed" lineColor="#475569"/>
-				</graphicElement>
-			</rectangle>
-			<line>
-				<reportElement x="0" y="234" width="555" height="1" forecolor="#4338CA" uuid="23d6348f-1887-4504-96d8-9379aa798b96"/>
-				<graphicElement>
-					<pen lineWidth="1.5"/>
-				</graphicElement>
+				<reportElement x="0" y="133" width="555" height="1" forecolor="#6E997A" uuid="26ae7b78-f7f8-47df-940a-bfe2c678fe76"/>
+				<graphicElement><pen lineWidth="1.2"/></graphicElement>
 			</line>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="240" width="450" height="12" forecolor="#0F172A" uuid="481c1ff0-a2ed-41d6-8845-7f2d7bf59edd"/>
+				<reportElement x="0" y="137" width="420" height="11" forecolor="#111827" uuid="b4ecc489-e523-49bd-b1ee-3cf75b25973b"/>
 				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[($P{nomEntreprise} != null ? $P{nomEntreprise}.toUpperCase() : "") +
-($P{formeJuridique} != null && !$P{formeJuridique}.trim().isEmpty() ? " - " + $P{formeJuridique} : "") +
-($P{capitalSocial} != null && !$P{capitalSocial}.trim().isEmpty() ? " au capital de " + $P{capitalSocial} : "")]]></textFieldExpression>
+($P{formeJuridique} != null && !$P{formeJuridique}.trim().isEmpty() ? " — " + $P{formeJuridique} : "") +
+($P{capitalSocial} != null && !$P{capitalSocial}.trim().isEmpty() ? " | Capital : " + $P{capitalSocial} : "")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="455" y="240" width="65" height="12" forecolor="#475569" uuid="27e851e8-12e8-4940-91ec-987c0e97993a"/>
+				<reportElement x="425" y="137" width="65" height="11" forecolor="#6B7280" uuid="bc0522e4-114e-486d-bf17-10cf852e2b55"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
+					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " / "]]></textFieldExpression>
 			</textField>
 			<textField evaluationTime="Report">
-				<reportElement x="520" y="240" width="35" height="12" forecolor="#475569" uuid="57b28abb-ce07-43b0-ad03-f5cf11cd6e0f"/>
+				<reportElement x="490" y="137" width="30" height="11" forecolor="#6B7280" uuid="c75008fb-1c7e-483b-829e-3cfdb8fc1e1e"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
+					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<textFieldExpression><![CDATA["" + $V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="253" width="555" height="11" forecolor="#334155" uuid="2c73916e-5ae8-4751-a444-837a01da776b"/>
+				<reportElement x="0" y="148" width="555" height="10" forecolor="#6B7280" uuid="53d47c3a-6e4d-43b7-9ea0-a25da2682c2e"/>
 				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
+					<font fontName="DejaVu Sans" size="7"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Siège Social : " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="264" width="555" height="11" forecolor="#334155" uuid="68fca518-9494-4b8a-8a99-1e38117211cb"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
-				<textFieldExpression><![CDATA["RC : " + ($P{rcEntreprise} != null && !$P{rcEntreprise}.isEmpty() ? $P{rcEntreprise} : "-") + ($P{tribunalRc} != null && !$P{tribunalRc}.trim().isEmpty() ? " (" + $P{tribunalRc} + ")" : "") +
+				<textFieldExpression><![CDATA["RC : " + ($P{rcEntreprise} != null && !$P{rcEntreprise}.isEmpty() ? $P{rcEntreprise} : "-") +
 "  |  IF : " + ($P{nifEntreprise} != null && !$P{nifEntreprise}.isEmpty() ? $P{nifEntreprise} : "-") +
 "  |  PATENTE : " + ($P{patenteEntreprise} != null && !$P{patenteEntreprise}.isEmpty() ? $P{patenteEntreprise} : "-") +
 "  |  ICE : " + ($P{iceEntreprise} != null && !$P{iceEntreprise}.isEmpty() ? $P{iceEntreprise} : "-") +
 "  |  CNSS : " + ($P{cnssEntreprise} != null && !$P{cnssEntreprise}.isEmpty() ? $P{cnssEntreprise} : "-")]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="275" width="555" height="11" forecolor="#334155" uuid="3b2aac22-71d4-46b2-a931-cb104d6ad970"/>
+				<reportElement x="0" y="158" width="555" height="10" forecolor="#6B7280" uuid="8566567c-ef87-432b-88e6-0f1c1f667d3b"/>
 				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
+					<font fontName="DejaVu Sans" size="7"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Tél : " + ($P{telephoneEntreprise} != null && !$P{telephoneEntreprise}.isEmpty() ? $P{telephoneEntreprise} : "-") +
-($P{gsmEntreprise} != null && !$P{gsmEntreprise}.trim().isEmpty() ? "  |  GSM : " + $P{gsmEntreprise} : "") +
-($P{emailEntreprise} != null && !$P{emailEntreprise}.trim().isEmpty() ? "  |  Email : " + $P{emailEntreprise} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Siège : " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "") +
+($P{telephoneEntreprise} != null && !$P{telephoneEntreprise}.isEmpty() ? "  |  Tél : " + $P{telephoneEntreprise} : "") +
+($P{emailEntreprise} != null && !$P{emailEntreprise}.isEmpty() ? "  |  Email : " + $P{emailEntreprise} : "")]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="286" width="555" height="11" forecolor="#334155" uuid="538d85ed-f39d-40ce-a9eb-d7fd199e45d4"/>
+				<reportElement x="0" y="168" width="555" height="9" forecolor="#9CA3AF" uuid="d383d7f7-e850-4c2c-8c70-300f24bf5a96"/>
 				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
+					<font fontName="DejaVu Sans" size="6.5" isItalic="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[($P{banqueEntreprise} != null && !$P{banqueEntreprise}.trim().isEmpty() ? "Banque : " + $P{banqueEntreprise} : "") +
-($P{ribEntreprise} != null && !$P{ribEntreprise}.trim().isEmpty() ? "  |  RIB : " + $P{ribEntreprise} : "")]]></textFieldExpression>
-			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="297" width="555" height="11" forecolor="#475569" uuid="ee4381bb-a763-42f0-87dd-598a1a2c5aab"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7" isItalic="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{piedPage} != null ? $P{piedPage} : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[($P{banqueEntreprise} != null && !$P{banqueEntreprise}.trim().isEmpty() ? $P{banqueEntreprise} : "") +
+($P{ribEntreprise} != null && !$P{ribEntreprise}.trim().isEmpty() ? " — RIB : " + $P{ribEntreprise} : "") +
+($P{piedPage} != null && !$P{piedPage}.trim().isEmpty() ? "  •  " + $P{piedPage} : "")]]></textFieldExpression>
 			</textField>
 		</band>
 	</lastPageFooter>
