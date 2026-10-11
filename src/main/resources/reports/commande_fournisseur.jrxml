@@ -62,25 +62,25 @@
 	<pageHeader>
 		<band height="190">
 			<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
-				<reportElement x="0" y="12" width="64" height="44" uuid="88f30f26-b591-41d9-a700-cb6d1817b995"/>
+				<reportElement x="0" y="12" width="80" height="65" uuid="88f30f26-b591-41d9-a700-cb6d1817b995"/>
 				<imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
 			</image>
 			<textField isBlankWhenNull="true">
-				<reportElement x="72" y="12" width="310" height="26" forecolor="#111827" uuid="d3c21368-818e-4dbf-a230-305514196be7"/>
+				<reportElement x="80" y="12" width="310" height="26" forecolor="#111827" uuid="d3c21368-818e-4dbf-a230-305514196be7"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="17" isBold="true"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{nomEntreprise} != null ? $P{nomEntreprise}.toUpperCase() : ""]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="72" y="39" width="310" height="16" forecolor="#6B7280" uuid="1991a3c8-3597-4392-8f63-c99fe4d79ef8"/>
+				<reportElement x="80" y="38" width="310" height="16" forecolor="#6B7280" uuid="1991a3c8-3597-4392-8f63-c99fe4d79ef8"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="9"/>
 				</textElement>
 				<textFieldExpression><![CDATA[($P{activiteEntreprise} != null && !$P{activiteEntreprise}.trim().isEmpty() ? $P{activiteEntreprise} : "") + ($P{formeJuridique} != null && !$P{formeJuridique}.trim().isEmpty() ? ($P{activiteEntreprise} != null && !$P{activiteEntreprise}.trim().isEmpty() ? " — " : "") + $P{formeJuridique} : "")]]></textFieldExpression>
 			</textField>
 			<rectangle radius="3">
-				<reportElement x="395" y="12" width="160" height="54" backcolor="#FFFFFF" uuid="2c0cec35-f5be-4818-9770-144308f24a98"/>
+				<reportElement x="395" y="12" width="160" height="54" backcolor="#6E997A" uuid="2c0cec35-f5be-4818-9770-144308f24a98"/>
 				<graphicElement>
 					<pen lineWidth="1.0" lineColor="#111827"/>
 				</graphicElement>
@@ -106,21 +106,15 @@
 				</textElement>
 				<textFieldExpression><![CDATA["Date : " + ($P{dateCommande} != null ? $P{dateCommande} : "-")]]></textFieldExpression>
 			</textField>
-			<line>
-				<reportElement x="0" y="76" width="555" height="1" forecolor="#111827" uuid="19fcece3-6f40-4864-ba52-b97f33a0b095"/>
-				<graphicElement>
-					<pen lineWidth="1.0"/>
-				</graphicElement>
-			</line>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="88" width="265" height="12" forecolor="#374151" uuid="e8599999-2f53-4dea-ab3d-44614d229cf9"/>
+				<reportElement x="80" y="55" width="265" height="12" forecolor="#374151" uuid="e8599999-2f53-4dea-ab3d-44614d229cf9"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$P{adresseEntreprise} != null ? $P{adresseEntreprise} : ""]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="0" y="101" width="265" height="10" forecolor="#6B7280" uuid="0efe4641-ad1a-4489-99ac-5af72e8f95a5"/>
+				<reportElement x="80" y="68" width="265" height="10" forecolor="#6B7280" uuid="0efe4641-ad1a-4489-99ac-5af72e8f95a5"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="6.5"/>
 				</textElement>
@@ -173,8 +167,8 @@
 	</pageHeader>
 	<columnHeader>
 		<band height="26">
-			<rectangle>
-				<reportElement x="0" y="0" width="555" height="25" backcolor="#F3F4F6" uuid="82ab40f3-d829-4011-9c5e-b768ff2e9470"/>
+			<rectangle radius="6">
+				<reportElement x="0" y="0" width="555" height="25" backcolor="#6E997A" uuid="82ab40f3-d829-4011-9c5e-b768ff2e9470"/>
 				<graphicElement>
 					<pen lineWidth="0.8" lineColor="#111827"/>
 				</graphicElement>
