@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 023 :
+      Ajout des champs légaux, fiscaux (Maroc) et bancaires dans la table clients :
+      code_client, forme_juridique, pays, identifiant_fiscal, patente, capital_social,
+      numero_cnss, rib_bancaire, banque_nom.
+    -->
+    <changeSet id="023-add-clients-legal-and-banking-fields" author="erp-commercial">
+        <sql splitStatements="true">
+            ALTER TABLE IF EXISTS clients 
+                ADD COLUMN IF NOT EXISTS code_client VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS forme_juridique VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS pays VARCHAR(100) DEFAULT 'Maroc',
+                ADD COLUMN IF NOT EXISTS identifiant_fiscal VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS patente VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS capital_social VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS numero_cnss VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS rib_bancaire VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS banque_nom VARCHAR(150);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

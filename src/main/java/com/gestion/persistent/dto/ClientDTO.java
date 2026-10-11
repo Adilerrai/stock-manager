@@ -6,17 +6,26 @@ import java.time.LocalDateTime;
 
 public class ClientDTO {
     private Long id;
+    private String codeClient;
     private String nom;
     private String prenom;
     private String nomComplet;
+    private String formeJuridique;
     private String telephone;
     private String email;
     private String adresse;
     private String ville;
     private String codePostal;
+    private String pays = "Maroc";
     private CategorieClient categorie;
     private String numeroRegistreCommerce;
     private String numeroIdentificationFiscale;
+    private String identifiantFiscal;
+    private String patente;
+    private String capitalSocial;
+    private String numeroCnss;
+    private String ribBancaire;
+    private String banqueNom;
     private String ice;
     private com.gestion.persistent.enums.TarifClient tarif;
     private Integer delaiPaiementJours;
@@ -38,6 +47,9 @@ public class ClientDTO {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public String getCodeClient() { return codeClient; }
+    public void setCodeClient(String codeClient) { this.codeClient = codeClient; }
+
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
 
@@ -46,6 +58,9 @@ public class ClientDTO {
 
     public String getNomComplet() { return nomComplet; }
     public void setNomComplet(String nomComplet) { this.nomComplet = nomComplet; }
+
+    public String getFormeJuridique() { return formeJuridique; }
+    public void setFormeJuridique(String formeJuridique) { this.formeJuridique = formeJuridique; }
 
     public String getTelephone() { return telephone; }
     public void setTelephone(String telephone) { this.telephone = telephone; }
@@ -62,14 +77,49 @@ public class ClientDTO {
     public String getCodePostal() { return codePostal; }
     public void setCodePostal(String codePostal) { this.codePostal = codePostal; }
 
+    public String getPays() { return pays; }
+    public void setPays(String pays) { this.pays = pays; }
+
     public CategorieClient getCategorie() { return categorie; }
     public void setCategorie(CategorieClient categorie) { this.categorie = categorie; }
 
     public String getNumeroRegistreCommerce() { return numeroRegistreCommerce; }
     public void setNumeroRegistreCommerce(String numeroRegistreCommerce) { this.numeroRegistreCommerce = numeroRegistreCommerce; }
 
-    public String getNumeroIdentificationFiscale() { return numeroIdentificationFiscale; }
-    public void setNumeroIdentificationFiscale(String numeroIdentificationFiscale) { this.numeroIdentificationFiscale = numeroIdentificationFiscale; }
+    public String getNumeroIdentificationFiscale() {
+        return numeroIdentificationFiscale != null ? numeroIdentificationFiscale : identifiantFiscal;
+    }
+    public void setNumeroIdentificationFiscale(String numeroIdentificationFiscale) {
+        this.numeroIdentificationFiscale = numeroIdentificationFiscale;
+        if (this.identifiantFiscal == null) {
+            this.identifiantFiscal = numeroIdentificationFiscale;
+        }
+    }
+
+    public String getIdentifiantFiscal() {
+        return identifiantFiscal != null ? identifiantFiscal : numeroIdentificationFiscale;
+    }
+    public void setIdentifiantFiscal(String identifiantFiscal) {
+        this.identifiantFiscal = identifiantFiscal;
+        if (this.numeroIdentificationFiscale == null) {
+            this.numeroIdentificationFiscale = identifiantFiscal;
+        }
+    }
+
+    public String getPatente() { return patente; }
+    public void setPatente(String patente) { this.patente = patente; }
+
+    public String getCapitalSocial() { return capitalSocial; }
+    public void setCapitalSocial(String capitalSocial) { this.capitalSocial = capitalSocial; }
+
+    public String getNumeroCnss() { return numeroCnss; }
+    public void setNumeroCnss(String numeroCnss) { this.numeroCnss = numeroCnss; }
+
+    public String getRibBancaire() { return ribBancaire; }
+    public void setRibBancaire(String ribBancaire) { this.ribBancaire = ribBancaire; }
+
+    public String getBanqueNom() { return banqueNom; }
+    public void setBanqueNom(String banqueNom) { this.banqueNom = banqueNom; }
 
     public BigDecimal getCreditAutorise() { return creditAutorise; }
     public void setCreditAutorise(BigDecimal creditAutorise) { this.creditAutorise = creditAutorise; }
@@ -113,5 +163,3 @@ public class ClientDTO {
     public String getCommercialNom() { return commercialNom; }
     public void setCommercialNom(String commercialNom) { this.commercialNom = commercialNom; }
 }
-
-

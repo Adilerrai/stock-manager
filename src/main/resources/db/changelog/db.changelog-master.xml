@@ -76,4 +76,7 @@
     <!-- Changeset 022 : Support EFFET, TRAITE et LCN dans paiements_mode_paiement_check -->
     <include file="changes/022-fix-paiements-mode-paiement-check.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 023 : Champs légaux, fiscaux (Maroc) et bancaires dans clients -->
+    <include file="changes/023-add-clients-legal-and-banking-fields.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

@@ -19,6 +19,9 @@ public class Client {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "code_client")
+    private String codeClient;
+
     @Column(nullable = false)
     private String nom;
 
@@ -26,6 +29,9 @@ public class Client {
 
     @Column(name = "nom_complet")
     private String nomComplet;
+
+    @Column(name = "forme_juridique")
+    private String formeJuridique;
 
     private String telephone;
 
@@ -37,6 +43,9 @@ public class Client {
 
     private String codePostal;
 
+    @Column(name = "pays")
+    private String pays = "Maroc";
+
     @Enumerated(EnumType.STRING)
     @Column(name = "categorie")
     private CategorieClient categorie = CategorieClient.PARTICULIER;
@@ -47,8 +56,26 @@ public class Client {
     @Column(name = "numero_identification_fiscale")
     private String numeroIdentificationFiscale; // NIF
 
+    @Column(name = "identifiant_fiscal")
+    private String identifiantFiscal;
+
     @Column(name = "ice")
     private String ice; // Identifiant Commun de l'Entreprise
+
+    @Column(name = "patente")
+    private String patente;
+
+    @Column(name = "capital_social")
+    private String capitalSocial;
+
+    @Column(name = "numero_cnss")
+    private String numeroCnss;
+
+    @Column(name = "rib_bancaire")
+    private String ribBancaire;
+
+    @Column(name = "banque_nom")
+    private String banqueNom;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tarif")
@@ -296,6 +323,40 @@ public class Client {
     public void setFactures(List<Facture> factures) {
         this.factures = factures;
     }
+
+    public String getCodeClient() { return codeClient; }
+    public void setCodeClient(String codeClient) { this.codeClient = codeClient; }
+
+    public String getFormeJuridique() { return formeJuridique; }
+    public void setFormeJuridique(String formeJuridique) { this.formeJuridique = formeJuridique; }
+
+    public String getPays() { return pays; }
+    public void setPays(String pays) { this.pays = pays; }
+
+    public String getIdentifiantFiscal() {
+        return identifiantFiscal != null ? identifiantFiscal : numeroIdentificationFiscale;
+    }
+    public void setIdentifiantFiscal(String identifiantFiscal) {
+        this.identifiantFiscal = identifiantFiscal;
+        if (this.numeroIdentificationFiscale == null) {
+            this.numeroIdentificationFiscale = identifiantFiscal;
+        }
+    }
+
+    public String getPatente() { return patente; }
+    public void setPatente(String patente) { this.patente = patente; }
+
+    public String getCapitalSocial() { return capitalSocial; }
+    public void setCapitalSocial(String capitalSocial) { this.capitalSocial = capitalSocial; }
+
+    public String getNumeroCnss() { return numeroCnss; }
+    public void setNumeroCnss(String numeroCnss) { this.numeroCnss = numeroCnss; }
+
+    public String getRibBancaire() { return ribBancaire; }
+    public void setRibBancaire(String ribBancaire) { this.ribBancaire = ribBancaire; }
+
+    public String getBanqueNom() { return banqueNom; }
+    public void setBanqueNom(String banqueNom) { this.banqueNom = banqueNom; }
 
     public String getIce() { return ice; }
     public void setIce(String ice) { this.ice = ice; }
