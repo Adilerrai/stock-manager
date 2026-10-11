@@ -259,7 +259,14 @@
 			</line>
 
 			<staticText>
-				<reportElement x="4" y="0" width="236" height="25" forecolor="#FFFFFF" uuid="col-designation"/>
+				<reportElement x="4" y="0" width="72" height="25" forecolor="#93C5FD" uuid="col-reference"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[RÉFÉRENCE]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="80" y="0" width="156" height="25" forecolor="#FFFFFF" uuid="col-designation"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>
 				</textElement>
@@ -317,13 +324,22 @@
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 
-			<!-- Désignation -->
+			<!-- Référence -->
+			<textField isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="4" y="0" width="72" height="25" forecolor="#2563EB" uuid="det-reference"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{reference} != null ? $F{reference} : ""]]></textFieldExpression>
+			</textField>
+
+			<!-- Désignation en MAJUSCULES -->
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement stretchType="RelativeToBandHeight" x="4" y="0" width="232" height="25" forecolor="#0F172A" uuid="det-design"/>
+				<reportElement stretchType="RelativeToBandHeight" x="80" y="0" width="156" height="25" forecolor="#0F172A" uuid="det-design"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[($F{reference} != null && !$F{reference}.trim().isEmpty() ? "[" + $F{reference} + "] " : "") + ($F{designation} != null ? $F{designation} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{designation} != null ? $F{designation}.toUpperCase() : ""]]></textFieldExpression>
 			</textField>
 
 			<!-- Quantité -->
