@@ -103,30 +103,141 @@ public class CommandeService {
         commande.setObservations(commandeDTO.getObservations());
         commande.setPointDeVenteId(getTenantId());
 
+        boolean appliquerTva = Boolean.TRUE.equals(commandeDTO.getAppliquerTVA());
+        commande.setAppliquerTVA(appliquerTva);
+        commande.setTauxTVA(commandeDTO.getTauxTVA() != null ? commandeDTO.getTauxTVA() : (appliquerTva ? new BigDecimal("20.00") : BigDecimal.ZERO));
+
         commande = commandeRepository.save(commande);
 
         // Créer les lignes de commande
-        BigDecimal montantTotal = BigDecimal.ZERO;
-        for (LigneCommandeDTO ligneDTO : commandeDTO.getLignesCommande()) {
-            LigneCommande ligne = createLigneCommande(commande, ligneDTO);
-            montantTotal = montantTotal.add(ligne.getMontantLigne());
+        BigDecimal montantHTTotal = BigDecimal.ZERO;
+        BigDecimal montantTVATotal = BigDecimal.ZERO;
+        BigDecimal montantTTCTotal = BigDecimal.ZERO;
+
+        if (commandeDTO.getLignesCommande() != null) {
+            for (LigneCommandeDTO ligneDTO : commandeDTO.getLignesCommande()) {
+                LigneCommande ligne = createLigneCommande(commande, ligneDTO, appliquerTva, commande.getTauxTVA());
+                if (ligne.getMontantHT() != null) {
+                    montantHTTotal = montantHTTotal.add(ligne.getMontantHT());
+                }
+                if (ligne.getMontantTVA() != null) {
+                    montantTVATotal = montantTVATotal.add(ligne.getMontantTVA());
+                }
+                if (ligne.getMontantTTC() != null) {
+                    montantTTCTotal = montantTTCTotal.add(ligne.getMontantTTC());
+                } else if (ligne.getMontantLigne() != null) {
+                    montantTTCTotal = montantTTCTotal.add(ligne.getMontantLigne());
+                }
+            }
         }
 
-        commande.setMontantTotal(montantTotal);
+        BigDecimal finalHT = commandeDTO.getMontantHT() != null ? commandeDTO.getMontantHT() : montantHTTotal;
+        BigDecimal finalTVA = commandeDTO.getMontantTVA() != null ? commandeDTO.getMontantTVA() : (appliquerTva ? montantTVATotal : BigDecimal.ZERO);
+        BigDecimal finalTTC = commandeDTO.getMontantTTC() != null ? commandeDTO.getMontantTTC() 
+                : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : (appliquerTva ? montantTTCTotal : finalHT));
+
+        commande.setMontantHT(finalHT);
+        commande.setMontantTVA(finalTVA);
+        commande.setMontantTTC(finalTTC);
+        commande.setMontantTotal(finalTTC);
+
         return commandeRepository.save(commande);
     }
 
-    private LigneCommande createLigneCommande(Commande commande, LigneCommandeDTO ligneDTO) {
+    @Transactional
+    public Commande updateCommande(Long id, CommandeDTO commandeDTO) {
+        Commande commande = getCommandeById(id);
+
+        if (commande.getStatut() == StatutCommande.LIVREE || commande.getStatut() == StatutCommande.ANNULEE) {
+            throw new CommonException("Impossible de modifier une commande déjà livrée ou annulée.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (commandeDTO.getFournisseurId() != null) {
+            Fournisseur fournisseur = fournisseurRepository.findById(commandeDTO.getFournisseurId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", commandeDTO.getFournisseurId()));
+            commande.setFournisseur(fournisseur);
+        }
+
+        if (commandeDTO.getDateLivraisonPrevue() != null) {
+            commande.setDateLivraisonPrevue(commandeDTO.getDateLivraisonPrevue());
+        }
+        if (commandeDTO.getObservations() != null) {
+            commande.setObservations(commandeDTO.getObservations());
+        }
+
+        boolean appliquerTva = Boolean.TRUE.equals(commandeDTO.getAppliquerTVA());
+        commande.setAppliquerTVA(appliquerTva);
+        commande.setTauxTVA(commandeDTO.getTauxTVA() != null ? commandeDTO.getTauxTVA() : (appliquerTva ? new BigDecimal("20.00") : BigDecimal.ZERO));
+
+        if (commandeDTO.getLignesCommande() != null) {
+            if (commande.getLignesCommande() != null && !commande.getLignesCommande().isEmpty()) {
+                ligneCommandeRepository.deleteAll(commande.getLignesCommande());
+                commande.getLignesCommande().clear();
+            }
+
+            BigDecimal montantHTTotal = BigDecimal.ZERO;
+            BigDecimal montantTVATotal = BigDecimal.ZERO;
+            BigDecimal montantTTCTotal = BigDecimal.ZERO;
+
+            for (LigneCommandeDTO ligneDTO : commandeDTO.getLignesCommande()) {
+                LigneCommande ligne = createLigneCommande(commande, ligneDTO, appliquerTva, commande.getTauxTVA());
+                commande.getLignesCommande().add(ligne);
+                if (ligne.getMontantHT() != null) {
+                    montantHTTotal = montantHTTotal.add(ligne.getMontantHT());
+                }
+                if (ligne.getMontantTVA() != null) {
+                    montantTVATotal = montantTVATotal.add(ligne.getMontantTVA());
+                }
+                if (ligne.getMontantTTC() != null) {
+                    montantTTCTotal = montantTTCTotal.add(ligne.getMontantTTC());
+                } else if (ligne.getMontantLigne() != null) {
+                    montantTTCTotal = montantTTCTotal.add(ligne.getMontantLigne());
+                }
+            }
+
+            BigDecimal finalHT = commandeDTO.getMontantHT() != null ? commandeDTO.getMontantHT() : montantHTTotal;
+            BigDecimal finalTVA = commandeDTO.getMontantTVA() != null ? commandeDTO.getMontantTVA() : (appliquerTva ? montantTVATotal : BigDecimal.ZERO);
+            BigDecimal finalTTC = commandeDTO.getMontantTTC() != null ? commandeDTO.getMontantTTC() 
+                    : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : (appliquerTva ? montantTTCTotal : finalHT));
+
+            commande.setMontantHT(finalHT);
+            commande.setMontantTVA(finalTVA);
+            commande.setMontantTTC(finalTTC);
+            commande.setMontantTotal(finalTTC);
+        }
+
+        return commandeRepository.save(commande);
+    }
+
+    private LigneCommande createLigneCommande(Commande commande, LigneCommandeDTO ligneDTO, boolean appliquerTva, BigDecimal defaultTauxTva) {
         Produit produit = produitRepository.findById(ligneDTO.getProduitId())
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", "id", ligneDTO.getProduitId()));
 
         LigneCommande ligne = new LigneCommande();
         ligne.setCommande(commande);
         ligne.setProduit(produit);
-        ligne.setQuantiteCommandee(ligneDTO.getQuantiteCommandee());
-        ligne.setPrixUnitaire(ligneDTO.getPrixUnitaire());
+        ligne.setQuantiteCommandee(ligneDTO.getQuantiteCommandee() != null ? ligneDTO.getQuantiteCommandee() : 1);
         ligne.setQualiteProduit(ligneDTO.getQualiteProduit());
-        ligne.setMontantLigne(BigDecimal.valueOf(ligneDTO.getQuantiteCommandee()).multiply(ligneDTO.getPrixUnitaire()));
+
+        BigDecimal qte = BigDecimal.valueOf(ligne.getQuantiteCommandee());
+        BigDecimal prixUnitaire = ligneDTO.getPrixUnitaire() != null ? ligneDTO.getPrixUnitaire() : BigDecimal.ZERO;
+        BigDecimal puHT = ligneDTO.getPrixUnitaireHT() != null ? ligneDTO.getPrixUnitaireHT() : prixUnitaire;
+        BigDecimal tauxTVA = ligneDTO.getTauxTVA() != null ? ligneDTO.getTauxTVA() : (appliquerTva ? defaultTauxTva : BigDecimal.ZERO);
+
+        ligne.setPrixUnitaire(prixUnitaire);
+        ligne.setPrixUnitaireHT(puHT);
+        ligne.setTauxTVA(tauxTVA);
+
+        BigDecimal montantHT = ligneDTO.getMontantHT() != null ? ligneDTO.getMontantHT() : puHT.multiply(qte);
+        BigDecimal montantTVA = ligneDTO.getMontantTVA() != null ? ligneDTO.getMontantTVA() 
+                : (appliquerTva ? montantHT.multiply(tauxTVA).divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
+        BigDecimal montantTTC = ligneDTO.getMontantTTC() != null ? ligneDTO.getMontantTTC() : montantHT.add(montantTVA);
+        BigDecimal montantLigne = ligneDTO.getMontantLigne() != null ? ligneDTO.getMontantLigne() : (appliquerTva ? montantTTC : montantHT);
+
+        ligne.setMontantHT(montantHT);
+        ligne.setMontantTVA(montantTVA);
+        ligne.setMontantTTC(montantTTC);
+        ligne.setMontantLigne(montantLigne);
 
         return ligneCommandeRepository.save(ligne);
     }

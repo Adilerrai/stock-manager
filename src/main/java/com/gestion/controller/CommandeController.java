@@ -45,6 +45,23 @@ public class CommandeController {
         return ResponseEntity.ok(commandeMapper.toDto(commande));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<CommandeDTO> updateCommande(
+            @PathVariable("id") Long id,
+            @RequestBody CommandeDTO commandeDTO) {
+        Commande commande = commandeService.updateCommande(id, commandeDTO);
+        return ResponseEntity.ok(commandeMapper.toDto(commande));
+    }
+
+    @PutMapping("/update")
+    public ResponseEntity<CommandeDTO> updateCommandeBody(@RequestBody CommandeDTO commandeDTO) {
+        if (commandeDTO.getId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Commande commande = commandeService.updateCommande(commandeDTO.getId(), commandeDTO);
+        return ResponseEntity.ok(commandeMapper.toDto(commande));
+    }
+
     @GetMapping("/all")
     public ResponseEntity<List<CommandeDTO>> getAllCommandes() {
         List<Commande> commandes = commandeService.getAllCommandes();

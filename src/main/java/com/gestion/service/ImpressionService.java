@@ -358,12 +358,17 @@ public class ImpressionService {
         params.put("statut", commande.getStatut() != null ? commande.getStatut().toString() : "TRANSMISE");
         params.put("observations", commande.getObservations());
         BigDecimal total = commande.getMontantTotal() != null ? commande.getMontantTotal() : BigDecimal.ZERO;
+        BigDecimal ht = commande.getMontantHT() != null ? commande.getMontantHT() : total;
+        BigDecimal tva = commande.getMontantTVA() != null ? commande.getMontantTVA() : BigDecimal.ZERO;
+        BigDecimal ttc = commande.getMontantTTC() != null ? commande.getMontantTTC() 
+                : (total.compareTo(BigDecimal.ZERO) > 0 ? total : ht.add(tva));
+
         params.put("montantTotal", total);
-        params.put("montantHT", total);
-        params.put("montantTVA", BigDecimal.ZERO);
-        params.put("montantTTC", total);
+        params.put("montantHT", ht);
+        params.put("montantTVA", tva);
+        params.put("montantTTC", ttc);
         String devise = (String) params.getOrDefault("devise", "MAD");
-        params.put("montantEnLettres", FrenchNumberToWords.convertir(total, devise));
+        params.put("montantEnLettres", FrenchNumberToWords.convertir(ttc, devise));
 
         if (commande.getFournisseur() != null) {
             Fournisseur f = commande.getFournisseur();
@@ -381,7 +386,19 @@ public class ImpressionService {
                 map.put("designation", lc.getProduit() != null ? lc.getProduit().getDesignation() : "Article");
                 map.put("quantite", lc.getQuantiteCommandee() != null ? BigDecimal.valueOf(lc.getQuantiteCommandee())
                         : BigDecimal.ZERO);
-                map.put("prixUnitaire", lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO);
+
+                BigDecimal pu = lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO;
+                BigDecimal puHT = lc.getPrixUnitaireHT() != null ? lc.getPrixUnitaireHT() : pu;
+                BigDecimal tauxTva = lc.getTauxTVA() != null ? lc.getTauxTVA() 
+                        : (commande.getTauxTVA() != null ? commande.getTauxTVA() : BigDecimal.ZERO);
+                BigDecimal mtHT = lc.getMontantHT() != null ? lc.getMontantHT() : lc.getMontantLigne();
+                BigDecimal mtTTC = lc.getMontantTTC() != null ? lc.getMontantTTC() : lc.getMontantLigne();
+
+                map.put("prixUnitaire", pu);
+                map.put("prixUnitaireHT", puHT);
+                map.put("tauxTVA", tauxTva);
+                map.put("montantHT", mtHT);
+                map.put("montantTTC", mtTTC);
                 map.put("montantTotal", lc.getMontantLigne() != null ? lc.getMontantLigne() : BigDecimal.ZERO);
                 lignes.add(map);
             }
