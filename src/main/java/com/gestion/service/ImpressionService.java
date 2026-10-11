@@ -369,9 +369,15 @@ public class ImpressionService {
         params.put("montantTTC", ttc);
         String devise = commande.getDevise() != null && !commande.getDevise().isBlank() 
                 ? commande.getDevise() 
-                : (String) params.getOrDefault("devise", "MAD");
+                : (commande.getFournisseur() != null && commande.getFournisseur().getDevise() != null && !commande.getFournisseur().getDevise().isBlank()
+                        ? commande.getFournisseur().getDevise()
+                        : (String) params.getOrDefault("devise", "MAD"));
         params.put("devise", devise);
         params.put("montantEnLettres", FrenchNumberToWords.convertir(ttc, devise));
+
+        boolean isInternational = (commande.getFournisseur() != null && commande.getFournisseur().getTypeFournisseur() == TypeFournisseur.INTERNATIONAL)
+                || (!"MAD".equalsIgnoreCase(devise));
+        params.put("isInternational", isInternational);
 
         if (commande.getFournisseur() != null) {
             Fournisseur f = commande.getFournisseur();
