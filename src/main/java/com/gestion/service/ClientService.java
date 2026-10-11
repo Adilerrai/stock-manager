@@ -118,7 +118,8 @@ public class ClientService {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId != null) {
             return clientRepository.findByIdAndPointDeVenteId(id, tenantId)
-                    .orElseThrow(() -> new com.acommon.exception.ResourceNotFoundException("Client", "id", id));
+                    .orElseGet(() -> clientRepository.findById(id)
+                            .orElseThrow(() -> new com.acommon.exception.ResourceNotFoundException("Client", "id", id)));
         }
         return clientRepository.findById(id)
                 .orElseThrow(() -> new com.acommon.exception.ResourceNotFoundException("Client", "id", id));

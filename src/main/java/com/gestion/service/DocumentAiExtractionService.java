@@ -394,6 +394,9 @@ public class DocumentAiExtractionService {
             if (dto.getTierId() != null) {
                 boolean exists = clients.stream().anyMatch(c -> c.getId().equals(dto.getTierId()));
                 dto.setTierMatched(exists);
+                if (!exists) {
+                    dto.setTierId(null);
+                }
             }
             if (!dto.isTierMatched() && dto.getTierIce() != null && !dto.getTierIce().isBlank()) {
                 clients.stream()
@@ -568,11 +571,11 @@ public class DocumentAiExtractionService {
     }
 
     private DocumentOcrAnalysisResultDTO enregistrerFactureAchat(DocumentOcrAnalysisResultDTO dto, Long tenantId) {
-        Fournisseur fournisseur;
+        Fournisseur fournisseur = null;
         if (dto.getTierId() != null) {
-            fournisseur = fournisseurRepository.findById(dto.getTierId())
-                    .orElseThrow(() -> new IllegalArgumentException("Fournisseur ID introuvable : " + dto.getTierId()));
-        } else {
+            fournisseur = fournisseurRepository.findById(dto.getTierId()).orElse(null);
+        }
+        if (fournisseur == null) {
             // Création automatique du fournisseur s'il n'existe pas encore
             fournisseur = new Fournisseur();
             fournisseur.setRaisonSociale(dto.getTierNom() != null ? dto.getTierNom() : "Fournisseur Inconnu");
@@ -629,11 +632,11 @@ public class DocumentAiExtractionService {
     }
 
     private DocumentOcrAnalysisResultDTO enregistrerCommandeClient(DocumentOcrAnalysisResultDTO dto, Long tenantId) {
-        Client client;
+        Client client = null;
         if (dto.getTierId() != null) {
-            client = clientRepository.findById(dto.getTierId())
-                    .orElseThrow(() -> new IllegalArgumentException("Client ID introuvable : " + dto.getTierId()));
-        } else {
+            client = clientRepository.findById(dto.getTierId()).orElse(null);
+        }
+        if (client == null) {
             client = new Client();
             client.setNom(dto.getTierNom() != null ? dto.getTierNom() : "Client Importé");
             client.setNomComplet(dto.getTierNom());

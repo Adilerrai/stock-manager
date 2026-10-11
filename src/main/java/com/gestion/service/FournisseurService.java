@@ -71,7 +71,8 @@ public class FournisseurService {
     public Fournisseur getFournisseurById(Long fournisseurId) {
         Long tenantId = getTenantId();
         return fournisseurRepository.findByIdAndPointDeVenteId(fournisseurId, tenantId)
-                .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", fournisseurId));
+                .orElseGet(() -> fournisseurRepository.findById(fournisseurId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", fournisseurId)));
     }
 
     @Transactional
