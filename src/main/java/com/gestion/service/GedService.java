@@ -247,7 +247,8 @@ public class GedService {
     public DocumentComptableDTO getDocument(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Document introuvable avec l'ID: " + id));
+                .orElseGet(() -> documentRepository.findById(id)
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable avec l'ID: " + id)));
         return toDto(doc);
     }
 
@@ -255,7 +256,8 @@ public class GedService {
     public Resource chargerFichier(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Document introuvable avec l'ID: " + id));
+                .orElseGet(() -> documentRepository.findById(id)
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable avec l'ID: " + id)));
 
         try {
             Path file = Paths.get(doc.getCheminStockage());
@@ -263,6 +265,20 @@ public class GedService {
             if (resource.exists() && resource.isReadable()) {
                 return resource;
             } else {
+                if (doc.getNomStocke() != null) {
+                    if (doc.getPointDeVenteId() != null) {
+                        Path tenantPath = this.rootLocation.resolve(String.valueOf(doc.getPointDeVenteId())).resolve(doc.getNomStocke()).normalize();
+                        Resource tenantRes = new UrlResource(tenantPath.toUri());
+                        if (tenantRes.exists() && tenantRes.isReadable()) {
+                            return tenantRes;
+                        }
+                    }
+                    Path rootPath = this.rootLocation.resolve(doc.getNomStocke()).normalize();
+                    Resource rootRes = new UrlResource(rootPath.toUri());
+                    if (rootRes.exists() && rootRes.isReadable()) {
+                        return rootRes;
+                    }
+                }
                 throw new RuntimeException("Fichier non lisible sur le serveur: " + doc.getNomOriginal());
             }
         } catch (MalformedURLException e) {
@@ -273,7 +289,8 @@ public class GedService {
     public DocumentComptableDTO lierAEcriture(Long documentId, Long ecritureId) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(documentId, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId));
+                .orElseGet(() -> documentRepository.findById(documentId)
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId)));
 
         doc.setEcritureId(ecritureId);
         DocumentComptable saved = documentRepository.save(doc);
@@ -287,7 +304,8 @@ public class GedService {
     public DocumentComptableDTO lierDocument(Long documentId, Long factureAchatId, Long commandeClientId, Long livraisonId, Long paiementId, Long chequeEffetId) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(documentId, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId));
+                .orElseGet(() -> documentRepository.findById(documentId)
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId)));
 
         if (factureAchatId != null) doc.setFactureAchatId(factureAchatId);
         if (commandeClientId != null) doc.setCommandeClientId(commandeClientId);
@@ -302,7 +320,8 @@ public class GedService {
     public void supprimerDocument(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + id));
+                .orElseGet(() -> documentRepository.findById(id)
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + id)));
 
         // Suppression physique du fichier sur le disque
         try {
