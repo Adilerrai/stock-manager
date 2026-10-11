@@ -131,6 +131,12 @@ public class FournisseurService {
         if (fournisseurDTO.getActif() != null) {
             fournisseur.setActif(fournisseurDTO.getActif());
         }
+        if (fournisseurDTO.getTypeFournisseur() != null) {
+            fournisseur.setTypeFournisseur(fournisseurDTO.getTypeFournisseur());
+        }
+        if (fournisseurDTO.getDevise() != null) {
+            fournisseur.setDevise(fournisseurDTO.getDevise());
+        }
 
         return fournisseurRepository.save(fournisseur);
     }

@@ -26,6 +26,7 @@ public class CommandeDTO {
     private BigDecimal montantHT;
     private BigDecimal montantTVA;
     private BigDecimal montantTTC;
+    private String devise;
     private String observations;
     private List<LigneCommandeDTO> lignesCommande;
 
@@ -80,6 +81,9 @@ public class CommandeDTO {
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }
+
+    public String getDevise() { return devise; }
+    public void setDevise(String devise) { this.devise = devise; }
 
     public List<LigneCommandeDTO> getLignesCommande() { return lignesCommande; }
     public void setLignesCommande(List<LigneCommandeDTO> lignesCommande) { this.lignesCommande = lignesCommande; }

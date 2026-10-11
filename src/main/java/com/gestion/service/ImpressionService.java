@@ -367,7 +367,10 @@ public class ImpressionService {
         params.put("montantHT", ht);
         params.put("montantTVA", tva);
         params.put("montantTTC", ttc);
-        String devise = (String) params.getOrDefault("devise", "MAD");
+        String devise = commande.getDevise() != null && !commande.getDevise().isBlank() 
+                ? commande.getDevise() 
+                : (String) params.getOrDefault("devise", "MAD");
+        params.put("devise", devise);
         params.put("montantEnLettres", FrenchNumberToWords.convertir(ttc, devise));
 
         if (commande.getFournisseur() != null) {

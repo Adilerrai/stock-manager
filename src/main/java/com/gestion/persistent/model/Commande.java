@@ -58,6 +58,9 @@ public class Commande {
     @Column(name = "montant_ttc", precision = 12, scale = 2)
     private BigDecimal montantTTC = BigDecimal.ZERO;
 
+    @Column(name = "devise", length = 10)
+    private String devise = "MAD";
+
     private String observations;
 
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -137,4 +140,7 @@ public class Commande {
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
+
+    public String getDevise() { return devise != null ? devise : "MAD"; }
+    public void setDevise(String devise) { this.devise = devise; }
 }

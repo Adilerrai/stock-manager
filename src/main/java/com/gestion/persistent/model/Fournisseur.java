@@ -59,6 +59,13 @@ public class Fournisseur {
     @Column(name = "point_de_vente_id", nullable = false)
     private Long pointDeVenteId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_fournisseur", length = 30)
+    private com.gestion.persistent.enums.TypeFournisseur typeFournisseur = com.gestion.persistent.enums.TypeFournisseur.NATIONAL;
+
+    @Column(name = "devise", length = 10)
+    private String devise = "MAD";
+
     @PrePersist
     @PreUpdate
     public void prePersist() {
@@ -147,4 +154,14 @@ public class Fournisseur {
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
+
+    public com.gestion.persistent.enums.TypeFournisseur getTypeFournisseur() { return typeFournisseur; }
+    public void setTypeFournisseur(com.gestion.persistent.enums.TypeFournisseur typeFournisseur) { this.typeFournisseur = typeFournisseur; }
+
+    public String getDevise() { return devise != null ? devise : "MAD"; }
+    public void setDevise(String devise) { this.devise = devise; }
+
+    public boolean isInternational() {
+        return com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL.equals(this.typeFournisseur);
+    }
 }

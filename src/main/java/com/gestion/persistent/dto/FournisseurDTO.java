@@ -88,4 +88,13 @@ public class FournisseurDTO {
 
     public String getConditionsPaiement() { return conditionsPaiement; }
     public void setConditionsPaiement(String conditionsPaiement) { this.conditionsPaiement = conditionsPaiement; }
+
+    private com.gestion.persistent.enums.TypeFournisseur typeFournisseur;
+    private String devise;
+
+    public com.gestion.persistent.enums.TypeFournisseur getTypeFournisseur() { return typeFournisseur; }
+    public void setTypeFournisseur(com.gestion.persistent.enums.TypeFournisseur typeFournisseur) { this.typeFournisseur = typeFournisseur; }
+
+    public String getDevise() { return devise; }
+    public void setDevise(String devise) { this.devise = devise; }
 }

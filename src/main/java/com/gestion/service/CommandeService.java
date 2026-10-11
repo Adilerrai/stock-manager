@@ -103,9 +103,16 @@ public class CommandeService {
         commande.setObservations(commandeDTO.getObservations());
         commande.setPointDeVenteId(getTenantId());
 
-        boolean appliquerTva = Boolean.TRUE.equals(commandeDTO.getAppliquerTVA());
+        boolean isInternational = fournisseur.getTypeFournisseur() == com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL;
+        String devise = (commandeDTO.getDevise() != null && !commandeDTO.getDevise().isBlank())
+                ? commandeDTO.getDevise()
+                : (fournisseur.getDevise() != null ? fournisseur.getDevise() : "MAD");
+        commande.setDevise(devise);
+
+        // Si le fournisseur est international, la TVA marocaine n'est pas applicable (0%)
+        boolean appliquerTva = !isInternational && Boolean.TRUE.equals(commandeDTO.getAppliquerTVA());
         commande.setAppliquerTVA(appliquerTva);
-        commande.setTauxTVA(commandeDTO.getTauxTVA() != null ? commandeDTO.getTauxTVA() : (appliquerTva ? new BigDecimal("20.00") : BigDecimal.ZERO));
+        commande.setTauxTVA(appliquerTva ? (commandeDTO.getTauxTVA() != null ? commandeDTO.getTauxTVA() : new BigDecimal("20.00")) : BigDecimal.ZERO);
 
         commande = commandeRepository.save(commande);
 
@@ -132,9 +139,10 @@ public class CommandeService {
         }
 
         BigDecimal finalHT = commandeDTO.getMontantHT() != null ? commandeDTO.getMontantHT() : montantHTTotal;
-        BigDecimal finalTVA = commandeDTO.getMontantTVA() != null ? commandeDTO.getMontantTVA() : (appliquerTva ? montantTVATotal : BigDecimal.ZERO);
-        BigDecimal finalTTC = commandeDTO.getMontantTTC() != null ? commandeDTO.getMontantTTC() 
-                : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : (appliquerTva ? montantTTCTotal : finalHT));
+        BigDecimal finalTVA = appliquerTva ? (commandeDTO.getMontantTVA() != null ? commandeDTO.getMontantTVA() : montantTVATotal) : BigDecimal.ZERO;
+        BigDecimal finalTTC = appliquerTva 
+                ? (commandeDTO.getMontantTTC() != null ? commandeDTO.getMontantTTC() : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : montantTTCTotal))
+                : finalHT;
 
         commande.setMontantHT(finalHT);
         commande.setMontantTVA(finalTVA);
@@ -152,8 +160,9 @@ public class CommandeService {
             throw new CommonException("Impossible de modifier une commande déjà livrée ou annulée.", HttpStatus.BAD_REQUEST);
         }
 
+        Fournisseur fournisseur = commande.getFournisseur();
         if (commandeDTO.getFournisseurId() != null) {
-            Fournisseur fournisseur = fournisseurRepository.findById(commandeDTO.getFournisseurId())
+            fournisseur = fournisseurRepository.findById(commandeDTO.getFournisseurId())
                     .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", commandeDTO.getFournisseurId()));
             commande.setFournisseur(fournisseur);
         }
@@ -165,9 +174,16 @@ public class CommandeService {
             commande.setObservations(commandeDTO.getObservations());
         }
 
-        boolean appliquerTva = Boolean.TRUE.equals(commandeDTO.getAppliquerTVA());
+        boolean isInternational = fournisseur != null && fournisseur.getTypeFournisseur() == com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL;
+        if (commandeDTO.getDevise() != null && !commandeDTO.getDevise().isBlank()) {
+            commande.setDevise(commandeDTO.getDevise());
+        } else if (fournisseur != null && fournisseur.getDevise() != null) {
+            commande.setDevise(fournisseur.getDevise());
+        }
+
+        boolean appliquerTva = !isInternational && Boolean.TRUE.equals(commandeDTO.getAppliquerTVA());
         commande.setAppliquerTVA(appliquerTva);
-        commande.setTauxTVA(commandeDTO.getTauxTVA() != null ? commandeDTO.getTauxTVA() : (appliquerTva ? new BigDecimal("20.00") : BigDecimal.ZERO));
+        commande.setTauxTVA(appliquerTva ? (commandeDTO.getTauxTVA() != null ? commandeDTO.getTauxTVA() : new BigDecimal("20.00")) : BigDecimal.ZERO);
 
         if (commandeDTO.getLignesCommande() != null) {
             if (commande.getLignesCommande() != null && !commande.getLignesCommande().isEmpty()) {
@@ -196,9 +212,10 @@ public class CommandeService {
             }
 
             BigDecimal finalHT = commandeDTO.getMontantHT() != null ? commandeDTO.getMontantHT() : montantHTTotal;
-            BigDecimal finalTVA = commandeDTO.getMontantTVA() != null ? commandeDTO.getMontantTVA() : (appliquerTva ? montantTVATotal : BigDecimal.ZERO);
-            BigDecimal finalTTC = commandeDTO.getMontantTTC() != null ? commandeDTO.getMontantTTC() 
-                    : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : (appliquerTva ? montantTTCTotal : finalHT));
+            BigDecimal finalTVA = appliquerTva ? (commandeDTO.getMontantTVA() != null ? commandeDTO.getMontantTVA() : montantTVATotal) : BigDecimal.ZERO;
+            BigDecimal finalTTC = appliquerTva 
+                    ? (commandeDTO.getMontantTTC() != null ? commandeDTO.getMontantTTC() : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : montantTTCTotal))
+                    : finalHT;
 
             commande.setMontantHT(finalHT);
             commande.setMontantTVA(finalTVA);
