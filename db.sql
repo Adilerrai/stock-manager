@@ -1811,5 +1811,70 @@ ON CONFLICT DO NOTHING;
 SELECT setval('regles_fiscales_is_id_seq', (SELECT COALESCE(MAX(id), 1) FROM regles_fiscales_is));
 
 -- =============================================================================
+-- 13. DEMANDES DE PRIX (DDP / RFQ) ET COMPARATEUR D'OFFRES FOURNISSEURS
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS demandes_prix (
+    id                             BIGSERIAL PRIMARY KEY,
+    numero_ddp                     VARCHAR(50) NOT NULL,
+    objet                          VARCHAR(255) NOT NULL,
+    statut                         VARCHAR(30) DEFAULT 'BROUILLON' NOT NULL,
+    date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_limite_reponse            TIMESTAMP,
+    demande_achat_id               VARCHAR(50),
+    observations                   TEXT,
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT uk_ddp_tenant_numero UNIQUE (point_de_vente_id, numero_ddp)
+);
+
+CREATE TABLE IF NOT EXISTS lignes_demande_prix (
+    id                             BIGSERIAL PRIMARY KEY,
+    demande_prix_id                BIGINT NOT NULL,
+    produit_id                     BIGINT,
+    reference                      VARCHAR(100),
+    designation                    VARCHAR(255) NOT NULL,
+    quantite_demandee              NUMERIC(12, 2) DEFAULT 1.00 NOT NULL,
+    unite                          VARCHAR(20) DEFAULT 'U',
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT fk_ldp_ddp FOREIGN KEY (demande_prix_id) REFERENCES demandes_prix(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ldp_produit FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS offres_fournisseurs (
+    id                             BIGSERIAL PRIMARY KEY,
+    demande_prix_id                BIGINT NOT NULL,
+    fournisseur_id                 BIGINT NOT NULL,
+    numero_devis                   VARCHAR(100),
+    date_reception                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delai_livraison_jours          INTEGER DEFAULT 0,
+    frais_port                     NUMERIC(12, 2) DEFAULT 0.00,
+    statut                         VARCHAR(30) DEFAULT 'EN_ATTENTE',
+    conditions_paiement            VARCHAR(100),
+    observations                   TEXT,
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT fk_offre_ddp FOREIGN KEY (demande_prix_id) REFERENCES demandes_prix(id) ON DELETE CASCADE,
+    CONSTRAINT fk_offre_fournisseur FOREIGN KEY (fournisseur_id) REFERENCES fournisseurs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS lignes_offre_fournisseur (
+    id                             BIGSERIAL PRIMARY KEY,
+    offre_fournisseur_id           BIGINT NOT NULL,
+    ligne_demande_prix_id          BIGINT NOT NULL,
+    prix_unitaire_ht               NUMERIC(12, 2) DEFAULT 0.00 NOT NULL,
+    remise_pourcentage             NUMERIC(5, 2) DEFAULT 0.00,
+    taux_tva                       NUMERIC(5, 2) DEFAULT 20.00,
+    quantite_proposee              NUMERIC(12, 2) DEFAULT 1.00 NOT NULL,
+    disponible_stock               BOOLEAN DEFAULT TRUE,
+    est_retenue                    BOOLEAN DEFAULT FALSE,
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT fk_lof_offre FOREIGN KEY (offre_fournisseur_id) REFERENCES offres_fournisseurs(id) ON DELETE CASCADE,
+    CONSTRAINT fk_lof_ldp FOREIGN KEY (ligne_demande_prix_id) REFERENCES lignes_demande_prix(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ddp_point_de_vente ON demandes_prix(point_de_vente_id);
+CREATE INDEX IF NOT EXISTS idx_offre_ddp ON offres_fournisseurs(demande_prix_id);
+
+-- =============================================================================
 -- FIN DU SCRIPT db.sql
 -- =============================================================================
+
