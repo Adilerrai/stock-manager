@@ -385,6 +385,8 @@ public class ImpressionService {
             params.put("fournisseurTelephone", f.getTelephone());
             params.put("fournisseurAdresse", f.getAdresse());
             params.put("fournisseurIce", f.getIce());
+            params.put("fournisseurPays", f.getPays());
+            params.put("fournisseurVille", f.getVille());
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();
@@ -402,13 +404,15 @@ public class ImpressionService {
                         : (commande.getTauxTVA() != null ? commande.getTauxTVA() : BigDecimal.ZERO);
                 BigDecimal mtHT = lc.getMontantHT() != null ? lc.getMontantHT() : lc.getMontantLigne();
                 BigDecimal mtTTC = lc.getMontantTTC() != null ? lc.getMontantTTC() : lc.getMontantLigne();
+                BigDecimal mtTotal = lc.getMontantLigne() != null ? lc.getMontantLigne() : (mtHT != null ? mtHT : BigDecimal.ZERO);
 
                 map.put("prixUnitaire", pu);
                 map.put("prixUnitaireHT", puHT);
                 map.put("tauxTVA", tauxTva);
                 map.put("montantHT", mtHT);
                 map.put("montantTTC", mtTTC);
-                map.put("montantTotal", lc.getMontantLigne() != null ? lc.getMontantLigne() : BigDecimal.ZERO);
+                map.put("montantTotal", mtTotal);
+                map.put("montantLigne", mtTotal);
                 lignes.add(map);
             }
         }
@@ -444,6 +448,7 @@ public class ImpressionService {
             params.put("fournisseurTelephone", f.getTelephone());
             params.put("fournisseurAdresse", f.getAdresse());
             params.put("fournisseurIce", f.getIce());
+            params.put("fournisseurPays", f.getPays());
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();

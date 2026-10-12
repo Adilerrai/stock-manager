@@ -26,10 +26,10 @@ public class LigneCommande {
     @Column(name = "quantite_livree")
     private Integer quantiteLivree ;
 
-    @Column(name = "prix_unitaire", precision = 12, scale = 2, nullable = false)
+    @Column(name = "prix_unitaire", precision = 14, scale = 4, nullable = false)
     private BigDecimal prixUnitaire;
 
-    @Column(name = "prix_unitaire_ht", precision = 12, scale = 2)
+    @Column(name = "prix_unitaire_ht", precision = 14, scale = 4)
     private BigDecimal prixUnitaireHT;
 
     @Column(name = "taux_tva", precision = 5, scale = 2)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 026 :
+      - Support des prix unitaires à 4 décimales (ex: 0.039, 0.0395) pour les lignes de commande fournisseur
+      - Augmentation de la précision de prix_unitaire et prix_unitaire_ht à NUMERIC(14, 4)
+    -->
+    <changeSet id="026-alter-lignes-commande-unit-price-precision" author="erp-achats">
+        <modifyDataType tableName="lignes_commande" columnName="prix_unitaire" newDataType="NUMERIC(14, 4)"/>
+        <modifyDataType tableName="lignes_commande" columnName="prix_unitaire_ht" newDataType="NUMERIC(14, 4)"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -142,7 +142,12 @@ public class CommandeService {
         BigDecimal finalTVA = appliquerTva ? (commandeDTO.getMontantTVA() != null ? commandeDTO.getMontantTVA() : montantTVATotal) : BigDecimal.ZERO;
         BigDecimal finalTTC = appliquerTva 
                 ? (commandeDTO.getMontantTTC() != null ? commandeDTO.getMontantTTC() : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : montantTTCTotal))
-                : finalHT;
+                : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : (commandeDTO.getMontantHT() != null ? commandeDTO.getMontantHT() : finalHT));
+
+        if (!appliquerTva && commandeDTO.getMontantTotal() != null) {
+            finalHT = commandeDTO.getMontantHT() != null ? commandeDTO.getMontantHT() : commandeDTO.getMontantTotal();
+            finalTTC = commandeDTO.getMontantTotal();
+        }
 
         commande.setMontantHT(finalHT);
         commande.setMontantTVA(finalTVA);
@@ -215,7 +220,12 @@ public class CommandeService {
             BigDecimal finalTVA = appliquerTva ? (commandeDTO.getMontantTVA() != null ? commandeDTO.getMontantTVA() : montantTVATotal) : BigDecimal.ZERO;
             BigDecimal finalTTC = appliquerTva 
                     ? (commandeDTO.getMontantTTC() != null ? commandeDTO.getMontantTTC() : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : montantTTCTotal))
-                    : finalHT;
+                    : (commandeDTO.getMontantTotal() != null ? commandeDTO.getMontantTotal() : (commandeDTO.getMontantHT() != null ? commandeDTO.getMontantHT() : finalHT));
+
+            if (!appliquerTva && commandeDTO.getMontantTotal() != null) {
+                finalHT = commandeDTO.getMontantHT() != null ? commandeDTO.getMontantHT() : commandeDTO.getMontantTotal();
+                finalTTC = commandeDTO.getMontantTotal();
+            }
 
             commande.setMontantHT(finalHT);
             commande.setMontantTVA(finalTVA);
@@ -245,10 +255,12 @@ public class CommandeService {
         ligne.setPrixUnitaireHT(puHT);
         ligne.setTauxTVA(tauxTVA);
 
-        BigDecimal montantHT = ligneDTO.getMontantHT() != null ? ligneDTO.getMontantHT() : puHT.multiply(qte);
+        BigDecimal montantHT = ligneDTO.getMontantHT() != null ? ligneDTO.getMontantHT() 
+                : (ligneDTO.getMontantLigne() != null && !appliquerTva ? ligneDTO.getMontantLigne() : puHT.multiply(qte));
         BigDecimal montantTVA = ligneDTO.getMontantTVA() != null ? ligneDTO.getMontantTVA() 
                 : (appliquerTva ? montantHT.multiply(tauxTVA).divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP) : BigDecimal.ZERO);
-        BigDecimal montantTTC = ligneDTO.getMontantTTC() != null ? ligneDTO.getMontantTTC() : montantHT.add(montantTVA);
+        BigDecimal montantTTC = ligneDTO.getMontantTTC() != null ? ligneDTO.getMontantTTC() 
+                : (ligneDTO.getMontantLigne() != null ? ligneDTO.getMontantLigne() : montantHT.add(montantTVA));
         BigDecimal montantLigne = ligneDTO.getMontantLigne() != null ? ligneDTO.getMontantLigne() : (appliquerTva ? montantTTC : montantHT);
 
         ligne.setMontantHT(montantHT);
@@ -530,6 +542,7 @@ public class CommandeService {
             parameters.put("dateLivraisonPrevue", commande.getDateLivraisonPrevue());
             parameters.put("fournisseurNom", commande.getFournisseur().getRaisonSociale());
             parameters.put("fournisseurAdresse", commande.getFournisseur().getAdresse());
+            parameters.put("fournisseurPays", commande.getFournisseur().getPays());
             parameters.put("montantTotal", commande.getMontantTotal());
             parameters.put("observations", commande.getObservations());
             parameters.put("statut", commande.getStatut().toString());

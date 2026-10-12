@@ -85,4 +85,7 @@
     <!-- Changeset 025 : Champs devise et type_fournisseur dans fournisseurs et commandes -->
     <include file="changes/025-add-fournisseurs-and-commandes-international-fields.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 026 : Précision 4 décimales pour prix_unitaire et prix_unitaire_ht sur lignes_commande -->
+    <include file="changes/026-alter-lignes-commande-unit-price-precision.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

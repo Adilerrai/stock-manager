@@ -37,6 +37,7 @@
 	<parameter name="fournisseurTelephone" class="java.lang.String"/>
 	<parameter name="fournisseurAdresse" class="java.lang.String"/>
 	<parameter name="fournisseurIce" class="java.lang.String"/>
+	<parameter name="fournisseurPays" class="java.lang.String"/>
 	<parameter name="observations" class="java.lang.String"/>
 	<parameter name="notes" class="java.lang.String"/>
 	<parameter name="montantHT" class="java.math.BigDecimal"/>
@@ -178,6 +179,13 @@
 				<text><![CDATA[FOURNISSEUR]]></text>
 			</staticText>
 			<textField isBlankWhenNull="true">
+				<reportElement x="395" y="86" width="151" height="11" forecolor="#4B5563" uuid="f27b9c91-2a29-42b4-92ca-493f1d8bb63a"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{fournisseurPays} != null && !$P{fournisseurPays}.trim().isEmpty() ? $P{fournisseurPays}.toUpperCase() : ""]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
 				<reportElement x="291" y="99" width="255" height="18" forecolor="#111827" uuid="29be03dd-93ea-4023-b4be-764120d6643f"/>
 				<textElement verticalAlignment="Top">
 					<font fontName="DejaVu Sans" size="11" isBold="true"/>
@@ -196,7 +204,7 @@
 				<textElement verticalAlignment="Top">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$P{fournisseurAdresse} != null ? $P{fournisseurAdresse} : "-"]]></textFieldExpression>
+				<textFieldExpression><![CDATA[($P{fournisseurAdresse} != null && !$P{fournisseurAdresse}.trim().isEmpty() && !$P{fournisseurAdresse}.equals("-") ? $P{fournisseurAdresse} : "") + ($P{fournisseurPays} != null && !$P{fournisseurPays}.trim().isEmpty() && ($P{fournisseurAdresse} == null || !$P{fournisseurAdresse}.toLowerCase().contains($P{fournisseurPays}.toLowerCase())) ? ($P{fournisseurAdresse} != null && !$P{fournisseurAdresse}.trim().isEmpty() && !$P{fournisseurAdresse}.equals("-") ? " — " : "") + $P{fournisseurPays} : ($P{fournisseurAdresse} != null && !$P{fournisseurAdresse}.trim().isEmpty() ? "" : "-"))]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="291" y="146" width="255" height="11" forecolor="#111827" uuid="14c31a43-a67a-4c84-8351-c441b4c85482"/>
@@ -314,7 +322,7 @@
 				<textFieldExpression><![CDATA[$F{quantite} != null ? $F{quantite} : ($F{quantiteCommandee} != null ? $F{quantiteCommandee} : java.math.BigDecimal.ZERO)]]></textFieldExpression>
 			</textField>
 			<!-- P.U. HT -->
-			<textField pattern="#,##0.00" isBlankWhenNull="true">
+			<textField pattern="#,##0.00##" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToBandHeight" x="369" y="0" width="82" height="22" forecolor="#374151" uuid="c8eba23b-530b-485c-b2e3-a12e9751f851"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
