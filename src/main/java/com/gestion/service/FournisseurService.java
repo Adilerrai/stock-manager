@@ -57,6 +57,13 @@ public class FournisseurService {
         fournisseur.setActif(true);
         fournisseur.setPointDeVenteId(tenantId);
 
+        if (fournisseurDTO.getTypeFournisseur() != null) {
+            fournisseur.setTypeFournisseur(fournisseurDTO.getTypeFournisseur());
+        }
+        if (fournisseurDTO.getDevise() != null && !fournisseurDTO.getDevise().isBlank()) {
+            fournisseur.setDevise(fournisseurDTO.getDevise());
+        }
+
         return fournisseurRepository.save(fournisseur);
     }
 

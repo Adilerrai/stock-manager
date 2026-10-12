@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FournisseurDTO {
     private Long id;
     private String raisonSociale;
@@ -97,4 +99,34 @@ public class FournisseurDTO {
 
     public String getDevise() { return devise; }
     public void setDevise(String devise) { this.devise = devise; }
+
+    private String formeJuridique;
+    private String capitalSocial;
+
+    public String getFormeJuridique() { return formeJuridique; }
+    public void setFormeJuridique(String formeJuridique) { this.formeJuridique = formeJuridique; }
+
+    public String getCapitalSocial() { return capitalSocial; }
+    public void setCapitalSocial(String capitalSocial) { this.capitalSocial = capitalSocial; }
+
+    public String getIdentifiantFiscal() { return numeroIdentificationFiscale; }
+    public void setIdentifiantFiscal(String identifiantFiscal) {
+        if (this.numeroIdentificationFiscale == null || this.numeroIdentificationFiscale.isBlank()) {
+            this.numeroIdentificationFiscale = identifiantFiscal;
+        }
+    }
+
+    public Integer getDelaiPaiement() { return delaiPaiementJours; }
+    public void setDelaiPaiement(Integer delaiPaiement) {
+        if (this.delaiPaiementJours == null) {
+            this.delaiPaiementJours = delaiPaiement;
+        }
+    }
+
+    public String getModePaiementDefaut() { return conditionsPaiement; }
+    public void setModePaiementDefaut(String modePaiementDefaut) {
+        if (this.conditionsPaiement == null || this.conditionsPaiement.isBlank()) {
+            this.conditionsPaiement = modePaiementDefaut;
+        }
+    }
 }
