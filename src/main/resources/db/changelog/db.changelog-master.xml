@@ -91,4 +91,7 @@
     <!-- Changeset 027 : Demandes de Prix (DDP / RFQ) et Comparateur d'Offres Fournisseurs -->
     <include file="changes/027-create-demandes-prix-and-comparateur.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 028 : Suppression contrainte NOT NULL sur qualite dans lots -->
+    <include file="changes/028-remove-qualite-not-null-constraints.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

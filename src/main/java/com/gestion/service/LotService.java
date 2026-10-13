@@ -75,8 +75,9 @@ public class LotService {
     }
 
     public List<Lot> consommerStock(Long produitId, Long depotId, QualiteProduit qualite, BigDecimal quantiteAConsommer) {
+        QualiteProduit q = qualite != null ? qualite : QualiteProduit.PREMIERE_QUALITE;
         List<Lot> lotsDisponibles = lotRepository.findByProduitIdAndDepotIdAndQualiteAndQuantiteDisponibleGreaterThanOrderByDateReception(
-            produitId, depotId, qualite, BigDecimal.ZERO);
+            produitId, depotId, q, BigDecimal.ZERO);
         
         // Logique FIFO pour consommer les lots
         // ... implémentation de la consommation

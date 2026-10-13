@@ -77,7 +77,6 @@ public class InventaireService {
                 LigneInventaire li = new LigneInventaire();
                 li.setInventaire(inv);
                 li.setProduit(p);
-                li.setQualite(QualiteProduit.PREMIERE_QUALITE);
 
                 Stock stock = stockRepository.findByProduitWithQualities(p.getId()).orElse(null);
                 BigDecimal qteTheo = stock != null && stock.getQuantiteTotaleDisponible() != null ?
@@ -140,7 +139,6 @@ public class InventaireService {
                                 depotId,
                                 TypeMouvement.INVENTAIRE,
                                 ecart,
-                                li.getQualite(),
                                 inv.getReference(),
                                 "Ajustement inventaire positif " + inv.getReference()
                         );
@@ -150,7 +148,6 @@ public class InventaireService {
                                 depotId,
                                 TypeMouvement.AJUSTEMENT_NEGATIF,
                                 ecart.abs(),
-                                li.getQualite(),
                                 inv.getReference(),
                                 "Ajustement inventaire négatif " + inv.getReference()
                         );

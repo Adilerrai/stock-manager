@@ -130,10 +130,6 @@ public class LivraisonService {
         ligne.setQuantiteLivree(ligneDTO.getQuantiteLivree());
         ligne.setPrixProduit(ligneDTO.getPrixProduit());
         
-        // La qualité doit toujours venir du frontend - obligatoire
-        if (ligneDTO.getQualiteProduit() == null) {
-            throw new IllegalArgumentException("La qualité du produit est obligatoire");
-        }
         ligne.setQualiteProduit(ligneDTO.getQualiteProduit());
 
         return ligneLivraisonRepository.save(ligne);
@@ -343,9 +339,7 @@ public class LivraisonService {
         ligneEntity.setProduit(produit);
         ligneEntity.setDepot(depot);
         
-        if (ligneEntity.getQualiteProduit() == null) {
-            throw new IllegalArgumentException("La qualité du produit est obligatoire");
-        }
+
 
         return ligneLivraisonRepository.save(ligneEntity);
     }
@@ -455,8 +449,7 @@ public class LivraisonService {
                 ligneLiv.setQuantiteLivree((long) qteRestante);
                 ligneLiv.setPrixProduit(ligneCmd.getPrixUnitaire());
 
-                // Qualité par défaut
-                ligneLiv.setQualiteProduit(QualiteProduit.PREMIERE_QUALITE);
+                ligneLiv.setQualiteProduit(ligneCmd.getQualiteProduit());
                 
                 // Résoudre le dépôt par défaut
                 Depot depot = null;

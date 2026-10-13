@@ -28,6 +28,7 @@ public class LigneLivraison {
 
     private BigDecimal prixProduit;
     @Enumerated(EnumType.STRING)
+    @Column(name = "qualite_produit", nullable = true)
     private QualiteProduit qualiteProduit;
 
 

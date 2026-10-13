@@ -26,7 +26,7 @@ public class Lot {
     private Depot depot;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "qualite", nullable = false)
+    @Column(name = "qualite", nullable = true)
     private QualiteProduit qualite;
     
     @Column(name = "quantite_initiale", nullable = false, precision = 10, scale = 2)

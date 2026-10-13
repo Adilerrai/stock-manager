@@ -25,7 +25,7 @@ public class LigneInventaire {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "qualite")
-    private QualiteProduit qualite = QualiteProduit.PREMIERE_QUALITE;
+    private QualiteProduit qualite;
 
     @Column(name = "quantite_theorique", nullable = false, precision = 12, scale = 3)
     private BigDecimal quantiteTheorique = BigDecimal.ZERO;

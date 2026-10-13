@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 028 :
+      - Suppression de la contrainte NOT NULL sur la colonne qualite de la table 'lots'
+      - Rendre la notion de qualité de produit facultative / nullable sur toutes les tables
+    -->
+    <changeSet id="028-remove-qualite-not-null-constraints" author="erp-pointvente">
+        <sql splitStatements="true">
+            ALTER TABLE IF EXISTS lots ALTER COLUMN qualite DROP NOT NULL;
+            ALTER TABLE IF EXISTS lots ALTER COLUMN qualite DROP DEFAULT;
+            ALTER TABLE IF EXISTS lignes_livraison ALTER COLUMN qualite_produit DROP NOT NULL;
+            ALTER TABLE IF EXISTS mouvements_stock ALTER COLUMN qualite_produit DROP NOT NULL;
+            ALTER TABLE IF EXISTS lignes_commande ALTER COLUMN qualite_produit DROP NOT NULL;
+            ALTER TABLE IF EXISTS lignes_inventaire ALTER COLUMN qualite DROP NOT NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

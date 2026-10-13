@@ -1060,10 +1060,19 @@ public class DocumentAiExtractionService {
         Depot depot = depotRepository.findByPointDeVenteId(tenantId).stream()
                 .findFirst()
                 .orElse(null);
+        if (depot == null) {
+            depot = depotRepository.findByActifTrue().stream().findFirst().orElse(null);
+        }
 
         Livraison liv = new Livraison();
         liv.setNumeroLivraison(dto.getNumeroPiece() != null ? dto.getNumeroPiece() : "BL-" + System.currentTimeMillis());
-        liv.setDateLivraison(dto.getDatePiece() != null ? LocalDate.parse(dto.getDatePiece()).atStartOfDay() : LocalDateTime.now());
+        LocalDateTime dateLiv = LocalDateTime.now();
+        if (dto.getDatePiece() != null && !dto.getDatePiece().isBlank()) {
+            try {
+                dateLiv = LocalDate.parse(dto.getDatePiece()).atStartOfDay();
+            } catch (Exception ignored) {}
+        }
+        liv.setDateLivraison(dateLiv);
         liv.setMontantTotal(dto.getMontantTTC());
         liv.setPointDeVenteId(tenantId);
         liv.setObservations("BL fournisseur importé via OCR & Groq AI");
@@ -1075,6 +1084,9 @@ public class DocumentAiExtractionService {
             Produit p = null;
             if (l.getProduitId() != null) {
                 p = produitRepository.findById(l.getProduitId()).orElse(null);
+            }
+            if (p == null) {
+                p = produitRepository.findByPointDeVenteId(tenantId).stream().findFirst().orElse(null);
             }
             ll.setProduit(p);
             ll.setQuantiteLivree(l.getQuantite() != null ? l.getQuantite().longValue() : 1L);

@@ -147,7 +147,6 @@ public class AvoirService {
                                 depotId,
                                 TypeMouvement.AJUSTEMENT_POSITIF,
                                 ligne.getQuantite(),
-                                QualiteProduit.PREMIERE_QUALITE,
                                 avoir.getNumeroAvoir(),
                                 "Retour marchandise avoir client " + avoir.getNumeroAvoir()
                         );
@@ -157,7 +156,6 @@ public class AvoirService {
                                 depotId,
                                 TypeMouvement.AJUSTEMENT_NEGATIF,
                                 ligne.getQuantite(),
-                                QualiteProduit.PREMIERE_QUALITE,
                                 avoir.getNumeroAvoir(),
                                 "Retour marchandise avoir fournisseur " + avoir.getNumeroAvoir()
                         );

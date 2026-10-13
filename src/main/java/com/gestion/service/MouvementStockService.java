@@ -107,30 +107,27 @@ public class MouvementStockService {
     @Transactional
     public MouvementStock creerMouvement(Long produitId, Long depotId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, String referenceDocument, String motif) {
-        return creerMouvement(produitId, depotId, typeMouvement, quantite, QualiteProduit.PREMIERE_QUALITE, referenceDocument, motif, false);
+        return creerMouvement(produitId, depotId, typeMouvement, quantite, null, referenceDocument, motif, false);
     }
 
     @Transactional
     public MouvementStock creerMouvement(Long produitId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, String referenceDocument, String motif) {
-        return creerMouvement(produitId, null, typeMouvement, quantite, QualiteProduit.PREMIERE_QUALITE, referenceDocument, motif, false);
+        return creerMouvement(produitId, null, typeMouvement, quantite, null, referenceDocument, motif, false);
     }
 
     private void appliquerMouvementStock(Long produitId, TypeMouvement typeMouvement,
                                          BigDecimal quantite, QualiteProduit qualite, boolean depuisReservation) {
         switch (typeMouvement) {
             case ENTREE_LIVRAISON, AJUSTEMENT_POSITIF, TRANSFERT_ENTREE ->
-                stockService.ajouterStockParQualite(produitId, qualite, quantite);
+                stockService.ajouterStock(produitId, quantite);
             case SORTIE_VENTE, SORTIE_COMMANDE, AJUSTEMENT_NEGATIF, TRANSFERT_SORTIE ->
-                stockService.retirerStockParQualite(produitId, qualite, quantite, depuisReservation);
+                stockService.retirerStock(produitId, quantite, depuisReservation);
             case INVENTAIRE -> {
-                Stock stock = stockRepository.findByProduitWithQualities(produitId).orElse(null);
+                Stock stock = stockRepository.findByProduitId(produitId).orElse(null);
                 if (stock != null) {
-                    StockQualite sq = stock.getStockByQualite(qualite);
-                    if (sq != null) {
-                        sq.setQuantiteDisponible(quantite);
-                        stockRepository.save(stock);
-                    }
+                    stock.setQuantiteDisponible(quantite);
+                    stockRepository.save(stock);
                 }
             }
         }

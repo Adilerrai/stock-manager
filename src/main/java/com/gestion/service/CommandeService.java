@@ -389,8 +389,7 @@ public class CommandeService {
                     LigneLivraisonDTO lldto = new LigneLivraisonDTO();
                     lldto.setProduit(produitMapper.toDto(lc.getProduit()));
                     lldto.setQuantiteLivree((long) restant);
-                    lldto.setPrixProduit(lc.getPrixUnitaire());
-                    lldto.setQualiteProduit(lc.getQualiteProduit() != null ? lc.getQualiteProduit() : QualiteProduit.PREMIERE_QUALITE);
+                    lldto.setQualiteProduit(lc.getQualiteProduit());
 
                     if (receptionDTO != null && receptionDTO.getDepotId() != null) {
                         DepotDTO dd = new DepotDTO();
@@ -451,9 +450,7 @@ public class CommandeService {
                 LigneLivraisonDTO lldto = new LigneLivraisonDTO();
                 lldto.setProduit(produitMapper.toDto(lc.getProduit()));
                 lldto.setQuantiteLivree(item.getQuantiteRecue().longValue());
-                lldto.setPrixProduit(item.getPrixUnitaire() != null ? item.getPrixUnitaire() : lc.getPrixUnitaire());
-                lldto.setQualiteProduit(item.getQualiteProduit() != null ? item.getQualiteProduit()
-                        : (lc.getQualiteProduit() != null ? lc.getQualiteProduit() : QualiteProduit.PREMIERE_QUALITE));
+                lldto.setQualiteProduit(item.getQualiteProduit() != null ? item.getQualiteProduit() : lc.getQualiteProduit());
 
                 Long depotId = item.getDepotId() != null ? item.getDepotId()
                         : (receptionDTO.getDepotId() != null ? receptionDTO.getDepotId() : null);

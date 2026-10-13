@@ -258,8 +258,7 @@ public class BonLivraisonClientService {
                         ligne.getDepot() != null ? ligne.getDepot().getId() : null,
                         TypeMouvement.SORTIE_VENTE,
                         ligne.getQuantiteLivree() != null ? ligne.getQuantiteLivree() : BigDecimal.ONE,
-                        ligne.getLot() != null && ligne.getLot().getQualite() != null ? 
-                                ligne.getLot().getQualite() : QualiteProduit.PREMIERE_QUALITE,
+                        ligne.getLot() != null ? ligne.getLot().getQualite() : null,
                         bl.getNumeroBl(),
                         "Expédition BL client " + bl.getNumeroBl(),
                         isFromOrder
@@ -383,8 +382,7 @@ public class BonLivraisonClientService {
                                 ligne.getDepot() != null ? ligne.getDepot().getId() : null,
                                 TypeMouvement.ENTREE_LIVRAISON,
                                 ligne.getQuantiteLivree() != null ? ligne.getQuantiteLivree() : BigDecimal.ONE,
-                                ligne.getLot() != null && ligne.getLot().getQualite() != null ? 
-                                        ligne.getLot().getQualite() : QualiteProduit.PREMIERE_QUALITE,
+                                ligne.getLot() != null ? ligne.getLot().getQualite() : null,
                                 bl.getNumeroBl(),
                                 "Réintégration stock suite annulation BL " + bl.getNumeroBl()
                         );
@@ -440,8 +438,7 @@ public class BonLivraisonClientService {
                                 ligne.getDepot() != null ? ligne.getDepot().getId() : null,
                                 TypeMouvement.ENTREE_LIVRAISON,
                                 ligne.getQuantiteLivree() != null ? ligne.getQuantiteLivree() : BigDecimal.ONE,
-                                ligne.getLot() != null && ligne.getLot().getQualite() != null ? 
-                                        ligne.getLot().getQualite() : QualiteProduit.PREMIERE_QUALITE,
+                                ligne.getLot() != null ? ligne.getLot().getQualite() : null,
                                 bl.getNumeroBl(),
                                 "Réintégration stock suite remise en brouillon BL " + bl.getNumeroBl()
                         );
