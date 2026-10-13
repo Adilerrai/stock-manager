@@ -33,6 +33,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,31 +42,14 @@ public class DocumentAiExtractionService {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentAiExtractionService.class);
 
-    @Value("${groq.api.url:https://api.groq.com/openai/v1/chat/completions}")
-    private String groqApiUrl;
+    @Value("${local.ai.url:${LOCAL_AI_URL:http://5.189.162.46:11434/v1/chat/completions}}")
+    private String localAiUrl;
 
-    @Value("${groq.api.key:${GROQ_API_KEY:}}")
-    private String groqApiKey;
+    @Value("${local.ai.model:${LOCAL_AI_MODEL:qwen2.5:3b}}")
+    private String localAiModel;
 
-    @Value("${groq.model:qwen/qwen3.8-27b}")
-    private String groqModel;
-
-    // Clé de secours par défaut assemblée dynamiquement pour ne pas déclencher le scanner GitHub
-    private static final String P1 = "gs" + "k_H7tjIGWa";
-    private static final String P2 = "RBZIsugwXHzH";
-    private static final String P3 = "WGdyb3FY3URC";
-    private static final String P4 = "WwP9QAxjTdtABmo81j6C";
-
-    private String resolveApiKey() {
-        if (groqApiKey != null && !groqApiKey.isBlank()) {
-            return groqApiKey.trim();
-        }
-        String env = System.getenv("GROQ_API_KEY");
-        if (env != null && !env.isBlank()) {
-            return env.trim();
-        }
-        return (P1 + P2 + P3 + P4).trim();
-    }
+    @Value("${local.ai.enabled:${LOCAL_AI_ENABLED:true}}")
+    private boolean localAiEnabled;
 
     private final OpenOcrService openOcrService;
     private final FournisseurRepository fournisseurRepository;
@@ -82,7 +67,8 @@ public class DocumentAiExtractionService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(30))
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(60))
             .build();
 
     public DocumentAiExtractionService(OpenOcrService openOcrService,
@@ -155,8 +141,20 @@ public class DocumentAiExtractionService {
             List<Client> clients = clientRepository.findByPointDeVenteId(tenantId);
             List<Produit> produits = produitRepository.findByPointDeVenteId(tenantId);
 
-            // 3. Appel Groq AI pour analyse structurée et matching
-            DocumentOcrAnalysisResultDTO dto = appelerGroqPourMatching(ocrText, typeDocumentAttendu, fournisseurs, clients, produits);
+            // 3. Extraction intelligente via IA Locale Ollama (avec fallback automatique Regex si hors ligne)
+            DocumentOcrAnalysisResultDTO dto = null;
+            if (localAiEnabled && localAiUrl != null && !localAiUrl.isBlank()) {
+                try {
+                    dto = appelerIaLocalePourMatching(ocrText, typeDocumentAttendu, fournisseurs, clients, produits);
+                } catch (Exception ex) {
+                    log.warn("IA locale Ollama non joignable ({}), basculement sur Regex local : {}", 
+                            localAiUrl, ex.getMessage());
+                }
+            }
+
+            if (dto == null) {
+                dto = analyserDocumentViaReglesEtRegex(ocrText, typeDocumentAttendu, fournisseurs, clients, produits);
+            }
             dto.setRawOcrText(ocrText);
             if (docGed != null) {
                 dto.setDocumentId(docGed.getId());
@@ -177,15 +175,14 @@ public class DocumentAiExtractionService {
     }
 
     /**
-     * Envoie le texte OCR et les référentiels ERP à Groq AI
+     * Appel à l'IA locale Ollama (Qwen 2.5) pour l'analyse sémantique et le matching.
      */
-    private DocumentOcrAnalysisResultDTO appelerGroqPourMatching(String ocrText,
-                                                                 String typeDocumentAttendu,
-                                                                 List<Fournisseur> fournisseurs,
-                                                                 List<Client> clients,
-                                                                 List<Produit> produits) throws Exception {
+    private DocumentOcrAnalysisResultDTO appelerIaLocalePourMatching(String ocrText,
+                                                                     String typeDocumentAttendu,
+                                                                     List<Fournisseur> fournisseurs,
+                                                                     List<Client> clients,
+                                                                     List<Produit> produits) throws Exception {
 
-        // Limiter les contextes pour rester dans les limites de tokens
         String fournisseursContext = fournisseurs.stream().limit(50)
                 .map(f -> String.format("{id:%d, nom:'%s', ice:'%s', rc:'%s'}", 
                         f.getId(), escape(f.getRaisonSociale()), escape(f.getIce()), escape(f.getNumeroRegistreCommerce())))
@@ -222,6 +219,11 @@ public class DocumentAiExtractionService {
                - Identifie le tiers (Fournisseur ou Client selon le document) et extrait montants et lignes.
             4. Retourne UNIQUEMENT un objet JSON valide conforme au schéma demandé.
             """;
+
+        String promptOcrText = ocrText;
+        if (promptOcrText != null && promptOcrText.length() > 20000) {
+            promptOcrText = promptOcrText.substring(0, 20000);
+        }
 
         String userPrompt = String.format("""
             TYPE_ATTENDU : %s
@@ -281,37 +283,51 @@ public class DocumentAiExtractionService {
                 fournisseursContext,
                 clientsContext,
                 produitsContext,
-                ocrText
+                promptOcrText
         );
 
         Map<String, Object> messageSystem = Map.of("role", "system", "content", systemPrompt);
         Map<String, Object> messageUser = Map.of("role", "user", "content", userPrompt);
 
         Map<String, Object> requestPayload = new HashMap<>();
-        requestPayload.put("model", groqModel != null && !groqModel.isBlank() ? groqModel.trim() : "qwen/qwen3.8-27b");
+        requestPayload.put("model", localAiModel != null && !localAiModel.isBlank() ? localAiModel.trim() : "qwen2.5:3b");
         requestPayload.put("messages", List.of(messageSystem, messageUser));
         requestPayload.put("temperature", 0.1);
-        requestPayload.put("response_format", Map.of("type", "json_object"));
+        requestPayload.put("stream", false);
 
         String jsonBody = objectMapper.writeValueAsString(requestPayload);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(groqApiUrl))
+                .version(HttpClient.Version.HTTP_1_1)
+                .uri(URI.create(localAiUrl.trim()))
                 .timeout(Duration.ofSeconds(60))
                 .header("Content-Type", "application/json")
-                .header("Authorization", "Bearer " + resolveApiKey())
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody, StandardCharsets.UTF_8))
                 .build();
 
+        log.info(">> Appel IA Locale Ollama ({}) sur {}...", localAiModel, localAiUrl);
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            log.error("Erreur API Groq (HTTP {}): {}", response.statusCode(), response.body());
-            throw new RuntimeException("Erreur de communication avec Groq AI (" + response.statusCode() + "): " + response.body());
+            log.warn("Erreur API IA Locale (HTTP {}): {}", response.statusCode(), response.body());
+            return null;
         }
 
         JsonNode root = objectMapper.readTree(response.body());
         String aiContent = root.path("choices").path(0).path("message").path("content").asText();
+
+        if (aiContent.contains("```")) {
+            int start = aiContent.indexOf("```json");
+            if (start != -1) {
+                start += 7;
+            } else {
+                start = aiContent.indexOf("```") + 3;
+            }
+            int end = aiContent.lastIndexOf("```");
+            if (end > start) {
+                aiContent = aiContent.substring(start, end).trim();
+            }
+        }
 
         return parseJsonResult(aiContent);
     }
@@ -365,7 +381,7 @@ public class DocumentAiExtractionService {
                         ligne.setMontantHT(ligne.getQuantite().multiply(ligne.getPrixUnitaireHT()));
                     }
                     if (ligne.getMontantTTC().compareTo(BigDecimal.ZERO) == 0) {
-                        BigDecimal tva = ligne.getMontantHT().multiply(ligne.getTauxTVA()).divide(BigDecimal.valueOf(100));
+                        BigDecimal tva = ligne.getMontantHT().multiply(ligne.getTauxTVA()).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
                         ligne.setMontantTTC(ligne.getMontantHT().add(tva));
                     }
                     lignes.add(ligne);
@@ -375,9 +391,348 @@ public class DocumentAiExtractionService {
 
             return dto;
         } catch (Exception e) {
-            log.error("Erreur lors de la conversion du JSON Groq : {}", e.getMessage());
-            throw new RuntimeException("Le modèle IA n'a pas retourné un JSON exploitable: " + e.getMessage(), e);
+            log.error("Erreur lors de la conversion du JSON IA locale : {}", e.getMessage());
+            return null;
         }
+    }
+
+    /**
+     * Analyse et structuration locale 100% autonome (Regex et règles métier marocaines)
+     * à partir du texte extrait par docTR OCR, sans aucun appel externe (ni Groq, ni OpenOCR).
+     */
+    private DocumentOcrAnalysisResultDTO analyserDocumentViaReglesEtRegex(String ocrText,
+                                                                         String typeDocumentAttendu,
+                                                                         List<Fournisseur> fournisseurs,
+                                                                         List<Client> clients,
+                                                                         List<Produit> produits) {
+        DocumentOcrAnalysisResultDTO dto = new DocumentOcrAnalysisResultDTO();
+        if (ocrText == null || ocrText.isBlank()) {
+            dto.setTypeDocument(typeDocumentAttendu != null ? typeDocumentAttendu : "FACTURE_ACHAT");
+            dto.setDatePiece(LocalDate.now().toString());
+            dto.setLignes(new ArrayList<>());
+            return dto;
+        }
+
+        // 1. Détection du type de document
+        String typeDoc = determinerTypeDocument(ocrText, typeDocumentAttendu);
+        dto.setTypeDocument(typeDoc);
+
+        // 2. Détection du numéro de pièce
+        dto.setNumeroPiece(extraireNumeroPiece(ocrText, typeDoc));
+
+        // 3. Détection des dates
+        extraireDates(ocrText, dto);
+
+        // 4. Chèque / Effet bancaire
+        if ("CHEQUE".equalsIgnoreCase(typeDoc) || "EFFET".equalsIgnoreCase(typeDoc) || "TRAITE".equalsIgnoreCase(typeDoc)) {
+            dto.setNomBanque(extraireNomBanque(ocrText));
+            dto.setNumeroCheque(extraireNumeroCheque(ocrText, dto.getNumeroPiece()));
+        }
+
+        // 5. ICE et Identification Tiers (Fournisseur ou Client)
+        String ice = extraireIce(ocrText);
+        dto.setTierIce(ice);
+        identifierTier(ocrText, ice, typeDoc, dto, fournisseurs, clients);
+
+        // 6. Extraction des montants (HT, TVA, TTC)
+        extraireMontants(ocrText, dto);
+
+        // 7. Extraction des lignes d'articles et matching catalogue
+        if (!"CHEQUE".equalsIgnoreCase(typeDoc) && !"EFFET".equalsIgnoreCase(typeDoc) && !"TRAITE".equalsIgnoreCase(typeDoc)) {
+            dto.setLignes(extraireLignesArticles(ocrText, produits));
+        } else {
+            dto.setLignes(new ArrayList<>());
+        }
+
+        return dto;
+    }
+
+    private String determinerTypeDocument(String text, String attendu) {
+        if (attendu != null && !attendu.isBlank() && !"AUTO_DETECT".equalsIgnoreCase(attendu)) {
+            return attendu;
+        }
+        String upper = text.toUpperCase();
+        if (upper.contains("PAYEZ CONTRE CE CHÈQUE") || upper.contains("PAYEZ CONTRE CE CHEQUE") 
+                || upper.contains("CHÈQUE") || upper.contains("CHEQUE")) {
+            return "CHEQUE";
+        }
+        if (upper.contains("LETTRE DE CHANGE") || upper.contains("TRAITE") 
+                || upper.contains("EFFET DE COMMERCE") || upper.contains("BILLET A ORDRE")) {
+            return "EFFET";
+        }
+        if (upper.contains("BON DE COMMANDE") || upper.contains("COMMANDE CLIENT") 
+                || upper.contains("BC N°") || upper.contains("COMMANDE N°")) {
+            return "COMMANDE_CLIENT";
+        }
+        if (upper.contains("BON DE LIVRAISON") || upper.contains("BON DE RECEPTION") 
+                || upper.contains("B.L.") || upper.contains("BL N°") || upper.contains("LIVRAISON")) {
+            return "BON_LIVRAISON_FOURNISSEUR";
+        }
+        return "FACTURE_ACHAT";
+    }
+
+    private String extraireNumeroPiece(String text, String typeDoc) {
+        Pattern pattern = Pattern.compile(
+                "(?i)(?:Facture|FAC|BL|B\\.L\\.|Bon\\s+de\\s+livraison|Bon\\s+de\\s+commande|Commande|BC|N°\\s*pi[èe]ce|N°|R[ée]f(?:[ée]rence)?)\\s*[:#\\-\\s]\\s*([A-Za-z0-9/\\-_]{3,30})"
+        );
+        Matcher m = pattern.matcher(text);
+        if (m.find()) {
+            String val = m.group(1).trim();
+            if (!val.equalsIgnoreCase("date") && !val.equalsIgnoreCase("client") && !val.equalsIgnoreCase("fournisseur")) {
+                return val;
+            }
+        }
+
+        // Format standard marocain (ex: FA2609037, 202609225, FAC-2025-001, BL2026-004)
+        Pattern patternCode = Pattern.compile("\\b([A-Z]{1,4}[\\-_]?[0-9]{4,10}[A-Z0-9/\\-_]*)\\b");
+        Matcher mCode = patternCode.matcher(text);
+        while (mCode.find()) {
+            String val = mCode.group(1).trim();
+            if (val.length() >= 5 && !val.equalsIgnoreCase("MAROC") && !val.equalsIgnoreCase("TOTAL")) {
+                return val;
+            }
+        }
+        return null;
+    }
+
+    private void extraireDates(String text, DocumentOcrAnalysisResultDTO dto) {
+        Pattern datePattern = Pattern.compile("(\\b\\d{1,2}[/\\-.]\\d{1,2}[/\\-.]\\d{2,4}\\b|\\b\\d{4}[/\\-.]\\d{1,2}[/\\-.]\\d{1,2}\\b)");
+
+        Pattern emissionPattern = Pattern.compile("(?i)(?:Date(?:\\s+d['’]émission)?|Le|Casablanca,\\s*le|Rabat,\\s*le|Fait\\s+le)\\s*[:#\\-\\s]?\\s*(" + datePattern.pattern() + ")");
+        Matcher mEmission = emissionPattern.matcher(text);
+        if (mEmission.find()) {
+            dto.setDatePiece(normaliserDate(mEmission.group(1)));
+        }
+
+        Pattern echeancePattern = Pattern.compile("(?i)(?:Éch[ée]ance|Echeance|Date\\s+d['’][ée]ch[ée]ance|Payable\\s+le|Au)\\s*[:#\\-\\s]?\\s*(" + datePattern.pattern() + ")");
+        Matcher mEcheance = echeancePattern.matcher(text);
+        if (mEcheance.find()) {
+            dto.setDateEcheance(normaliserDate(mEcheance.group(1)));
+        }
+
+        if (dto.getDatePiece() == null) {
+            Matcher mAny = datePattern.matcher(text);
+            if (mAny.find()) {
+                dto.setDatePiece(normaliserDate(mAny.group(1)));
+            } else {
+                dto.setDatePiece(LocalDate.now().toString());
+            }
+        }
+    }
+
+    private String normaliserDate(String raw) {
+        if (raw == null || raw.isBlank()) return LocalDate.now().toString();
+        try {
+            raw = raw.replace(".", "/").replace("-", "/").trim();
+            String[] parts = raw.split("/");
+            if (parts.length == 3) {
+                if (parts[0].length() == 4) { // YYYY/MM/DD
+                    int y = Integer.parseInt(parts[0]);
+                    int m = Integer.parseInt(parts[1]);
+                    int d = Integer.parseInt(parts[2]);
+                    return String.format("%04d-%02d-%02d", y, m, d);
+                } else { // DD/MM/YYYY
+                    int d = Integer.parseInt(parts[0]);
+                    int m = Integer.parseInt(parts[1]);
+                    int y = Integer.parseInt(parts[2]);
+                    if (y < 100) y += 2000;
+                    return String.format("%04d-%02d-%02d", y, m, d);
+                }
+            }
+        } catch (Exception ignored) {}
+        return LocalDate.now().toString();
+    }
+
+    private String extraireNomBanque(String text) {
+        String upper = text.toUpperCase();
+        if (upper.contains("ATTIJARIWAFA") || upper.contains("ATTIJARI")) return "Attijariwafa Bank";
+        if (upper.contains("BANQUE POPULAIRE") || upper.contains("CHAABI") || upper.contains("BCP")) return "Banque Populaire";
+        if (upper.contains("BANK OF AFRICA") || upper.contains("BMCE")) return "Bank of Africa";
+        if (upper.contains("CIH")) return "CIH Bank";
+        if (upper.contains("SOCIETE GENERALE") || upper.contains("SOCIÉTÉ GÉNÉRALE") || upper.contains("SGMB")) return "Société Générale";
+        if (upper.contains("CREDIT DU MAROC") || upper.contains("CRÉDIT DU MAROC") || upper.contains("CDM")) return "Crédit du Maroc";
+        if (upper.contains("CREDIT AGRICOLE") || upper.contains("CRÉDIT AGRICOLE") || upper.contains("CAM")) return "Crédit Agricole du Maroc";
+        if (upper.contains("AL BARID")) return "Al Barid Bank";
+        if (upper.contains("CFG")) return "CFG Bank";
+        if (upper.contains("UMNIA")) return "Umnia Bank";
+        return null;
+    }
+
+    private String extraireNumeroCheque(String text, String fallback) {
+        Pattern p = Pattern.compile("(?i)(?:Ch[èe]que|N°\\s*ch[èe]que|N°)\\s*[:#\\-\\s]?\\s*([0-9]{6,10})");
+        Matcher m = p.matcher(text);
+        if (m.find()) return m.group(1);
+        Pattern pDigits = Pattern.compile("\\b([0-9]{7,8})\\b");
+        Matcher mDigits = pDigits.matcher(text);
+        if (mDigits.find()) return mDigits.group(1);
+        return fallback;
+    }
+
+    private String extraireIce(String text) {
+        Pattern p = Pattern.compile("(?i)(?:ICE|I\\.C\\.E)[\\s:#\\-]*([0-9]{15})");
+        Matcher m = p.matcher(text);
+        if (m.find()) return m.group(1);
+        Pattern p15 = Pattern.compile("\\b([0-9]{15})\\b");
+        Matcher m15 = p15.matcher(text);
+        if (m15.find()) return m15.group(1);
+        return null;
+    }
+
+    private void identifierTier(String text, String ice, String typeDoc, DocumentOcrAnalysisResultDTO dto,
+                                List<Fournisseur> fournisseurs, List<Client> clients) {
+        boolean isClientExpected = "COMMANDE_CLIENT".equalsIgnoreCase(typeDoc);
+        dto.setTierType(isClientExpected ? "CLIENT" : "FOURNISSEUR");
+
+        // 1. Recherche par ICE dans la BDD
+        if (ice != null && !ice.isBlank()) {
+            if (isClientExpected) {
+                clients.stream().filter(c -> ice.equalsIgnoreCase(c.getIce())).findFirst().ifPresent(c -> {
+                    dto.setTierId(c.getId());
+                    dto.setTierNom(c.getNomComplet() != null ? c.getNomComplet() : c.getNom());
+                    dto.setTierMatched(true);
+                });
+            } else {
+                fournisseurs.stream().filter(f -> ice.equalsIgnoreCase(f.getIce())).findFirst().ifPresent(f -> {
+                    dto.setTierId(f.getId());
+                    dto.setTierNom(f.getRaisonSociale());
+                    dto.setTierMatched(true);
+                });
+            }
+        }
+
+        // 2. Recherche par nom dans la BDD si non trouvé par ICE
+        if (!dto.isTierMatched()) {
+            String upper = text.toUpperCase();
+            if (isClientExpected) {
+                clients.stream()
+                        .filter(c -> {
+                            String nom = c.getNomComplet() != null ? c.getNomComplet() : c.getNom();
+                            return nom != null && nom.length() >= 3 && upper.contains(nom.toUpperCase());
+                        })
+                        .findFirst()
+                        .ifPresent(c -> {
+                            dto.setTierId(c.getId());
+                            dto.setTierNom(c.getNomComplet() != null ? c.getNomComplet() : c.getNom());
+                            dto.setTierIce(c.getIce());
+                            dto.setTierMatched(true);
+                        });
+            } else {
+                fournisseurs.stream()
+                        .filter(f -> f.getRaisonSociale() != null && f.getRaisonSociale().length() >= 3 && upper.contains(f.getRaisonSociale().toUpperCase()))
+                        .findFirst()
+                        .ifPresent(f -> {
+                            dto.setTierId(f.getId());
+                            dto.setTierNom(f.getRaisonSociale());
+                            dto.setTierIce(f.getIce());
+                            dto.setTierMatched(true);
+                        });
+            }
+        }
+
+        // 3. Si toujours non trouvé, extraire un nom potentiel du document
+        if (dto.getTierNom() == null || dto.getTierNom().isBlank()) {
+            Pattern pNom = Pattern.compile("(?i)(?:Fournisseur|Client|Doit|Société|Ste|Établissement)\\s*[:#\\-\\s]\\s*([A-Za-z0-9\\s&.-]{3,50})");
+            Matcher mNom = pNom.matcher(text);
+            if (mNom.find()) {
+                dto.setTierNom(mNom.group(1).trim());
+            } else {
+                String[] lines = text.split("\\r?\\n");
+                for (String l : lines) {
+                    String clean = l.trim();
+                    if (clean.length() >= 3 && !clean.startsWith("---") && !clean.toUpperCase().startsWith("PAGE")) {
+                        dto.setTierNom(clean);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    private void extraireMontants(String text, DocumentOcrAnalysisResultDTO dto) {
+        BigDecimal ttc = extraireMontantParPattern(text, "(?i)(?:Total\\s*TTC|Net\\s*(?:à|a)\\s*payer|Montant\\s*TTC|Total\\s*Net|Total\\s*Général|Net\\s*TTC|Total)\\s*[:#\\-\\s]?\\s*([0-9\\s]{1,15}[.,][0-9]{2})");
+        BigDecimal ht = extraireMontantParPattern(text, "(?i)(?:Total\\s*HT|Montant\\s*HT|Sous[\\s\\-]total|Total\\s*brut)\\s*[:#\\-\\s]?\\s*([0-9\\s]{1,15}[.,][0-9]{2})");
+        BigDecimal tva = extraireMontantParPattern(text, "(?i)(?:Total\\s*TVA|Montant\\s*TVA|TVA\\s*(?:20%|14%|10%|7%|à\\s*20%)?)\\s*[:#\\-\\s]?\\s*([0-9\\s]{1,15}[.,][0-9]{2})");
+
+        if (ttc != null && ht == null) {
+            ht = ttc.divide(BigDecimal.valueOf(1.20), 2, java.math.RoundingMode.HALF_UP);
+            tva = ttc.subtract(ht);
+        } else if (ht != null && ttc == null) {
+            tva = (tva != null) ? tva : ht.multiply(BigDecimal.valueOf(0.20)).setScale(2, java.math.RoundingMode.HALF_UP);
+            ttc = ht.add(tva);
+        } else if (ht != null && ttc != null && tva == null) {
+            tva = ttc.subtract(ht);
+        }
+
+        dto.setMontantHT(ht != null ? ht : BigDecimal.ZERO);
+        dto.setMontantTVA(tva != null ? tva : BigDecimal.ZERO);
+        dto.setMontantTTC(ttc != null ? ttc : BigDecimal.ZERO);
+    }
+
+    private BigDecimal extraireMontantParPattern(String text, String regex) {
+        Pattern p = Pattern.compile(regex);
+        Matcher m = p.matcher(text);
+        BigDecimal lastFound = null;
+        while (m.find()) {
+            String raw = m.group(1).replace(" ", "").replace(",", ".");
+            try {
+                lastFound = new BigDecimal(raw);
+            } catch (Exception ignored) {}
+        }
+        return lastFound;
+    }
+
+    private List<LigneDocumentOcrDTO> extraireLignesArticles(String text, List<Produit> produits) {
+        List<LigneDocumentOcrDTO> lignes = new ArrayList<>();
+        String[] textLines = text.split("\\r?\\n");
+
+        for (String line : textLines) {
+            String upper = line.toUpperCase().trim();
+            if (upper.length() < 3 || upper.startsWith("PAGE") || upper.startsWith("---") || upper.startsWith("TOTAL")) {
+                continue;
+            }
+
+            Produit produitMatch = null;
+            for (Produit p : produits) {
+                String ref = p.getReference() != null ? p.getReference().toUpperCase().trim() : "";
+                String des = (p.getDesignation() != null ? p.getDesignation() : p.getNom() != null ? p.getNom() : "").toUpperCase().trim();
+                if ((!ref.isEmpty() && upper.contains(ref)) || (des.length() >= 4 && upper.contains(des))) {
+                    produitMatch = p;
+                    break;
+                }
+            }
+
+            Pattern numPattern = Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s+(\\d+(?:[.,]\\d+)?)");
+            Matcher mNum = numPattern.matcher(line);
+
+            if (produitMatch != null) {
+                LigneDocumentOcrDTO dto = new LigneDocumentOcrDTO();
+                dto.setProduitId(produitMatch.getId());
+                dto.setReference(produitMatch.getReference());
+                dto.setDesignation(produitMatch.getDesignation() != null ? produitMatch.getDesignation() : produitMatch.getNom());
+                dto.setTauxTVA(BigDecimal.valueOf(20.0));
+
+                BigDecimal qte = BigDecimal.ONE;
+                BigDecimal pu = produitMatch.getPrixVenteHt() != null ? produitMatch.getPrixVenteHt() : 
+                                (produitMatch.getPrixAchatHt() != null ? produitMatch.getPrixAchatHt() : BigDecimal.ZERO);
+
+                if (mNum.find()) {
+                    try {
+                        qte = new BigDecimal(mNum.group(1).replace(",", "."));
+                        pu = new BigDecimal(mNum.group(2).replace(",", "."));
+                    } catch (Exception ignored) {}
+                }
+
+                dto.setQuantite(qte);
+                dto.setPrixUnitaireHT(pu);
+                BigDecimal montantHT = qte.multiply(pu).setScale(2, java.math.RoundingMode.HALF_UP);
+                dto.setMontantHT(montantHT);
+                BigDecimal montantTTC = montantHT.multiply(BigDecimal.valueOf(1.20)).setScale(2, java.math.RoundingMode.HALF_UP);
+                dto.setMontantTTC(montantTTC);
+                lignes.add(dto);
+            }
+        }
+
+        return lignes;
     }
 
     /**

@@ -37,6 +37,7 @@ public class OpenOcrService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
             .connectTimeout(Duration.ofSeconds(30))
             .build();
 
@@ -51,66 +52,15 @@ public class OpenOcrService {
 
         String mimeType = determinerMimeType(fileName, contentType);
 
-        // 1. Tenter en priorité le microservice docTR OCR (ultra-rapide, privé, 100% local)
+        // 1. Appel du microservice docTR OCR (100% local, privé)
         String doctrText = extraireTexteViaDocTr(fileBytes, fileName, mimeType);
         if (doctrText != null && !doctrText.isBlank()) {
             log.info("docTR OCR utilisé avec succès pour {} (longueur texte : {})", fileName, doctrText.length());
             return doctrText;
         }
 
-        log.info("docTR non disponible ou réponse vide. Basculement sur le moteur secondaire OpenOCR...");
-
-        // 2. Fallback OpenOCR
-        String base64Data = Base64.getEncoder().encodeToString(fileBytes);
-        String engine = (defaultEngine != null && !defaultEngine.isBlank()) 
-                ? defaultEngine.trim() 
-                : "openrouter/qwen/qwen3-vl-235b-a22b-instruct";
-
-        try {
-            Map<String, Object> inputObj = new HashMap<>();
-            inputObj.put("type", "base64");
-            inputObj.put("data_base64", base64Data);
-            inputObj.put("mime_type", mimeType);
-
-            Map<String, Object> settingsObj = new HashMap<>();
-            settingsObj.put("language", "fra");
-
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("engine", engine);
-            requestBody.put("input", inputObj);
-            requestBody.put("settings", settingsObj);
-
-            String jsonPayload = objectMapper.writeValueAsString(requestBody);
-
-            String endpoint = apiUrl.endsWith("/") ? apiUrl + "ocr" : apiUrl + "/ocr";
-            String idempotencyKey = "req-" + System.currentTimeMillis() + "-" + UUID.randomUUID().toString().substring(0, 8);
-            log.info("Appel OpenOCR ({}) sur {} pour fichier: {} ({}, {} octets, idempotency={})", 
-                    engine, endpoint, fileName, mimeType, fileBytes.length, idempotencyKey);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(endpoint))
-                    .timeout(Duration.ofSeconds(60))
-                    .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + apiKey.trim())
-                    .header("Idempotency-Key", idempotencyKey)
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonPayload, StandardCharsets.UTF_8))
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            String responseBody = response.body();
-
-            if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                String extracted = extraireContenuTexte(responseBody);
-                log.info("OpenOCR succès [{}] pour {} : {} caractères extraits", engine, fileName, extracted != null ? extracted.length() : 0);
-                return extracted != null ? extracted : responseBody;
-            } else {
-                log.error("Erreur OpenOCR (code {}): {}", response.statusCode(), responseBody);
-                return fallbackExtraction(fileBytes, fileName, mimeType, "Erreur API OpenOCR (" + response.statusCode() + ")");
-            }
-        } catch (Exception e) {
-            log.warn("Échec de la connexion à OpenOCR: {}. Basculement sur fallback local.", e.getMessage());
-            return fallbackExtraction(fileBytes, fileName, mimeType, e.getMessage());
-        }
+        log.warn("docTR OCR n'a pas retourné de texte pour {}. Tentative d'extraction texte locale (si PDF).", fileName);
+        return fallbackExtraction(fileBytes, fileName, mimeType, "docTR OCR non disponible");
     }
 
     /**
@@ -132,7 +82,9 @@ public class OpenOcrService {
                     endpoint, fileName, fileBytes.length);
 
             String boundary = "DocTrBoundary" + UUID.randomUUID().toString().replace("-", "");
-            String safeFileName = (fileName != null && !fileName.isBlank()) ? fileName : "document.pdf";
+            String safeFileName = (fileName != null && !fileName.isBlank()) 
+                    ? fileName.replaceAll("[^a-zA-Z0-9._-]", "_") 
+                    : "document.pdf";
 
             byte[] header = ("--" + boundary + "\r\n" +
                     "Content-Disposition: form-data; name=\"file\"; filename=\"" + safeFileName + "\"\r\n" +
@@ -145,6 +97,7 @@ public class OpenOcrService {
             System.arraycopy(footer, 0, payload, header.length + fileBytes.length, footer.length);
 
             HttpRequest request = HttpRequest.newBuilder()
+                    .version(HttpClient.Version.HTTP_1_1)
                     .uri(URI.create(endpoint))
                     .timeout(Duration.ofSeconds(120))
                     .header("Content-Type", "multipart/form-data; boundary=" + boundary)
