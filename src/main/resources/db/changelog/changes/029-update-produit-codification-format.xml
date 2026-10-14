@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="029-update-produit-codification-format" author="system">
+        <comment>
+            Met à jour le format de codification automatique des produits.
+            Nouveau format : P-0001, P-0002, ... au lieu de PROD-2026-0001.
+        </comment>
+        <update tableName="codification_documents">
+            <column name="prefixe" value="P"/>
+            <column name="modele_format" value="{PREFIX}-{NUM}"/>
+            <column name="longueur_sequence" valueNumeric="4"/>
+            <where>type_document = 'PRODUIT'</where>
+        </update>
+        <rollback>
+            <update tableName="codification_documents">
+                <column name="prefixe" value="PROD"/>
+                <column name="modele_format" value="{PREFIX}-{AAAA}-{NUM}"/>
+                <column name="longueur_sequence" valueNumeric="4"/>
+                <where>type_document = 'PRODUIT'</where>
+            </update>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

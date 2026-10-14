@@ -94,4 +94,8 @@
     <!-- Changeset 028 : Suppression contrainte NOT NULL sur qualite dans lots -->
     <include file="changes/028-remove-qualite-not-null-constraints.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 029 : Mise à jour format codification PRODUIT → P-0001, P-0002, ... -->
+    <include file="changes/029-update-produit-codification-format.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
+

@@ -10,7 +10,7 @@ public enum TypeDocumentCodification {
     DEVIS("Devis Client", "DEV", "{PREFIX}-{AAAA}-{NUM}", 3),
     AVOIR_CLIENT("Avoir Client", "AVR-CLI", "{PREFIX}-{AAAA}-{NUM}", 3),
     AVOIR_FOURNISSEUR("Avoir Fournisseur", "AVR-FRS", "{PREFIX}-{AAAA}-{NUM}", 3),
-    PRODUIT("Référence Produit", "PROD", "{PREFIX}-{AAAA}-{NUM}", 4),
+    PRODUIT("Référence Produit", "P", "{PREFIX}-{NUM}", 4),
     DEMANDE_PRIX("Demande de Prix (DDP)", "DDP", "{PREFIX}-{AAAA}-{NUM}", 3);
 
     private final String libelle;
