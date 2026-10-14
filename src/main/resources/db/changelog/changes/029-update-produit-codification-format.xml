@@ -10,14 +10,14 @@
             Met à jour le format de codification automatique des produits.
             Nouveau format : P-0001, P-0002, ... au lieu de PROD-2026-0001.
         </comment>
-        <update tableName="codification_documents">
+        <update tableName="codifications_document">
             <column name="prefixe" value="P"/>
             <column name="modele_format" value="{PREFIX}-{NUM}"/>
             <column name="longueur_sequence" valueNumeric="4"/>
             <where>type_document = 'PRODUIT'</where>
         </update>
         <rollback>
-            <update tableName="codification_documents">
+            <update tableName="codifications_document">
                 <column name="prefixe" value="PROD"/>
                 <column name="modele_format" value="{PREFIX}-{AAAA}-{NUM}"/>
                 <column name="longueur_sequence" valueNumeric="4"/>
