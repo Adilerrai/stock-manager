@@ -253,7 +253,12 @@ public class EntrepriseProfileService {
                 .orElseGet(() -> buildDefaultProfile(currentTenantId));
 
         profile.setLogoData(compressedData);
-        profile.setLogoContentType(contentType);
+        if (compressedData != null && compressedData.length > 2
+                && (compressedData[0] & 0xFF) == 0xFF && (compressedData[1] & 0xFF) == 0xD8) {
+            profile.setLogoContentType("image/jpeg");
+        } else {
+            profile.setLogoContentType(contentType);
+        }
         profile.setLogoFileName(file.getOriginalFilename());
         profile.setDateMiseAJour(LocalDateTime.now());
 

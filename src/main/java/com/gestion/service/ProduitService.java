@@ -256,7 +256,12 @@ public class ProduitService {
                     
                     produitImage.setFileName(produitDTO.getImage().getFileName());
                     produitImage.setImageData(compressedImageData);
-                    produitImage.setContentType(produitDTO.getImage().getContentType());
+                    if (compressedImageData != null && compressedImageData.length > 2
+                            && (compressedImageData[0] & 0xFF) == 0xFF && (compressedImageData[1] & 0xFF) == 0xD8) {
+                        produitImage.setContentType("image/jpeg");
+                    } else {
+                        produitImage.setContentType(produitDTO.getImage().getContentType());
+                    }
                     produitImage.setProduit(produit);
                     
                     produit.setImage(produitImage);

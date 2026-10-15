@@ -1,12 +1,17 @@
 package com.gestion.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageOutputStream;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,6 +19,8 @@ import java.util.Iterator;
 
 @Service
 public class ImageCompressionService {
+
+    private static final Logger log = LoggerFactory.getLogger(ImageCompressionService.class);
 
     private static final float COMPRESSION_QUALITY = 0.7f; // 70% qualité
     private static final int MAX_WIDTH = 800;
@@ -24,20 +31,29 @@ public class ImageCompressionService {
             return originalImage;
         }
 
-        // Lire l'image originale
-        BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(originalImage));
-        if (bufferedImage == null) {
+        try {
+            // Lire l'image originale
+            BufferedImage bufferedImage = ImageIO.read(new ByteArrayInputStream(originalImage));
+            if (bufferedImage == null) {
+                log.warn("Format d'image non décodable par ImageIO (contentType: {}). Image conservée sans compression.", contentType);
+                return originalImage;
+            }
+
+            // Redimensionner et convertir en TYPE_INT_RGB sur fond blanc
+            // Cela élimine le canal alpha (ARGB, ABGR) et normalise l'espace colorimétrique,
+            // évitant l'erreur JPEG native "Bogus input colorspace" (notamment pour les logos PNG).
+            BufferedImage rgbImage = resizeAndConvertToRgb(bufferedImage);
+
+            // Compresser en JPEG
+            return compressBufferedImage(rgbImage);
+        } catch (Exception e) {
+            log.warn("Erreur lors de la compression de l'image ({}) : {}. Utilisation des données d'origine.",
+                    contentType, e.getMessage());
             return originalImage;
         }
-
-        // Redimensionner si nécessaire
-        BufferedImage resizedImage = resizeImage(bufferedImage);
-
-        // Compresser
-        return compressBufferedImage(resizedImage, getFormatName(contentType));
     }
 
-    private BufferedImage resizeImage(BufferedImage originalImage) {
+    private BufferedImage resizeAndConvertToRgb(BufferedImage originalImage) {
         int originalWidth = originalImage.getWidth();
         int originalHeight = originalImage.getHeight();
 
@@ -50,82 +66,69 @@ public class ImageCompressionService {
             double heightRatio = (double) MAX_HEIGHT / originalHeight;
             double ratio = Math.min(widthRatio, heightRatio);
 
-            newWidth = (int) (originalWidth * ratio);
-            newHeight = (int) (originalHeight * ratio);
+            newWidth = Math.max(1, (int) (originalWidth * ratio));
+            newHeight = Math.max(1, (int) (originalHeight * ratio));
         }
 
-        if (newWidth == originalWidth && newHeight == originalHeight) {
+        // Si l'image est déjà TYPE_INT_RGB, sans alpha et aux bonnes dimensions, on peut la conserver
+        if (newWidth == originalWidth && newHeight == originalHeight
+                && originalImage.getType() == BufferedImage.TYPE_INT_RGB
+                && !hasAlpha(originalImage)) {
             return originalImage;
         }
 
-        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2d = resizedImage.createGraphics();
-        g2d.setPaint(Color.WHITE);
-        g2d.fillRect(0, 0, newWidth, newHeight);
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
-        g2d.dispose();
+        // Toujours créer un BufferedImage TYPE_INT_RGB avec fond blanc pour garantir la compatibilité JPEG
+        BufferedImage rgbImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = rgbImage.createGraphics();
+        try {
+            g2d.setPaint(Color.WHITE);
+            g2d.fillRect(0, 0, newWidth, newHeight);
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
+        } finally {
+            g2d.dispose();
+        }
 
-        return resizedImage;
+        return rgbImage;
     }
 
-    private byte[] compressBufferedImage(BufferedImage image, String formatName) throws IOException {
+    private boolean hasAlpha(BufferedImage image) {
+        if (image == null) return false;
+        ColorModel cm = image.getColorModel();
+        return cm != null && cm.hasAlpha();
+    }
+
+    private byte[] compressBufferedImage(BufferedImage image) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        if ("jpeg".equalsIgnoreCase(formatName) || "jpg".equalsIgnoreCase(formatName)) {
-            // Compression JPEG avec qualité
-            Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
-            if (writers.hasNext()) {
-                ImageWriter writer = writers.next();
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
+        if (writers.hasNext()) {
+            ImageWriter writer = writers.next();
+            try {
                 ImageWriteParam param = writer.getDefaultWriteParam();
-                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                param.setCompressionQuality(COMPRESSION_QUALITY);
+                if (param.canWriteCompressed()) {
+                    param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+                    param.setCompressionQuality(COMPRESSION_QUALITY);
+                }
 
                 try (ImageOutputStream ios = ImageIO.createImageOutputStream(baos)) {
                     writer.setOutput(ios);
-                    writer.write(null, new javax.imageio.IIOImage(image, null, null), param);
+                    writer.write(null, new IIOImage(image, null, null), param);
                 }
+            } finally {
                 writer.dispose();
             }
         } else {
-            // Pour les autres formats (PNG, etc.), encoder en JPEG compressé pour garantir un fichier ultra-léger (< 80KB)
-            Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
-            if (writers.hasNext()) {
-                ImageWriter writer = writers.next();
-                ImageWriteParam param = writer.getDefaultWriteParam();
-                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                param.setCompressionQuality(COMPRESSION_QUALITY);
-
-                try (ImageOutputStream ios = ImageIO.createImageOutputStream(baos)) {
-                    writer.setOutput(ios);
-                    writer.write(null, new javax.imageio.IIOImage(image, null, null), param);
-                }
-                writer.dispose();
-            } else {
-                ImageIO.write(image, "jpeg", baos);
-            }
+            ImageIO.write(image, "jpeg", baos);
         }
 
         return baos.toByteArray();
     }
 
-    private String getFormatName(String contentType) {
-        if (contentType == null) return "jpeg";
-        
-        return switch (contentType.toLowerCase()) {
-            case "image/jpeg", "image/jpg" -> "jpeg";
-            case "image/png" -> "png";
-            case "image/gif" -> "gif";
-            case "image/bmp" -> "bmp";
-            default -> "jpeg";
-        };
-    }
-
     public byte[] decompressImage(byte[] compressedImage) {
-        // Pour les images, la décompression se fait automatiquement lors de la lecture
-        // Cette méthode peut être utilisée pour des traitements supplémentaires si nécessaire
         return compressedImage;
     }
 }
+
