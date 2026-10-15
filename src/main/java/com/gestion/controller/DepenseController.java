@@ -1,27 +1,36 @@
 package com.gestion.controller;
 
 import com.gestion.persistent.dto.DepenseDTO;
+import com.gestion.persistent.dto.DocumentComptableDTO;
 import com.gestion.persistent.dto.ResultatEntrepriseDTO;
+import com.gestion.persistent.enums.ModePaiement;
 import com.gestion.service.DepenseService;
+import com.gestion.service.GedService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/depenses")
+@RequestMapping({"/api/depenses", "/api/v1/depenses"})
 @CrossOrigin(origins = "*")
 public class DepenseController {
 
     private final DepenseService depenseService;
+    private final GedService gedService;
 
-    public DepenseController(DepenseService depenseService) {
+    public DepenseController(DepenseService depenseService, @Lazy GedService gedService) {
         this.depenseService = depenseService;
+        this.gedService = gedService;
     }
 
     @PostMapping
@@ -66,15 +75,56 @@ public class DepenseController {
         return ResponseEntity.ok(depenseService.getStatistiquesParCategorie(dateDebut, dateFin));
     }
 
-    /**
-     * Calcule le résultat d'exploitation net réel de l'entreprise :
-     * Résultat Net = Marge Commerciale Nette - Total Dépenses
-     */
     @GetMapping("/resultat-net")
     public ResponseEntity<ResultatEntrepriseDTO> getResultatNet(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin) {
         ResultatEntrepriseDTO resultat = depenseService.calculerResultatNet(dateDebut, dateFin);
         return ResponseEntity.ok(resultat);
+    }
+
+    // =========================================================================
+    // GESTION DES PIÈCES JOINTES (GED) ATTACHÉES À LA DÉPENSE
+    // =========================================================================
+
+    @GetMapping("/{id}/documents")
+    public ResponseEntity<List<DocumentComptableDTO>> getDocumentsDepense(@PathVariable Long id) {
+        return ResponseEntity.ok(gedService.getDocumentsParDepense(id));
+    }
+
+    @PostMapping(value = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DocumentComptableDTO> attacherDocument(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "typePiece", required = false, defaultValue = "JUSTIFICATIF_DEPENSE") String typePiece,
+            @RequestParam(value = "description", required = false) String description) throws IOException {
+        
+        // Vérifier que la dépense existe
+        depenseService.getDepenseById(id);
+
+        DocumentComptableDTO doc = gedService.stockerDocument(
+                file, typePiece, description, null, null, null, null, null, null, null, null, id
+        );
+        return new ResponseEntity<>(doc, HttpStatus.CREATED);
+    }
+
+    // =========================================================================
+    // DÉCLARATION PAYÉE
+    // =========================================================================
+
+    @PutMapping("/{id}")
+    public ResponseEntity<DepenseDTO> modifierDepense(
+            @PathVariable Long id,
+            @RequestBody DepenseDTO dto) {
+        return ResponseEntity.ok(depenseService.modifierDepense(id, dto));
+    }
+
+    @PutMapping("/{id}/declarer-payee")
+    public ResponseEntity<DepenseDTO> declarerPayee(
+            @PathVariable Long id,
+            @RequestParam ModePaiement modePaiement,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datePaiement,
+            @RequestParam(required = false) String referencePaiement) {
+        return ResponseEntity.ok(depenseService.declarerPayee(id, modePaiement, datePaiement, referencePaiement));
     }
 }

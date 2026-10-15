@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 031 : Création des tables Prestataires, Consommables, Lignes de Dépenses Consommables
+                      et intégration Pièces Jointes GED pour Dépenses
+    -->
+    <changeSet id="031-add-consommables-prestataires-depenses" author="erp-pointvente">
+        <sql splitStatements="false">
+            -- 1. Table PRESTATAIRES
+            CREATE TABLE IF NOT EXISTS prestataires (
+                id BIGSERIAL PRIMARY KEY,
+                point_de_vente_id BIGINT NOT NULL,
+                raison_sociale VARCHAR(255) NOT NULL,
+                contact_nom VARCHAR(255),
+                ice VARCHAR(50),
+                telephone VARCHAR(50),
+                email VARCHAR(100),
+                adresse VARCHAR(255),
+                ville VARCHAR(100),
+                code_postal VARCHAR(20),
+                pays VARCHAR(50) DEFAULT 'Maroc',
+                type_prestation VARCHAR(50) DEFAULT 'AUTRE',
+                registre_commerce VARCHAR(100),
+                identifiant_fiscal VARCHAR(100),
+                patente VARCHAR(100),
+                rib_bancaire VARCHAR(50),
+                banque_nom VARCHAR(100),
+                delai_paiement_jours INT DEFAULT 30,
+                actif BOOLEAN DEFAULT TRUE,
+                notes TEXT,
+                date_creation TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_prestataires_tenant ON prestataires(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_prestataires_raison ON prestataires(raison_sociale);
+            CREATE INDEX IF NOT EXISTS idx_prestataires_ice ON prestataires(ice);
+            CREATE INDEX IF NOT EXISTS idx_prestataires_type ON prestataires(type_prestation);
+
+            -- 2. Table CONSOMMABLES
+            CREATE TABLE IF NOT EXISTS consommables (
+                id BIGSERIAL PRIMARY KEY,
+                point_de_vente_id BIGINT NOT NULL,
+                reference VARCHAR(100) NOT NULL,
+                code_barre VARCHAR(100),
+                designation VARCHAR(255) NOT NULL,
+                description TEXT,
+                categorie VARCHAR(50) NOT NULL,
+                unite_mesure VARCHAR(30) NOT NULL,
+                stock_actuel NUMERIC(12, 2) NOT NULL DEFAULT 0,
+                stock_minimum NUMERIC(12, 2) DEFAULT 0,
+                dernier_prix_achat NUMERIC(12, 2) DEFAULT 0,
+                emplacement VARCHAR(255),
+                actif BOOLEAN DEFAULT TRUE,
+                notes TEXT,
+                date_creation TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                derniere_mise_a_jour TIMESTAMP WITHOUT TIME ZONE,
+                CONSTRAINT uk_consommables_tenant_ref UNIQUE (point_de_vente_id, reference)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_consommables_tenant ON consommables(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_consommables_ref ON consommables(reference);
+            CREATE INDEX IF NOT EXISTS idx_consommables_designation ON consommables(designation);
+            CREATE INDEX IF NOT EXISTS idx_consommables_cat ON consommables(categorie);
+
+            -- 3. Table LIGNES_DEPENSES_CONSOMMABLES
+            CREATE TABLE IF NOT EXISTS lignes_depenses_consommables (
+                id BIGSERIAL PRIMARY KEY,
+                depense_id BIGINT NOT NULL,
+                consommable_id BIGINT NOT NULL,
+                quantite NUMERIC(12, 2) NOT NULL DEFAULT 1,
+                prix_unitaire NUMERIC(12, 2) NOT NULL DEFAULT 0,
+                montant_total NUMERIC(12, 2) NOT NULL DEFAULT 0,
+                notes VARCHAR(255),
+                CONSTRAINT fk_ligne_depense_consommable_dep FOREIGN KEY (depense_id) REFERENCES depenses(id) ON DELETE CASCADE,
+                CONSTRAINT fk_ligne_depense_consommable_art FOREIGN KEY (consommable_id) REFERENCES consommables(id)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_lignes_depenses_cons_dep ON lignes_depenses_consommables(depense_id);
+            CREATE INDEX IF NOT EXISTS idx_lignes_depenses_cons_art ON lignes_depenses_consommables(consommable_id);
+
+            -- 4. Liaison PRESTATAIRE dans DEPENSES
+            ALTER TABLE IF EXISTS depenses 
+                ADD COLUMN IF NOT EXISTS prestataire_id BIGINT;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'fk_depenses_prestataire'
+                ) THEN
+                    ALTER TABLE depenses 
+                        ADD CONSTRAINT fk_depenses_prestataire 
+                        FOREIGN KEY (prestataire_id) REFERENCES prestataires(id) ON DELETE SET NULL;
+                END IF;
+            END $$;
+
+            CREATE INDEX IF NOT EXISTS idx_depenses_prestataire ON depenses(prestataire_id);
+
+            -- 5. Liaison DEPENSE dans DOCUMENTS_COMPTABLES (GED Pièces Jointes)
+            ALTER TABLE IF EXISTS documents_comptables 
+                ADD COLUMN IF NOT EXISTS depense_id BIGINT;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'fk_documents_comptables_depense'
+                ) THEN
+                    ALTER TABLE documents_comptables 
+                        ADD CONSTRAINT fk_documents_comptables_depense 
+                        FOREIGN KEY (depense_id) REFERENCES depenses(id) ON DELETE CASCADE;
+                END IF;
+            END $$;
+
+            CREATE INDEX IF NOT EXISTS idx_documents_comptables_depense ON documents_comptables(depense_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

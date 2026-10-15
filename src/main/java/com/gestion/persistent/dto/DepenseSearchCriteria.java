@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class DepenseSearchCriteria {
+    private String query;
     private String reference;
     private String designation;
     private String beneficiaire;
@@ -17,10 +18,15 @@ public class DepenseSearchCriteria {
     private BigDecimal montantMin;
     private BigDecimal montantMax;
     private Long fournisseurId;
+    private Long prestataireId;
+    private Long consommableId;
     private Boolean deverseeCompta;
     private Long societeId;
 
     public DepenseSearchCriteria() {}
+
+    public String getQuery() { return query; }
+    public void setQuery(String query) { this.query = query; }
 
     public String getReference() { return reference; }
     public void setReference(String reference) { this.reference = reference; }
@@ -51,6 +57,12 @@ public class DepenseSearchCriteria {
 
     public Long getFournisseurId() { return fournisseurId; }
     public void setFournisseurId(Long fournisseurId) { this.fournisseurId = fournisseurId; }
+
+    public Long getPrestataireId() { return prestataireId; }
+    public void setPrestataireId(Long prestataireId) { this.prestataireId = prestataireId; }
+
+    public Long getConsommableId() { return consommableId; }
+    public void setConsommableId(Long consommableId) { this.consommableId = consommableId; }
 
     public Boolean getDeverseeCompta() { return deverseeCompta; }
     public void setDeverseeCompta(Boolean deverseeCompta) { this.deverseeCompta = deverseeCompta; }

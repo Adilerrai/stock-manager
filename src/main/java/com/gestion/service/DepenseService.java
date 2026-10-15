@@ -4,12 +4,22 @@ import com.acommon.persistant.model.TenantContext;
 import com.acommon.persistant.model.User;
 import com.acommon.repository.UserRepository;
 import com.gestion.persistent.dto.DepenseDTO;
+import com.gestion.persistent.dto.DocumentComptableDTO;
+import com.gestion.persistent.dto.LigneDepenseConsommableDTO;
 import com.gestion.persistent.dto.MargeDTO;
 import com.gestion.persistent.dto.ResultatEntrepriseDTO;
 import com.gestion.persistent.enums.CategorieDepense;
 import com.gestion.persistent.enums.ModePaiement;
+import com.gestion.persistent.model.Consommable;
 import com.gestion.persistent.model.Depense;
+import com.gestion.persistent.model.LigneDepenseConsommable;
+import com.gestion.persistent.model.Prestataire;
+import com.gestion.repository.ConsommableRepository;
 import com.gestion.repository.DepenseRepository;
+import com.gestion.repository.FournisseurRepository;
+import com.gestion.repository.LigneDepenseConsommableRepository;
+import com.gestion.repository.PrestataireRepository;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,16 +38,28 @@ public class DepenseService {
     private final DepenseRepository depenseRepository;
     private final UserRepository userRepository;
     private final MargeService margeService;
-    private final com.gestion.repository.FournisseurRepository fournisseurRepository;
+    private final FournisseurRepository fournisseurRepository;
+    private final PrestataireRepository prestataireRepository;
+    private final ConsommableRepository consommableRepository;
+    private final LigneDepenseConsommableRepository ligneDepenseConsommableRepository;
+    private final GedService gedService;
 
     public DepenseService(DepenseRepository depenseRepository,
                           UserRepository userRepository,
                           MargeService margeService,
-                          com.gestion.repository.FournisseurRepository fournisseurRepository) {
+                          FournisseurRepository fournisseurRepository,
+                          PrestataireRepository prestataireRepository,
+                          ConsommableRepository consommableRepository,
+                          LigneDepenseConsommableRepository ligneDepenseConsommableRepository,
+                          @Lazy GedService gedService) {
         this.depenseRepository = depenseRepository;
         this.userRepository = userRepository;
         this.margeService = margeService;
         this.fournisseurRepository = fournisseurRepository;
+        this.prestataireRepository = prestataireRepository;
+        this.consommableRepository = consommableRepository;
+        this.ligneDepenseConsommableRepository = ligneDepenseConsommableRepository;
+        this.gedService = gedService;
     }
 
     public DepenseDTO creerDepense(DepenseDTO dto, Long userId) {
@@ -49,11 +71,11 @@ public class DepenseService {
         Depense depense = new Depense();
         depense.setReference(genererReference());
         depense.setDesignation(dto.getDesignation());
-        depense.setMontant(dto.getMontant() != null ? dto.getMontant() : BigDecimal.ZERO);
         depense.setDateDepense(dto.getDateDepense() != null ? dto.getDateDepense() : LocalDate.now());
         depense.setCategorie(dto.getCategorie() != null ? dto.getCategorie() : CategorieDepense.AUTRES_CHARGES);
         depense.setModePaiement(dto.getModePaiement() != null ? dto.getModePaiement() : ModePaiement.ESPECES);
 
+        // Association Fournisseur
         if (dto.getFournisseurId() != null) {
             com.gestion.persistent.model.Fournisseur f = fournisseurRepository.findById(dto.getFournisseurId()).orElse(null);
             depense.setFournisseur(f);
@@ -62,8 +84,23 @@ public class DepenseService {
             } else {
                 depense.setBeneficiaire(dto.getBeneficiaire());
             }
+        } else if (dto.getPrestataireId() != null) {
+            // Association Prestataire
+            Prestataire p = prestataireRepository.findById(dto.getPrestataireId()).orElse(null);
+            depense.setPrestataire(p);
+            if ((dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty()) && p != null) {
+                depense.setBeneficiaire(p.getRaisonSociale());
+            } else {
+                depense.setBeneficiaire(dto.getBeneficiaire());
+            }
         } else {
             depense.setBeneficiaire(dto.getBeneficiaire());
+        }
+
+        // Si le prestataire est spécifié en plus
+        if (dto.getPrestataireId() != null && depense.getPrestataire() == null) {
+            Prestataire p = prestataireRepository.findById(dto.getPrestataireId()).orElse(null);
+            depense.setPrestataire(p);
         }
 
         depense.setArticlesDetail(dto.getArticlesDetail());
@@ -74,6 +111,45 @@ public class DepenseService {
         Long tenantId = TenantContext.getCurrentTenant();
         depense.setPointDeVenteId(tenantId != null ? tenantId : 1L);
         depense.setDateCreation(LocalDateTime.now());
+
+        // Traitement des lignes de consommables achetés
+        BigDecimal totalLignesConsommables = BigDecimal.ZERO;
+        List<LigneDepenseConsommable> lignesToSave = new ArrayList<>();
+
+        if (dto.getLignesConsommables() != null && !dto.getLignesConsommables().isEmpty()) {
+            for (LigneDepenseConsommableDTO ligneDto : dto.getLignesConsommables()) {
+                if (ligneDto.getConsommableId() != null) {
+                    Consommable c = consommableRepository.findById(ligneDto.getConsommableId()).orElse(null);
+                    if (c != null) {
+                        BigDecimal qte = ligneDto.getQuantite() != null ? ligneDto.getQuantite() : BigDecimal.ONE;
+                        BigDecimal pu = ligneDto.getPrixUnitaire() != null ? ligneDto.getPrixUnitaire() : c.getDernierPrixAchat();
+
+                        LigneDepenseConsommable ligne = new LigneDepenseConsommable(depense, c, qte, pu);
+                        ligne.setNotes(ligneDto.getNotes());
+                        lignesToSave.add(ligne);
+                        totalLignesConsommables = totalLignesConsommables.add(ligne.getMontantTotal());
+
+                        // Réapprovisionnement automatique du stock de consommables
+                        c.setStockActuel(c.getStockActuel().add(qte));
+                        if (pu.compareTo(BigDecimal.ZERO) > 0) {
+                            c.setDernierPrixAchat(pu);
+                        }
+                        consommableRepository.save(c);
+                    }
+                }
+            }
+        }
+
+        // Montant de la dépense : soit celui du DTO, soit somme des consommables
+        if (dto.getMontant() != null && dto.getMontant().compareTo(BigDecimal.ZERO) > 0) {
+            depense.setMontant(dto.getMontant());
+        } else if (totalLignesConsommables.compareTo(BigDecimal.ZERO) > 0) {
+            depense.setMontant(totalLignesConsommables);
+        } else {
+            depense.setMontant(BigDecimal.ZERO);
+        }
+
+        depense.getLignesConsommables().addAll(lignesToSave);
 
         Depense saved = depenseRepository.save(depense);
         return toDto(saved);
@@ -116,7 +192,62 @@ public class DepenseService {
         Long tenantId = TenantContext.getCurrentTenant();
         Depense d = (tenantId != null ? depenseRepository.findByIdAndPointDeVenteId(id, tenantId) : depenseRepository.findById(id))
                 .orElseThrow(() -> new RuntimeException("Dépense non trouvée avec l'id: " + id));
+
+        // Réajustement des stocks de consommables si des lignes existaient
+        if (d.getLignesConsommables() != null) {
+            for (LigneDepenseConsommable ligne : d.getLignesConsommables()) {
+                if (ligne.getConsommable() != null) {
+                    Consommable c = ligne.getConsommable();
+                    BigDecimal nouveauStock = c.getStockActuel().subtract(ligne.getQuantite());
+                    if (nouveauStock.compareTo(BigDecimal.ZERO) < 0) nouveauStock = BigDecimal.ZERO;
+                    c.setStockActuel(nouveauStock);
+                    consommableRepository.save(c);
+                }
+            }
+        }
+
         depenseRepository.delete(d);
+    }
+
+    public DepenseDTO declarerPayee(Long id, ModePaiement modePaiement, LocalDate datePaiement, String referencePaiement) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Depense d = (tenantId != null ? depenseRepository.findByIdAndPointDeVenteId(id, tenantId) : depenseRepository.findById(id))
+                .orElseThrow(() -> new RuntimeException("Dépense non trouvée avec l'id: " + id));
+
+        if (modePaiement != null) d.setModePaiement(modePaiement);
+        if (datePaiement != null) d.setDateDepense(datePaiement);
+        if (referencePaiement != null && !referencePaiement.trim().isEmpty()) {
+            d.setNumeroFactureJustificatif(referencePaiement);
+        }
+
+        Depense saved = depenseRepository.save(d);
+        return toDto(saved);
+    }
+
+    public DepenseDTO modifierDepense(Long id, DepenseDTO dto) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Depense d = (tenantId != null ? depenseRepository.findByIdAndPointDeVenteId(id, tenantId) : depenseRepository.findById(id))
+                .orElseThrow(() -> new RuntimeException("Dépense non trouvée avec l'id: " + id));
+
+        if (dto.getDesignation() != null) d.setDesignation(dto.getDesignation());
+        if (dto.getMontant() != null) d.setMontant(dto.getMontant());
+        if (dto.getDateDepense() != null) d.setDateDepense(dto.getDateDepense());
+        if (dto.getCategorie() != null) d.setCategorie(dto.getCategorie());
+        if (dto.getModePaiement() != null) d.setModePaiement(dto.getModePaiement());
+        if (dto.getBeneficiaire() != null) d.setBeneficiaire(dto.getBeneficiaire());
+        if (dto.getNumeroFactureJustificatif() != null) d.setNumeroFactureJustificatif(dto.getNumeroFactureJustificatif());
+        if (dto.getNotes() != null) d.setNotes(dto.getNotes());
+        if (dto.getArticlesDetail() != null) d.setArticlesDetail(dto.getArticlesDetail());
+
+        if (dto.getFournisseurId() != null) {
+            d.setFournisseur(fournisseurRepository.findById(dto.getFournisseurId()).orElse(null));
+        }
+        if (dto.getPrestataireId() != null) {
+            d.setPrestataire(prestataireRepository.findById(dto.getPrestataireId()).orElse(null));
+        }
+
+        Depense saved = depenseRepository.save(d);
+        return toDto(saved);
     }
 
     @Transactional(readOnly = true)
@@ -189,6 +320,17 @@ public class DepenseService {
         List<DepenseDTO> filtered = list.stream()
                 .filter(d -> {
                     if (criteria == null) return true;
+                    if (criteria.getQuery() != null && !criteria.getQuery().trim().isEmpty()) {
+                        String q = criteria.getQuery().toLowerCase().trim();
+                        String ref = d.getReference() != null ? d.getReference().toLowerCase() : "";
+                        String des = d.getDesignation() != null ? d.getDesignation().toLowerCase() : "";
+                        String ben = d.getBeneficiaire() != null ? d.getBeneficiaire().toLowerCase() : "";
+                        String fn = d.getFournisseur() != null && d.getFournisseur().getRaisonSociale() != null ? d.getFournisseur().getRaisonSociale().toLowerCase() : "";
+                        String pr = d.getPrestataire() != null && d.getPrestataire().getRaisonSociale() != null ? d.getPrestataire().getRaisonSociale().toLowerCase() : "";
+                        String notes = d.getNotes() != null ? d.getNotes().toLowerCase() : "";
+                        boolean matches = ref.contains(q) || des.contains(q) || ben.contains(q) || fn.contains(q) || pr.contains(q) || notes.contains(q);
+                        if (!matches) return false;
+                    }
                     if (criteria.getReference() != null && !criteria.getReference().trim().isEmpty()) {
                         if (d.getReference() == null || !d.getReference().toLowerCase().contains(criteria.getReference().toLowerCase())) return false;
                     }
@@ -198,10 +340,12 @@ public class DepenseService {
                     if (criteria.getBeneficiaire() != null && !criteria.getBeneficiaire().trim().isEmpty()) {
                         String b = d.getBeneficiaire();
                         String fn = d.getFournisseur() != null ? d.getFournisseur().getRaisonSociale() : null;
+                        String pn = d.getPrestataire() != null ? d.getPrestataire().getRaisonSociale() : null;
                         String q = criteria.getBeneficiaire().toLowerCase();
                         boolean matchB = b != null && b.toLowerCase().contains(q);
                         boolean matchFn = fn != null && fn.toLowerCase().contains(q);
-                        if (!matchB && !matchFn) return false;
+                        boolean matchPn = pn != null && pn.toLowerCase().contains(q);
+                        if (!matchB && !matchFn && !matchPn) return false;
                     }
                     if (criteria.getCategorie() != null && d.getCategorie() != criteria.getCategorie()) {
                         return false;
@@ -224,6 +368,14 @@ public class DepenseService {
                     if (criteria.getFournisseurId() != null) {
                         if (d.getFournisseur() == null || !d.getFournisseur().getId().equals(criteria.getFournisseurId())) return false;
                     }
+                    if (criteria.getPrestataireId() != null) {
+                        if (d.getPrestataire() == null || !d.getPrestataire().getId().equals(criteria.getPrestataireId())) return false;
+                    }
+                    if (criteria.getConsommableId() != null) {
+                        boolean hasCons = d.getLignesConsommables() != null && d.getLignesConsommables().stream()
+                                .anyMatch(l -> l.getConsommable() != null && l.getConsommable().getId().equals(criteria.getConsommableId()));
+                        if (!hasCons) return false;
+                    }
                     if (criteria.getDeverseeCompta() != null) {
                         boolean dev = Boolean.TRUE.equals(d.getDeverseeCompta());
                         if (dev != criteria.getDeverseeCompta()) return false;
@@ -241,7 +393,7 @@ public class DepenseService {
         return new org.springframework.data.domain.PageImpl<>(pageContent, pageable, filtered.size());
     }
 
-    private DepenseDTO toDto(Depense d) {
+    public DepenseDTO toDto(Depense d) {
         DepenseDTO dto = new DepenseDTO();
         dto.setId(d.getId());
         dto.setReference(d.getReference());
@@ -251,12 +403,58 @@ public class DepenseService {
         dto.setCategorie(d.getCategorie());
         dto.setModePaiement(d.getModePaiement());
         dto.setBeneficiaire(d.getBeneficiaire());
+
+        // Fournisseur
         if (d.getFournisseur() != null) {
             dto.setFournisseurId(d.getFournisseur().getId());
             dto.setFournisseurNom(d.getFournisseur().getRaisonSociale());
             dto.setFournisseurTelephone(d.getFournisseur().getTelephone());
             dto.setFournisseurIce(d.getFournisseur().getIce());
         }
+
+        // Prestataire
+        if (d.getPrestataire() != null) {
+            dto.setPrestataireId(d.getPrestataire().getId());
+            dto.setPrestataireNom(d.getPrestataire().getRaisonSociale());
+            dto.setPrestataireTelephone(d.getPrestataire().getTelephone());
+            dto.setPrestataireIce(d.getPrestataire().getIce());
+            dto.setTypePrestation(d.getPrestataire().getTypePrestation());
+        }
+
+        // Lignes de consommables
+        if (d.getLignesConsommables() != null && !d.getLignesConsommables().isEmpty()) {
+            List<LigneDepenseConsommableDTO> lignes = d.getLignesConsommables().stream()
+                    .map(l -> {
+                        LigneDepenseConsommableDTO lDto = new LigneDepenseConsommableDTO();
+                        lDto.setId(l.getId());
+                        lDto.setDepenseId(d.getId());
+                        if (l.getConsommable() != null) {
+                            lDto.setConsommableId(l.getConsommable().getId());
+                            lDto.setConsommableReference(l.getConsommable().getReference());
+                            lDto.setConsommableDesignation(l.getConsommable().getDesignation());
+                            lDto.setUniteMesure(l.getConsommable().getUniteMesure() != null ? l.getConsommable().getUniteMesure().getLibelle() : "");
+                        }
+                        lDto.setQuantite(l.getQuantite());
+                        lDto.setPrixUnitaire(l.getPrixUnitaire());
+                        lDto.setMontantTotal(l.getMontantTotal());
+                        lDto.setNotes(l.getNotes());
+                        return lDto;
+                    })
+                    .collect(Collectors.toList());
+            dto.setLignesConsommables(lignes);
+        }
+
+        // Pièces jointes GED attachées à cette dépense
+        if (d.getId() != null && gedService != null) {
+            try {
+                List<DocumentComptableDTO> docs = gedService.getDocumentsParDepense(d.getId());
+                dto.setDocuments(docs);
+                dto.setNombrePiecesJointes(docs != null ? docs.size() : 0);
+            } catch (Exception ignored) {
+                dto.setNombrePiecesJointes(0);
+            }
+        }
+
         dto.setArticlesDetail(d.getArticlesDetail());
         dto.setDeverseeCompta(Boolean.TRUE.equals(d.getDeverseeCompta()));
         dto.setDateDeversement(d.getDateDeversement());

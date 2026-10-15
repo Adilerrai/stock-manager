@@ -118,6 +118,22 @@ public class GedService {
             Long livraisonId,
             Long chequeEffetId,
             Long bonLivraisonClientId) throws IOException {
+        return stockerDocument(file, typePiece, description, ecritureId, factureAchatId, factureVenteId, paiementId, commandeClientId, livraisonId, chequeEffetId, bonLivraisonClientId, null);
+    }
+
+    public DocumentComptableDTO stockerDocument(
+            MultipartFile file,
+            String typePiece,
+            String description,
+            Long ecritureId,
+            Long factureAchatId,
+            Long factureVenteId,
+            Long paiementId,
+            Long commandeClientId,
+            Long livraisonId,
+            Long chequeEffetId,
+            Long bonLivraisonClientId,
+            Long depenseId) throws IOException {
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Le fichier à téléverser ne peut pas être vide.");
@@ -183,6 +199,7 @@ public class GedService {
         doc.setLivraisonId(livraisonId);
         doc.setChequeEffetId(chequeEffetId);
         doc.setBonLivraisonClientId(bonLivraisonClientId);
+        doc.setDepenseId(depenseId);
         doc.setUploadedBy(getUsername());
         doc.setDateUpload(LocalDateTime.now());
 
@@ -278,6 +295,14 @@ public class GedService {
     }
 
     @Transactional(readOnly = true)
+    public List<DocumentComptableDTO> getDocumentsParDepense(Long depenseId) {
+        Long tenantId = getTenantId();
+        return documentRepository.findByPointDeVenteIdAndDepenseIdOrderByDateUploadDesc(tenantId, depenseId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public DocumentComptableDTO getDocument(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
@@ -340,6 +365,10 @@ public class GedService {
     }
 
     public DocumentComptableDTO lierDocument(Long documentId, Long factureAchatId, Long commandeClientId, Long livraisonId, Long paiementId, Long chequeEffetId, Long bonLivraisonClientId) {
+        return lierDocument(documentId, factureAchatId, commandeClientId, livraisonId, paiementId, chequeEffetId, bonLivraisonClientId, null);
+    }
+
+    public DocumentComptableDTO lierDocument(Long documentId, Long factureAchatId, Long commandeClientId, Long livraisonId, Long paiementId, Long chequeEffetId, Long bonLivraisonClientId, Long depenseId) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(documentId, tenantId)
                 .orElseGet(() -> documentRepository.findById(documentId)
@@ -351,6 +380,7 @@ public class GedService {
         if (paiementId != null) doc.setPaiementId(paiementId);
         if (chequeEffetId != null) doc.setChequeEffetId(chequeEffetId);
         if (bonLivraisonClientId != null) doc.setBonLivraisonClientId(bonLivraisonClientId);
+        if (depenseId != null) doc.setDepenseId(depenseId);
 
         DocumentComptable saved = documentRepository.save(doc);
         return toDto(saved);
@@ -394,6 +424,7 @@ public class GedService {
         dto.setLivraisonId(doc.getLivraisonId());
         dto.setBonLivraisonClientId(doc.getBonLivraisonClientId());
         dto.setChequeEffetId(doc.getChequeEffetId());
+        dto.setDepenseId(doc.getDepenseId());
         dto.setUploadedBy(doc.getUploadedBy());
         dto.setDateUpload(doc.getDateUpload());
         dto.setUrlVisualisation("/api/v1/ged/documents/" + doc.getId() + "/visualiser");

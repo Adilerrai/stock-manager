@@ -50,6 +50,13 @@ public class Depense {
     @JoinColumn(name = "fournisseur_id")
     private Fournisseur fournisseur;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prestataire_id")
+    private Prestataire prestataire;
+
+    @OneToMany(mappedBy = "depense", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<LigneDepenseConsommable> lignesConsommables = new java.util.ArrayList<>();
+
     @Column(name = "articles_detail", columnDefinition = "TEXT")
     private String articlesDetail;
 
@@ -127,4 +134,10 @@ public class Depense {
 
     public Long getEcritureId() { return ecritureId; }
     public void setEcritureId(Long ecritureId) { this.ecritureId = ecritureId; }
+
+    public Prestataire getPrestataire() { return prestataire; }
+    public void setPrestataire(Prestataire prestataire) { this.prestataire = prestataire; }
+
+    public java.util.List<LigneDepenseConsommable> getLignesConsommables() { return lignesConsommables; }
+    public void setLignesConsommables(java.util.List<LigneDepenseConsommable> lignesConsommables) { this.lignesConsommables = lignesConsommables; }
 }

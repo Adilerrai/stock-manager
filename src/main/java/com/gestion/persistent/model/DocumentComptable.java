@@ -63,6 +63,9 @@ public class DocumentComptable {
     @Column(name = "cheque_effet_id")
     private Long chequeEffetId;
 
+    @Column(name = "depense_id")
+    private Long depenseId;
+
     @Column(name = "uploaded_by", length = 150)
     private String uploadedBy;
 
@@ -131,6 +134,9 @@ public class DocumentComptable {
 
     public Long getChequeEffetId() { return chequeEffetId; }
     public void setChequeEffetId(Long chequeEffetId) { this.chequeEffetId = chequeEffetId; }
+
+    public Long getDepenseId() { return depenseId; }
+    public void setDepenseId(Long depenseId) { this.depenseId = depenseId; }
 
     public String getUploadedBy() { return uploadedBy; }
     public void setUploadedBy(String uploadedBy) { this.uploadedBy = uploadedBy; }

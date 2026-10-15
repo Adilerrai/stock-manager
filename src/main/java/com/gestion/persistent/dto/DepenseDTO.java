@@ -21,6 +21,15 @@ public class DepenseDTO {
     private String fournisseurNom;
     private String fournisseurTelephone;
     private String fournisseurIce;
+    private Long prestataireId;
+    private String prestataireNom;
+    private String prestataireTelephone;
+    private String prestataireIce;
+    private com.gestion.persistent.enums.TypePrestation typePrestation;
+    private String typePrestationLibelle;
+    private java.util.List<LigneDepenseConsommableDTO> lignesConsommables = new java.util.ArrayList<>();
+    private java.util.List<DocumentComptableDTO> documents = new java.util.ArrayList<>();
+    private Integer nombrePiecesJointes = 0;
     private String articlesDetail;
     private String numeroFactureJustificatif;
     private String notes;
@@ -107,4 +116,41 @@ public class DepenseDTO {
 
     public Long getEcritureId() { return ecritureId; }
     public void setEcritureId(Long ecritureId) { this.ecritureId = ecritureId; }
+
+    public Long getPrestataireId() { return prestataireId; }
+    public void setPrestataireId(Long prestataireId) { this.prestataireId = prestataireId; }
+
+    public String getPrestataireNom() { return prestataireNom; }
+    public void setPrestataireNom(String prestataireNom) { this.prestataireNom = prestataireNom; }
+
+    public String getPrestataireTelephone() { return prestataireTelephone; }
+    public void setPrestataireTelephone(String prestataireTelephone) { this.prestataireTelephone = prestataireTelephone; }
+
+    public String getPrestataireIce() { return prestataireIce; }
+    public void setPrestataireIce(String prestataireIce) { this.prestataireIce = prestataireIce; }
+
+    public com.gestion.persistent.enums.TypePrestation getTypePrestation() { return typePrestation; }
+    public void setTypePrestation(com.gestion.persistent.enums.TypePrestation typePrestation) {
+        this.typePrestation = typePrestation;
+        if (typePrestation != null) {
+            this.typePrestationLibelle = typePrestation.getLibelle();
+        }
+    }
+
+    public String getTypePrestationLibelle() { return typePrestationLibelle; }
+    public void setTypePrestationLibelle(String typePrestationLibelle) { this.typePrestationLibelle = typePrestationLibelle; }
+
+    public java.util.List<LigneDepenseConsommableDTO> getLignesConsommables() { return lignesConsommables; }
+    public void setLignesConsommables(java.util.List<LigneDepenseConsommableDTO> lignesConsommables) {
+        this.lignesConsommables = lignesConsommables != null ? lignesConsommables : new java.util.ArrayList<>();
+    }
+
+    public java.util.List<DocumentComptableDTO> getDocuments() { return documents; }
+    public void setDocuments(java.util.List<DocumentComptableDTO> documents) {
+        this.documents = documents != null ? documents : new java.util.ArrayList<>();
+        this.nombrePiecesJointes = this.documents.size();
+    }
+
+    public Integer getNombrePiecesJointes() { return nombrePiecesJointes != null ? nombrePiecesJointes : (documents != null ? documents.size() : 0); }
+    public void setNombrePiecesJointes(Integer nombrePiecesJointes) { this.nombrePiecesJointes = nombrePiecesJointes; }
 }

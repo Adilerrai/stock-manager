@@ -40,10 +40,11 @@ public class GedController {
             @RequestParam(value = "commandeClientId", required = false) Long commandeClientId,
             @RequestParam(value = "livraisonId", required = false) Long livraisonId,
             @RequestParam(value = "chequeEffetId", required = false) Long chequeEffetId,
-            @RequestParam(value = "bonLivraisonClientId", required = false) Long bonLivraisonClientId) throws IOException {
+            @RequestParam(value = "bonLivraisonClientId", required = false) Long bonLivraisonClientId,
+            @RequestParam(value = "depenseId", required = false) Long depenseId) throws IOException {
 
         DocumentComptableDTO dto = gedService.stockerDocument(
-                file, typePiece, description, ecritureId, factureAchatId, factureVenteId, paiementId, commandeClientId, livraisonId, chequeEffetId, bonLivraisonClientId
+                file, typePiece, description, ecritureId, factureAchatId, factureVenteId, paiementId, commandeClientId, livraisonId, chequeEffetId, bonLivraisonClientId, depenseId
         );
         return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
@@ -102,6 +103,11 @@ public class GedController {
         return ResponseEntity.ok(gedService.getDocumentsParBonLivraisonClient(bonLivraisonClientId));
     }
 
+    @GetMapping("/documents/depense/{depenseId}")
+    public ResponseEntity<List<DocumentComptableDTO>> getDocumentsParDepense(@PathVariable Long depenseId) {
+        return ResponseEntity.ok(gedService.getDocumentsParDepense(depenseId));
+    }
+
     // =========================================================================
     // VISUALISATION INLINE & TÉLÉCHARGEMENT
     // =========================================================================
@@ -154,8 +160,9 @@ public class GedController {
             @RequestParam(required = false) Long livraisonId,
             @RequestParam(required = false) Long paiementId,
             @RequestParam(required = false) Long chequeEffetId,
-            @RequestParam(required = false) Long bonLivraisonClientId) {
-        return ResponseEntity.ok(gedService.lierDocument(id, factureAchatId, commandeClientId, livraisonId, paiementId, chequeEffetId, bonLivraisonClientId));
+            @RequestParam(required = false) Long bonLivraisonClientId,
+            @RequestParam(required = false) Long depenseId) {
+        return ResponseEntity.ok(gedService.lierDocument(id, factureAchatId, commandeClientId, livraisonId, paiementId, chequeEffetId, bonLivraisonClientId, depenseId));
     }
 
     @DeleteMapping("/documents/{id}")
