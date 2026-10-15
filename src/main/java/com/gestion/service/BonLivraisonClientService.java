@@ -27,6 +27,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.gestion.persistent.dto.DocumentComptableDTO;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -47,6 +50,7 @@ public class BonLivraisonClientService {
     private final CodificationService codificationService;
     private final com.gestion.repository.StockRepository stockRepository;
     private final AuditService auditService;
+    private final GedService gedService;
 
     public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
                                      ClientRepository clientRepository,
@@ -57,7 +61,8 @@ public class BonLivraisonClientService {
                                      BonLivraisonClientMapper bonLivraisonClientMapper,
                                      CodificationService codificationService,
                                      com.gestion.repository.StockRepository stockRepository,
-                                     AuditService auditService) {
+                                     AuditService auditService,
+                                     GedService gedService) {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.clientRepository = clientRepository;
         this.commandeClientRepository = commandeClientRepository;
@@ -68,6 +73,7 @@ public class BonLivraisonClientService {
         this.codificationService = codificationService;
         this.stockRepository = stockRepository;
         this.auditService = auditService;
+        this.gedService = gedService;
     }
 
     public Page<BonLivraisonClient> searchBonsLivraison(BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
@@ -592,8 +598,62 @@ public class BonLivraisonClientService {
     public BonLivraisonClientDTO getBonLivraisonById(Long id) {
         Long tenantId = TenantContext.getCurrentTenant();
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(id, tenantId != null ? tenantId : 1L)
-                .orElseThrow(() -> new RuntimeException("Bon de livraison non trouvé avec l'id: " + id));
-        return bonLivraisonClientMapper.toDto(bl);
+                .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + id, HttpStatus.NOT_FOUND));
+        BonLivraisonClientDTO dto = bonLivraisonClientMapper.toDto(bl);
+        dto.setPiecesJointes(gedService.getDocumentsParBonLivraisonClient(id));
+        return dto;
+    }
+
+    public DocumentComptableDTO ajouterPieceJointe(Long blId, MultipartFile file, String description, String typePiece) throws IOException {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
+                .orElseThrow(() -> new CommonException("Bon de livraison introuvable ID: " + blId, HttpStatus.NOT_FOUND));
+
+        String resolvedType = (typePiece != null && !typePiece.isBlank()) ? typePiece : "BON_LIVRAISON_CLIENT";
+        String desc = (description != null && !description.isBlank()) ? description : ("Pièce jointe BL Client #" + blId);
+
+        return gedService.stockerDocument(
+                file,
+                resolvedType,
+                desc,
+                null, null, null, null, null, null, null, blId
+        );
+    }
+
+    public List<DocumentComptableDTO> ajouterPiecesJointes(Long blId, List<MultipartFile> files, String description, String typePiece) throws IOException {
+        List<DocumentComptableDTO> result = new java.util.ArrayList<>();
+        if (files != null) {
+            for (MultipartFile file : files) {
+                if (file != null && !file.isEmpty()) {
+                    result.add(ajouterPieceJointe(blId, file, description, typePiece));
+                }
+            }
+        }
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<DocumentComptableDTO> getPiecesJointes(Long blId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
+                .orElseThrow(() -> new CommonException("Bon de livraison introuvable ID: " + blId, HttpStatus.NOT_FOUND));
+        return gedService.getDocumentsParBonLivraisonClient(blId);
+    }
+
+    public void supprimerPieceJointe(Long blId, Long pieceJointeId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
+                .orElseThrow(() -> new CommonException("Bon de livraison introuvable ID: " + blId, HttpStatus.NOT_FOUND));
+
+        DocumentComptableDTO doc = gedService.getDocument(pieceJointeId);
+        if (doc == null || (!blId.equals(doc.getBonLivraisonClientId()) && !blId.equals(doc.getLivraisonId()))) {
+            throw new CommonException("La pièce jointe #" + pieceJointeId + " n'est pas rattachée à ce bon de livraison.", HttpStatus.BAD_REQUEST);
+        }
+
+        gedService.supprimerDocument(pieceJointeId);
     }
 
     public List<BonLivraisonClientDTO> getBonsLivraisonNonFactures(Long clientId) {

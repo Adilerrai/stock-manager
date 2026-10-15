@@ -27,6 +27,7 @@ public class BonLivraisonClientDTO {
     private String factureNumero;
     private Boolean facturé;
     private List<LigneBonLivraisonClientDTO> lignes = new ArrayList<>();
+    private List<DocumentComptableDTO> piecesJointes = new ArrayList<>();
 
     public BonLivraisonClientDTO() {}
 
@@ -89,4 +90,7 @@ public class BonLivraisonClientDTO {
 
     public List<String> getCommandeClientNumeros() { return commandeClientNumeros; }
     public void setCommandeClientNumeros(List<String> commandeClientNumeros) { this.commandeClientNumeros = commandeClientNumeros; }
+
+    public List<DocumentComptableDTO> getPiecesJointes() { return piecesJointes; }
+    public void setPiecesJointes(List<DocumentComptableDTO> piecesJointes) { this.piecesJointes = piecesJointes != null ? piecesJointes : new ArrayList<>(); }
 }

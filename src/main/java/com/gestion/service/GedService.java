@@ -103,6 +103,21 @@ public class GedService {
             Long commandeClientId,
             Long livraisonId,
             Long chequeEffetId) throws IOException {
+        return stockerDocument(file, typePiece, description, ecritureId, factureAchatId, factureVenteId, paiementId, commandeClientId, livraisonId, chequeEffetId, null);
+    }
+
+    public DocumentComptableDTO stockerDocument(
+            MultipartFile file,
+            String typePiece,
+            String description,
+            Long ecritureId,
+            Long factureAchatId,
+            Long factureVenteId,
+            Long paiementId,
+            Long commandeClientId,
+            Long livraisonId,
+            Long chequeEffetId,
+            Long bonLivraisonClientId) throws IOException {
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Le fichier à téléverser ne peut pas être vide.");
@@ -167,6 +182,7 @@ public class GedService {
         doc.setCommandeClientId(commandeClientId);
         doc.setLivraisonId(livraisonId);
         doc.setChequeEffetId(chequeEffetId);
+        doc.setBonLivraisonClientId(bonLivraisonClientId);
         doc.setUploadedBy(getUsername());
         doc.setDateUpload(LocalDateTime.now());
 
@@ -231,6 +247,24 @@ public class GedService {
     public List<DocumentComptableDTO> getDocumentsParLivraison(Long livraisonId) {
         Long tenantId = getTenantId();
         return documentRepository.findByPointDeVenteIdAndLivraisonIdOrderByDateUploadDesc(tenantId, livraisonId).stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<DocumentComptableDTO> getDocumentsParBonLivraisonClient(Long bonLivraisonClientId) {
+        Long tenantId = getTenantId();
+        List<DocumentComptable> docs = documentRepository.findByPointDeVenteIdAndBonLivraisonClientIdOrderByDateUploadDesc(tenantId, bonLivraisonClientId);
+        if (docs.isEmpty()) {
+            // Retro-compatibilité avec les pièces attachées sous livraisonId avec typePiece BL
+            List<DocumentComptable> fallbackDocs = documentRepository.findByPointDeVenteIdAndLivraisonIdOrderByDateUploadDesc(tenantId, bonLivraisonClientId).stream()
+                    .filter(d -> "BON_LIVRAISON".equalsIgnoreCase(d.getTypePiece()) || "BON_LIVRAISON_CLIENT".equalsIgnoreCase(d.getTypePiece()))
+                    .collect(Collectors.toList());
+            if (!fallbackDocs.isEmpty()) {
+                return fallbackDocs.stream().map(this::toDto).collect(Collectors.toList());
+            }
+        }
+        return docs.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
     }
@@ -302,6 +336,10 @@ public class GedService {
     }
 
     public DocumentComptableDTO lierDocument(Long documentId, Long factureAchatId, Long commandeClientId, Long livraisonId, Long paiementId, Long chequeEffetId) {
+        return lierDocument(documentId, factureAchatId, commandeClientId, livraisonId, paiementId, chequeEffetId, null);
+    }
+
+    public DocumentComptableDTO lierDocument(Long documentId, Long factureAchatId, Long commandeClientId, Long livraisonId, Long paiementId, Long chequeEffetId, Long bonLivraisonClientId) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(documentId, tenantId)
                 .orElseGet(() -> documentRepository.findById(documentId)
@@ -312,6 +350,7 @@ public class GedService {
         if (livraisonId != null) doc.setLivraisonId(livraisonId);
         if (paiementId != null) doc.setPaiementId(paiementId);
         if (chequeEffetId != null) doc.setChequeEffetId(chequeEffetId);
+        if (bonLivraisonClientId != null) doc.setBonLivraisonClientId(bonLivraisonClientId);
 
         DocumentComptable saved = documentRepository.save(doc);
         return toDto(saved);
@@ -353,6 +392,7 @@ public class GedService {
         dto.setPaiementId(doc.getPaiementId());
         dto.setCommandeClientId(doc.getCommandeClientId());
         dto.setLivraisonId(doc.getLivraisonId());
+        dto.setBonLivraisonClientId(doc.getBonLivraisonClientId());
         dto.setChequeEffetId(doc.getChequeEffetId());
         dto.setUploadedBy(doc.getUploadedBy());
         dto.setDateUpload(doc.getDateUpload());

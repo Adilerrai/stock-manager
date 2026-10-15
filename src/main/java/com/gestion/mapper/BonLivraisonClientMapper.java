@@ -19,6 +19,7 @@ public interface BonLivraisonClientMapper {
     @Mapping(target = "factureNumero", source = "facture.numeroFacture")
     @Mapping(target = "facturé", expression = "java(entity.getFacture() != null)")
     @Mapping(target = "lignes", source = "lignes")
+    @Mapping(target = "piecesJointes", ignore = true)
     BonLivraisonClientDTO toDto(BonLivraisonClient entity);
 
     @Mapping(target = "client", ignore = true)

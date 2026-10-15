@@ -57,6 +57,9 @@ public class DocumentComptable {
     @Column(name = "livraison_id")
     private Long livraisonId;
 
+    @Column(name = "bon_livraison_client_id")
+    private Long bonLivraisonClientId;
+
     @Column(name = "cheque_effet_id")
     private Long chequeEffetId;
 
@@ -122,6 +125,9 @@ public class DocumentComptable {
 
     public Long getLivraisonId() { return livraisonId; }
     public void setLivraisonId(Long livraisonId) { this.livraisonId = livraisonId; }
+
+    public Long getBonLivraisonClientId() { return bonLivraisonClientId; }
+    public void setBonLivraisonClientId(Long bonLivraisonClientId) { this.bonLivraisonClientId = bonLivraisonClientId; }
 
     public Long getChequeEffetId() { return chequeEffetId; }
     public void setChequeEffetId(Long chequeEffetId) { this.chequeEffetId = chequeEffetId; }

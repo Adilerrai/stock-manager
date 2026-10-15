@@ -12,8 +12,12 @@ import org.springframework.http.MediaType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import com.gestion.persistent.dto.DocumentComptableDTO;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -117,6 +121,41 @@ public class BonLivraisonClientController {
                 .header(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Livraisons_Clients_En_Retard.xlsx")
                 .body(bytes);
+    }
+
+    // =========================================================================
+    // PIÈCES JOINTES & JUSTIFICATIFS (GED) DU BON DE LIVRAISON CLIENT
+    // =========================================================================
+
+    @PostMapping(value = "/{id}/pieces-jointes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<DocumentComptableDTO> ajouterPieceJointe(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "typePiece", required = false, defaultValue = "BON_LIVRAISON_CLIENT") String typePiece) throws IOException {
+        DocumentComptableDTO piece = bonLivraisonClientService.ajouterPieceJointe(id, file, description, typePiece);
+        return ResponseEntity.status(HttpStatus.CREATED).body(piece);
+    }
+
+    @PostMapping(value = "/{id}/pieces-jointes/multiple", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<List<DocumentComptableDTO>> ajouterPiecesJointesMultiples(
+            @PathVariable Long id,
+            @RequestParam("files") List<MultipartFile> files,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "typePiece", required = false, defaultValue = "BON_LIVRAISON_CLIENT") String typePiece) throws IOException {
+        List<DocumentComptableDTO> pieces = bonLivraisonClientService.ajouterPiecesJointes(id, files, description, typePiece);
+        return ResponseEntity.status(HttpStatus.CREATED).body(pieces);
+    }
+
+    @GetMapping("/{id}/pieces-jointes")
+    public ResponseEntity<List<DocumentComptableDTO>> getPiecesJointes(@PathVariable Long id) {
+        return ResponseEntity.ok(bonLivraisonClientService.getPiecesJointes(id));
+    }
+
+    @DeleteMapping("/{id}/pieces-jointes/{pieceJointeId}")
+    public ResponseEntity<Void> supprimerPieceJointe(@PathVariable Long id, @PathVariable Long pieceJointeId) {
+        bonLivraisonClientService.supprimerPieceJointe(id, pieceJointeId);
+        return ResponseEntity.noContent().build();
     }
 
 }

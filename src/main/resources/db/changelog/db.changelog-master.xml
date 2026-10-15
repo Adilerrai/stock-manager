@@ -97,5 +97,8 @@
     <!-- Changeset 029 : Mise à jour format codification PRODUIT → P-0001, P-0002, ... -->
     <include file="changes/029-update-produit-codification-format.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 030 : Support de l'attachement documentaire (PDF/Images) pour Bons de Livraison Client -->
+    <include file="changes/030-add-documents-comptables-bon-livraison-client.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 

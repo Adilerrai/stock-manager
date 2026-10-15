@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 030 : Support de l'attachement documentaire (PDF/Images) pour Bons de Livraison Client
+    -->
+    <changeSet id="030-add-documents-comptables-bon-livraison-client" author="erp-pointvente">
+        <sql splitStatements="false">
+            -- Ajout de bon_livraison_client_id dans documents_comptables
+            ALTER TABLE IF EXISTS documents_comptables 
+                ADD COLUMN IF NOT EXISTS bon_livraison_client_id BIGINT;
+
+            -- Index pour les recherches instantanées des pièces jointes BL Client
+            CREATE INDEX IF NOT EXISTS idx_documents_comptables_bl_client ON documents_comptables(bon_livraison_client_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

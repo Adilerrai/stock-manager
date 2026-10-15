@@ -20,6 +20,7 @@ public class DocumentComptableDTO {
     private Long paiementId;
     private Long commandeClientId;
     private Long livraisonId;
+    private Long bonLivraisonClientId;
     private Long chequeEffetId;
     private String uploadedBy;
     private LocalDateTime dateUpload;
@@ -75,6 +76,9 @@ public class DocumentComptableDTO {
 
     public Long getLivraisonId() { return livraisonId; }
     public void setLivraisonId(Long livraisonId) { this.livraisonId = livraisonId; }
+
+    public Long getBonLivraisonClientId() { return bonLivraisonClientId; }
+    public void setBonLivraisonClientId(Long bonLivraisonClientId) { this.bonLivraisonClientId = bonLivraisonClientId; }
 
     public Long getChequeEffetId() { return chequeEffetId; }
     public void setChequeEffetId(Long chequeEffetId) { this.chequeEffetId = chequeEffetId; }
