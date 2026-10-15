@@ -28,6 +28,21 @@ public class TestRenderPdf {
         params.put("devise", "MAD");
         params.put("banqueEntreprise", "");
         params.put("ribEntreprise", "");
+
+        java.awt.image.BufferedImage logo = new java.awt.image.BufferedImage(300, 150, java.awt.image.BufferedImage.TYPE_INT_RGB);
+        java.awt.Graphics2D g = logo.createGraphics();
+        g.setColor(new java.awt.Color(0xF0, 0xFD, 0xF4));
+        g.fillRect(0, 0, 300, 150);
+        g.setColor(new java.awt.Color(0x6E, 0x99, 0x7A));
+        g.fillRoundRect(8, 8, 284, 134, 16, 16);
+        g.setColor(java.awt.Color.WHITE);
+        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 42));
+        g.drawString("TECHNO", 50, 70);
+        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 24));
+        g.drawString("GLOBAL LOGO", 65, 110);
+        g.dispose();
+        params.put("logoImage", logo);
+
         return params;
     }
 
@@ -159,7 +174,9 @@ public class TestRenderPdf {
 
             JasperPrint jp = JasperFillManager.fillReport(jr, params, new JRBeanCollectionDataSource(data));
             JasperExportManager.exportReportToPdfFile(jp, "uploads/test_facture_client_moderne.pdf");
-            System.out.println("Generated uploads/test_facture_client_moderne.pdf");
+            java.awt.image.BufferedImage img = (java.awt.image.BufferedImage) JasperPrintManager.printPageToImage(jp, 0, 1.5f);
+            javax.imageio.ImageIO.write(img, "PNG", new File("uploads/test_facture_client_page1.png"));
+            System.out.println("Generated uploads/test_facture_client_page1.png");
         }
     }
 

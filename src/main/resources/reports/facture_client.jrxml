@@ -74,22 +74,22 @@
 	<pageHeader>
 		<band height="175">
 			<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
-				<reportElement x="0" y="8" width="80" height="65" uuid="ab0cf9ec-6857-41e2-ad5e-93315d6f3899"/>
+				<reportElement x="0" y="6" width="125" height="68" uuid="ab0cf9ec-6857-41e2-ad5e-93315d6f3899"/>
 				<imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
 			</image>
 			<textField isBlankWhenNull="true">
-				<reportElement x="80" y="8" width="280" height="26" forecolor="#111827" uuid="c132d001-d579-46c7-b14e-bb97ce06a83d"/>
-				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="16" isBold="true"/></textElement>
+				<reportElement x="130" y="6" width="235" height="20" forecolor="#111827" uuid="c132d001-d579-46c7-b14e-bb97ce06a83d"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="12" isBold="true"/></textElement>
 				<textFieldExpression><![CDATA[$P{nomEntreprise} != null ? $P{nomEntreprise}.toUpperCase() : ""]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="80" y="34" width="280" height="15" forecolor="#6B7280" uuid="055c2805-dd29-4719-9af1-b94f03785a22"/>
-				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8.5"/></textElement>
+				<reportElement x="130" y="27" width="235" height="13" forecolor="#6B7280" uuid="055c2805-dd29-4719-9af1-b94f03785a22"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
 				<textFieldExpression><![CDATA[($P{activiteEntreprise} != null && !$P{activiteEntreprise}.trim().isEmpty() ? $P{activiteEntreprise} : "") + ($P{formeJuridique} != null && !$P{formeJuridique}.trim().isEmpty() ? ($P{activiteEntreprise} != null && !$P{activiteEntreprise}.trim().isEmpty() ? " — " : "") + $P{formeJuridique} : "")]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="80" y="49" width="280" height="14" forecolor="#6B7280" uuid="155f44ae-09b1-4e92-a538-b6909f3c66e8"/>
-				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
+				<reportElement x="130" y="42" width="235" height="14" forecolor="#6B7280" uuid="155f44ae-09b1-4e92-a538-b6909f3c66e8"/>
+				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="7.5"/></textElement>
 				<textFieldExpression><![CDATA[$P{adresseEntreprise} != null ? $P{adresseEntreprise} : ""]]></textFieldExpression>
 			</textField>
 			<rectangle radius="6">
