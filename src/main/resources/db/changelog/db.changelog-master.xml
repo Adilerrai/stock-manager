@@ -106,5 +106,8 @@
     <!-- Changeset 032 : Support Type Produit (Marchandise vs Service / Main d'œuvre) -->
     <include file="changes/032-add-type-produit-to-produits.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 033 : Séparation numéro interne et numéro externe (OCR / BC client) commandes_client -->
+    <include file="changes/033-add-numero-commande-externe.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 

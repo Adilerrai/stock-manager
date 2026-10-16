@@ -366,6 +366,7 @@ public class ImpressionService {
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroCommande", commande.getNumeroCommande());
+        params.put("numeroCommandeExterne", commande.getNumeroCommandeExterne() != null ? commande.getNumeroCommandeExterne() : "");
         params.put("dateCommande",
                 commande.getDateCommande() != null ? commande.getDateCommande().format(DATETIME_FORMATTER) : "-");
         params.put("dateLivraisonPrevue",

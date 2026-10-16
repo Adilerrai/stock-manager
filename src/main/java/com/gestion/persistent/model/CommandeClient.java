@@ -19,6 +19,9 @@ public class CommandeClient {
     @Column(name = "numero_commande", nullable = false)
     private String numeroCommande;
 
+    @Column(name = "numero_commande_externe", length = 100)
+    private String numeroCommandeExterne;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "client_id")
     private Client client;
@@ -183,6 +186,9 @@ public class CommandeClient {
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }
+
+    public String getNumeroCommandeExterne() { return numeroCommandeExterne; }
+    public void setNumeroCommandeExterne(String numeroCommandeExterne) { this.numeroCommandeExterne = numeroCommandeExterne; }
 
     public List<LigneCommandeClient> getLignesCommande() { return lignesCommande; }
     public void setLignesCommande(List<LigneCommandeClient> lignesCommande) { this.lignesCommande = lignesCommande; }

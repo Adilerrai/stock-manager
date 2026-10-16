@@ -88,6 +88,9 @@ public class CommandeClientService {
         } else {
             commande.setNumeroCommande(generateNumeroCommandeClient());
         }
+        if (commandeDTO.getNumeroCommandeExterne() != null && !commandeDTO.getNumeroCommandeExterne().isBlank()) {
+            commande.setNumeroCommandeExterne(commandeDTO.getNumeroCommandeExterne().trim());
+        }
         commande.setPointDeVenteId(getTenantId());
         if (commandeDTO.getClientId() != null) {
             clientRepository.findById(commandeDTO.getClientId()).ifPresent(commande::setClient);
@@ -241,6 +244,9 @@ public class CommandeClientService {
         }
         if (dto.getRemiseGlobaleMontant() != null) {
             commande.setRemiseGlobaleMontant(dto.getRemiseGlobaleMontant());
+        }
+        if (dto.getNumeroCommandeExterne() != null) {
+            commande.setNumeroCommandeExterne(dto.getNumeroCommandeExterne().trim().isEmpty() ? null : dto.getNumeroCommandeExterne().trim());
         }
 
         if (dto.getLignesCommande() != null) {

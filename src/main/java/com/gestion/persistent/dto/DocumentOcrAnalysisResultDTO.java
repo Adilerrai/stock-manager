@@ -33,8 +33,17 @@ public class DocumentOcrAnalysisResultDTO {
     private String urlVisualisation;
     private String nomBanque;
     private String numeroCheque;
+    private String numeroCommandeExterne;
 
     public DocumentOcrAnalysisResultDTO() {}
+
+    public String getNumeroCommandeExterne() {
+        return numeroCommandeExterne != null ? numeroCommandeExterne : numeroPiece;
+    }
+
+    public void setNumeroCommandeExterne(String numeroCommandeExterne) {
+        this.numeroCommandeExterne = numeroCommandeExterne;
+    }
 
     public String getTypeDocument() {
         return typeDocument;

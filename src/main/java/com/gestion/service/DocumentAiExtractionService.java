@@ -81,6 +81,7 @@ public class DocumentAiExtractionService {
     private final PaiementRepository paiementRepository;
     private final ChequeEffetRepository chequeEffetRepository;
     private final UserRepository userRepository;
+    private final CodificationService codificationService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
@@ -100,7 +101,8 @@ public class DocumentAiExtractionService {
                                        DocumentComptableRepository documentComptableRepository,
                                        PaiementRepository paiementRepository,
                                        ChequeEffetRepository chequeEffetRepository,
-                                       UserRepository userRepository) {
+                                       UserRepository userRepository,
+                                       CodificationService codificationService) {
         this.openOcrService = openOcrService;
         this.fournisseurRepository = fournisseurRepository;
         this.clientRepository = clientRepository;
@@ -114,6 +116,7 @@ public class DocumentAiExtractionService {
         this.paiementRepository = paiementRepository;
         this.chequeEffetRepository = chequeEffetRepository;
         this.userRepository = userRepository;
+        this.codificationService = codificationService;
     }
 
     private Long getTenantId() {
@@ -1019,7 +1022,21 @@ public class DocumentAiExtractionService {
         }
 
         CommandeClient c = new CommandeClient();
-        c.setNumeroCommande(dto.getNumeroPiece() != null ? dto.getNumeroPiece() : "CMD-" + System.currentTimeMillis());
+        String numInterne = null;
+        try {
+            if (codificationService != null) {
+                numInterne = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.COMMANDE_CLIENT, tenantId);
+            }
+        } catch (Exception ex) {
+            log.warn("Erreur lors de la génération automatique du numéro de commande interne: {}", ex.getMessage());
+        }
+        if (numInterne == null || numInterne.isBlank()) {
+            numInterne = "CMD-" + System.currentTimeMillis();
+        }
+
+        c.setNumeroCommande(numInterne);
+        // Numéro externe : Référence du Bon de Commande client extrait par l'OCR
+        c.setNumeroCommandeExterne(dto.getNumeroPiece() != null && !dto.getNumeroPiece().isBlank() ? dto.getNumeroPiece().trim() : null);
         c.setClient(client);
         c.setClientNom(client.getNomComplet() != null ? client.getNomComplet() : client.getNom());
         c.setClientTelephone(client.getTelephone());

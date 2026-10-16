@@ -13,6 +13,7 @@ import java.util.Map;
 public class CommandeClientDTO {
     private Long id;
     private String numeroCommande;
+    private String numeroCommandeExterne;
     private Long clientId;
     private String clientNom;
     private String clientTelephone;
@@ -189,6 +190,30 @@ public class CommandeClientDTO {
     @JsonProperty("idClient")
     public void setIdClient(Long id) {
         if (this.clientId == null) this.clientId = id;
+    }
+
+    public String getNumeroCommandeExterne() { return numeroCommandeExterne; }
+    public void setNumeroCommandeExterne(String numeroCommandeExterne) { this.numeroCommandeExterne = numeroCommandeExterne; }
+
+    @JsonProperty("referenceClient")
+    public void setReferenceClient(String referenceClient) {
+        if (this.numeroCommandeExterne == null || this.numeroCommandeExterne.isBlank()) {
+            this.numeroCommandeExterne = referenceClient;
+        }
+    }
+
+    @JsonProperty("numero_commande_externe")
+    public void setNumeroCommandeExterneSnake(String ref) {
+        if (this.numeroCommandeExterne == null || this.numeroCommandeExterne.isBlank()) {
+            this.numeroCommandeExterne = ref;
+        }
+    }
+
+    @JsonProperty("refCommandeClient")
+    public void setRefCommandeClient(String ref) {
+        if (this.numeroCommandeExterne == null || this.numeroCommandeExterne.isBlank()) {
+            this.numeroCommandeExterne = ref;
+        }
     }
 
     @JsonProperty("lignes")
