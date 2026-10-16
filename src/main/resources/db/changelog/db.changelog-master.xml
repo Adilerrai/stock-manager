@@ -103,5 +103,8 @@
     <!-- Changeset 031 : Tables Prestataires, Consommables, Lignes Dépenses Consommables & GED Dépenses -->
     <include file="changes/031-add-consommables-prestataires-depenses.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 032 : Support Type Produit (Marchandise vs Service / Main d'œuvre) -->
+    <include file="changes/032-add-type-produit-to-produits.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 

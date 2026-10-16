@@ -869,6 +869,8 @@ public class ComptabiliteService {
             compteContrepartie = findOrCreateCompte("51610000", "Caisse centrale", 5, SensCompte.CREDIT, tenantId);
         } else if (depense.getModePaiement() == ModePaiement.VIREMENT || depense.getModePaiement() == ModePaiement.CHEQUE || depense.getModePaiement() == ModePaiement.CARTE_BANCAIRE) {
             compteContrepartie = findOrCreateCompte("51410000", "Banques", 5, SensCompte.CREDIT, tenantId);
+        } else if (depense.getPrestataire() != null) {
+            compteContrepartie = findOrCreateCompte("44110000", "Fournisseurs & Prestataires", 4, SensCompte.CREDIT, tenantId);
         } else if (depense.getFournisseur() != null) {
             compteContrepartie = findOrCreateCompte("44110000", "Fournisseurs", 4, SensCompte.CREDIT, tenantId);
         } else {
@@ -884,8 +886,9 @@ public class ComptabiliteService {
             throw new IllegalStateException("L'exercice comptable contenant le " + ecriture.getDateEcriture() + " est clôturé. Impossible d'enregistrer l'écriture.");
         }
 
-        String tiers = depense.getFournisseur() != null ? depense.getFournisseur().getRaisonSociale()
-                     : (depense.getBeneficiaire() != null ? depense.getBeneficiaire() : "Fournisseur de frais");
+        String tiers = depense.getPrestataire() != null ? depense.getPrestataire().getRaisonSociale()
+                     : (depense.getBeneficiaire() != null ? depense.getBeneficiaire()
+                     : (depense.getFournisseur() != null ? depense.getFournisseur().getRaisonSociale() : "Prestataire de service"));
         String detail = depense.getArticlesDetail() != null && !depense.getArticlesDetail().trim().isEmpty()
                       ? (" (" + depense.getArticlesDetail() + ")") : "";
 

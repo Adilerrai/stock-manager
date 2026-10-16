@@ -2,6 +2,7 @@ package com.gestion.controller;
 
 import com.gestion.persistent.dto.ConsommableDTO;
 import com.gestion.persistent.dto.ConsommableSearchCriteria;
+import com.gestion.persistent.dto.SortieConsommableRequest;
 import com.gestion.persistent.enums.CategorieConsommable;
 import com.gestion.persistent.enums.UniteConsommable;
 import com.gestion.service.ConsommableService;
@@ -77,6 +78,13 @@ public class ConsommableController {
             @RequestParam BigDecimal quantite,
             @RequestParam(required = false) String motif) {
         return ResponseEntity.ok(consommableService.ajusterStock(id, quantite, motif));
+    }
+
+    @PostMapping("/{id}/sortie")
+    public ResponseEntity<ConsommableDTO> enregistrerSortie(
+            @PathVariable Long id,
+            @RequestBody SortieConsommableRequest request) {
+        return ResponseEntity.ok(consommableService.enregistrerSortie(id, request));
     }
 
     @GetMapping("/categories")

@@ -1,5 +1,6 @@
 package com.gestion.persistent.dto;
 
+import com.gestion.persistent.enums.TypeProduit;
 import com.gestion.persistent.enums.UniteMesure;
 import com.gestion.persistent.enums.CategorieArticle;
 import com.gestion.persistent.model.GroupeArticle;
@@ -33,6 +34,8 @@ public class ProduitDTO {
     private Long pointDeVenteId;
     private Long categorieId;
     private CategorieDTO categorie;
+    private TypeProduit typeProduit = TypeProduit.MARCHANDISE;
+    private String typeProduitLibelle;
 
     // Constructors
     public ProduitDTO() {
@@ -187,4 +190,23 @@ public class ProduitDTO {
 
     public BigDecimal getPrixMinVente() { return prixVenteMin; }
     public void setPrixMinVente(BigDecimal prixMinVente) { this.prixVenteMin = prixMinVente; }
+
+    public TypeProduit getTypeProduit() {
+        return typeProduit != null ? typeProduit : TypeProduit.MARCHANDISE;
+    }
+
+    public void setTypeProduit(TypeProduit typeProduit) {
+        this.typeProduit = typeProduit;
+        if (typeProduit != null) {
+            this.typeProduitLibelle = typeProduit.getLibelle();
+        }
+    }
+
+    public String getTypeProduitLibelle() {
+        return typeProduitLibelle != null ? typeProduitLibelle : (typeProduit != null ? typeProduit.getLibelle() : null);
+    }
+
+    public void setTypeProduitLibelle(String typeProduitLibelle) {
+        this.typeProduitLibelle = typeProduitLibelle;
+    }
 }

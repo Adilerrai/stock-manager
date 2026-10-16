@@ -3,6 +3,7 @@ package com.gestion.service;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.ConsommableDTO;
 import com.gestion.persistent.dto.ConsommableSearchCriteria;
+import com.gestion.persistent.dto.SortieConsommableRequest;
 import com.gestion.persistent.enums.CategorieConsommable;
 import com.gestion.persistent.enums.UniteConsommable;
 import com.gestion.persistent.model.Consommable;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -146,6 +148,60 @@ public class ConsommableService {
             c.setNotes((noteActuelle + "\n[Ajustement Stock " + LocalDateTime.now() + "]: " + motif).trim());
         }
         c.setDerniereMiseAJour(LocalDateTime.now());
+        return toDto(consommableRepository.save(c));
+    }
+
+    /**
+     * Enregistre une sortie / consommation interne de consommable.
+     * Décrémente le stock et consigne une trace horodatée dans l'historique des notes.
+     */
+    @Transactional
+    public ConsommableDTO enregistrerSortie(Long id, SortieConsommableRequest request) {
+        Long tenantId = getTenantId();
+        Consommable c = consommableRepository.findByIdAndPointDeVenteId(id, tenantId)
+                .orElseThrow(() -> new IllegalArgumentException("Consommable introuvable avec l'ID: " + id));
+
+        BigDecimal qteSortie = (request != null && request.getQuantite() != null) 
+                ? request.getQuantite() 
+                : BigDecimal.ONE;
+
+        if (qteSortie.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("La quantité sortie doit être strictement positive.");
+        }
+
+        BigDecimal stockActuel = c.getStockActuel() != null ? c.getStockActuel() : BigDecimal.ZERO;
+        
+        // Décrémentation avec plancher à 0 (évite les stocks incohérents)
+        BigDecimal nouveauStock = stockActuel.subtract(qteSortie);
+        if (nouveauStock.compareTo(BigDecimal.ZERO) < 0) {
+            nouveauStock = BigDecimal.ZERO;
+        }
+        c.setStockActuel(nouveauStock);
+
+        // Date de sortie
+        String dateStr = (request != null && request.getDateSortie() != null)
+                ? request.getDateSortie().toString()
+                : LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+
+        // Journalisation / Traçabilité dans les notes
+        StringBuilder trace = new StringBuilder("\n[Sortie/Utilisation le ")
+                .append(dateStr)
+                .append("]: -").append(qteSortie);
+        
+        if (c.getUniteMesure() != null) {
+            trace.append(" ").append(c.getUniteMesure());
+        }
+        if (request != null && request.getBeneficiaire() != null && !request.getBeneficiaire().isBlank()) {
+            trace.append(" | Demandeur/Service: ").append(request.getBeneficiaire().trim());
+        }
+        if (request != null && request.getMotif() != null && !request.getMotif().isBlank()) {
+            trace.append(" | Motif: ").append(request.getMotif().trim());
+        }
+
+        String noteActuelle = c.getNotes() != null ? c.getNotes() : "";
+        c.setNotes((noteActuelle + trace.toString()).trim());
+        c.setDerniereMiseAJour(LocalDateTime.now());
+
         return toDto(consommableRepository.save(c));
     }
 

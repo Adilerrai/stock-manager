@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 032 : Ajout de la colonne type_produit dans la table produits
+                      pour distinguer les Marchandises physiques et les Services / Prestations / Main d'œuvre
+    -->
+    <changeSet id="032-add-type-produit-to-produits" author="erp-pointvente">
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'produits' AND column_name = 'type_produit'
+                ) THEN
+                    ALTER TABLE produits ADD COLUMN type_produit VARCHAR(30) DEFAULT 'MARCHANDISE';
+                END IF;
+            END $$;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

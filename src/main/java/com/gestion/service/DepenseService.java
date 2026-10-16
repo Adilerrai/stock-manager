@@ -75,17 +75,8 @@ public class DepenseService {
         depense.setCategorie(dto.getCategorie() != null ? dto.getCategorie() : CategorieDepense.AUTRES_CHARGES);
         depense.setModePaiement(dto.getModePaiement() != null ? dto.getModePaiement() : ModePaiement.ESPECES);
 
-        // Association Fournisseur
-        if (dto.getFournisseurId() != null) {
-            com.gestion.persistent.model.Fournisseur f = fournisseurRepository.findById(dto.getFournisseurId()).orElse(null);
-            depense.setFournisseur(f);
-            if ((dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty()) && f != null) {
-                depense.setBeneficiaire(f.getRaisonSociale());
-            } else {
-                depense.setBeneficiaire(dto.getBeneficiaire());
-            }
-        } else if (dto.getPrestataireId() != null) {
-            // Association Prestataire
+        // Association Prestataire (La dépense est attachée au Prestataire de service)
+        if (dto.getPrestataireId() != null) {
             Prestataire p = prestataireRepository.findById(dto.getPrestataireId()).orElse(null);
             depense.setPrestataire(p);
             if ((dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty()) && p != null) {
@@ -93,14 +84,27 @@ public class DepenseService {
             } else {
                 depense.setBeneficiaire(dto.getBeneficiaire());
             }
+        } else if (dto.getFournisseurId() != null) {
+            // Rétrocompatibilité / transition si un ancien appel transmet un ID
+            Prestataire p = prestataireRepository.findById(dto.getFournisseurId()).orElse(null);
+            if (p != null) {
+                depense.setPrestataire(p);
+                if (dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty()) {
+                    depense.setBeneficiaire(p.getRaisonSociale());
+                } else {
+                    depense.setBeneficiaire(dto.getBeneficiaire());
+                }
+            } else {
+                com.gestion.persistent.model.Fournisseur f = fournisseurRepository.findById(dto.getFournisseurId()).orElse(null);
+                depense.setFournisseur(f);
+                if ((dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty()) && f != null) {
+                    depense.setBeneficiaire(f.getRaisonSociale());
+                } else {
+                    depense.setBeneficiaire(dto.getBeneficiaire());
+                }
+            }
         } else {
             depense.setBeneficiaire(dto.getBeneficiaire());
-        }
-
-        // Si le prestataire est spécifié en plus
-        if (dto.getPrestataireId() != null && depense.getPrestataire() == null) {
-            Prestataire p = prestataireRepository.findById(dto.getPrestataireId()).orElse(null);
-            depense.setPrestataire(p);
         }
 
         depense.setArticlesDetail(dto.getArticlesDetail());
@@ -239,11 +243,22 @@ public class DepenseService {
         if (dto.getNotes() != null) d.setNotes(dto.getNotes());
         if (dto.getArticlesDetail() != null) d.setArticlesDetail(dto.getArticlesDetail());
 
-        if (dto.getFournisseurId() != null) {
-            d.setFournisseur(fournisseurRepository.findById(dto.getFournisseurId()).orElse(null));
-        }
         if (dto.getPrestataireId() != null) {
-            d.setPrestataire(prestataireRepository.findById(dto.getPrestataireId()).orElse(null));
+            Prestataire p = prestataireRepository.findById(dto.getPrestataireId()).orElse(null);
+            d.setPrestataire(p);
+            if (p != null && (dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty())) {
+                d.setBeneficiaire(p.getRaisonSociale());
+            }
+        } else if (dto.getFournisseurId() != null) {
+            Prestataire p = prestataireRepository.findById(dto.getFournisseurId()).orElse(null);
+            if (p != null) {
+                d.setPrestataire(p);
+                if (dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty()) {
+                    d.setBeneficiaire(p.getRaisonSociale());
+                }
+            } else {
+                d.setFournisseur(fournisseurRepository.findById(dto.getFournisseurId()).orElse(null));
+            }
         }
 
         Depense saved = depenseRepository.save(d);
@@ -402,23 +417,30 @@ public class DepenseService {
         dto.setDateDepense(d.getDateDepense());
         dto.setCategorie(d.getCategorie());
         dto.setModePaiement(d.getModePaiement());
-        dto.setBeneficiaire(d.getBeneficiaire());
-
-        // Fournisseur
-        if (d.getFournisseur() != null) {
-            dto.setFournisseurId(d.getFournisseur().getId());
-            dto.setFournisseurNom(d.getFournisseur().getRaisonSociale());
-            dto.setFournisseurTelephone(d.getFournisseur().getTelephone());
-            dto.setFournisseurIce(d.getFournisseur().getIce());
-        }
-
-        // Prestataire
+        // Prestataire (Prioritaire pour une dépense)
         if (d.getPrestataire() != null) {
             dto.setPrestataireId(d.getPrestataire().getId());
             dto.setPrestataireNom(d.getPrestataire().getRaisonSociale());
             dto.setPrestataireTelephone(d.getPrestataire().getTelephone());
             dto.setPrestataireIce(d.getPrestataire().getIce());
             dto.setTypePrestation(d.getPrestataire().getTypePrestation());
+
+            // Rétrocompatibilité d'affichage si l'UI lit fournisseurNom
+            if (dto.getFournisseurNom() == null) {
+                dto.setFournisseurNom(d.getPrestataire().getRaisonSociale());
+                dto.setFournisseurId(d.getPrestataire().getId());
+            }
+            if (dto.getBeneficiaire() == null || dto.getBeneficiaire().trim().isEmpty()) {
+                dto.setBeneficiaire(d.getPrestataire().getRaisonSociale());
+            }
+        }
+
+        // Fournisseur (Rétrocompatibilité historique)
+        if (d.getFournisseur() != null && dto.getPrestataireId() == null) {
+            dto.setFournisseurId(d.getFournisseur().getId());
+            dto.setFournisseurNom(d.getFournisseur().getRaisonSociale());
+            dto.setFournisseurTelephone(d.getFournisseur().getTelephone());
+            dto.setFournisseurIce(d.getFournisseur().getIce());
         }
 
         // Lignes de consommables

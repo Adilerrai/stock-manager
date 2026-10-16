@@ -2,6 +2,7 @@ package com.gestion.persistent.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.gestion.persistent.enums.TypeProduit;
 import com.gestion.persistent.enums.UniteMesure;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -77,6 +78,10 @@ public class Produit {
     @Enumerated(EnumType.STRING)
     @Column(name = "unite_mesure_stock")
     private UniteMesure uniteMesureStock;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_produit", length = 30)
+    private TypeProduit typeProduit = TypeProduit.MARCHANDISE;
 
     @Column(name = "stock_minimum")
     private BigDecimal stockMinimum = BigDecimal.ZERO;
@@ -343,11 +348,22 @@ public class Produit {
         this.pointDeVenteId = pointDeVenteId;
     }
 
+    public TypeProduit getTypeProduit() {
+        return typeProduit != null ? typeProduit : TypeProduit.MARCHANDISE;
+    }
+
+    public void setTypeProduit(TypeProduit typeProduit) {
+        this.typeProduit = typeProduit != null ? typeProduit : TypeProduit.MARCHANDISE;
+    }
+
     @PrePersist
     @PreUpdate
     public void prePersist() {
         if (description == null || description.trim().isEmpty()) {
             description = designation != null ? designation : "Sans description";
+        }
+        if (typeProduit == null) {
+            typeProduit = TypeProduit.MARCHANDISE;
         }
         if (pointDeVenteId == null) {
             Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();

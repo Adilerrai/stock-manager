@@ -19,8 +19,11 @@ import java.util.function.Function;
 @Service
 public class JwtUtil {
 
-    private  String secret = "K9WJAYBWo2nsl7T0BtNiFEptw28PZDebaDMWqxhndpGPNe354j" ;
-    private long expiration  = 3600;
+    @Value("${jwt.secret:K9WJAYBWo2nsl7T0BtNiFEptw28PZDebaDMWqxhndpGPNe354j}")
+    private String secret;
+
+    @Value("${jwt.expiration:28800}")
+    private long expiration = 28800;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

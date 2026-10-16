@@ -173,18 +173,44 @@ public class ImpressionService {
 
         // Lignes
         List<Map<String, Object>> lignes = new ArrayList<>();
+        BigDecimal totalMoHT = BigDecimal.ZERO;
+        BigDecimal totalMoTTC = BigDecimal.ZERO;
+        BigDecimal moTauxTVA = null;
+        boolean hasService = false;
+
         if (facture.getLignes() != null) {
             for (LigneFacture lf : facture.getLignes()) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("reference", lf.getReference() != null ? lf.getReference() : "");
-                map.put("designation", lf.getDesignation() != null ? lf.getDesignation() : "");
-                map.put("quantite", lf.getQuantite() != null ? lf.getQuantite() : BigDecimal.ZERO);
-                map.put("prixUnitaireHT", lf.getPrixUnitaireHT() != null ? lf.getPrixUnitaireHT() : BigDecimal.ZERO);
-                map.put("tauxTVA", lf.getTauxTVA() != null ? lf.getTauxTVA() : BigDecimal.ZERO);
-                map.put("montantHT", lf.getMontantHT() != null ? lf.getMontantHT() : BigDecimal.ZERO);
-                map.put("montantTTC", lf.getMontantTTC() != null ? lf.getMontantTTC() : BigDecimal.ZERO);
-                lignes.add(map);
+                if (isServiceProduit(lf.getProduit(), lf.getDesignation())) {
+                    hasService = true;
+                    totalMoHT = totalMoHT.add(lf.getMontantHT() != null ? lf.getMontantHT() : BigDecimal.ZERO);
+                    totalMoTTC = totalMoTTC.add(lf.getMontantTTC() != null ? lf.getMontantTTC() : BigDecimal.ZERO);
+                    if (moTauxTVA == null && lf.getTauxTVA() != null) {
+                        moTauxTVA = lf.getTauxTVA();
+                    }
+                } else {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("reference", lf.getReference() != null ? lf.getReference() : "");
+                    map.put("designation", lf.getDesignation() != null ? lf.getDesignation() : "");
+                    map.put("quantite", lf.getQuantite() != null ? lf.getQuantite() : BigDecimal.ZERO);
+                    map.put("prixUnitaireHT", lf.getPrixUnitaireHT() != null ? lf.getPrixUnitaireHT() : BigDecimal.ZERO);
+                    map.put("tauxTVA", lf.getTauxTVA() != null ? lf.getTauxTVA() : BigDecimal.ZERO);
+                    map.put("montantHT", lf.getMontantHT() != null ? lf.getMontantHT() : BigDecimal.ZERO);
+                    map.put("montantTTC", lf.getMontantTTC() != null ? lf.getMontantTTC() : BigDecimal.ZERO);
+                    lignes.add(map);
+                }
             }
+        }
+
+        if (hasService) {
+            Map<String, Object> mo = new HashMap<>();
+            mo.put("reference", "MO");
+            mo.put("designation", "MAIN D'ŒUVRE");
+            mo.put("quantite", BigDecimal.ONE);
+            mo.put("prixUnitaireHT", totalMoHT);
+            mo.put("tauxTVA", moTauxTVA != null ? moTauxTVA : new BigDecimal("20.00"));
+            mo.put("montantHT", totalMoHT);
+            mo.put("montantTTC", totalMoTTC.compareTo(BigDecimal.ZERO) > 0 ? totalMoTTC : totalMoHT);
+            lignes.add(mo);
         }
 
         return exportToPdf("facture_client", params, lignes);
@@ -221,19 +247,38 @@ public class ImpressionService {
 
         List<Map<String, Object>> lignes = new ArrayList<>();
         String premierDepot = "Dépôt Principal";
+        BigDecimal totalMoPrix = BigDecimal.ZERO;
+        boolean hasService = false;
+
         if (bl.getLignes() != null) {
             for (LigneBonLivraisonClient lbl : bl.getLignes()) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("produitReference", lbl.getProduit() != null ? lbl.getProduit().getReference() : "");
-                map.put("produitDesignation", lbl.getProduit() != null ? lbl.getProduit().getDesignation() : "Article");
-                String depotNom = lbl.getDepot() != null ? lbl.getDepot().getNom() : "-";
-                map.put("depotNom", depotNom);
-                if (lbl.getDepot() != null)
-                    premierDepot = lbl.getDepot().getNom();
-                map.put("quantiteLivree", lbl.getQuantiteLivree() != null ? lbl.getQuantiteLivree() : BigDecimal.ZERO);
-                map.put("prixVente", lbl.getPrixVente() != null ? lbl.getPrixVente() : BigDecimal.ZERO);
-                lignes.add(map);
+                if (isServiceProduit(lbl.getProduit(), null)) {
+                    hasService = true;
+                    BigDecimal qte = lbl.getQuantiteLivree() != null ? lbl.getQuantiteLivree() : BigDecimal.ONE;
+                    BigDecimal pu = lbl.getPrixVente() != null ? lbl.getPrixVente() : BigDecimal.ZERO;
+                    totalMoPrix = totalMoPrix.add(pu.multiply(qte));
+                } else {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("produitReference", lbl.getProduit() != null ? lbl.getProduit().getReference() : "");
+                    map.put("produitDesignation", lbl.getProduit() != null ? lbl.getProduit().getDesignation() : "Article");
+                    String depotNom = lbl.getDepot() != null ? lbl.getDepot().getNom() : "-";
+                    map.put("depotNom", depotNom);
+                    if (lbl.getDepot() != null)
+                        premierDepot = lbl.getDepot().getNom();
+                    map.put("quantiteLivree", lbl.getQuantiteLivree() != null ? lbl.getQuantiteLivree() : BigDecimal.ZERO);
+                    map.put("prixVente", lbl.getPrixVente() != null ? lbl.getPrixVente() : BigDecimal.ZERO);
+                    lignes.add(map);
+                }
             }
+        }
+        if (hasService) {
+            Map<String, Object> mo = new HashMap<>();
+            mo.put("produitReference", "MO");
+            mo.put("produitDesignation", "MAIN D'ŒUVRE");
+            mo.put("depotNom", "-");
+            mo.put("quantiteLivree", BigDecimal.ONE);
+            mo.put("prixVente", totalMoPrix);
+            lignes.add(mo);
         }
         params.put("depotNom", premierDepot);
 
@@ -270,17 +315,39 @@ public class ImpressionService {
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();
+        BigDecimal totalMoHT = BigDecimal.ZERO;
+        BigDecimal moTauxTVA = null;
+        boolean hasService = false;
+
         if (devis.getLignes() != null) {
             for (LigneDevis ld : devis.getLignes()) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("reference", ld.getProduit() != null ? ld.getProduit().getReference() : "");
-                map.put("designation", ld.getProduit() != null ? ld.getProduit().getDesignation() : "Article");
-                map.put("quantite", ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO);
-                map.put("prixUnitaireHT", ld.getPrixUnitaireHT() != null ? ld.getPrixUnitaireHT() : BigDecimal.ZERO);
-                map.put("tauxTVA", ld.getTauxTVA() != null ? ld.getTauxTVA() : new BigDecimal("20.00"));
-                map.put("montantHT", ld.getMontantHT() != null ? ld.getMontantHT() : BigDecimal.ZERO);
-                lignes.add(map);
+                if (isServiceProduit(ld.getProduit(), ld.getDescription())) {
+                    hasService = true;
+                    totalMoHT = totalMoHT.add(ld.getMontantHT() != null ? ld.getMontantHT() : BigDecimal.ZERO);
+                    if (moTauxTVA == null && ld.getTauxTVA() != null) {
+                        moTauxTVA = ld.getTauxTVA();
+                    }
+                } else {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("reference", ld.getProduit() != null ? ld.getProduit().getReference() : "");
+                    map.put("designation", ld.getProduit() != null ? ld.getProduit().getDesignation() : "Article");
+                    map.put("quantite", ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO);
+                    map.put("prixUnitaireHT", ld.getPrixUnitaireHT() != null ? ld.getPrixUnitaireHT() : BigDecimal.ZERO);
+                    map.put("tauxTVA", ld.getTauxTVA() != null ? ld.getTauxTVA() : new BigDecimal("20.00"));
+                    map.put("montantHT", ld.getMontantHT() != null ? ld.getMontantHT() : BigDecimal.ZERO);
+                    lignes.add(map);
+                }
             }
+        }
+        if (hasService) {
+            Map<String, Object> mo = new HashMap<>();
+            mo.put("reference", "MO");
+            mo.put("designation", "MAIN D'ŒUVRE");
+            mo.put("quantite", BigDecimal.ONE);
+            mo.put("prixUnitaireHT", totalMoHT);
+            mo.put("tauxTVA", moTauxTVA != null ? moTauxTVA : new BigDecimal("20.00"));
+            mo.put("montantHT", totalMoHT);
+            lignes.add(mo);
         }
 
         return exportToPdf("devis_client", params, lignes);
@@ -322,16 +389,33 @@ public class ImpressionService {
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();
+        BigDecimal totalMo = BigDecimal.ZERO;
+        boolean hasService = false;
+
         if (commande.getLignesCommande() != null) {
             for (LigneCommandeClient lc : commande.getLignesCommande()) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("reference", lc.getProduit() != null ? lc.getProduit().getReference() : "");
-                map.put("designation", lc.getProduit() != null ? lc.getProduit().getDesignation() : "Article");
-                map.put("quantite", lc.getQuantite() != null ? lc.getQuantite() : BigDecimal.ZERO);
-                map.put("prixUnitaire", lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO);
-                map.put("montantTotal", lc.getMontantLigne() != null ? lc.getMontantLigne() : BigDecimal.ZERO);
-                lignes.add(map);
+                if (isServiceProduit(lc.getProduit(), null)) {
+                    hasService = true;
+                    totalMo = totalMo.add(lc.getMontantLigne() != null ? lc.getMontantLigne() : BigDecimal.ZERO);
+                } else {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("reference", lc.getProduit() != null ? lc.getProduit().getReference() : "");
+                    map.put("designation", lc.getProduit() != null ? lc.getProduit().getDesignation() : "Article");
+                    map.put("quantite", lc.getQuantite() != null ? lc.getQuantite() : BigDecimal.ZERO);
+                    map.put("prixUnitaire", lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO);
+                    map.put("montantTotal", lc.getMontantLigne() != null ? lc.getMontantLigne() : BigDecimal.ZERO);
+                    lignes.add(map);
+                }
             }
+        }
+        if (hasService) {
+            Map<String, Object> mo = new HashMap<>();
+            mo.put("reference", "MO");
+            mo.put("designation", "MAIN D'ŒUVRE");
+            mo.put("quantite", BigDecimal.ONE);
+            mo.put("prixUnitaire", totalMo);
+            mo.put("montantTotal", totalMo);
+            lignes.add(mo);
         }
 
         return exportToPdf("commande_client", params, lignes);
@@ -551,16 +635,36 @@ public class ImpressionService {
         }
 
         List<Map<String, Object>> lignes = new ArrayList<>();
+        BigDecimal totalMoHT = BigDecimal.ZERO;
+        BigDecimal totalMoTTC = BigDecimal.ZERO;
+        boolean hasService = false;
+
         if (avoir.getLignes() != null) {
             for (LigneAvoir la : avoir.getLignes()) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("reference", la.getProduit() != null ? la.getProduit().getReference() : "");
-                map.put("designation", la.getProduit() != null ? la.getProduit().getDesignation() : "Article");
-                map.put("quantite", la.getQuantite() != null ? la.getQuantite() : BigDecimal.ZERO);
-                map.put("prixUnitaire", la.getPrixUnitaireHT() != null ? la.getPrixUnitaireHT() : BigDecimal.ZERO);
-                map.put("montantTotal", la.getMontantTTC() != null ? la.getMontantTTC() : BigDecimal.ZERO);
-                lignes.add(map);
+                if (isServiceProduit(la.getProduit(), la.getDesignation())) {
+                    hasService = true;
+                    BigDecimal mt = la.getMontantTTC() != null ? la.getMontantTTC() : BigDecimal.ZERO;
+                    totalMoTTC = totalMoTTC.add(mt);
+                    totalMoHT = totalMoHT.add(la.getPrixUnitaireHT() != null ? la.getPrixUnitaireHT() : mt);
+                } else {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("reference", la.getProduit() != null ? la.getProduit().getReference() : "");
+                    map.put("designation", la.getProduit() != null ? la.getProduit().getDesignation() : "Article");
+                    map.put("quantite", la.getQuantite() != null ? la.getQuantite() : BigDecimal.ZERO);
+                    map.put("prixUnitaire", la.getPrixUnitaireHT() != null ? la.getPrixUnitaireHT() : BigDecimal.ZERO);
+                    map.put("montantTotal", la.getMontantTTC() != null ? la.getMontantTTC() : BigDecimal.ZERO);
+                    lignes.add(map);
+                }
             }
+        }
+        if (hasService) {
+            Map<String, Object> mo = new HashMap<>();
+            mo.put("reference", "MO");
+            mo.put("designation", "MAIN D'ŒUVRE");
+            mo.put("quantite", BigDecimal.ONE);
+            mo.put("prixUnitaire", totalMoHT);
+            mo.put("montantTotal", totalMoTTC.compareTo(BigDecimal.ZERO) > 0 ? totalMoTTC : totalMoHT);
+            lignes.add(mo);
         }
 
         return exportToPdf("avoir_client", params, lignes);
@@ -603,18 +707,48 @@ public class ImpressionService {
         params.put("modePaiement", modePaiement);
 
         List<Map<String, Object>> lignes = new ArrayList<>();
+        BigDecimal totalMoHT = BigDecimal.ZERO;
+        BigDecimal totalMoTTC = BigDecimal.ZERO;
+        boolean hasService = false;
+
         if (vente.getLignes() != null) {
             for (LigneVente lv : vente.getLignes()) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("designation", lv.getDesignation() != null ? lv.getDesignation() : "Article");
-                map.put("quantite", lv.getQuantite() != null ? lv.getQuantite() : BigDecimal.ONE);
-                map.put("prixUnitaireHT", lv.getPrixUnitaireHT() != null ? lv.getPrixUnitaireHT() : BigDecimal.ZERO);
-                map.put("montantTTC", lv.getMontantTTC() != null ? lv.getMontantTTC() : BigDecimal.ZERO);
-                lignes.add(map);
+                if (isServiceProduit(lv.getProduit(), lv.getDesignation())) {
+                    hasService = true;
+                    totalMoHT = totalMoHT.add(lv.getMontantHT() != null ? lv.getMontantHT() : BigDecimal.ZERO);
+                    totalMoTTC = totalMoTTC.add(lv.getMontantTTC() != null ? lv.getMontantTTC() : BigDecimal.ZERO);
+                } else {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("designation", lv.getDesignation() != null ? lv.getDesignation()
+                            : (lv.getProduit() != null ? lv.getProduit().getDesignation() : "Article"));
+                    map.put("quantite", lv.getQuantite() != null ? lv.getQuantite() : BigDecimal.ONE);
+                    map.put("prixUnitaireHT", lv.getPrixUnitaireHT() != null ? lv.getPrixUnitaireHT() : BigDecimal.ZERO);
+                    map.put("montantTTC", lv.getMontantTTC() != null ? lv.getMontantTTC() : BigDecimal.ZERO);
+                    lignes.add(map);
+                }
             }
+        }
+        if (hasService) {
+            Map<String, Object> mo = new HashMap<>();
+            mo.put("designation", "MAIN D'ŒUVRE");
+            mo.put("quantite", BigDecimal.ONE);
+            mo.put("prixUnitaireHT", totalMoHT);
+            mo.put("montantTTC", totalMoTTC.compareTo(BigDecimal.ZERO) > 0 ? totalMoTTC : totalMoHT);
+            lignes.add(mo);
         }
 
         return exportToPdf("ticket_vente_pos", params, lignes);
+    }
+
+    private boolean isServiceProduit(Produit p, String designation) {
+        if (p != null && p.getTypeProduit() == TypeProduit.SERVICE) {
+            return true;
+        }
+        if (designation != null) {
+            String d = designation.trim().toUpperCase();
+            return d.equals("MAIN D'OEUVRE") || d.equals("MAIN D'ŒUVRE") || d.contains("MAIN D'OEUVRE") || d.contains("MAIN D'ŒUVRE");
+        }
+        return false;
     }
 
     // ==========================================

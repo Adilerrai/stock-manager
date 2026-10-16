@@ -276,8 +276,9 @@ public class PasserelleComptableService {
             for (Depense dep : depenses) {
                 boolean deversee = Boolean.TRUE.equals(dep.getDeverseeCompta()) ||
                         ecritureRepository.findByReferencePieceAndPointDeVenteId(dep.getReference(), tenantId).isPresent();
-                String tiersNom = (dep.getFournisseur() != null) ? dep.getFournisseur().getRaisonSociale()
-                        : (dep.getBeneficiaire() != null ? dep.getBeneficiaire() : "Fournisseur de frais");
+                String tiersNom = (dep.getPrestataire() != null) ? dep.getPrestataire().getRaisonSociale()
+                        : (dep.getBeneficiaire() != null ? dep.getBeneficiaire()
+                        : ((dep.getFournisseur() != null) ? dep.getFournisseur().getRaisonSociale() : "Prestataire de service"));
                 String journal = (dep.getModePaiement() == ModePaiement.ESPECES) ? "CA"
                         : (dep.getModePaiement() == ModePaiement.VIREMENT || dep.getModePaiement() == ModePaiement.CHEQUE || dep.getModePaiement() == ModePaiement.CARTE_BANCAIRE ? "BQ" : "OD");
                 pieces.add(new PieceCommercialeEnAttenteDTO(
