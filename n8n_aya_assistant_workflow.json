@@ -1,0 +1,298 @@
+{
+  "name": "Aya - Backend API (Gemini Voice Aoede)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "aya-assistant",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-react-native",
+      "name": "Webhook (React Native App)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        200,
+        300
+      ],
+      "webhookId": "aya-assistant-webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-binary-audio",
+              "leftValue": "={{ $binary && $binary.audio ? true : false }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-voice-or-text",
+      "name": "Is Voice File Attached?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        440,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "audio"
+            },
+            {
+              "name": "model",
+              "value": "whisper-large-v3-turbo"
+            },
+            {
+              "name": "prompt",
+              "value": "Salam Si Mohamed. Tasjil dial l-khedma b Darija maghribiya w l-français: ventes, achats, factures, stock, agenda."
+            },
+            {
+              "name": "language",
+              "value": "ar"
+            },
+            {
+              "name": "response_format",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "groq-whisper-stt",
+      "name": "Groq Whisper Turbo (0.3s)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        680,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body?.text || $json.text }}",
+        "options": {
+          "systemMessage": "Tu es 'Aya', l'assistante exécutive personnelle du Directeur Général, Monsieur Mohamed Kardad (Si Mohamed).\n\nSTYLE ET CADENCE :\n- Tu réponds en MOINS DE 2 PHRASES : sois ultra-concise, polie et directe.\n- Miroir linguistique instantané :\n  * S'il te parle en français : français exécutif direct.\n  * S'il te parle en Darija : Darija marocaine d'affaires respectueuse et rapide ('Marhba Si Mohamed', 'Kolchi mriguel', 'Daba nteb3 hadchi').\n- Privilégie les puces concises pour les chiffres et les priorités."
+        }
+      },
+      "id": "aya-ai-agent",
+      "name": "Aya (AI Agent)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        940,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gemini-3.8-flash",
+        "options": {
+          "baseURL": "https://generativelanguage.googleapis.com/v1beta/openai",
+          "temperature": 0.2
+        }
+      },
+      "id": "openai-gemini-model",
+      "name": "Gemini 3.8 Flash (Ultra-Fast)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        860,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Webhook (React Native App)').item.json.body?.userId || 'mohamed-kardad' }}",
+        "contextWindowLength": 6
+      },
+      "id": "memory-buffer",
+      "name": "Conversation Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        980,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash-tts:generateContent?key=AQ.Ab8RN6KpntseYAwV2qJTMfBdNKQKV7YRp3xCHMSFL-8Ig3-yAw",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"{{ $json.output.replace(/\"/g, '\\\"').replace(/\\n/g, ' ') }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"responseModalities\": [\"AUDIO\"],\n    \"speechConfig\": {\n      \"voiceConfig\": {\n        \"prebuiltVoiceConfig\": {\n          \"voiceName\": \"Aoede\"\n        }\n      }\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "gemini-38-flash-tts",
+      "name": "Gemini 3.8 Flash TTS (Voix Aoede - Douce & Jeune)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1180,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  status: 'success',\n  reply: $('Aya (AI Agent)').first().json.output,\n  audioBase64: $json.candidates[0].content.parts[0].inlineData.data,\n  mimeType: $json.candidates[0].content.parts[0].inlineData.mimeType || 'audio/wav',\n  timestamp: new Date().toISOString()\n}) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-to-react-native",
+      "name": "Respond to React Native App",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1400,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook (React Native App)": {
+      "main": [
+        [
+          {
+            "node": "Is Voice File Attached?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Voice File Attached?": {
+      "main": [
+        [
+          {
+            "node": "Groq Whisper Turbo (0.3s)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Aya (AI Agent)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Whisper Turbo (0.3s)": {
+      "main": [
+        [
+          {
+            "node": "Aya (AI Agent)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 3.8 Flash (Ultra-Fast)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Aya (AI Agent)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Aya (AI Agent)",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aya (AI Agent)": {
+      "main": [
+        [
+          {
+            "node": "Gemini 3.8 Flash TTS (Voix Aoede - Douce & Jeune)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 3.8 Flash TTS (Voix Aoede - Douce & Jeune)": {
+      "main": [
+        [
+          {
+            "node": "Respond to React Native App",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
