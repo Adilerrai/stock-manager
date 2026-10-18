@@ -2,6 +2,7 @@ package com.gestion.repository;
 
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.AvoirSearchCriteria;
+import com.gestion.persistent.enums.StatutAvoir;
 import com.gestion.persistent.model.Avoir;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -78,6 +79,7 @@ public class AvoirRepositoryImpl implements AvoirRepositoryCustom {
         }
 
         if (criteria == null) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutAvoir.ANNULE));
             return predicates;
         }
 
@@ -91,6 +93,8 @@ public class AvoirRepositoryImpl implements AvoirRepositoryCustom {
 
         if (criteria.getStatut() != null) {
             predicates.add(cb.equal(root.get("statut"), criteria.getStatut()));
+        } else if (!Boolean.TRUE.equals(criteria.getInclureAnnulees())) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutAvoir.ANNULE));
         }
 
         if (criteria.getClientId() != null) {

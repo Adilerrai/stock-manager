@@ -17,8 +17,12 @@ public class DevisSearchCriteria {
     private BigDecimal montantMin;
     private BigDecimal montantMax;
     private Long societeId;
+    private Boolean inclureAnnulees;
 
     public DevisSearchCriteria() {}
+
+    public Boolean getInclureAnnulees() { return inclureAnnulees; }
+    public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
 
     public String getNumeroDevis() { return numeroDevis; }
     public void setNumeroDevis(String numeroDevis) { this.numeroDevis = numeroDevis; }

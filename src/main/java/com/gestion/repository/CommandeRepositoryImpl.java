@@ -2,6 +2,7 @@ package com.gestion.repository;
 
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.CommandeSearchCriteria;
+import com.gestion.persistent.enums.StatutCommande;
 import com.gestion.persistent.model.Commande;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -92,6 +93,7 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
         }
 
         if (criteria == null) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutCommande.ANNULEE));
             return predicates;
         }
 
@@ -106,6 +108,8 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
 
         if (criteria.getStatut() != null) {
             predicates.add(cb.equal(root.get("statut"), criteria.getStatut()));
+        } else if (!Boolean.TRUE.equals(criteria.getInclureAnnulees())) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutCommande.ANNULEE));
         }
 
         if (criteria.getDateDebutCommande() != null) {

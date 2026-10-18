@@ -12,6 +12,10 @@ public class CommandeSearchCriteria {
     private LocalDateTime dateDebutLivraison;
     private LocalDateTime dateFinLivraison;
     private Long societeId;
+    private Boolean inclureAnnulees;
+
+    public Boolean getInclureAnnulees() { return inclureAnnulees; }
+    public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
 
     // Getters et Setters
     public String getNumeroCommande() { return numeroCommande; }

@@ -2,6 +2,7 @@ package com.gestion.repository;
 
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.DevisSearchCriteria;
+import com.gestion.persistent.enums.StatutDevis;
 import com.gestion.persistent.model.Devis;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -80,6 +81,7 @@ public class DevisRepositoryImpl implements DevisRepositoryCustom {
         }
 
         if (criteria == null) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutDevis.REFUSE));
             return predicates;
         }
 
@@ -97,6 +99,8 @@ public class DevisRepositoryImpl implements DevisRepositoryCustom {
 
         if (criteria.getStatut() != null) {
             predicates.add(cb.equal(root.get("statut"), criteria.getStatut()));
+        } else if (!Boolean.TRUE.equals(criteria.getInclureAnnulees())) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutDevis.REFUSE));
         }
 
         if (criteria.getDateDebut() != null) {

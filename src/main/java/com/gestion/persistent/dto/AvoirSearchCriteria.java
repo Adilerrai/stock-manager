@@ -19,8 +19,12 @@ public class AvoirSearchCriteria {
     private BigDecimal montantMin;
     private BigDecimal montantMax;
     private Long societeId;
+    private Boolean inclureAnnulees;
 
     public AvoirSearchCriteria() {}
+
+    public Boolean getInclureAnnulees() { return inclureAnnulees; }
+    public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
 
     public String getNumeroAvoir() { return numeroAvoir; }
     public void setNumeroAvoir(String numeroAvoir) { this.numeroAvoir = numeroAvoir; }
