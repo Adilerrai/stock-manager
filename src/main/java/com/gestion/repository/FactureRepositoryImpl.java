@@ -81,6 +81,10 @@ public class FactureRepositoryImpl implements FactureRepositoryCustom {
         }
 
         if (criteria == null) {
+            predicates.add(cb.and(
+                    cb.or(cb.isNull(root.get("annulee")), cb.isFalse(root.get("annulee"))),
+                    cb.notEqual(root.get("statut"), com.gestion.persistent.enums.StatutFacture.ANNULEE)
+            ));
             return predicates;
         }
 
@@ -94,8 +98,8 @@ public class FactureRepositoryImpl implements FactureRepositoryCustom {
 
         if (criteria.getStatut() != null) {
             predicates.add(cb.equal(root.get("statut"), criteria.getStatut()));
-        } else if (Boolean.FALSE.equals(criteria.getInclureAnnulees())) {
-            // Ignorer uniquement si explicitement demandé d'exclure les factures annulées
+        } else if (!Boolean.TRUE.equals(criteria.getInclureAnnulees())) {
+            // Par défaut, exclure les factures annulées de la liste et du total
             predicates.add(cb.and(
                     cb.or(cb.isNull(root.get("annulee")), cb.isFalse(root.get("annulee"))),
                     cb.notEqual(root.get("statut"), com.gestion.persistent.enums.StatutFacture.ANNULEE)

@@ -18,8 +18,12 @@ public class CommandeClientSearchCriteria {
     private BigDecimal montantMin;
     private BigDecimal montantMax;
     private Long societeId;
+    private Boolean inclureAnnulees;
 
     public CommandeClientSearchCriteria() {}
+
+    public Boolean getInclureAnnulees() { return inclureAnnulees; }
+    public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
 
     public String getNumeroCommande() { return numeroCommande; }
     public void setNumeroCommande(String numeroCommande) { this.numeroCommande = numeroCommande; }

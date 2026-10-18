@@ -12,8 +12,12 @@ public class BonLivraisonClientSearchCriteria {
     private LocalDateTime dateDebut;
     private LocalDateTime dateFin;
     private Long societeId;
+    private Boolean inclureAnnulees;
 
     public BonLivraisonClientSearchCriteria() {}
+
+    public Boolean getInclureAnnulees() { return inclureAnnulees; }
+    public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
 
     public String getNumeroBL() { return numeroBL; }
     public void setNumeroBL(String numeroBL) { this.numeroBL = numeroBL; }

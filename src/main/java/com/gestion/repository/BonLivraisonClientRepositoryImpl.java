@@ -2,6 +2,7 @@ package com.gestion.repository;
 
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.BonLivraisonClientSearchCriteria;
+import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.model.BonLivraisonClient;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -78,6 +79,7 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
         }
 
         if (criteria == null) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutLivraison.ANNULEE));
             return predicates;
         }
 
@@ -95,6 +97,8 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
 
         if (criteria.getStatut() != null) {
             predicates.add(cb.equal(root.get("statut"), criteria.getStatut()));
+        } else if (!Boolean.TRUE.equals(criteria.getInclureAnnulees())) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutLivraison.ANNULEE));
         }
 
         if (Boolean.TRUE.equals(criteria.getFacturee())) {
