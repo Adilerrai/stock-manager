@@ -16,13 +16,17 @@ public interface CrmTacheRepository extends JpaRepository<CrmTache, Long> {
 
     List<CrmTache> findByPointDeVenteIdOrderByDateEcheanceAsc(Long pointDeVenteId);
 
-    List<CrmTache> findByPointDeVenteIdAndAssigneAIdOrderByDateEcheanceAsc(Long pointDeVenteId, Long userId);
+    @Query("SELECT t FROM CrmTache t WHERE t.pointDeVenteId = :pointDeVenteId AND t.assigneA.id = :userId ORDER BY t.dateEcheance ASC")
+    List<CrmTache> findByPointDeVenteIdAndAssigneAIdOrderByDateEcheanceAsc(@Param("pointDeVenteId") Long pointDeVenteId, @Param("userId") Long userId);
 
-    List<CrmTache> findByPointDeVenteIdAndAssigneAIdAndStatut(Long pointDeVenteId, Long userId, StatutTache statut);
+    @Query("SELECT t FROM CrmTache t WHERE t.pointDeVenteId = :pointDeVenteId AND t.assigneA.id = :userId AND t.statut = :statut")
+    List<CrmTache> findByPointDeVenteIdAndAssigneAIdAndStatut(@Param("pointDeVenteId") Long pointDeVenteId, @Param("userId") Long userId, @Param("statut") StatutTache statut);
 
-    List<CrmTache> findByPointDeVenteIdAndRapportId(Long pointDeVenteId, Long rapportId);
+    @Query("SELECT t FROM CrmTache t WHERE t.pointDeVenteId = :pointDeVenteId AND t.rapport.id = :rapportId")
+    List<CrmTache> findByPointDeVenteIdAndRapportId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("rapportId") Long rapportId);
 
-    List<CrmTache> findByPointDeVenteIdAndEntrepriseId(Long pointDeVenteId, Long entrepriseId);
+    @Query("SELECT t FROM CrmTache t WHERE t.pointDeVenteId = :pointDeVenteId AND t.entreprise.id = :entrepriseId")
+    List<CrmTache> findByPointDeVenteIdAndEntrepriseId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("entrepriseId") Long entrepriseId);
 
     Optional<CrmTache> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
 

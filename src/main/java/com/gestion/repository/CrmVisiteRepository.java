@@ -16,9 +16,11 @@ public interface CrmVisiteRepository extends JpaRepository<CrmVisite, Long> {
 
     List<CrmVisite> findByPointDeVenteIdOrderByDateVisiteDesc(Long pointDeVenteId);
 
-    List<CrmVisite> findByPointDeVenteIdAndCommercialIdOrderByDateVisiteDesc(Long pointDeVenteId, Long commercialId);
+    @Query("SELECT v FROM CrmVisite v WHERE v.pointDeVenteId = :pointDeVenteId AND v.commercial.id = :commercialId ORDER BY v.dateVisite DESC")
+    List<CrmVisite> findByPointDeVenteIdAndCommercialIdOrderByDateVisiteDesc(@Param("pointDeVenteId") Long pointDeVenteId, @Param("commercialId") Long commercialId);
 
-    List<CrmVisite> findByPointDeVenteIdAndEntrepriseIdOrderByDateVisiteDesc(Long pointDeVenteId, Long entrepriseId);
+    @Query("SELECT v FROM CrmVisite v WHERE v.pointDeVenteId = :pointDeVenteId AND v.entreprise.id = :entrepriseId ORDER BY v.dateVisite DESC")
+    List<CrmVisite> findByPointDeVenteIdAndEntrepriseIdOrderByDateVisiteDesc(@Param("pointDeVenteId") Long pointDeVenteId, @Param("entrepriseId") Long entrepriseId);
 
     List<CrmVisite> findByPointDeVenteIdAndStatut(Long pointDeVenteId, StatutVisite statut);
 
@@ -41,9 +43,11 @@ public interface CrmVisiteRepository extends JpaRepository<CrmVisite, Long> {
 
     long countByPointDeVenteId(Long pointDeVenteId);
 
-    long countByPointDeVenteIdAndCommercialId(Long pointDeVenteId, Long commercialId);
+    @Query("SELECT COUNT(v) FROM CrmVisite v WHERE v.pointDeVenteId = :pointDeVenteId AND v.commercial.id = :commercialId")
+    long countByPointDeVenteIdAndCommercialId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("commercialId") Long commercialId);
 
-    long countByPointDeVenteIdAndEntrepriseId(Long pointDeVenteId, Long entrepriseId);
+    @Query("SELECT COUNT(v) FROM CrmVisite v WHERE v.pointDeVenteId = :pointDeVenteId AND v.entreprise.id = :entrepriseId")
+    long countByPointDeVenteIdAndEntrepriseId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("entrepriseId") Long entrepriseId);
 
     @Query("SELECT COUNT(v) FROM CrmVisite v WHERE v.pointDeVenteId = :pointDeVenteId " +
            "AND v.statut = 'PLANIFIEE' AND v.dateVisite >= :debut AND v.dateVisite <= :fin")

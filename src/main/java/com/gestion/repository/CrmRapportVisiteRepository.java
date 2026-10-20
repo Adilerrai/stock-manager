@@ -16,7 +16,8 @@ public interface CrmRapportVisiteRepository extends JpaRepository<CrmRapportVisi
 
     List<CrmRapportVisite> findByPointDeVenteIdOrderByDateCreationDesc(Long pointDeVenteId);
 
-    Optional<CrmRapportVisite> findByVisiteId(Long visiteId);
+    @Query("SELECT r FROM CrmRapportVisite r WHERE r.visite.id = :visiteId")
+    Optional<CrmRapportVisite> findByVisiteId(@Param("visiteId") Long visiteId);
 
     Optional<CrmRapportVisite> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
 

@@ -17,11 +17,13 @@ public interface CrmOpportuniteRepository extends JpaRepository<CrmOpportunite, 
 
     List<CrmOpportunite> findByPointDeVenteIdOrderByDateCreationDesc(Long pointDeVenteId);
 
-    List<CrmOpportunite> findByPointDeVenteIdAndCommercialIdOrderByDateCreationDesc(Long pointDeVenteId, Long commercialId);
+    @Query("SELECT o FROM CrmOpportunite o WHERE o.pointDeVenteId = :pointDeVenteId AND o.commercial.id = :commercialId ORDER BY o.dateCreation DESC")
+    List<CrmOpportunite> findByPointDeVenteIdAndCommercialIdOrderByDateCreationDesc(@Param("pointDeVenteId") Long pointDeVenteId, @Param("commercialId") Long commercialId);
 
     List<CrmOpportunite> findByPointDeVenteIdAndEtape(Long pointDeVenteId, EtapeOpportunite etape);
 
-    List<CrmOpportunite> findByPointDeVenteIdAndEntrepriseId(Long pointDeVenteId, Long entrepriseId);
+    @Query("SELECT o FROM CrmOpportunite o WHERE o.pointDeVenteId = :pointDeVenteId AND o.entreprise.id = :entrepriseId")
+    List<CrmOpportunite> findByPointDeVenteIdAndEntrepriseId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("entrepriseId") Long entrepriseId);
 
     Optional<CrmOpportunite> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
 
@@ -32,9 +34,11 @@ public interface CrmOpportuniteRepository extends JpaRepository<CrmOpportunite, 
 
     long countByPointDeVenteId(Long pointDeVenteId);
 
-    long countByPointDeVenteIdAndCommercialId(Long pointDeVenteId, Long commercialId);
+    @Query("SELECT COUNT(o) FROM CrmOpportunite o WHERE o.pointDeVenteId = :pointDeVenteId AND o.commercial.id = :commercialId")
+    long countByPointDeVenteIdAndCommercialId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("commercialId") Long commercialId);
 
-    long countByPointDeVenteIdAndEntrepriseId(Long pointDeVenteId, Long entrepriseId);
+    @Query("SELECT COUNT(o) FROM CrmOpportunite o WHERE o.pointDeVenteId = :pointDeVenteId AND o.entreprise.id = :entrepriseId")
+    long countByPointDeVenteIdAndEntrepriseId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("entrepriseId") Long entrepriseId);
 
     long countByPointDeVenteIdAndEtape(Long pointDeVenteId, EtapeOpportunite etape);
 

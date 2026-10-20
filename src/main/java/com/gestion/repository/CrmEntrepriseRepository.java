@@ -17,7 +17,8 @@ public interface CrmEntrepriseRepository extends JpaRepository<CrmEntreprise, Lo
 
     List<CrmEntreprise> findByPointDeVenteIdAndStatut(Long pointDeVenteId, StatutEntreprise statut);
 
-    List<CrmEntreprise> findByPointDeVenteIdAndCommercialResponsableId(Long pointDeVenteId, Long commercialId);
+    @Query("SELECT e FROM CrmEntreprise e WHERE e.pointDeVenteId = :pointDeVenteId AND e.commercialResponsable.id = :commercialId")
+    List<CrmEntreprise> findByPointDeVenteIdAndCommercialResponsableId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("commercialId") Long commercialId);
 
     Optional<CrmEntreprise> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
 
@@ -36,5 +37,6 @@ public interface CrmEntrepriseRepository extends JpaRepository<CrmEntreprise, Lo
 
     long countByPointDeVenteId(Long pointDeVenteId);
 
-    long countByPointDeVenteIdAndCommercialResponsableId(Long pointDeVenteId, Long commercialId);
+    @Query("SELECT COUNT(e) FROM CrmEntreprise e WHERE e.pointDeVenteId = :pointDeVenteId AND e.commercialResponsable.id = :commercialId")
+    long countByPointDeVenteIdAndCommercialResponsableId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("commercialId") Long commercialId);
 }

@@ -15,9 +15,11 @@ public interface CrmContactRepository extends JpaRepository<CrmContact, Long> {
 
     List<CrmContact> findByPointDeVenteIdOrderByNomAsc(Long pointDeVenteId);
 
-    List<CrmContact> findByPointDeVenteIdAndEntrepriseId(Long pointDeVenteId, Long entrepriseId);
+    @Query("SELECT c FROM CrmContact c WHERE c.pointDeVenteId = :pointDeVenteId AND c.entreprise.id = :entrepriseId")
+    List<CrmContact> findByPointDeVenteIdAndEntrepriseId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("entrepriseId") Long entrepriseId);
 
-    List<CrmContact> findByPointDeVenteIdAndCommercialResponsableId(Long pointDeVenteId, Long commercialId);
+    @Query("SELECT c FROM CrmContact c WHERE c.pointDeVenteId = :pointDeVenteId AND c.commercialResponsable.id = :commercialId")
+    List<CrmContact> findByPointDeVenteIdAndCommercialResponsableId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("commercialId") Long commercialId);
 
     List<CrmContact> findByPointDeVenteIdAndStatut(Long pointDeVenteId, StatutContact statut);
 
@@ -38,7 +40,9 @@ public interface CrmContactRepository extends JpaRepository<CrmContact, Long> {
 
     long countByPointDeVenteId(Long pointDeVenteId);
 
-    long countByPointDeVenteIdAndCommercialResponsableId(Long pointDeVenteId, Long commercialId);
+    @Query("SELECT COUNT(c) FROM CrmContact c WHERE c.pointDeVenteId = :pointDeVenteId AND c.commercialResponsable.id = :commercialId")
+    long countByPointDeVenteIdAndCommercialResponsableId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("commercialId") Long commercialId);
 
-    long countByPointDeVenteIdAndEntrepriseId(Long pointDeVenteId, Long entrepriseId);
+    @Query("SELECT COUNT(c) FROM CrmContact c WHERE c.pointDeVenteId = :pointDeVenteId AND c.entreprise.id = :entrepriseId")
+    long countByPointDeVenteIdAndEntrepriseId(@Param("pointDeVenteId") Long pointDeVenteId, @Param("entrepriseId") Long entrepriseId);
 }
