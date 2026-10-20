@@ -39,9 +39,10 @@ public class CategorieController {
     }
 
     /**
-     * Retourne uniquement les catégories racines (niveau 0, sans parent)
+     * Retourne uniquement les catégories racines / top parents (niveau 0, sans parent)
+     * Format DTO enrichi avec nombreSousCategories, hasChildren et nombreProduits.
      */
-    @GetMapping({"/racines", "/roots"})
+    @GetMapping({"/racines", "/roots", "/top-parents", "/parents"})
     public ResponseEntity<List<CategorieDTO>> getCategoriesRacines() {
         return ResponseEntity.ok(categorieService.getCategoriesRacines());
     }
@@ -55,11 +56,24 @@ public class CategorieController {
     }
 
     /**
-     * Retourne les sous-catégories directes d'une catégorie
+     * Retourne les sous-catégories directes d'une catégorie parent (enfants directs)
+     * Format DTO enrichi avec nombreSousCategories, hasChildren et nombreProduits.
      */
-    @GetMapping("/{id}/sous-categories")
+    @GetMapping({"/{id}/sous-categories", "/{id}/enfants", "/{id}/children"})
     public ResponseEntity<List<CategorieDTO>> getSousCategories(@PathVariable Long id) {
         return ResponseEntity.ok(categorieService.getSousCategories(id));
+    }
+
+    /**
+     * API Lazy-loading ultra-rapide pour l'arbre des catégories :
+     * - Si parentId est absent : retourne les Top Parents (racines)
+     * - Si parentId est fourni : retourne les enfants directs de ce parent
+     * Format CategorieNodeDTO avec hasChildren=true/false et nombreProduits immédiat.
+     */
+    @GetMapping({"/noeuds", "/nodes", "/lazy-tree"})
+    public ResponseEntity<List<CategorieNodeDTO>> getNoeudsCategories(
+            @RequestParam(value = "parentId", required = false) Long parentId) {
+        return ResponseEntity.ok(categorieService.getNoeudsDirects(parentId));
     }
 
     /**

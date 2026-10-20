@@ -16,6 +16,9 @@ public class CategorieDTO {
     private int niveau;
     private Long pointDeVenteId;
     private LocalDateTime dateCreation;
+    private Long nombreProduits = 0L;
+    private int nombreSousCategories = 0;
+    private boolean hasChildren = false;
 
     public CategorieDTO() {}
 
@@ -57,4 +60,16 @@ public class CategorieDTO {
 
     public LocalDateTime getDateCreation() { return dateCreation; }
     public void setDateCreation(LocalDateTime dateCreation) { this.dateCreation = dateCreation; }
+
+    public Long getNombreProduits() { return nombreProduits; }
+    public void setNombreProduits(Long nombreProduits) { this.nombreProduits = nombreProduits; }
+
+    public int getNombreSousCategories() { return nombreSousCategories; }
+    public void setNombreSousCategories(int nombreSousCategories) { 
+        this.nombreSousCategories = nombreSousCategories; 
+        this.hasChildren = nombreSousCategories > 0;
+    }
+
+    public boolean isHasChildren() { return hasChildren || nombreSousCategories > 0; }
+    public void setHasChildren(boolean hasChildren) { this.hasChildren = hasChildren; }
 }

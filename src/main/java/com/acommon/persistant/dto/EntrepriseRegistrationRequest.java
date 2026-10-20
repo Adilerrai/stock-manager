@@ -19,6 +19,7 @@ public class EntrepriseRegistrationRequest {
     private String telephone;
     private String email;
     private String siteWeb;
+    private String couleursTenant;
     private String devise = "MAD";
 
     // Informations légales & fiscales
@@ -217,5 +218,13 @@ public class EntrepriseRegistrationRequest {
 
     public void setAdminTelephone(String adminTelephone) {
         this.adminTelephone = adminTelephone;
+    }
+
+    public String getCouleursTenant() {
+        return couleursTenant;
+    }
+
+    public void setCouleursTenant(String couleursTenant) {
+        this.couleursTenant = couleursTenant;
     }
 }

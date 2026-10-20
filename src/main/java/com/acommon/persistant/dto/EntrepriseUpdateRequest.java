@@ -22,6 +22,7 @@ public class EntrepriseUpdateRequest {
     private String articleImposition;
     private String compteBancaireRib;
     private String nomBanque;
+    private String couleursTenant;
     private Boolean actif;
 
     public EntrepriseUpdateRequest() {}
@@ -154,5 +155,13 @@ public class EntrepriseUpdateRequest {
 
     public void setActif(Boolean actif) {
         this.actif = actif;
+    }
+
+    public String getCouleursTenant() {
+        return couleursTenant;
+    }
+
+    public void setCouleursTenant(String couleursTenant) {
+        this.couleursTenant = couleursTenant;
     }
 }

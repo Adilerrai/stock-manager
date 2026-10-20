@@ -16,6 +16,7 @@ public class CategorieNodeDTO {
     private int niveau;
     private Long nombreProduits = 0L;
     private int nombreSousCategories = 0;
+    private boolean hasChildren = false;
     private List<CategorieNodeDTO> children = new ArrayList<>();
 
     public CategorieNodeDTO() {}
@@ -54,13 +55,28 @@ public class CategorieNodeDTO {
     public void setNombreProduits(Long nombreProduits) { this.nombreProduits = nombreProduits; }
 
     public int getNombreSousCategories() { return nombreSousCategories; }
-    public void setNombreSousCategories(int nombreSousCategories) { this.nombreSousCategories = nombreSousCategories; }
+    public void setNombreSousCategories(int nombreSousCategories) { 
+        this.nombreSousCategories = nombreSousCategories;
+        this.hasChildren = (nombreSousCategories > 0 || (children != null && !children.isEmpty()));
+    }
+
+    public boolean isHasChildren() { 
+        return hasChildren || nombreSousCategories > 0 || (children != null && !children.isEmpty()); 
+    }
+    public void setHasChildren(boolean hasChildren) { this.hasChildren = hasChildren; }
 
     public List<CategorieNodeDTO> getChildren() { return children; }
-    public void setChildren(List<CategorieNodeDTO> children) { this.children = children; }
+    public void setChildren(List<CategorieNodeDTO> children) { 
+        this.children = children; 
+        if (children != null && !children.isEmpty()) {
+            this.nombreSousCategories = children.size();
+            this.hasChildren = true;
+        }
+    }
 
     public void addChild(CategorieNodeDTO child) {
         this.children.add(child);
         this.nombreSousCategories = this.children.size();
+        this.hasChildren = true;
     }
 }

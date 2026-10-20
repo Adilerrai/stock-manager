@@ -21,6 +21,7 @@ public class EntrepriseResponse {
     private String articleImposition;
     private String compteBancaireRib;
     private String nomBanque;
+    private String couleursTenant;
     private Boolean actif;
     private LocalDateTime dateCreation;
     private int nombreUtilisateurs;
@@ -225,5 +226,13 @@ public class EntrepriseResponse {
 
     public void setAdminNomComplet(String adminNomComplet) {
         this.adminNomComplet = adminNomComplet;
+    }
+
+    public String getCouleursTenant() {
+        return couleursTenant;
+    }
+
+    public void setCouleursTenant(String couleursTenant) {
+        this.couleursTenant = couleursTenant;
     }
 }

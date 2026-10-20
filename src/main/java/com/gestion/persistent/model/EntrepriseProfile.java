@@ -81,6 +81,9 @@ public class EntrepriseProfile {
     @Column(name = "pied_page", length = 1000)
     private String piedPage;
 
+    @Column(name = "couleurs_tenant")
+    private String couleursTenant;
+
     @Column(name = "devise")
     private String devise = "MAD";
 
@@ -425,5 +428,13 @@ public class EntrepriseProfile {
 
     public void setToleranceEcartPourcentage(BigDecimal toleranceEcartPourcentage) {
         this.toleranceEcartPourcentage = toleranceEcartPourcentage;
+    }
+
+    public String getCouleursTenant() {
+        return couleursTenant;
+    }
+
+    public void setCouleursTenant(String couleursTenant) {
+        this.couleursTenant = couleursTenant;
     }
 }

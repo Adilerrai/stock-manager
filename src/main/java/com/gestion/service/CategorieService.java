@@ -61,7 +61,9 @@ public class CategorieService {
         } else {
             racines = categorieRepository.findByParentIsNullOrderByNomAsc();
         }
-        return racines.stream().map(this::toDto).collect(Collectors.toList());
+        List<CategorieDTO> dtos = racines.stream().map(this::toDto).collect(Collectors.toList());
+        enrichirCategoriesCounts(dtos);
+        return dtos;
     }
 
     /**
@@ -71,7 +73,9 @@ public class CategorieService {
     public List<CategorieDTO> getCategoriesFeuilles() {
         Long tenantId = TenantContext.getCurrentTenant();
         List<Categorie> feuilles = categorieRepository.findCategoriesFeuillesOrderByNomAsc(tenantId);
-        return feuilles.stream().map(this::toDto).collect(Collectors.toList());
+        List<CategorieDTO> dtos = feuilles.stream().map(this::toDto).collect(Collectors.toList());
+        enrichirCategoriesCounts(dtos);
+        return dtos;
     }
 
     /**
@@ -79,9 +83,128 @@ public class CategorieService {
      */
     @Transactional(readOnly = true)
     public List<CategorieDTO> getSousCategories(Long parentId) {
-        return categorieRepository.findByParentIdOrderByNomAsc(parentId).stream()
-                .map(this::toDto)
-                .collect(Collectors.toList());
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Categorie> enfants;
+        if (tenantId != null) {
+            enfants = categorieRepository.findByParentIdAndPointDeVenteIdOrderByNomAsc(parentId, tenantId);
+        } else {
+            enfants = categorieRepository.findByParentIdOrderByNomAsc(parentId);
+        }
+        List<CategorieDTO> dtos = enfants.stream().map(this::toDto).collect(Collectors.toList());
+        enrichirCategoriesCounts(dtos);
+        return dtos;
+    }
+
+    /**
+     * Chargement paresseux (Lazy-loading) pour l'arbre des catégories :
+     * - Si parentId == null : retourne uniquement les catégories top parents (niveau racine).
+     * - Si parentId != null : retourne uniquement les sous-catégories directes de ce parent.
+     */
+    @Transactional(readOnly = true)
+    public List<CategorieNodeDTO> getNoeudsDirects(Long parentId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        List<Categorie> categories;
+        if (parentId == null) {
+            if (tenantId != null) {
+                categories = categorieRepository.findByParentIsNullAndPointDeVenteIdOrderByNomAsc(tenantId);
+            } else {
+                categories = categorieRepository.findByParentIsNullOrderByNomAsc();
+            }
+        } else {
+            if (tenantId != null) {
+                categories = categorieRepository.findByParentIdAndPointDeVenteIdOrderByNomAsc(parentId, tenantId);
+            } else {
+                categories = categorieRepository.findByParentIdOrderByNomAsc(parentId);
+            }
+        }
+
+        if (categories.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> ids = categories.stream().map(Categorie::getId).collect(Collectors.toList());
+
+        // 1. Nombre de sous-catégories directes
+        Map<Long, Integer> sousCatCounts = new HashMap<>();
+        List<Object[]> scList = categorieRepository.countSousCategoriesGroupedByParentIdIn(ids);
+        if (scList != null) {
+            for (Object[] row : scList) {
+                if (row[0] != null && row[1] != null) {
+                    sousCatCounts.put((Long) row[0], ((Number) row[1]).intValue());
+                }
+            }
+        }
+
+        // 2. Nombre de produits rattachés
+        Map<Long, Long> prodCounts = new HashMap<>();
+        List<Object[]> pList = produitRepository.countGroupedByCategorieIdIn(ids);
+        if (pList != null) {
+            for (Object[] row : pList) {
+                if (row[0] != null && row[1] != null) {
+                    prodCounts.put((Long) row[0], ((Number) row[1]).longValue());
+                }
+            }
+        }
+
+        return categories.stream().map(c -> {
+            CategorieNodeDTO node = new CategorieNodeDTO();
+            node.setId(c.getId());
+            node.setNom(c.getNom());
+            node.setCode(c.getCode());
+            node.setDescription(c.getDescription());
+            node.setCouleur(c.getCouleur());
+            node.setIcone(c.getIcone());
+            node.setNiveau(c.getNiveau());
+            node.setCheminComplet(c.getCheminComplet());
+
+            if (c.getParent() != null) {
+                node.setParentId(c.getParent().getId());
+                node.setParentNom(c.getParent().getNom());
+            }
+
+            int scCount = sousCatCounts.getOrDefault(c.getId(), 0);
+            long prodCount = prodCounts.getOrDefault(c.getId(), 0L);
+
+            node.setNombreSousCategories(scCount);
+            node.setHasChildren(scCount > 0);
+            node.setNombreProduits(prodCount);
+            node.setChildren(new ArrayList<>()); // Vide par défaut pour chargement à la demande
+
+            return node;
+        }).collect(Collectors.toList());
+    }
+
+    private void enrichirCategoriesCounts(List<CategorieDTO> dtos) {
+        if (dtos == null || dtos.isEmpty()) return;
+        List<Long> ids = dtos.stream().map(CategorieDTO::getId).collect(Collectors.toList());
+
+        Map<Long, Integer> sousCatCounts = new HashMap<>();
+        List<Object[]> scList = categorieRepository.countSousCategoriesGroupedByParentIdIn(ids);
+        if (scList != null) {
+            for (Object[] row : scList) {
+                if (row[0] != null && row[1] != null) {
+                    sousCatCounts.put((Long) row[0], ((Number) row[1]).intValue());
+                }
+            }
+        }
+
+        Map<Long, Long> prodCounts = new HashMap<>();
+        List<Object[]> pList = produitRepository.countGroupedByCategorieIdIn(ids);
+        if (pList != null) {
+            for (Object[] row : pList) {
+                if (row[0] != null && row[1] != null) {
+                    prodCounts.put((Long) row[0], ((Number) row[1]).longValue());
+                }
+            }
+        }
+
+        for (CategorieDTO dto : dtos) {
+            int scCount = sousCatCounts.getOrDefault(dto.getId(), 0);
+            long prodCount = prodCounts.getOrDefault(dto.getId(), 0L);
+            dto.setNombreSousCategories(scCount);
+            dto.setHasChildren(scCount > 0);
+            dto.setNombreProduits(prodCount);
+        }
     }
 
     /**

@@ -109,5 +109,8 @@
     <!-- Changeset 033 : Séparation numéro interne et numéro externe (OCR / BC client) commandes_client -->
     <include file="changes/033-add-numero-commande-externe.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 034 : Ajout colonne couleurs_tenant dans entreprise_profiles et point_de_vente -->
+    <include file="changes/034-add-couleurs-tenant.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 

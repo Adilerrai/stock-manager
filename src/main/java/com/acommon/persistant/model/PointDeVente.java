@@ -52,6 +52,9 @@ public class PointDeVente {
     @Column(name = "module_fiscalite_actif")
     private Boolean moduleFiscaliteActif = true;
 
+    @Column(name = "couleurs_tenant")
+    private String couleursTenant;
+
     public PointDeVente() {
     }
 
@@ -188,5 +191,13 @@ public class PointDeVente {
 
     public void setModuleFiscaliteActif(Boolean moduleFiscaliteActif) {
         this.moduleFiscaliteActif = moduleFiscaliteActif;
+    }
+
+    public String getCouleursTenant() {
+        return couleursTenant;
+    }
+
+    public void setCouleursTenant(String couleursTenant) {
+        this.couleursTenant = couleursTenant;
     }
 }

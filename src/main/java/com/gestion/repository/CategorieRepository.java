@@ -37,4 +37,7 @@ public interface CategorieRepository extends JpaRepository<Categorie, Long> {
 
     @Query("SELECT COUNT(c) > 0 FROM Categorie c WHERE c.parent.id = :parentId")
     boolean hasSousCategories(@Param("parentId") Long parentId);
+
+    @Query("SELECT c.parent.id, COUNT(c) FROM Categorie c WHERE c.parent.id IN :parentIds GROUP BY c.parent.id")
+    List<Object[]> countSousCategoriesGroupedByParentIdIn(@Param("parentIds") List<Long> parentIds);
 }

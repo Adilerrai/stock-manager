@@ -37,6 +37,9 @@ public interface ProduitRepository extends JpaRepository<Produit, Long>, Produit
     @Query("SELECT COUNT(p) FROM Produit p WHERE p.categorie.id = :categorieId")
     long countByCategorieId(@Param("categorieId") Long categorieId);
 
+    @Query("SELECT p.categorie.id, COUNT(p) FROM Produit p WHERE p.categorie.id IN :categorieIds GROUP BY p.categorie.id")
+    List<Object[]> countGroupedByCategorieIdIn(@Param("categorieIds") List<Long> categorieIds);
+
     long countByPointDeVenteId(Long pointDeVenteId);
 
     List<Produit> findByPointDeVenteId(Long pointDeVenteId);

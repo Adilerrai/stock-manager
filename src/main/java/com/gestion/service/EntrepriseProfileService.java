@@ -86,6 +86,9 @@ public class EntrepriseProfileService {
         profile.setCompteBancaireRib(dto.getCompteBancaireRib());
         profile.setNomBanque(dto.getNomBanque());
         profile.setPiedPage(dto.getPiedPage());
+        if (dto.getCouleursTenant() != null) {
+            profile.setCouleursTenant(dto.getCouleursTenant());
+        }
         if (dto.getDevise() != null && !dto.getDevise().isBlank()) {
             profile.setDevise(dto.getDevise());
         }

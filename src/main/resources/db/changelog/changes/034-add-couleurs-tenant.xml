@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 034 : Ajout de la colonne couleurs_tenant dans entreprise_profiles et point_de_vente
+    -->
+    <changeSet id="034-add-couleurs-tenant" author="erp-pointvente">
+        <sql splitStatements="false">
+            ALTER TABLE IF EXISTS entreprise_profiles 
+                ADD COLUMN IF NOT EXISTS couleurs_tenant VARCHAR(255);
+
+            ALTER TABLE IF EXISTS point_de_vente 
+                ADD COLUMN IF NOT EXISTS couleurs_tenant VARCHAR(255);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

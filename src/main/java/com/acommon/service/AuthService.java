@@ -7,6 +7,7 @@ import com.acommon.persistant.model.User;
 import com.acommon.repository.PointDeVenteRepository;
 import com.acommon.repository.UserRepository;
 import com.acommon.config.JwtUtil;
+import com.gestion.repository.EntrepriseProfileRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,6 +25,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PointDeVenteRepository pointDeVenteRepository;
+    private final EntrepriseProfileRepository entrepriseProfileRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
@@ -31,11 +33,13 @@ public class AuthService {
     public AuthService(
             UserRepository userRepository,
             PointDeVenteRepository pointDeVenteRepository,
+            EntrepriseProfileRepository entrepriseProfileRepository,
             PasswordEncoder passwordEncoder,
             JwtUtil jwtUtil,
             AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.pointDeVenteRepository = pointDeVenteRepository;
+        this.entrepriseProfileRepository = entrepriseProfileRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.authenticationManager = authenticationManager;
@@ -117,6 +121,19 @@ public class AuthService {
         Long pdvId = (pdv != null) ? pdv.getId() : authenticatedUser.getPointDeVenteId();
         String nomPdv = (pdv != null) ? pdv.getNomPointDeVente() : null;
 
+        String couleursTenant = null;
+        if (pdv != null && pdv.getCouleursTenant() != null && !pdv.getCouleursTenant().isBlank()) {
+            couleursTenant = pdv.getCouleursTenant();
+        } else if (pdvId != null) {
+            couleursTenant = entrepriseProfileRepository.findByPointDeVenteId(pdvId)
+                    .map(com.gestion.persistent.model.EntrepriseProfile::getCouleursTenant)
+                    .orElse(null);
+        } else if (tenantId != null) {
+            couleursTenant = entrepriseProfileRepository.findByPointDeVenteId(tenantId)
+                    .map(com.gestion.persistent.model.EntrepriseProfile::getCouleursTenant)
+                    .orElse(null);
+        }
+
         // 6. Génération du token JWT avec le tenantId et le pointDeVenteId
         String token = jwtUtil.generateToken(authenticatedUser, tenantId, pdvId);
 
@@ -146,6 +163,7 @@ public class AuthService {
                 .tenantId(tenantId)
                 .pointDeVenteId(authenticatedUser.getPointDeVenteId())
                 .nomPointDeVente(nomPdv)
+                .couleursTenant(couleursTenant)
                 .mustChangePassword(Boolean.TRUE.equals(authenticatedUser.getMustChangePassword()))
                 .tokenType("Bearer")
                 .build();

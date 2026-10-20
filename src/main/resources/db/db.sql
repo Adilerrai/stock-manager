@@ -251,6 +251,7 @@ CREATE TABLE IF NOT EXISTS entreprise_profiles (
     pied_page                      VARCHAR(1000),
     devise                         VARCHAR(255),
     vente_stock_negatif            BOOLEAN DEFAULT FALSE,
+    couleurs_tenant                VARCHAR(255),
     date_mise_a_jour               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_entreprise_profiles_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE CASCADE
 );

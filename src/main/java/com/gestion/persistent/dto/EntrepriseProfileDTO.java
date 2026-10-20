@@ -28,6 +28,7 @@ public class EntrepriseProfileDTO {
     private boolean hasLogo;
     private String logoFileName;
     private String piedPage;
+    private String couleursTenant;
     private String devise;
     private Boolean venteStockNegatif = false;
 
@@ -159,4 +160,7 @@ public class EntrepriseProfileDTO {
 
     public BigDecimal getToleranceEcartPourcentage() { return toleranceEcartPourcentage != null ? toleranceEcartPourcentage : new BigDecimal("5.00"); }
     public void setToleranceEcartPourcentage(BigDecimal toleranceEcartPourcentage) { this.toleranceEcartPourcentage = toleranceEcartPourcentage; }
+
+    public String getCouleursTenant() { return couleursTenant; }
+    public void setCouleursTenant(String couleursTenant) { this.couleursTenant = couleursTenant; }
 }

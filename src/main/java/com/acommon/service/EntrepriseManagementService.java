@@ -79,6 +79,7 @@ public class EntrepriseManagementService {
         pdv.setEmail(request.getEmail() != null && !request.getEmail().isBlank() ? request.getEmail()
                 : request.getAdminEmail());
         pdv.setPassword(passwordEncoder.encode(request.getAdminPassword()));
+        pdv.setCouleursTenant(request.getCouleursTenant());
         pdv.setActif(true);
         pdv.setDateCreation(LocalDateTime.now());
         PointDeVente savedPdv = pointDeVenteRepository.save(pdv);
@@ -101,6 +102,7 @@ public class EntrepriseManagementService {
         profile.setTelephone(request.getTelephone());
         profile.setEmail(request.getEmail());
         profile.setSiteWeb(request.getSiteWeb());
+        profile.setCouleursTenant(request.getCouleursTenant());
         profile.setDevise(request.getDevise() != null && !request.getDevise().isBlank() ? request.getDevise() : "MAD");
         profile.setRegistreCommerce(request.getRegistreCommerce());
         profile.setNumeroIdentificationFiscale(request.getNumeroIdentificationFiscale());
@@ -195,6 +197,9 @@ public class EntrepriseManagementService {
         if (request.getActif() != null) {
             pdv.setActif(request.getActif());
         }
+        if (request.getCouleursTenant() != null) {
+            pdv.setCouleursTenant(request.getCouleursTenant());
+        }
         PointDeVente updatedPdv = pointDeVenteRepository.save(pdv);
 
         // Mettre à jour le profil
@@ -213,6 +218,8 @@ public class EntrepriseManagementService {
         profile.setTelephone(request.getTelephone());
         profile.setEmail(request.getEmail());
         profile.setSiteWeb(request.getSiteWeb());
+        if (request.getCouleursTenant() != null)
+            profile.setCouleursTenant(request.getCouleursTenant());
         if (request.getDevise() != null)
             profile.setDevise(request.getDevise());
         profile.setRegistreCommerce(request.getRegistreCommerce());
@@ -252,6 +259,7 @@ public class EntrepriseManagementService {
         res.setEmail(pdv.getEmail());
         res.setActif(pdv.getActif() != null ? pdv.getActif() : true);
         res.setDateCreation(pdv.getDateCreation());
+        res.setCouleursTenant(profile != null && profile.getCouleursTenant() != null ? profile.getCouleursTenant() : pdv.getCouleursTenant());
 
         int userCount = userRepository.countByTenantId(pdv.getTenantId());
         if (userCount == 0 && pdv.getId() != null) {
