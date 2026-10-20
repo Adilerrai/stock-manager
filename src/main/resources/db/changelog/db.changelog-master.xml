@@ -112,5 +112,8 @@
     <!-- Changeset 034 : Ajout colonne couleurs_tenant dans entreprise_profiles et point_de_vente -->
     <include file="changes/034-add-couleurs-tenant.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 035 : Création des tables du module CRM complet -->
+    <include file="changes/035-create-crm-module-tables.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 

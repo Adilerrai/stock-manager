@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 035 : Création des tables du module CRM complet
+      (Entreprises, Contacts, Opportunités, Visites, Rapports de Visite, Tâches, Activités)
+    -->
+    <changeSet id="035-create-crm-module-tables" author="erp-pointvente">
+        <sql splitStatements="false">
+            -- 1. Table crm_entreprises
+            CREATE TABLE IF NOT EXISTS crm_entreprises (
+                id                             BIGSERIAL PRIMARY KEY,
+                point_de_vente_id              BIGINT NOT NULL,
+                nom                            VARCHAR(200) NOT NULL,
+                secteur_activite               VARCHAR(100),
+                taille_entreprise              VARCHAR(50),
+                adresse                        TEXT,
+                ville                          VARCHAR(100),
+                code_postal                    VARCHAR(20),
+                pays                           VARCHAR(50) DEFAULT 'Maroc',
+                telephone                      VARCHAR(50),
+                email                          VARCHAR(150),
+                site_web                       VARCHAR(200),
+                ice                            VARCHAR(50),
+                statut                         VARCHAR(50) DEFAULT 'PROSPECT' NOT NULL,
+                commercial_responsable_id      BIGINT,
+                client_id                      BIGINT,
+                date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                date_modification              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_crm_entreprises_pdv FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT,
+                CONSTRAINT fk_crm_entreprises_commercial FOREIGN KEY (commercial_responsable_id) REFERENCES users(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_entreprises_client FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_crm_entreprises_pdv ON crm_entreprises(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_entreprises_comm ON crm_entreprises(commercial_responsable_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_entreprises_statut ON crm_entreprises(statut);
+
+            -- 2. Table crm_contacts
+            CREATE TABLE IF NOT EXISTS crm_contacts (
+                id                             BIGSERIAL PRIMARY KEY,
+                point_de_vente_id              BIGINT NOT NULL,
+                entreprise_id                  BIGINT,
+                nom                            VARCHAR(100) NOT NULL,
+                prenom                         VARCHAR(100),
+                nom_complet                    VARCHAR(200),
+                fonction                       VARCHAR(100),
+                email                          VARCHAR(150),
+                telephone                      VARCHAR(50),
+                mobile                         VARCHAR(50),
+                source_acquisition             VARCHAR(50) DEFAULT 'PROSPECTION_TERRAIN',
+                statut                         VARCHAR(50) DEFAULT 'PROSPECT' NOT NULL,
+                commercial_responsable_id      BIGINT,
+                principal                      BOOLEAN DEFAULT FALSE NOT NULL,
+                date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                date_modification              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_crm_contacts_pdv FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT,
+                CONSTRAINT fk_crm_contacts_entreprise FOREIGN KEY (entreprise_id) REFERENCES crm_entreprises(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_contacts_commercial FOREIGN KEY (commercial_responsable_id) REFERENCES users(id) ON DELETE SET NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_crm_contacts_pdv ON crm_contacts(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_contacts_entr ON crm_contacts(entreprise_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_contacts_comm ON crm_contacts(commercial_responsable_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_contacts_email ON crm_contacts(email);
+
+            -- 3. Table crm_opportunites
+            CREATE TABLE IF NOT EXISTS crm_opportunites (
+                id                             BIGSERIAL PRIMARY KEY,
+                point_de_vente_id              BIGINT NOT NULL,
+                titre                          VARCHAR(200) NOT NULL,
+                entreprise_id                  BIGINT,
+                contact_id                     BIGINT,
+                commercial_id                  BIGINT,
+                montant_estime                 NUMERIC(15, 2) DEFAULT 0.00,
+                probabilite                    INTEGER DEFAULT 10,
+                date_cloture_prevue            DATE,
+                etape                          VARCHAR(50) DEFAULT 'NOUVEAU' NOT NULL,
+                motif_perte                    TEXT,
+                notes                          TEXT,
+                devis_id                       BIGINT,
+                date_cloture_effective         TIMESTAMP,
+                date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                date_modification              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_crm_opp_pdv FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT,
+                CONSTRAINT fk_crm_opp_entreprise FOREIGN KEY (entreprise_id) REFERENCES crm_entreprises(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_opp_contact FOREIGN KEY (contact_id) REFERENCES crm_contacts(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_opp_commercial FOREIGN KEY (commercial_id) REFERENCES users(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_opp_devis FOREIGN KEY (devis_id) REFERENCES devis(id) ON DELETE SET NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_crm_opp_pdv ON crm_opportunites(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_opp_comm ON crm_opportunites(commercial_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_opp_etape ON crm_opportunites(etape);
+
+            -- 4. Table crm_visites
+            CREATE TABLE IF NOT EXISTS crm_visites (
+                id                             BIGSERIAL PRIMARY KEY,
+                point_de_vente_id              BIGINT NOT NULL,
+                entreprise_id                  BIGINT,
+                contact_id                     BIGINT,
+                opportunite_id                 BIGINT,
+                commercial_id                  BIGINT NOT NULL,
+                date_visite                    TIMESTAMP NOT NULL,
+                lieu                           VARCHAR(255),
+                type_visite                    VARCHAR(50) DEFAULT 'PROSPECTION' NOT NULL,
+                objectif                       VARCHAR(255),
+                statut                         VARCHAR(50) DEFAULT 'PLANIFIEE' NOT NULL,
+                motif_annulation               TEXT,
+                date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_crm_visites_pdv FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT,
+                CONSTRAINT fk_crm_visites_entreprise FOREIGN KEY (entreprise_id) REFERENCES crm_entreprises(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_visites_contact FOREIGN KEY (contact_id) REFERENCES crm_contacts(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_visites_opp FOREIGN KEY (opportunite_id) REFERENCES crm_opportunites(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_visites_commercial FOREIGN KEY (commercial_id) REFERENCES users(id) ON DELETE RESTRICT
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_crm_visites_pdv ON crm_visites(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_visites_comm ON crm_visites(commercial_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_visites_date ON crm_visites(date_visite);
+            CREATE INDEX IF NOT EXISTS idx_crm_visites_statut ON crm_visites(statut);
+
+            -- 5. Table crm_rapports_visite (1 Visite = 1 Rapport max)
+            CREATE TABLE IF NOT EXISTS crm_rapports_visite (
+                id                             BIGSERIAL PRIMARY KEY,
+                point_de_vente_id              BIGINT NOT NULL,
+                visite_id                      BIGINT NOT NULL UNIQUE,
+                statut                         VARCHAR(50) DEFAULT 'BROUILLON' NOT NULL,
+                resume                         TEXT NOT NULL,
+                interlocuteurs_presents        TEXT,
+                besoins_identifies             TEXT,
+                objections_soulevees           TEXT,
+                resultat                       VARCHAR(100),
+                prochaine_etape                TEXT,
+                duree_minutes                  INTEGER DEFAULT 30,
+                soumis_le                      TIMESTAMP,
+                valide_par_user_id             BIGINT,
+                valide_le                      TIMESTAMP,
+                motif_rejet                    TEXT,
+                date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                date_modification              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_crm_rapports_pdv FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT,
+                CONSTRAINT fk_crm_rapports_visite FOREIGN KEY (visite_id) REFERENCES crm_visites(id) ON DELETE CASCADE,
+                CONSTRAINT fk_crm_rapports_validateur FOREIGN KEY (valide_par_user_id) REFERENCES users(id) ON DELETE SET NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_crm_rapports_pdv ON crm_rapports_visite(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_rapports_visite ON crm_rapports_visite(visite_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_rapports_statut ON crm_rapports_visite(statut);
+
+            -- 6. Table crm_taches (Actions de suivi & rappels)
+            CREATE TABLE IF NOT EXISTS crm_taches (
+                id                             BIGSERIAL PRIMARY KEY,
+                point_de_vente_id              BIGINT NOT NULL,
+                titre                          VARCHAR(200) NOT NULL,
+                description                    TEXT,
+                visite_id                      BIGINT,
+                rapport_id                     BIGINT,
+                opportunite_id                 BIGINT,
+                entreprise_id                  BIGINT,
+                contact_id                     BIGINT,
+                assigne_a_user_id              BIGINT NOT NULL,
+                cree_par_user_id               BIGINT,
+                priorite                       VARCHAR(50) DEFAULT 'MOYENNE' NOT NULL,
+                statut                         VARCHAR(50) DEFAULT 'A_FAIRE' NOT NULL,
+                date_echeance                  DATE,
+                date_realisation               TIMESTAMP,
+                date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_crm_taches_pdv FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT,
+                CONSTRAINT fk_crm_taches_visite FOREIGN KEY (visite_id) REFERENCES crm_visites(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_taches_rapport FOREIGN KEY (rapport_id) REFERENCES crm_rapports_visite(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_taches_opp FOREIGN KEY (opportunite_id) REFERENCES crm_opportunites(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_taches_entreprise FOREIGN KEY (entreprise_id) REFERENCES crm_entreprises(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_taches_contact FOREIGN KEY (contact_id) REFERENCES crm_contacts(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_taches_assigne FOREIGN KEY (assigne_a_user_id) REFERENCES users(id) ON DELETE RESTRICT,
+                CONSTRAINT fk_crm_taches_createur FOREIGN KEY (cree_par_user_id) REFERENCES users(id) ON DELETE SET NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_crm_taches_pdv ON crm_taches(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_taches_assigne ON crm_taches(assigne_a_user_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_taches_statut ON crm_taches(statut);
+            CREATE INDEX IF NOT EXISTS idx_crm_taches_echeance ON crm_taches(date_echeance);
+
+            -- 7. Table crm_activites (Timeline chronologique 360°)
+            CREATE TABLE IF NOT EXISTS crm_activites (
+                id                             BIGSERIAL PRIMARY KEY,
+                point_de_vente_id              BIGINT NOT NULL,
+                type_activite                  VARCHAR(50) NOT NULL,
+                titre                          VARCHAR(200) NOT NULL,
+                description                    TEXT,
+                entreprise_id                  BIGINT,
+                contact_id                     BIGINT,
+                opportunite_id                 BIGINT,
+                visite_id                      BIGINT,
+                user_id                        BIGINT,
+                date_activite                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+                metadata_json                  TEXT,
+                CONSTRAINT fk_crm_activites_pdv FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT,
+                CONSTRAINT fk_crm_activites_entreprise FOREIGN KEY (entreprise_id) REFERENCES crm_entreprises(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_activites_contact FOREIGN KEY (contact_id) REFERENCES crm_contacts(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_activites_opp FOREIGN KEY (opportunite_id) REFERENCES crm_opportunites(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_activites_visite FOREIGN KEY (visite_id) REFERENCES crm_visites(id) ON DELETE SET NULL,
+                CONSTRAINT fk_crm_activites_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_crm_activites_pdv ON crm_activites(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_activites_entr ON crm_activites(entreprise_id);
+            CREATE INDEX IF NOT EXISTS idx_crm_activites_date ON crm_activites(date_activite);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
