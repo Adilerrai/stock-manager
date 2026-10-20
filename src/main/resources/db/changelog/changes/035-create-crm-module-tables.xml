@@ -7,11 +7,11 @@
     logicalFilePath="db/changelog/db.changelog-master.xml">
 
     <!-- 
-      Changeset 035 : Création des tables du module CRM complet
-      (Entreprises, Contacts, Opportunités, Visites, Rapports de Visite, Tâches, Activités)
+      Changeset 035 : Creation des tables du module CRM complet
+      (Entreprises, Contacts, Opportunites, Visites, Rapports de Visite, Taches, Activites)
     -->
     <changeSet id="035-create-crm-module-tables" author="erp-pointvente">
-        <sql splitStatements="false">
+        <sql splitStatements="false"><![CDATA[
             -- 1. Table crm_entreprises
             CREATE TABLE IF NOT EXISTS crm_entreprises (
                 id                             BIGSERIAL PRIMARY KEY,
@@ -153,7 +153,7 @@
             CREATE INDEX IF NOT EXISTS idx_crm_rapports_visite ON crm_rapports_visite(visite_id);
             CREATE INDEX IF NOT EXISTS idx_crm_rapports_statut ON crm_rapports_visite(statut);
 
-            -- 6. Table crm_taches (Actions de suivi & rappels)
+            -- 6. Table crm_taches (Actions de suivi et rappels)
             CREATE TABLE IF NOT EXISTS crm_taches (
                 id                             BIGSERIAL PRIMARY KEY,
                 point_de_vente_id              BIGINT NOT NULL,
@@ -186,7 +186,7 @@
             CREATE INDEX IF NOT EXISTS idx_crm_taches_statut ON crm_taches(statut);
             CREATE INDEX IF NOT EXISTS idx_crm_taches_echeance ON crm_taches(date_echeance);
 
-            -- 7. Table crm_activites (Timeline chronologique 360°)
+            -- 7. Table crm_activites (Timeline chronologique 360)
             CREATE TABLE IF NOT EXISTS crm_activites (
                 id                             BIGSERIAL PRIMARY KEY,
                 point_de_vente_id              BIGINT NOT NULL,
@@ -211,7 +211,7 @@
             CREATE INDEX IF NOT EXISTS idx_crm_activites_pdv ON crm_activites(point_de_vente_id);
             CREATE INDEX IF NOT EXISTS idx_crm_activites_entr ON crm_activites(entreprise_id);
             CREATE INDEX IF NOT EXISTS idx_crm_activites_date ON crm_activites(date_activite);
-        </sql>
+        ]]></sql>
     </changeSet>
 
 </databaseChangeLog>
