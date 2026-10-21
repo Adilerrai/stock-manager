@@ -11,7 +11,7 @@ from datetime import datetime
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
 
 BASE_URL = 'https://sit-transmission1.odoo.com'
-COOKIE = 'frontend_lang=fr_FR; tz=Africa/Casablanca; cids=1; color_scheme=dark; session_id=5AozDPwL1wo4495It4BJgS6tpadMkaB-cVkRcScq6EklPgRe1KnFt5yO5yvEgc2da1_A-J3LVxszdneAq8GNXw'
+COOKIE = 'frontend_lang=fr_FR; tz=Africa/Casablanca; cids=1; color_scheme=dark; session_id=l57Zdx51vyF-rrohotCUcl3OQ7ecqnIsf66ITyBs-rSjwcOE6HhlgbDEWmmUQ0AzJr-T2YhjAtuefHrasPp_Xw'
 
 HEADERS = {
     'Accept': 'application/json',
@@ -208,8 +208,9 @@ DELETE FROM reglements_fournisseur WHERE point_de_vente_id = {TENANT_ID};
 DELETE FROM factures_achat WHERE point_de_vente_id = {TENANT_ID};
 DELETE FROM cheques_effets WHERE point_de_vente_id = {TENANT_ID};
 
--- 3. Ventes, Factures clients, Devis, Commandes clients, BLs clients, Avoirs
-DELETE FROM paiements WHERE facture_id IN (SELECT id FROM factures WHERE point_de_vente_id = {TENANT_ID});
+-- 3. Ventes, Factures clients, Paiements, Devis, Commandes clients, BLs clients, Avoirs
+DELETE FROM paiement_affectations WHERE paiement_id IN (SELECT id FROM paiements WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM paiements WHERE point_de_vente_id = {TENANT_ID} OR facture_id IN (SELECT id FROM factures WHERE point_de_vente_id = {TENANT_ID});
 DELETE FROM lignes_facture WHERE facture_id IN (SELECT id FROM factures WHERE point_de_vente_id = {TENANT_ID}) 
    OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
 DELETE FROM factures WHERE point_de_vente_id = {TENANT_ID};
@@ -547,23 +548,58 @@ ON CONFLICT DO NOTHING;
 
     sql_lines.append("")
 
-    # 5. Commandes Fournisseurs
+    # 5. Commandes Fournisseurs (Direct depuis Odoo purchase.order)
     sql_lines.append("-- -----------------------------------------------------------------------------")
-    sql_lines.append(f"-- 5. COMMANDES FOURNISSEURS (218 BONS ODOO) (TENANT #{TENANT_ID})")
+    sql_lines.append(f"-- 5. COMMANDES FOURNISSEURS (DEPUIS ODOO PURCHASE.ORDER) (TENANT #{TENANT_ID})")
     sql_lines.append("-- -----------------------------------------------------------------------------")
-    cmd_rows = list(ws_cmd.iter_rows(values_only=True))[1:]
-    print(f"Commandes à traiter : {len(cmd_rows)}")
+    print("\n5. Récupération des bons de commande fournisseur confirmés depuis Odoo (purchase.order state='purchase')...")
+    po_data = odoo_call(
+        "purchase.order", "search_read",
+        [[["state", "=", "purchase"]]],
+        {
+            "fields": [
+                "name", "partner_id", "date_order", "date_planned",
+                "amount_untaxed", "amount_total", "currency_id",
+                "state", "receipt_status"
+            ],
+            "limit": 1000,
+            "order": "date_order asc, id asc"
+        }
+    )
+    odoo_pos = po_data if isinstance(po_data, list) else []
+    print(f"Bons de commande fournisseur confirmés récupérés d'Odoo : {len(odoo_pos)}")
 
-    for r in cmd_rows:
-        num_cmd = str(r[0] or "").strip()
-        frn_nom = str(r[1] or "").strip()
-        dt_cmd = date_val(r[3])
-        dt_prev = date_val(r[4])
-        total_ht = num_val(r[5], 0.0)
-        total_ttc = num_val(r[6], 0.0)
-        devise = str(r[7] or "MAD").strip()
-        st_cmd = map_statut_commande(r[8])
-        st_liv = map_statut_livraison(r[9])
+    nb_pos = 0
+    po_ids = []
+    po_id_to_name = {}
+    for po in odoo_pos:
+        po_ids.append(po["id"])
+        num_cmd = str(po.get("name") or "").strip()
+        po_id_to_name[po["id"]] = num_cmd
+        p_obj = po.get("partner_id")
+        frn_nom = p_obj[1] if (p_obj and isinstance(p_obj, (list, tuple))) else "FOURNISSEUR DIVERS"
+        dt_cmd = date_val(po.get("date_order"))
+        dt_prev = date_val(po.get("date_planned"))
+        total_ht = float(po.get("amount_untaxed") or 0.0)
+        total_ttc = float(po.get("amount_total") or 0.0)
+
+        curr_obj = po.get("currency_id")
+        devise = curr_obj[1] if (curr_obj and isinstance(curr_obj, (list, tuple))) else "MAD"
+
+        st_odoo = str(po.get("state") or "").lower()
+        st_cmd = "VALIDEE"
+
+        rec_odoo = str(po.get("receipt_status") or "").lower()
+        if rec_odoo == "full":
+            st_liv = "LIVREE"
+        elif rec_odoo == "partial":
+            st_liv = "PARTIELLE"
+        elif rec_odoo == "pending":
+            st_liv = "EN_ATTENTE"
+        elif rec_odoo == "cancel":
+            st_liv = "ANNULEE"
+        else:
+            st_liv = "EN_ATTENTE"
 
         e_num = num_cmd[:100].replace("'", "''")
         e_frn = frn_nom[:255].replace("'", "''")
@@ -573,73 +609,86 @@ ON CONFLICT DO NOTHING;
         appliquer_tva = "TRUE" if montant_tva > 0.01 else "FALSE"
         taux_tva = "20.00" if montant_tva > 0.01 else "0.00"
 
+        frn_sub = f"(SELECT id FROM fournisseurs WHERE (raison_social = '{e_frn}' OR raison_social ILIKE '{e_frn}%') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+
         sql_lines.append(
             f"INSERT INTO commandes (numero_commande, fournisseur_id, statut, statut_livraison, "
             f"date_commande, date_livraison_prevue, montant_total, montant_ht, montant_tva, montant_ttc, "
             f"appliquer_tva, taux_tva, devise, point_de_vente_id) "
             f"VALUES ('{e_num}', "
-            f"(SELECT id FROM fournisseurs WHERE raison_social = '{e_frn}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
+            f"COALESCE({frn_sub}, (SELECT id FROM fournisseurs WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
             f"'{st_cmd}', '{st_liv}', {dt_cmd}, {dt_prev}, {total_ttc:.2f}, {total_ht:.2f}, {montant_tva:.2f}, {total_ttc:.2f}, "
-            f"{appliquer_tva}, {taux_tva}, '{e_devise}', {TENANT_ID});"
+            f"{appliquer_tva}, {taux_tva}, '{e_devise}', {TENANT_ID}) "
+            f"ON CONFLICT DO NOTHING;"
         )
+        nb_pos += 1
 
     sql_lines.append("")
 
-    # 6. Lignes de Commande
+    # 6. Lignes de Commande Fournisseur (Direct depuis Odoo purchase.order.line pour les BC confirmés)
     sql_lines.append("-- -----------------------------------------------------------------------------")
-    sql_lines.append(f"-- 6. LIGNES DE COMMANDE DÉTAILLÉES (TENANT #{TENANT_ID})")
+    sql_lines.append(f"-- 6. LIGNES DE COMMANDE DÉTAILLÉES (POUR LES {len(po_ids)} BC FOURNISSEURS) (TENANT #{TENANT_ID})")
     sql_lines.append("-- -----------------------------------------------------------------------------")
-    ws_det = wb['Commandes_Detaillees']
-    current_cmd = None
+    print(f"\n6. Récupération des lignes pour les {len(po_ids)} BC fournisseur confirmés...")
+    po_lines_domain = [[["order_id", "in", po_ids]]] if po_ids else [[]]
+    po_lines_data = odoo_call(
+        "purchase.order.line", "search_read",
+        po_lines_domain,
+        {
+            "fields": [
+                "order_id", "product_id", "name", "product_qty",
+                "qty_received", "price_unit", "discount", "price_subtotal", "price_total"
+            ],
+            "limit": 10000,
+            "order": "order_id asc, sequence asc, id asc"
+        }
+    )
+    odoo_po_lines = po_lines_data if isinstance(po_lines_data, list) else []
+    print(f"Lignes de commande d'achat récupérées d'Odoo : {len(odoo_po_lines)}")
+
     lignes_count = 0
-
-    for r in list(ws_det.iter_rows(values_only=True))[1:]:
-        c0 = str(r[0] or "").strip()
-        c1 = str(r[1] or "").strip()
-
-        if c0 and not c0.startswith('↳') and not 'Code Article' in c0:
-            current_cmd = c0
+    for pol in odoo_po_lines:
+        o_obj = pol.get("order_id")
+        if not o_obj:
             continue
+        po_id = o_obj[0] if isinstance(o_obj, (list, tuple)) else o_obj
+        cmd_name = po_id_to_name.get(po_id)
+        if not cmd_name:
+            m_po = re.search(r'P\d+', str(o_obj[1] if isinstance(o_obj, (list, tuple)) else o_obj))
+            cmd_name = m_po.group(0) if m_po else (o_obj[1].split()[0] if isinstance(o_obj, (list, tuple)) else str(o_obj).split()[0])
+        e_cmd = cmd_name[:100].replace("'", "''")
 
-        if '↳' in c0:
-            if 'Code Article' in c0:
-                continue
-            if not current_cmd:
-                continue
+        p_obj = pol.get("product_id")
+        p_display = p_obj[1] if (p_obj and isinstance(p_obj, (list, tuple))) else str(pol.get("name") or "")
+        c_code, c_nom = parse_code_nom(p_display)
+        e_code = c_code.replace("'", "''") if c_code else ""
+        e_pnom = c_nom[:255].replace("'", "''")
 
-            raw_code = c0.replace('↳', '').strip()
-            clean_name = re.sub(r'^\[.*?\]\s*', '', c1).strip().lower()
+        if e_code:
+            prod_sub = f"(SELECT id FROM produits WHERE (reference = '{e_code}' OR reference LIKE '{e_code}%') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+        else:
+            prod_sub = f"(SELECT id FROM produits WHERE (designation = '{e_pnom}' OR designation ILIKE '{e_pnom}%') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
 
-            unique_ref = prod_map_for_details.get((raw_code, clean_name))
-            if not unique_ref:
-                unique_ref = prod_map_for_details.get(raw_code)
-            if not unique_ref:
-                unique_ref = prod_map_for_details.get(clean_name)
-            if not unique_ref:
-                unique_ref = raw_code
+        qte_cde = int(round(float(pol.get("product_qty") or 1.0)))
+        qte_rec = int(round(float(pol.get("qty_received") or 0.0)))
+        pu_ht = float(pol.get("price_unit") or 0.0)
+        st_ht = float(pol.get("price_subtotal") or (pu_ht * qte_cde))
+        st_ttc = float(pol.get("price_total") or st_ht)
+        montant_tva = max(0.0, st_ttc - st_ht)
+        taux_tva = round((montant_tva / st_ht * 100), 2) if st_ht > 0.01 else (20.00 if montant_tva > 0.01 else 0.00)
 
-            qte_cde = int_val(r[8], 1)
-            qte_rec = int_val(r[9], 0)
-            pu_ht = num_val(r[12], 0.0)
-            st_ht = num_val(r[15], pu_ht * qte_cde)
-            st_ttc = num_val(r[16], st_ht)
-            montant_tva = max(0.0, st_ttc - st_ht)
-            taux_tva = 20.00 if montant_tva > 0.01 else 0.00
+        sql_lines.append(
+            f"INSERT INTO lignes_commande (commande_id, produit_id, quantite_commandee, quantite_livree, "
+            f"prix_unitaire, prix_unitaire_ht, taux_tva, montant_ht, montant_tva, montant_ttc, montant_ligne, qualite_produit) "
+            f"VALUES ("
+            f"(SELECT id FROM commandes WHERE numero_commande = '{e_cmd}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
+            f"COALESCE({prod_sub}, (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
+            f"{qte_cde}, {qte_rec}, {pu_ht:.4f}, {pu_ht:.4f}, {taux_tva:.2f}, {st_ht:.2f}, {montant_tva:.2f}, {st_ttc:.2f}, {st_ht:.2f}, NULL) "
+            f"ON CONFLICT DO NOTHING;"
+        )
+        lignes_count += 1
 
-            e_cmd = current_cmd[:100].replace("'", "''")
-            e_ref = unique_ref[:255].replace("'", "''")
-
-            sql_lines.append(
-                f"INSERT INTO lignes_commande (commande_id, produit_id, quantite_commandee, quantite_livree, "
-                f"prix_unitaire, prix_unitaire_ht, taux_tva, montant_ht, montant_tva, montant_ttc, montant_ligne, qualite_produit) "
-                f"VALUES ("
-                f"(SELECT id FROM commandes WHERE numero_commande = '{e_cmd}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
-                f"(SELECT id FROM produits WHERE reference = '{e_ref}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
-                f"{qte_cde}, {qte_rec}, {pu_ht:.4f}, {pu_ht:.4f}, {taux_tva:.2f}, {st_ht:.2f}, {montant_tva:.2f}, {st_ttc:.2f}, {st_ht:.2f}, NULL);"
-            )
-            lignes_count += 1
-
-    print(f"Lignes de commande générées : {lignes_count}")
+    print(f"Lignes de commande insérées : {lignes_count}")
     sql_lines.append("")
 
     # 7. BLs / Réceptions Fournisseurs (Depuis Odoo stock.picking & stock.move)
@@ -708,7 +757,9 @@ ON CONFLICT DO NOTHING;
 
         po_num = None
         if p.get("purchase_id") and isinstance(p.get("purchase_id"), dict):
-            po_num = p["purchase_id"].get("display_name")
+            raw_po = p["purchase_id"].get("display_name")
+            m = re.search(r'P\d+', str(raw_po))
+            po_num = m.group(0) if m else raw_po
         elif p.get("origin") and str(p.get("origin")).strip().startswith("P"):
             m = re.search(r'P\d+', str(p.get("origin")))
             if m:
@@ -726,27 +777,9 @@ ON CONFLICT DO NOTHING;
             nb_bl_po += 1
             obs = f"Réception rattachée à la commande {po_num}"
         else:
-            # Réception sans PO Odoo : on crée une commande associée pour garantir le fournisseur obligatoire !
-            auto_cmd_num = f"CMD-REC-{num_bl}"[:100].replace("'", "''")
+            po_subquery = "NULL"
             nb_bl_direct_cmd += 1
             obs = f"Réception directe Odoo ({p.get('origin') or num_bl})"
-
-            if partner_name:
-                frn_subquery = f"(SELECT id FROM fournisseurs WHERE (raison_social ILIKE '{partner_name[:100].replace('\'', '\'\'')}%' OR raison_social = '{partner_name[:100].replace('\'', '\'\'')}') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
-            else:
-                frn_subquery = f"(SELECT id FROM fournisseurs WHERE raison_social = 'FOURNISSEUR DIVERS' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
-
-            sql_lines.append(
-                f"INSERT INTO commandes (numero_commande, fournisseur_id, statut, statut_livraison, "
-                f"date_commande, date_livraison_reelle, montant_total, montant_ht, montant_tva, montant_ttc, "
-                f"appliquer_tva, taux_tva, devise, point_de_vente_id) "
-                f"VALUES ('{auto_cmd_num}', "
-                f"COALESCE({frn_subquery}, (SELECT id FROM fournisseurs WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
-                f"'VALIDEE', 'LIVREE', {dt_liv}, {dt_liv}, {montant_total:.2f}, {montant_total:.2f}, 0.00, {montant_total:.2f}, "
-                f"FALSE, 0.00, 'MAD', {TENANT_ID}) "
-                f"ON CONFLICT DO NOTHING;"
-            )
-            po_subquery = f"(SELECT id FROM commandes WHERE numero_commande = '{auto_cmd_num}' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
 
         e_obs = obs[:255].replace("'", "''")
 
@@ -995,21 +1028,23 @@ WHERE c.point_de_vente_id = {TENANT_ID};
 
         print(f"Factures d'achat insérées : {nb_factures} (Lignes : {nb_lignes_fac})")
 
-    # 11. Commandes Clients & Lignes de commandes (Depuis Odoo sale.order & sale.order.line)
-    print("\n5. Récupération des commandes clients depuis Odoo (sale.order)...")
+    # 11. Commandes Clients & Lignes de commandes (Depuis Odoo sale.order state='sale' & sale.order.line)
+    print("\n5. Récupération des bons de commande clients confirmés depuis Odoo (sale.order state='sale')...")
     so_data = odoo_call(
-        "sale.order", "search_read", [[]],
+        "sale.order", "search_read",
+        [[["state", "=", "sale"]]],
         {
             "fields": [
                 "name", "partner_id", "date_order", "amount_untaxed",
                 "amount_tax", "amount_total", "state", "client_order_ref",
-                "x_studio_n_de_commande_client"
+                "x_studio_n_de_commande_client", "invoice_ids", "picking_ids"
             ],
-            "limit": 1500,
+            "limit": 2000,
             "order": "date_order asc, id asc"
         }
     )
     odoo_so = so_data if isinstance(so_data, list) else []
+    print(f"Bons de commande clients confirmés récupérés d'Odoo : {len(odoo_so)}")
 
     # Récupération des lignes de commande client sale.order.line par lots
     print("   Récupération des lignes de commandes clients (sale.order.line)...")
@@ -1035,6 +1070,17 @@ WHERE c.point_de_vente_id = {TENANT_ID};
                 if oid not in lines_by_so:
                     lines_by_so[oid] = []
                 lines_by_so[oid].append(l)
+
+    print(f"   Lignes de commandes clients récupérées : {sum(len(v) for v in lines_by_so.values())}")
+    # Construction des index de correspondance Commande <-> BL et Commande <-> Facture
+    picking_to_so_name = {}
+    invoice_to_so_name = {}
+    for so in odoo_so:
+        so_num = str(so.get("name") or "").strip()
+        for pkid in so.get("picking_ids", []):
+            picking_to_so_name[pkid] = so_num
+        for invid in so.get("invoice_ids", []):
+            invoice_to_so_name[invid] = so_num
 
     sql_lines.append("\n-- -----------------------------------------------------------------------------")
     sql_lines.append(f"-- 11. COMMANDES CLIENTS & LIGNES DE COMMANDE (TENANT #{TENANT_ID})")
@@ -1168,12 +1214,13 @@ WHERE c.point_de_vente_id = {TENANT_ID};
         e_pname = p_name[:200].replace("'", "''")
         client_sub = f"(SELECT id FROM clients WHERE (nom = '{e_pname}' OR nom ILIKE '{e_pname}%') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
 
-        sale_obj = p.get("sale_id")
-        so_num = None
-        if sale_obj and isinstance(sale_obj, (list, tuple)):
-            so_num = sale_obj[1]
-        elif p.get("origin") and str(p.get("origin")).strip().startswith("S"):
-            so_num = str(p.get("origin")).strip().split()[0]
+        so_num = picking_to_so_name.get(p_id)
+        if not so_num:
+            sale_obj = p.get("sale_id")
+            if sale_obj and isinstance(sale_obj, (list, tuple)):
+                so_num = sale_obj[1]
+            elif p.get("origin") and str(p.get("origin")).strip().startswith("S"):
+                so_num = str(p.get("origin")).strip().split()[0]
 
         if so_num:
             e_so = so_num[:100].replace("'", "''")
@@ -1259,10 +1306,10 @@ WHERE c.point_de_vente_id = {TENANT_ID};
     print(f"BLs clients insérés : {nb_bl_cli} (Lignes : {nb_bl_lines}, dont {len(so_delivered)} commandes livrées)")
 
     # 13. Factures Clients (account.move out_invoice & account.move.line)
-    print("\n7. Récupération des factures clients depuis Odoo (account.move)...")
+    print("\n7. Récupération des factures clients depuis Odoo (account.move out_invoice)...")
     out_inv_data = odoo_call(
         "account.move", "search_read",
-        [[["move_type", "in", ["out_invoice", "out_refund"]]]],
+        [[["move_type", "=", "out_invoice"]]],
         {
             "fields": [
                 "name", "partner_id", "invoice_date", "invoice_date_due",
@@ -1370,7 +1417,15 @@ WHERE c.point_de_vente_id = {TENANT_ID};
             nb_inv_cli_lines += 1
 
         # Rattachement Facture <-> Bon de Livraison Client via commande d'origine
-        if orig:
+        so_from_inv = invoice_to_so_name.get(inv_id)
+        if so_from_inv:
+            sql_lines.append(
+                f"UPDATE bons_livraison_client "
+                f"SET facture_id = (SELECT id FROM factures WHERE numero_facture = '{e_num}' AND point_de_vente_id = {TENANT_ID} LIMIT 1) "
+                f"WHERE commande_client_id IN (SELECT id FROM commandes_client WHERE numero_commande = '{so_from_inv}' AND point_de_vente_id = {TENANT_ID}) "
+                f"  AND point_de_vente_id = {TENANT_ID};\n"
+            )
+        elif orig:
             orig_orders = [o.strip() for o in re.findall(r'S\d+', orig)]
             if orig_orders:
                 orders_in_clause = ", ".join(f"'{o}'" for o in orig_orders)
@@ -1382,6 +1437,291 @@ WHERE c.point_de_vente_id = {TENANT_ID};
                 )
 
     print(f"Factures clients insérées : {nb_inv_cli} (Lignes : {nb_inv_cli_lines})")
+
+    # 13.b Avoirs Clients (account.move out_refund & account.move.line)
+    print("\n7.b Récupération des avoirs clients depuis Odoo (account.move out_refund)...")
+    out_ref_data = odoo_call(
+        "account.move", "search_read",
+        [[["move_type", "=", "out_refund"]]],
+        {
+            "fields": [
+                "name", "partner_id", "invoice_date",
+                "amount_untaxed", "amount_tax", "amount_total",
+                "state", "payment_state", "ref", "reversed_entry_id", "invoice_origin"
+            ],
+            "limit": 100,
+            "order": "invoice_date asc, id asc"
+        }
+    )
+    odoo_out_refunds = out_ref_data if isinstance(out_ref_data, list) else []
+
+    ref_ids = [r["id"] for r in odoo_out_refunds]
+    lines_by_refund = {}
+    if ref_ids:
+        ref_lines = odoo_call(
+            "account.move.line", "search_read",
+            [[["move_id", "in", ref_ids], ["display_type", "=", "product"]]],
+            {
+                "fields": [
+                    "move_id", "product_id", "name", "quantity",
+                    "price_unit", "discount", "price_subtotal", "price_total"
+                ],
+                "limit": 1000
+            }
+        )
+        if isinstance(ref_lines, list):
+            for rl in ref_lines:
+                mid = rl.get("move_id")[0] if isinstance(rl.get("move_id"), (list, tuple)) else rl.get("move_id")
+                if mid not in lines_by_refund:
+                    lines_by_refund[mid] = []
+                lines_by_refund[mid].append(rl)
+
+    sql_lines.append("\n-- -----------------------------------------------------------------------------")
+    sql_lines.append(f"-- 13.b AVOIRS CLIENTS (TENANT #{TENANT_ID})")
+    sql_lines.append("-- -----------------------------------------------------------------------------")
+
+    nb_avoirs_cli = 0
+    nb_lignes_avoir = 0
+
+    for ref_inv in odoo_out_refunds:
+        ref_id = ref_inv["id"]
+        num_avr = str(ref_inv.get("name") or f"AVR-{ref_id}").strip()
+        e_navr = num_avr[:100].replace("'", "''")
+        dt_avr = date_val(ref_inv.get("invoice_date"))
+
+        p_obj = ref_inv.get("partner_id")
+        p_name = p_obj[1] if (p_obj and isinstance(p_obj, (list, tuple))) else "CLIENT DIVERS"
+        e_pname = p_name[:200].replace("'", "''")
+        client_sub = f"(SELECT id FROM clients WHERE (nom = '{e_pname}' OR nom ILIKE '{e_pname}%') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+
+        ht = float(ref_inv.get("amount_untaxed") or 0.0)
+        ttc = float(ref_inv.get("amount_total") or 0.0)
+        tva = max(0.0, ttc - ht)
+
+        st_pay = str(ref_inv.get("payment_state") or "").lower()
+        statut_avr = "UTILISE" if st_pay in ("paid", "in_payment") else "VALIDE"
+
+        # Facture d'origine
+        rev_obj = ref_inv.get("reversed_entry_id")
+        rev_name = None
+        if rev_obj and isinstance(rev_obj, (list, tuple)):
+            m_orig = re.search(r'(FA/\d+/\d+|INV/\d+/\d+)', str(rev_obj[1]))
+            if m_orig:
+                rev_name = m_orig.group(1)
+            else:
+                rev_name = rev_obj[1].split()[0]
+        elif ref_inv.get("ref"):
+            m_orig = re.search(r'(FA/\d+/\d+|INV/\d+/\d+)', str(ref_inv.get("ref")))
+            if m_orig:
+                rev_name = m_orig.group(1)
+
+        if rev_name:
+            e_rev_name = rev_name[:100].replace("'", "''")
+            fac_orig_sub = f"(SELECT id FROM factures WHERE numero_facture = '{e_rev_name}' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+            e_num_fac_orig = f"'{e_rev_name}'"
+        else:
+            fac_orig_sub = "NULL"
+            e_num_fac_orig = "NULL"
+
+        ref_desc = str(ref_inv.get("ref") or "").strip()
+        e_motif = ref_desc[:255].replace("'", "''") if ref_desc else "Avoir client Odoo"
+        orig_comm = str(ref_inv.get("invoice_origin") or "").strip()
+        e_notes_avr = f"Origine: {orig_comm}"[:255].replace("'", "''") if orig_comm else ""
+
+        sql_lines.append(
+            f"INSERT INTO avoirs (numero_avoir, type_avoir, nature_avoir, facture_origine_id, numero_facture_origine, "
+            f"client_id, cree_par_user_id, date_avoir, montant_ht, montant_tva, montant_ttc, statut, motif, notes, point_de_vente_id) "
+            f"VALUES ('{e_navr}', 'CLIENT', 'RETOUR_MARCHANDISE', {fac_orig_sub}, {e_num_fac_orig}, "
+            f"COALESCE({client_sub}, (SELECT id FROM clients WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
+            f"{user_sub}, ({dt_avr})::date, {ht:.2f}, {tva:.2f}, {ttc:.2f}, '{statut_avr}', '{e_motif}', '{e_notes_avr}', {TENANT_ID}) "
+            f"ON CONFLICT DO NOTHING;"
+        )
+        nb_avoirs_cli += 1
+
+        for rl in lines_by_refund.get(ref_id, []):
+            prod_obj = rl.get("product_id")
+            p_display = prod_obj[1] if (prod_obj and isinstance(prod_obj, (list, tuple))) else str(rl.get("name") or "")
+            c_code, c_nom = parse_code_nom(p_display)
+            e_code = c_code.replace("'", "''") if c_code else ""
+            e_pnom = c_nom[:255].replace("'", "''")
+
+            if e_code:
+                prod_sub = f"(SELECT id FROM produits WHERE (reference = '{e_code}' OR reference LIKE '{e_code}%') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+            else:
+                prod_sub = f"(SELECT id FROM produits WHERE designation = '{e_pnom}' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+
+            qte_l = float(rl.get("quantity") or 1.0)
+            pu_l = float(rl.get("price_unit") or 0.0)
+            ht_l = float(rl.get("price_subtotal") or (pu_l * qte_l))
+            ttc_l = float(rl.get("price_total") or ht_l)
+            tva_l = max(0.0, ttc_l - ht_l)
+            taux_tva_l = round((tva_l / ht_l * 100), 2) if ht_l > 0.01 else 20.00
+            desig_l = str(rl.get("name") or e_pnom)[:255].replace("'", "''")
+
+            sql_lines.append(
+                f"INSERT INTO lignes_avoir (avoir_id, produit_id, designation, quantite, prix_unitaire_ht, "
+                f"taux_tva, montant_ht, montant_tva, montant_ttc, remettre_en_stock, motif_retour) "
+                f"SELECT a.id, COALESCE({prod_sub}, (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
+                f"'{desig_l}', {qte_l:.3f}, {pu_l:.2f}, {taux_tva_l:.2f}, {ht_l:.2f}, {tva_l:.2f}, {ttc_l:.2f}, true, 'PRODUIT_NON_CONFORME' "
+                f"FROM avoirs a WHERE a.numero_avoir = '{e_navr}' AND a.point_de_vente_id = {TENANT_ID} LIMIT 1;"
+            )
+            nb_lignes_avoir += 1
+
+    print(f"Avoirs clients insérés : {nb_avoirs_cli} (Lignes : {nb_lignes_avoir})")
+
+    # 14. Paiements Clients (account.payment)
+    print("\n8. Récupération des paiements clients depuis Odoo (account.payment)...")
+    payments_data = odoo_call(
+        "account.payment", "search_read",
+        [[["partner_type", "=", "customer"]]],
+        {
+            "fields": [
+                "name", "date", "amount", "partner_id", "journal_id",
+                "memo", "payment_reference", "reconciled_invoice_ids",
+                "check_number", "state", "l10n_ma_reports_payment_method"
+            ],
+            "limit": 1000,
+            "order": "date asc, id asc"
+        }
+    )
+    odoo_payments = payments_data if isinstance(payments_data, list) else []
+
+    all_reconciled_inv_ids = set()
+    for p in odoo_payments:
+        for iid in p.get("reconciled_invoice_ids", []):
+            all_reconciled_inv_ids.add(iid)
+
+    inv_id_to_name = {}
+    if all_reconciled_inv_ids:
+        invoices_info = odoo_call(
+            "account.move", "read",
+            [list(all_reconciled_inv_ids)],
+            {"fields": ["id", "name", "amount_total"]}
+        )
+        if isinstance(invoices_info, list):
+            for inv in invoices_info:
+                inv_id_to_name[inv["id"]] = inv.get("name")
+
+    sql_lines.append("\n-- -----------------------------------------------------------------------------")
+    sql_lines.append(f"-- 14. PAIEMENTS CLIENTS & AFFECTATIONS (TENANT #{TENANT_ID})")
+    sql_lines.append("-- -----------------------------------------------------------------------------")
+
+    nb_payments = 0
+    nb_affectations = 0
+    user_sub = "(SELECT id FROM users LIMIT 1)"
+
+    for p in odoo_payments:
+        p_name = str(p.get("name") or f"PAY-{p['id']}").strip()
+        e_pname_num = p_name[:100].replace("'", "''")
+        dt_pay = date_val(p.get("date"))
+        amount = float(p.get("amount") or 0.0)
+
+        # Client
+        part_obj = p.get("partner_id")
+        c_name = part_obj[1] if (part_obj and isinstance(part_obj, (list, tuple))) else "CLIENT DIVERS"
+        e_cname = c_name[:200].replace("'", "''")
+        client_sub = f"(SELECT id FROM clients WHERE (nom = '{e_cname}' OR nom ILIKE '{e_cname}%') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+
+        # Mode de paiement (gestion l10n_ma : 5 = LCN / Bill of Exchange)
+        ma_method = str(p.get("l10n_ma_reports_payment_method") or "").strip()
+        chk_num = str(p.get("check_number") or "").strip()
+        memo_raw = str(p.get("memo") or p.get("payment_reference") or "").strip()
+        memo_str = memo_raw.lower()
+        j_obj = p.get("journal_id")
+        j_name = str(j_obj[1] if (j_obj and isinstance(j_obj, (list, tuple))) else "").lower()
+
+        if ma_method == "5" or "lcn" in memo_str or "effet" in memo_str or "traite" in memo_str:
+            mode_p = "LCN"
+        elif ma_method == "2" or chk_num or "cheque" in memo_str or "chèque" in memo_str:
+            mode_p = "CHEQUE"
+        elif ma_method == "1" or "cash" in j_name or "caisse" in j_name or "espece" in memo_str:
+            mode_p = "ESPECES"
+        elif ma_method == "4" or "virement" in memo_str:
+            mode_p = "VIREMENT"
+        elif ma_method == "7":
+            mode_p = "CHEQUE" if chk_num else "VIREMENT"
+        else:
+            mode_p = "VIREMENT"
+
+        memo = str(p.get("memo") or p.get("payment_reference") or "").strip()
+        e_memo = memo[:255].replace("'", "''")
+        chk_num = str(p.get("check_number") or "").strip()
+        e_chk = sql_escape(chk_num if chk_num else None, 100)
+
+        # Facture principale réconciliée
+        reconciled_ids = p.get("reconciled_invoice_ids") or []
+        first_inv_name = None
+        for iid in reconciled_ids:
+            if iid in inv_id_to_name:
+                first_inv_name = inv_id_to_name[iid]
+                break
+
+        if not first_inv_name and (memo.startswith("FA/") or memo.startswith("INV/")):
+            first_inv_name = memo.split()[0].rstrip(",")
+
+        if first_inv_name:
+            e_finv = first_inv_name[:100].replace("'", "''")
+            fac_sub = f"(SELECT id FROM factures WHERE numero_facture = '{e_finv}' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+        else:
+            fac_sub = "NULL"
+
+        obs_pay = f"Paiement client Odoo {p_name}" + (f" (Memo: {e_memo})" if e_memo else "")
+        e_obs_pay = obs_pay[:255].replace("'", "''")
+
+        sql_lines.append(
+            f"INSERT INTO paiements (numero_paiement, date_paiement, client_id, facture_id, montant, "
+            f"mode_paiement, reference_paiement, nom_banque, numero_cheque, encaisse_par_user_id, notes, point_de_vente_id) "
+            f"VALUES ('{e_pname_num}', {dt_pay}, COALESCE({client_sub}, (SELECT id FROM clients WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
+            f"{fac_sub}, {amount:.2f}, '{mode_p}', '{e_memo}', 'Banque', {e_chk}, {user_sub}, '{e_obs_pay}', {TENANT_ID}) "
+            f"ON CONFLICT DO NOTHING;"
+        )
+        nb_payments += 1
+
+        # Affectations aux factures réconciliées
+        if reconciled_ids:
+            part_amount = amount / len(reconciled_ids) if len(reconciled_ids) > 0 else amount
+            for iid in reconciled_ids:
+                inv_name = inv_id_to_name.get(iid)
+                if inv_name:
+                    e_invn = inv_name[:100].replace("'", "''")
+                    sql_lines.append(
+                        f"INSERT INTO paiement_affectations (paiement_id, facture_id, montant_affecte, date_affectation) "
+                        f"SELECT "
+                        f"  (SELECT id FROM paiements WHERE numero_paiement = '{e_pname_num}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
+                        f"  f.id, "
+                        f"  {part_amount:.2f}, "
+                        f"  {dt_pay} "
+                        f"FROM factures f WHERE f.numero_facture = '{e_invn}' AND f.point_de_vente_id = {TENANT_ID} "
+                        f"LIMIT 1;"
+                    )
+                    nb_affectations += 1
+
+    # Recalcul des montants payés et statuts des factures client
+    sql_lines.append(f"""
+-- Mise à jour des montants payés et des statuts des factures client
+UPDATE factures f
+SET montant_paye = COALESCE((
+    SELECT SUM(pa.montant_affecte)
+    FROM paiement_affectations pa
+    WHERE pa.facture_id = f.id
+), COALESCE((
+    SELECT SUM(p.montant)
+    FROM paiements p
+    WHERE p.facture_id = f.id AND p.point_de_vente_id = {TENANT_ID}
+), 0.00))
+WHERE f.point_de_vente_id = {TENANT_ID};
+
+UPDATE factures f
+SET montant_restant = GREATEST(0.00, f.montant_final - f.montant_paye),
+    statut = CASE 
+        WHEN f.montant_paye >= f.montant_final AND f.montant_final > 0 THEN 'PAYEE_TOTALEMENT'
+        WHEN f.montant_paye > 0 THEN 'PAYEE_PARTIELLEMENT'
+        ELSE f.statut
+    END
+WHERE f.point_de_vente_id = {TENANT_ID};
+""")
+
+    print(f"Paiements clients insérés : {nb_payments} (Affectations : {nb_affectations})")
 
     sql_lines.append("\nCOMMIT;\n")
 
