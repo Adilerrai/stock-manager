@@ -213,6 +213,44 @@ public class LivraisonService {
         return livraisonRepository.save(livraison);
     }
 
+    @Transactional
+    public Livraison remettreEnBrouillon(Long livraisonId) {
+        Livraison livraison = getLivraisonById(livraisonId);
+
+        // Si la livraison était validée/livrée (LIVREE ou PARTIELLE), annuler l'impact stock
+        if (livraison.getStatut() == StatutLivraison.LIVREE || livraison.getStatut() == StatutLivraison.PARTIELLE) {
+            List<LigneLivraison> lignes = ligneLivraisonRepository.findByLivraison_Id(livraisonId);
+            for (LigneLivraison ligne : lignes) {
+                if (ligne.getProduit() != null) {
+                    Long depotId = (ligne.getDepot() != null) ? ligne.getDepot().getId() : null;
+                    try {
+                        mouvementStockService.creerMouvement(
+                                ligne.getProduit().getId(),
+                                depotId,
+                                TypeMouvement.AJUSTEMENT_NEGATIF,
+                                BigDecimal.valueOf(ligne.getQuantiteLivree()),
+                                ligne.getQualiteProduit(),
+                                "ANNUL-LIV-" + (livraison.getNumeroLivraison() != null ? livraison.getNumeroLivraison() : livraison.getId()),
+                                "Déduction stock suite remise en brouillon réception " + (livraison.getNumeroLivraison() != null ? livraison.getNumeroLivraison() : livraison.getId())
+                        );
+                    } catch (Exception ex) {
+                        log.warn("Erreur lors de la réversion stock de la livraison {}: {}", livraisonId, ex.getMessage());
+                    }
+                }
+            }
+        }
+
+        livraison.setStatut(StatutLivraison.BROUILLON);
+        Livraison saved = livraisonRepository.save(livraison);
+
+        if (saved.getCommande() != null) {
+            mettreAJourStatutLivraisonCommande(saved.getCommande());
+        }
+
+        return saved;
+    }
+
+
     public List<Livraison> getLivraisonsByStatut(StatutLivraison statut) {
         Long tenantId = TenantContext.getCurrentTenant();
         return livraisonRepository.findByStatutAndPointDeVenteId(statut, tenantId != null ? tenantId : 1L);

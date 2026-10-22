@@ -77,6 +77,26 @@ public class BonLivraisonClientController {
         return ResponseEntity.ok(bonLivraisonClientService.remettreEnBrouillon(id));
     }
 
+    @RequestMapping(value = "/{id}/statut", method = {RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.POST})
+    public ResponseEntity<BonLivraisonClientDTO> changerStatut(
+            @PathVariable Long id,
+            @RequestParam(value = "statut", required = false) String statut,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        String effectiveStatut = statut;
+        if ((effectiveStatut == null || effectiveStatut.isBlank()) && body != null) {
+            effectiveStatut = body.get("statut");
+        }
+        if (effectiveStatut != null && "BROUILLON".equalsIgnoreCase(effectiveStatut.trim())) {
+            return ResponseEntity.ok(bonLivraisonClientService.remettreEnBrouillon(id));
+        } else if (effectiveStatut != null && ("LIVREE".equalsIgnoreCase(effectiveStatut.trim()) || "VALIDEE".equalsIgnoreCase(effectiveStatut.trim()))) {
+            return ResponseEntity.ok(bonLivraisonClientService.validerEtExpedierBL(id));
+        } else if (effectiveStatut != null && "ANNULEE".equalsIgnoreCase(effectiveStatut.trim())) {
+            return ResponseEntity.ok(bonLivraisonClientService.annulerBonLivraisonClient(id));
+        }
+        return ResponseEntity.ok(bonLivraisonClientService.getBonLivraisonById(id));
+    }
+
+
     @PutMapping("/{id}")
     public ResponseEntity<BonLivraisonClientDTO> updateBonLivraisonClient(@PathVariable Long id, @RequestBody BonLivraisonClientDTO dto) {
         return ResponseEntity.ok(bonLivraisonClientService.updateBonLivraisonClient(id, dto));

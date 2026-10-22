@@ -102,6 +102,42 @@ public class LivraisonController {
         return ResponseEntity.ok(livraisonMapper.toDto(livraison));
     }
 
+    @PostMapping("/{id}/brouillon")
+    public ResponseEntity<LivraisonDTO> remettreEnBrouillon(@PathVariable("id") Long id) {
+        Livraison livraison = livraisonService.remettreEnBrouillon(id);
+        return ResponseEntity.ok(livraisonMapper.toDto(livraison));
+    }
+
+    @PutMapping("/{id}/brouillon")
+    public ResponseEntity<LivraisonDTO> remettreEnBrouillonPut(@PathVariable("id") Long id) {
+        Livraison livraison = livraisonService.remettreEnBrouillon(id);
+        return ResponseEntity.ok(livraisonMapper.toDto(livraison));
+    }
+
+    @RequestMapping(value = "/{id}/statut", method = {RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.POST})
+    public ResponseEntity<LivraisonDTO> changerStatut(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "statut", required = false) String statut,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        String effectiveStatut = statut;
+        if ((effectiveStatut == null || effectiveStatut.isBlank()) && body != null) {
+            effectiveStatut = body.get("statut");
+        }
+        if (effectiveStatut != null && "BROUILLON".equalsIgnoreCase(effectiveStatut.trim())) {
+            Livraison livraison = livraisonService.remettreEnBrouillon(id);
+            return ResponseEntity.ok(livraisonMapper.toDto(livraison));
+        } else if (effectiveStatut != null && ("LIVREE".equalsIgnoreCase(effectiveStatut.trim()) || "VALIDEE".equalsIgnoreCase(effectiveStatut.trim()))) {
+            Livraison livraison = livraisonService.validerLivraison(id);
+            return ResponseEntity.ok(livraisonMapper.toDto(livraison));
+        } else if (effectiveStatut != null && "ANNULEE".equalsIgnoreCase(effectiveStatut.trim())) {
+            Livraison livraison = livraisonService.annulerLivraison(id);
+            return ResponseEntity.ok(livraisonMapper.toDto(livraison));
+        }
+        Livraison livraison = livraisonService.getLivraisonWithDetails(id);
+        return ResponseEntity.ok(livraisonMapper.toDto(livraison));
+    }
+
+
 
 
     @GetMapping("/{id}/details")

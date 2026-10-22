@@ -121,5 +121,9 @@
     <!-- Changeset 037 : Ajout numero_achat_client dans devis -->
     <include file="changes/037-add-numero-achat-client-to-devis.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 038 : Autoriser le statut BROUILLON pour les livraisons et BL client -->
+    <include file="changes/038-allow-brouillon-in-statut-livraison-check.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
+
 
