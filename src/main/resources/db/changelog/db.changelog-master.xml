@@ -115,5 +115,8 @@
     <!-- Changeset 035 : Création des tables du module CRM complet -->
     <include file="changes/035-create-crm-module-tables.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 036 : Index de performance pour les recherches (SearchCriteria) : B-tree composites + GIN trigram -->
+    <include file="changes/036-add-search-criteria-indexes.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 

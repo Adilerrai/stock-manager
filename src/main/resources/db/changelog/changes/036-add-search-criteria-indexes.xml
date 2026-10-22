@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 036 : Index de performance pour les recherches paginees (*SearchCriteria)
+
+      Constat (analyse des *RepositoryImpl) :
+        - TOUTES les recherches filtrent sur point_de_vente_id = ? puis trient (ORDER BY date DESC) + LIMIT/OFFSET.
+          => index composites (point_de_vente_id, date_tri DESC) : filtre tenant + plage de dates + tri sans SORT.
+        - Les filtres par tiers (client_id, fournisseur_id, ...) ne sont pas indexes (PostgreSQL n'indexe pas les FK).
+          => index (fk_id, date_tri DESC) : historique d'un tiers deja trie.
+        - Les recherches textuelles utilisent LOWER(col) LIKE '%x%' : un B-tree est inutilisable.
+          => index GIN pg_trgm (changeset 036-b, conditionne a la disponibilite de l'extension).
+    -->
+
+    <!-- ===================================================================== -->
+    <!-- 036-a : Index B-tree composites (tenant / tri / FK filtrees)          -->
+    <!-- ===================================================================== -->
+    <changeSet id="036-a-add-search-criteria-btree-indexes" author="erp-pointvente">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <sql splitStatements="true"><![CDATA[
+            -- VENTES (VenteSearchCriteria) : tri par defaut date_vente DESC
+            CREATE INDEX IF NOT EXISTS idx_ventes_pdv_date      ON ventes (point_de_vente_id, date_vente DESC);
+            CREATE INDEX IF NOT EXISTS idx_ventes_client_date   ON ventes (client_id, date_vente DESC);
+            CREATE INDEX IF NOT EXISTS idx_ventes_vendeur_date  ON ventes (vendeur_id, date_vente DESC);
+
+            -- FACTURES (FactureSearchCriteria) : tri date_facture DESC, filtre estEchue sur date_echeance
+            CREATE INDEX IF NOT EXISTS idx_factures_pdv_date     ON factures (point_de_vente_id, date_facture DESC);
+            CREATE INDEX IF NOT EXISTS idx_factures_client_date  ON factures (client_id, date_facture DESC);
+            CREATE INDEX IF NOT EXISTS idx_factures_pdv_echeance ON factures (point_de_vente_id, date_echeance);
+
+            -- DEVIS (DevisSearchCriteria) : tri date_devis DESC
+            CREATE INDEX IF NOT EXISTS idx_devis_pdv_date    ON devis (point_de_vente_id, date_devis DESC);
+            CREATE INDEX IF NOT EXISTS idx_devis_client_date ON devis (client_id, date_devis DESC);
+
+            -- COMMANDES CLIENT (CommandeClientSearchCriteria) : tri date_commande DESC
+            CREATE INDEX IF NOT EXISTS idx_cmd_client_pdv_date    ON commandes_client (point_de_vente_id, date_commande DESC);
+            CREATE INDEX IF NOT EXISTS idx_cmd_client_client_date ON commandes_client (client_id, date_commande DESC);
+
+            -- COMMANDES FOURNISSEUR (CommandeSearchCriteria) : tri date_commande DESC + plage date_livraison_prevue
+            CREATE INDEX IF NOT EXISTS idx_commandes_pdv_date          ON commandes (point_de_vente_id, date_commande DESC);
+            CREATE INDEX IF NOT EXISTS idx_commandes_fournisseur_date  ON commandes (fournisseur_id, date_commande DESC);
+            CREATE INDEX IF NOT EXISTS idx_commandes_pdv_livr_prevue   ON commandes (point_de_vente_id, date_livraison_prevue);
+
+            -- LIVRAISONS FOURNISSEUR (LivraisonSearchCriteria) : tri date_livraison DESC
+            CREATE INDEX IF NOT EXISTS idx_livraisons_pdv_date ON livraisons (point_de_vente_id, date_livraison DESC);
+            CREATE INDEX IF NOT EXISTS idx_livraisons_commande ON livraisons (commande_id);
+
+            -- BONS DE LIVRAISON CLIENT (BonLivraisonClientSearchCriteria) : tri date_bl DESC, filtre facturee
+            CREATE INDEX IF NOT EXISTS idx_blc_pdv_date    ON bons_livraison_client (point_de_vente_id, date_bl DESC);
+            CREATE INDEX IF NOT EXISTS idx_blc_client_date ON bons_livraison_client (client_id, date_bl DESC);
+            CREATE INDEX IF NOT EXISTS idx_blc_cmd_client  ON bons_livraison_client (commande_client_id);
+            CREATE INDEX IF NOT EXISTS idx_blc_facture     ON bons_livraison_client (facture_id);
+
+            -- AVOIRS (AvoirSearchCriteria) : tri date_avoir DESC
+            CREATE INDEX IF NOT EXISTS idx_avoirs_pdv_date         ON avoirs (point_de_vente_id, date_avoir DESC);
+            CREATE INDEX IF NOT EXISTS idx_avoirs_client_date      ON avoirs (client_id, date_avoir DESC);
+            CREATE INDEX IF NOT EXISTS idx_avoirs_fournisseur_date ON avoirs (fournisseur_id, date_avoir DESC);
+
+            -- PAIEMENTS (PaiementSearchCriteria) : tri date_paiement DESC
+            CREATE INDEX IF NOT EXISTS idx_paiements_pdv_date    ON paiements (point_de_vente_id, date_paiement DESC);
+            CREATE INDEX IF NOT EXISTS idx_paiements_client_date ON paiements (client_id, date_paiement DESC);
+            CREATE INDEX IF NOT EXISTS idx_paiements_vente       ON paiements (vente_id);
+            CREATE INDEX IF NOT EXISTS idx_paiements_facture     ON paiements (facture_id);
+
+            -- CHEQUES / EFFETS (ChequeEffetSearchCriteria) : tri date_echeance ASC, filtre statut frequent (portefeuille)
+            CREATE INDEX IF NOT EXISTS idx_cheques_effets_pdv_echeance        ON cheques_effets (point_de_vente_id, date_echeance);
+            CREATE INDEX IF NOT EXISTS idx_cheques_effets_pdv_statut_echeance ON cheques_effets (point_de_vente_id, statut, date_echeance);
+
+            -- MOUVEMENTS DE STOCK (MouvementStockSearchCriteria) : tri date_mouvement DESC
+            CREATE INDEX IF NOT EXISTS idx_mvt_stock_pdv_date     ON mouvements_stock (point_de_vente_id, date_mouvement DESC);
+            CREATE INDEX IF NOT EXISTS idx_mvt_stock_produit_date ON mouvements_stock (produit_id, date_mouvement DESC);
+            CREATE INDEX IF NOT EXISTS idx_mvt_stock_depot_date   ON mouvements_stock (depot_id, date_mouvement DESC);
+            CREATE INDEX IF NOT EXISTS idx_mvt_stock_lot          ON mouvements_stock (lot_id);
+
+            -- STOCKS / PRODUITS (StockSearchCriteria) : jointure produits filtree par tenant + categorie
+            CREATE INDEX IF NOT EXISTS idx_produits_pdv_categorie ON produits (point_de_vente_id, categorie_id);
+
+            -- CLIENTS (ClientSearchCriteria) : filtre commercial
+            CREATE INDEX IF NOT EXISTS idx_clients_commercial ON clients (commercial_user_id);
+
+            -- FOURNISSEURS (FournisseurSearchCriteria) : tri par defaut raison_social ASC
+            CREATE INDEX IF NOT EXISTS idx_fournisseurs_pdv_raison ON fournisseurs (point_de_vente_id, raison_social);
+
+            -- DEPENSES (DepenseService) : findByPointDeVenteIdOrderByDateDepenseDesc / findByPeriode...
+            CREATE INDEX IF NOT EXISTS idx_depenses_pdv_date    ON depenses (point_de_vente_id, date_depense DESC);
+            CREATE INDEX IF NOT EXISTS idx_depenses_fournisseur ON depenses (fournisseur_id);
+
+            -- CONSOMMABLES (ConsommableService) : findByPointDeVenteIdOrderByDesignationAsc
+            CREATE INDEX IF NOT EXISTS idx_consommables_pdv_designation ON consommables (point_de_vente_id, designation);
+
+            -- PRESTATAIRES (PrestataireService) : findByPointDeVenteIdOrderByRaisonSocialeAsc
+            CREATE INDEX IF NOT EXISTS idx_prestataires_pdv_raison ON prestataires (point_de_vente_id, raison_sociale);
+        ]]></sql>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- 036-b : Index GIN trigram pour LOWER(col) LIKE '%...%'                -->
+    <!-- Ignore (MARK_RAN) si pg_trgm n'est pas disponible sur le serveur.     -->
+    <!-- ===================================================================== -->
+    <changeSet id="036-b-add-search-criteria-trigram-indexes" author="erp-pointvente">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM pg_available_extensions WHERE name = 'pg_trgm'</sqlCheck>
+        </preConditions>
+        <sql splitStatements="true"><![CDATA[
+            CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+            -- Numeros de documents (recherche partielle insensible a la casse)
+            CREATE INDEX IF NOT EXISTS idx_trgm_factures_numero   ON factures              USING gin (lower(numero_facture) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_devis_numero      ON devis                 USING gin (lower(numero_devis) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_cmd_client_numero ON commandes_client      USING gin (lower(numero_commande) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_commandes_numero  ON commandes             USING gin (lower(numero_commande) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_blc_numero        ON bons_livraison_client USING gin (lower(numero_bl) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_avoirs_numero     ON avoirs                USING gin (lower(numero_avoir) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_livraisons_numero ON livraisons            USING gin (lower(numero_livraison) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_livraisons_suivi  ON livraisons            USING gin (lower(numero_suivi) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_livraisons_transp ON livraisons            USING gin (lower(transporteur) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_lots_numero       ON lots                  USING gin (lower(numero_lot) gin_trgm_ops);
+
+            -- Commandes client : nom / telephone saisis (clientTelephone sans lower)
+            CREATE INDEX IF NOT EXISTS idx_trgm_cmd_client_nom ON commandes_client USING gin (lower(client_nom) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_cmd_client_tel ON commandes_client USING gin (client_telephone gin_trgm_ops);
+
+            -- Cheques / effets
+            CREATE INDEX IF NOT EXISTS idx_trgm_cheques_numero ON cheques_effets USING gin (lower(numero_piece) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_cheques_tireur ON cheques_effets USING gin (lower(tireur) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_cheques_banque ON cheques_effets USING gin (lower(banque_emettrice) gin_trgm_ops);
+
+            -- Clients (query globale = OR sur ces colonnes -> BitmapOr ; telephone/ice sans lower)
+            CREATE INDEX IF NOT EXISTS idx_trgm_clients_nom_complet ON clients USING gin (lower(nom_complet) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_clients_nom         ON clients USING gin (lower(nom) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_clients_prenom      ON clients USING gin (lower(prenom) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_clients_email       ON clients USING gin (lower(email) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_clients_ice_lower   ON clients USING gin (lower(ice) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_clients_tel         ON clients USING gin (telephone gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_clients_ice         ON clients USING gin (ice gin_trgm_ops);
+
+            -- Fournisseurs
+            CREATE INDEX IF NOT EXISTS idx_trgm_fournisseurs_raison  ON fournisseurs USING gin (lower(raison_social) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_fournisseurs_email   ON fournisseurs USING gin (lower(email) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_fournisseurs_contact ON fournisseurs USING gin (lower(contact) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_fournisseurs_adresse ON fournisseurs USING gin (lower(adresse) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_fournisseurs_tel     ON fournisseurs USING gin (telephone gin_trgm_ops);
+
+            -- Produits (ProduitSearchCriteria + query globale StockSearchCriteria)
+            CREATE INDEX IF NOT EXISTS idx_trgm_produits_description ON produits USING gin (lower(description) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_produits_designation ON produits USING gin (lower(designation) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_produits_reference   ON produits USING gin (lower(reference) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_produits_code_barre  ON produits USING gin (lower(code_barre) gin_trgm_ops);
+        ]]></sql>
+    </changeSet>
+
+</databaseChangeLog>
