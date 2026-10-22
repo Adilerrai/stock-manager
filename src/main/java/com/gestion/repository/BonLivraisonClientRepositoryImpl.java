@@ -23,7 +23,7 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
     private EntityManager entityManager;
 
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
-            "id", "numeroBL", "dateBl", "statut"
+            "id", "numeroBL", "numeroBl", "dateBl", "statut"
     );
 
     @Override
@@ -31,6 +31,11 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<BonLivraisonClient> query = cb.createQuery(BonLivraisonClient.class);
         Root<BonLivraisonClient> root = query.from(BonLivraisonClient.class);
+
+        // Fetch joins ToOne pour éviter le N+1 sur client, commandeClient, facture
+        root.fetch("client", JoinType.LEFT);
+        root.fetch("commandeClient", JoinType.LEFT);
+        root.fetch("facture", JoinType.LEFT);
 
         List<Predicate> predicates = buildPredicates(cb, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
@@ -40,7 +45,8 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
             pageable.getSort().forEach(order -> {
                 String prop = order.getProperty();
                 if (ALLOWED_SORT_PROPERTIES.contains(prop)) {
-                    orders.add(order.isAscending() ? cb.asc(root.get(prop)) : cb.desc(root.get(prop)));
+                    String actualProp = "numeroBL".equals(prop) ? "numeroBl" : prop;
+                    orders.add(order.isAscending() ? cb.asc(root.get(actualProp)) : cb.desc(root.get(actualProp)));
                 }
             });
             if (!orders.isEmpty()) {

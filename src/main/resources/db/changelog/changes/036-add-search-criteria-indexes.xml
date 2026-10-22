@@ -26,46 +26,55 @@
             <dbms type="postgresql"/>
         </preConditions>
         <sql splitStatements="true"><![CDATA[
-            -- VENTES (VenteSearchCriteria) : tri par defaut date_vente DESC
+            -- VENTES (VenteSearchCriteria) : tri par defaut date_vente DESC ou id DESC
             CREATE INDEX IF NOT EXISTS idx_ventes_pdv_date      ON ventes (point_de_vente_id, date_vente DESC);
+            CREATE INDEX IF NOT EXISTS idx_ventes_pdv_id        ON ventes (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_ventes_client_date   ON ventes (client_id, date_vente DESC);
             CREATE INDEX IF NOT EXISTS idx_ventes_vendeur_date  ON ventes (vendeur_id, date_vente DESC);
 
-            -- FACTURES (FactureSearchCriteria) : tri date_facture DESC, filtre estEchue sur date_echeance
+            -- FACTURES (FactureSearchCriteria) : tri date_facture DESC ou id DESC, filtre estEchue sur date_echeance
             CREATE INDEX IF NOT EXISTS idx_factures_pdv_date     ON factures (point_de_vente_id, date_facture DESC);
+            CREATE INDEX IF NOT EXISTS idx_factures_pdv_id       ON factures (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_factures_client_date  ON factures (client_id, date_facture DESC);
             CREATE INDEX IF NOT EXISTS idx_factures_pdv_echeance ON factures (point_de_vente_id, date_echeance);
 
-            -- DEVIS (DevisSearchCriteria) : tri date_devis DESC
+            -- DEVIS (DevisSearchCriteria) : tri date_devis DESC ou id DESC
             CREATE INDEX IF NOT EXISTS idx_devis_pdv_date    ON devis (point_de_vente_id, date_devis DESC);
+            CREATE INDEX IF NOT EXISTS idx_devis_pdv_id      ON devis (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_devis_client_date ON devis (client_id, date_devis DESC);
 
-            -- COMMANDES CLIENT (CommandeClientSearchCriteria) : tri date_commande DESC
+            -- COMMANDES CLIENT (CommandeClientSearchCriteria) : tri date_commande DESC ou id DESC
             CREATE INDEX IF NOT EXISTS idx_cmd_client_pdv_date    ON commandes_client (point_de_vente_id, date_commande DESC);
+            CREATE INDEX IF NOT EXISTS idx_cmd_client_pdv_id      ON commandes_client (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_cmd_client_client_date ON commandes_client (client_id, date_commande DESC);
 
-            -- COMMANDES FOURNISSEUR (CommandeSearchCriteria) : tri date_commande DESC + plage date_livraison_prevue
+            -- COMMANDES FOURNISSEUR (CommandeSearchCriteria) : tri date_commande DESC ou id DESC + plage date_livraison_prevue
             CREATE INDEX IF NOT EXISTS idx_commandes_pdv_date          ON commandes (point_de_vente_id, date_commande DESC);
+            CREATE INDEX IF NOT EXISTS idx_commandes_pdv_id            ON commandes (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_commandes_fournisseur_date  ON commandes (fournisseur_id, date_commande DESC);
             CREATE INDEX IF NOT EXISTS idx_commandes_pdv_livr_prevue   ON commandes (point_de_vente_id, date_livraison_prevue);
 
-            -- LIVRAISONS FOURNISSEUR (LivraisonSearchCriteria) : tri date_livraison DESC
+            -- LIVRAISONS FOURNISSEUR (LivraisonSearchCriteria) : tri date_livraison DESC ou id DESC
             CREATE INDEX IF NOT EXISTS idx_livraisons_pdv_date ON livraisons (point_de_vente_id, date_livraison DESC);
+            CREATE INDEX IF NOT EXISTS idx_livraisons_pdv_id   ON livraisons (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_livraisons_commande ON livraisons (commande_id);
 
-            -- BONS DE LIVRAISON CLIENT (BonLivraisonClientSearchCriteria) : tri date_bl DESC, filtre facturee
+            -- BONS DE LIVRAISON CLIENT (BonLivraisonClientSearchCriteria) : tri date_bl DESC ou id DESC, filtre facturee
             CREATE INDEX IF NOT EXISTS idx_blc_pdv_date    ON bons_livraison_client (point_de_vente_id, date_bl DESC);
+            CREATE INDEX IF NOT EXISTS idx_blc_pdv_id      ON bons_livraison_client (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_blc_client_date ON bons_livraison_client (client_id, date_bl DESC);
             CREATE INDEX IF NOT EXISTS idx_blc_cmd_client  ON bons_livraison_client (commande_client_id);
             CREATE INDEX IF NOT EXISTS idx_blc_facture     ON bons_livraison_client (facture_id);
 
-            -- AVOIRS (AvoirSearchCriteria) : tri date_avoir DESC
+            -- AVOIRS (AvoirSearchCriteria) : tri date_avoir DESC ou id DESC
             CREATE INDEX IF NOT EXISTS idx_avoirs_pdv_date         ON avoirs (point_de_vente_id, date_avoir DESC);
+            CREATE INDEX IF NOT EXISTS idx_avoirs_pdv_id           ON avoirs (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_avoirs_client_date      ON avoirs (client_id, date_avoir DESC);
             CREATE INDEX IF NOT EXISTS idx_avoirs_fournisseur_date ON avoirs (fournisseur_id, date_avoir DESC);
 
-            -- PAIEMENTS (PaiementSearchCriteria) : tri date_paiement DESC
+            -- PAIEMENTS (PaiementSearchCriteria) : tri date_paiement DESC ou id DESC
             CREATE INDEX IF NOT EXISTS idx_paiements_pdv_date    ON paiements (point_de_vente_id, date_paiement DESC);
+            CREATE INDEX IF NOT EXISTS idx_paiements_pdv_id      ON paiements (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_paiements_client_date ON paiements (client_id, date_paiement DESC);
             CREATE INDEX IF NOT EXISTS idx_paiements_vente       ON paiements (vente_id);
             CREATE INDEX IF NOT EXISTS idx_paiements_facture     ON paiements (facture_id);
@@ -74,8 +83,9 @@
             CREATE INDEX IF NOT EXISTS idx_cheques_effets_pdv_echeance        ON cheques_effets (point_de_vente_id, date_echeance);
             CREATE INDEX IF NOT EXISTS idx_cheques_effets_pdv_statut_echeance ON cheques_effets (point_de_vente_id, statut, date_echeance);
 
-            -- MOUVEMENTS DE STOCK (MouvementStockSearchCriteria) : tri date_mouvement DESC
+            -- MOUVEMENTS DE STOCK (MouvementStockSearchCriteria) : tri date_mouvement DESC ou id DESC
             CREATE INDEX IF NOT EXISTS idx_mvt_stock_pdv_date     ON mouvements_stock (point_de_vente_id, date_mouvement DESC);
+            CREATE INDEX IF NOT EXISTS idx_mvt_stock_pdv_id       ON mouvements_stock (point_de_vente_id, id DESC);
             CREATE INDEX IF NOT EXISTS idx_mvt_stock_produit_date ON mouvements_stock (produit_id, date_mouvement DESC);
             CREATE INDEX IF NOT EXISTS idx_mvt_stock_depot_date   ON mouvements_stock (depot_id, date_mouvement DESC);
             CREATE INDEX IF NOT EXISTS idx_mvt_stock_lot          ON mouvements_stock (lot_id);
