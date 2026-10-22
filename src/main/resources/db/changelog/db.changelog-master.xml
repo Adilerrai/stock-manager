@@ -118,5 +118,8 @@
     <!-- Changeset 036 : Index de performance pour les recherches (SearchCriteria) : B-tree composites + GIN trigram -->
     <include file="changes/036-add-search-criteria-indexes.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 037 : Ajout numero_achat_client dans devis -->
+    <include file="changes/037-add-numero-achat-client-to-devis.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 

@@ -33,6 +33,7 @@ public class DevisRepositoryImpl implements DevisRepositoryCustom {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Devis> query = cb.createQuery(Devis.class);
         Root<Devis> root = query.from(Devis.class);
+        root.fetch("client", JoinType.LEFT);
 
         List<Predicate> predicates = buildPredicates(cb, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
@@ -87,6 +88,10 @@ public class DevisRepositoryImpl implements DevisRepositoryCustom {
 
         if (criteria.getNumeroDevis() != null && !criteria.getNumeroDevis().trim().isEmpty()) {
             predicates.add(cb.like(cb.lower(root.get("numeroDevis")), "%" + criteria.getNumeroDevis().trim().toLowerCase() + "%"));
+        }
+
+        if (criteria.getNumeroAchatClient() != null && !criteria.getNumeroAchatClient().trim().isEmpty()) {
+            predicates.add(cb.like(cb.lower(root.get("numeroAchatClient")), "%" + criteria.getNumeroAchatClient().trim().toLowerCase() + "%"));
         }
 
         if (criteria.getClientId() != null) {

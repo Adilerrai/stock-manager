@@ -60,6 +60,9 @@ public class Devis {
 
     private String notes;
 
+    @Column(name = "numero_achat_client", length = 100)
+    private String numeroAchatClient;
+
     @Column(name = "conditions_paiement")
     private String conditionsPaiement;
 
@@ -253,6 +256,14 @@ public class Devis {
 
     public void setFactureGenereeId(Long factureGenereeId) {
         this.factureGenereeId = factureGenereeId;
+    }
+
+    public String getNumeroAchatClient() {
+        return numeroAchatClient;
+    }
+
+    public void setNumeroAchatClient(String numeroAchatClient) {
+        this.numeroAchatClient = numeroAchatClient;
     }
 
     public LocalDateTime getDateCreation() {

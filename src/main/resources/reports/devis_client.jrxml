@@ -29,6 +29,7 @@
 	<parameter name="piedPage" class="java.lang.String"/>
 	<parameter name="devise" class="java.lang.String"/>
 	<parameter name="numeroDevis" class="java.lang.String"/>
+	<parameter name="numeroAchatClient" class="java.lang.String"/>
 	<parameter name="dateDevis" class="java.lang.String"/>
 	<parameter name="dateValidite" class="java.lang.String"/>
 	<parameter name="statut" class="java.lang.String"/>
@@ -106,7 +107,7 @@
 			<textField isBlankWhenNull="true">
 				<reportElement x="0" y="118" width="255" height="14" forecolor="#374151" uuid="eaa5b878-4160-42c8-ba2f-524318cdbf5f"/>
 				<textElement verticalAlignment="Middle"><font fontName="DejaVu Sans" size="8"/></textElement>
-				<textFieldExpression><![CDATA["Validité : " + ($P{dateValidite} != null ? $P{dateValidite} : "30 jours")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Validité : " + ($P{dateValidite} != null ? $P{dateValidite} : "30 jours") + ($P{numeroAchatClient} != null && !$P{numeroAchatClient}.trim().isEmpty() ? " | Réf / N° Achat : " + $P{numeroAchatClient} : "")]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
 				<reportElement x="0" y="133" width="255" height="14" forecolor="#6B7280" uuid="56169548-77e1-4f34-8e33-25e0b7a0eeda"/>

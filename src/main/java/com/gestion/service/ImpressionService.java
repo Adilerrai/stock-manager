@@ -298,6 +298,7 @@ public class ImpressionService {
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroDevis", devis.getNumeroDevis());
+        params.put("numeroAchatClient", devis.getNumeroAchatClient() != null ? devis.getNumeroAchatClient() : "");
         params.put("dateDevis", devis.getDateDevis() != null ? devis.getDateDevis().format(DATE_FORMATTER) : "-");
         params.put("dateValidite",
                 devis.getDateValidite() != null ? devis.getDateValidite().format(DATE_FORMATTER) : "30 jours");

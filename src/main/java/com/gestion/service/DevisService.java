@@ -88,6 +88,7 @@ public class DevisService {
         devis.setStatut(dto.getStatut() != null ? dto.getStatut() : StatutDevis.BROUILLON);
         devis.setRemiseGlobale(dto.getRemiseGlobale() != null ? dto.getRemiseGlobale() : BigDecimal.ZERO);
         devis.setNotes(dto.getNotes() != null ? dto.getNotes() : dto.getObservations());
+        devis.setNumeroAchatClient(dto.getNumeroAchatClient());
         devis.setConditionsPaiement(dto.getConditionsPaiement());
         devis.setDateCreation(LocalDateTime.now());
 
@@ -136,6 +137,7 @@ public class DevisService {
         if (maj.getRemiseGlobale() != null) existant.setRemiseGlobale(maj.getRemiseGlobale());
         if (maj.getNotes() != null) existant.setNotes(maj.getNotes());
         else if (maj.getObservations() != null) existant.setNotes(maj.getObservations());
+        if (maj.getNumeroAchatClient() != null) existant.setNumeroAchatClient(maj.getNumeroAchatClient());
         if (maj.getConditionsPaiement() != null) existant.setConditionsPaiement(maj.getConditionsPaiement());
         if (maj.getStatut() != null) existant.setStatut(maj.getStatut());
 
@@ -239,6 +241,7 @@ public class DevisService {
         if (maj.getDateValidite() != null) existant.setDateValidite(maj.getDateValidite());
         if (maj.getRemiseGlobale() != null) existant.setRemiseGlobale(maj.getRemiseGlobale());
         if (maj.getNotes() != null) existant.setNotes(maj.getNotes());
+        if (maj.getNumeroAchatClient() != null) existant.setNumeroAchatClient(maj.getNumeroAchatClient());
         if (maj.getConditionsPaiement() != null) existant.setConditionsPaiement(maj.getConditionsPaiement());
         if (maj.getStatut() != null) existant.setStatut(maj.getStatut());
 
@@ -316,6 +319,9 @@ public class DevisService {
         }
         commande.setDateCommande(LocalDateTime.now());
         commande.setStatut(StatutCommandeClient.CONFIRMEE);
+        if (devis.getNumeroAchatClient() != null && !devis.getNumeroAchatClient().trim().isEmpty()) {
+            commande.setNumeroCommandeExterne(devis.getNumeroAchatClient().trim());
+        }
         commande.setMontantHT(devis.getMontantHT());
         commande.setMontantTTC(devis.getMontantFinal());
         commande.setObservations("Générée automatiquement depuis le Devis " + devis.getNumeroDevis());

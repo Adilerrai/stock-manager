@@ -9,6 +9,7 @@ import java.time.LocalDate;
  */
 public class DevisSearchCriteria {
     private String numeroDevis;
+    private String numeroAchatClient;
     private Long clientId;
     private String clientNom;
     private StatutDevis statut;
@@ -20,6 +21,9 @@ public class DevisSearchCriteria {
     private Boolean inclureAnnulees;
 
     public DevisSearchCriteria() {}
+
+    public String getNumeroAchatClient() { return numeroAchatClient; }
+    public void setNumeroAchatClient(String numeroAchatClient) { this.numeroAchatClient = numeroAchatClient; }
 
     public Boolean getInclureAnnulees() { return inclureAnnulees; }
     public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }

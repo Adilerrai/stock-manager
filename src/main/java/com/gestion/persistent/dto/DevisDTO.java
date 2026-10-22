@@ -31,6 +31,7 @@ public class DevisDTO {
     private BigDecimal montantFinal;
     private StatutDevis statut;
     private String notes;
+    private String numeroAchatClient;
     private String conditionsPaiement;
     private Long pointDeVenteId;
     private Long commandeGenereeId;
@@ -183,5 +184,23 @@ public class DevisDTO {
     @JsonProperty("idClient")
     public void setIdClient(Long clientId) {
         if (this.clientId == null) this.clientId = clientId;
+    }
+
+    public String getNumeroAchatClient() {
+        return numeroAchatClient;
+    }
+
+    public void setNumeroAchatClient(String numeroAchatClient) {
+        this.numeroAchatClient = numeroAchatClient;
+    }
+
+    @JsonProperty("numero_achat_client")
+    public void setNumero_achat_client(String numeroAchatClient) {
+        if (this.numeroAchatClient == null) this.numeroAchatClient = numeroAchatClient;
+    }
+
+    @JsonProperty("refAchatClient")
+    public void setRefAchatClient(String refAchatClient) {
+        if (this.numeroAchatClient == null) this.numeroAchatClient = refAchatClient;
     }
 }

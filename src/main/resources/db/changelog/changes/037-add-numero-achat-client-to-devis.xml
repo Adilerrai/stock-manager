@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 037 : Ajout de la colonne numero_achat_client dans la table devis
+                      pour attacher le numéro de commande d'achat / bon de commande émis par le client.
+    -->
+    <changeSet id="037-add-numero-achat-client-to-devis" author="erp-pointvente">
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 
+                    FROM information_schema.columns 
+                    WHERE table_name = 'devis' AND column_name = 'numero_achat_client'
+                ) THEN
+                    ALTER TABLE devis ADD COLUMN numero_achat_client VARCHAR(100);
+                END IF;
+            END $$;
+        </sql>
+    </changeSet>
+
+    <changeSet id="037-add-index-devis-numero-achat-client" author="erp-pointvente">
+        <sql splitStatements="true"><![CDATA[
+            CREATE INDEX IF NOT EXISTS idx_devis_numero_achat_client ON devis (numero_achat_client);
+        ]]></sql>
+    </changeSet>
+</databaseChangeLog>
