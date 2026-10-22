@@ -21,7 +21,8 @@
     <!-- ===================================================================== -->
     <!-- 036-a : Index B-tree composites (tenant / tri / FK filtrees)          -->
     <!-- ===================================================================== -->
-    <changeSet id="036-a-add-search-criteria-btree-indexes" author="erp-pointvente">
+    <changeSet id="036-a-add-search-criteria-btree-indexes" author="erp-pointvente" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
         </preConditions>
@@ -115,7 +116,8 @@
     <!-- 036-b : Index GIN trigram pour LOWER(col) LIKE '%...%'                -->
     <!-- Ignore (MARK_RAN) si pg_trgm n'est pas disponible sur le serveur.     -->
     <!-- ===================================================================== -->
-    <changeSet id="036-b-add-search-criteria-trigram-indexes" author="erp-pointvente">
+    <changeSet id="036-b-add-search-criteria-trigram-indexes" author="erp-pointvente" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
             <sqlCheck expectedResult="1">SELECT COUNT(*) FROM pg_available_extensions WHERE name = 'pg_trgm'</sqlCheck>
