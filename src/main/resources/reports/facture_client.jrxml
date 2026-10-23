@@ -306,7 +306,31 @@
 
 	<!-- Dernière page : Totaux avec couleur dynamique & Pied légal -->
 	<lastPageFooter>
-		<band height="140">
+		<band height="145">
+			<!-- Cadre Modalités & Règlement (à gauche des totaux) -->
+			<rectangle radius="6">
+				<reportElement x="28" y="6" width="330" height="66" backcolor="#F9FAFB" uuid="f98e1234-0044-4000-8000-000000000044"/>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#E5E7EB"/>
+				</graphicElement>
+			</rectangle>
+			<staticText>
+				<reportElement x="38" y="11" width="310" height="12" forecolor="#1F2937" uuid="f98e1234-0045-4000-8000-000000000045"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+				</textElement>
+				<text><![CDATA[RÈGLEMENT & CONDITIONS]]></text>
+			</staticText>
+			<textField isBlankWhenNull="true">
+				<reportElement x="38" y="26" width="310" height="42" forecolor="#4B5563" uuid="f98e1234-0046-4000-8000-000000000046"/>
+				<textElement verticalAlignment="Top" markup="html">
+					<font fontName="DejaVu Sans" size="7.5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($P{dateEcheance} != null && !$P{dateEcheance}.isEmpty() ? "<b>Échéance :</b> " + $P{dateEcheance} + "<br/>" : "") +
+($P{modePaiement} != null && !$P{modePaiement}.isEmpty() ? "<b>Mode de paiement :</b> " + $P{modePaiement} + "<br/>" : "") +
+($P{bonLivraisonNumeros} != null && !$P{bonLivraisonNumeros}.isEmpty() ? "<b>Réf BL :</b> " + $P{bonLivraisonNumeros} : "")]]></textFieldExpression>
+			</textField>
+
 			<!-- Cadre des totaux (à droite) -->
 			<rectangle radius="6">
 				<reportElement x="370" y="6" width="197" height="66" backcolor="#FFFFFF" uuid="f98e1234-0030-4000-8000-000000000030"/>
@@ -372,38 +396,44 @@
 				<textFieldExpression><![CDATA[($P{montantFinal} != null ? $P{montantFinal} : ($P{montantTTC} != null ? $P{montantTTC} : java.math.BigDecimal.ZERO)) + " " + ($P{devise} != null ? $P{devise} : "MAD")]]></textFieldExpression>
 			</textField>
 
-			<!-- Mention Montant en lettres -->
+			<!-- Bloc Arrêté de Facture en toutes lettres (mis en valeur, fond grisé clair) -->
+			<rectangle radius="4">
+				<reportElement x="28" y="76" width="539" height="22" backcolor="#F8FAFC" uuid="f98e1234-0047-4000-8000-000000000047"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="28" y="74" width="539" height="16" forecolor="#475569" uuid="f98e1234-0039-4000-8000-000000000039"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5" isItalic="true"/>
+				<reportElement x="34" y="78" width="527" height="18" forecolor="#0F172A" uuid="f98e1234-0039-4000-8000-000000000039"/>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.isEmpty() ? "Arrêtée la présente facture à la somme de : " + $P{montantEnLettres} : ""]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() ? "<b>Arrêtée la présente facture à la somme de : </b>" + $P{montantEnLettres} : ""]]></textFieldExpression>
 			</textField>
 
 			<!-- Ligne de séparation et pied légal -->
 			<line>
-				<reportElement x="28" y="98" width="539" height="1" forecolor="#1F2937" uuid="f98e1234-0040-4000-8000-000000000040"/>
+				<reportElement x="28" y="103" width="539" height="1" forecolor="#1F2937" uuid="f98e1234-0040-4000-8000-000000000040"/>
 				<graphicElement>
 					<pen lineWidth="0.8"/>
 				</graphicElement>
 			</line>
 			<textField isBlankWhenNull="true">
-				<reportElement x="28" y="103" width="539" height="24" forecolor="#1F2937" uuid="f98e1234-0041-4000-8000-000000000041"/>
+				<reportElement x="28" y="107" width="539" height="24" forecolor="#1F2937" uuid="f98e1234-0041-4000-8000-000000000041"/>
 				<textElement textAlignment="Center" verticalAlignment="Top" markup="html">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<textFieldExpression><![CDATA["<b>IF</b>: " + ($P{nifEntreprise} != null ? $P{nifEntreprise} : "-") + " - <b>Patente</b>: " + ($P{patenteEntreprise} != null ? $P{patenteEntreprise} : "-") + " - <b>CNSS</b>: " + ($P{cnssEntreprise} != null ? $P{cnssEntreprise} : "-") + " - <b>RC</b>: " + ($P{rcEntreprise} != null ? $P{rcEntreprise} : "-") + " - <b>ICE</b>: " + ($P{iceEntreprise} != null ? $P{iceEntreprise} : "-") + " <b>Email</b>: " + ($P{emailEntreprise} != null ? $P{emailEntreprise} : "-") + " <b>Tél</b>: " + ($P{telephoneEntreprise} != null ? $P{telephoneEntreprise} : "-")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="447" y="127" width="60" height="11" forecolor="#6B7280" uuid="f98e1234-0042-4000-8000-000000000042"/>
+				<reportElement x="447" y="132" width="60" height="11" forecolor="#6B7280" uuid="f98e1234-0042-4000-8000-000000000042"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " /"]]></textFieldExpression>
 			</textField>
 			<textField evaluationTime="Report">
-				<reportElement x="509" y="127" width="58" height="11" forecolor="#6B7280" uuid="f98e1234-0043-4000-8000-000000000043"/>
+				<reportElement x="509" y="132" width="58" height="11" forecolor="#6B7280" uuid="f98e1234-0043-4000-8000-000000000043"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>

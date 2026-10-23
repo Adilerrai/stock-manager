@@ -166,8 +166,22 @@ public class ImpressionService {
         params.put("montantPaye", facture.getMontantPaye());
         params.put("montantRestant", facture.getMontantRestant());
 
-        BigDecimal netFacture = facture.getMontantFinal() != null ? facture.getMontantFinal()
-                : (facture.getMontantTTC() != null ? facture.getMontantTTC() : facture.getMontantHT());
+        // Mode de paiement si existant
+        String modePaiement = "";
+        if (facture.getPaiements() != null && !facture.getPaiements().isEmpty()) {
+            modePaiement = facture.getPaiements().stream()
+                    .map(p -> p.getModePaiement() != null ? p.getModePaiement().toString() : "")
+                    .filter(s -> !s.isEmpty())
+                    .distinct()
+                    .collect(Collectors.joining(", "));
+        }
+        params.put("modePaiement", !modePaiement.isEmpty() ? modePaiement : "Virement / Chèque");
+
+        BigDecimal netFacture = (facture.getMontantFinal() != null && facture.getMontantFinal().compareTo(BigDecimal.ZERO) > 0)
+                ? facture.getMontantFinal()
+                : ((facture.getMontantTTC() != null && facture.getMontantTTC().compareTo(BigDecimal.ZERO) > 0)
+                        ? facture.getMontantTTC()
+                        : (facture.getMontantHT() != null ? facture.getMontantHT() : BigDecimal.ZERO));
         String devise = (String) params.getOrDefault("devise", "MAD");
         params.put("montantEnLettres", FrenchNumberToWords.convertir(netFacture, devise));
 
@@ -459,7 +473,6 @@ public class ImpressionService {
                         ? commande.getFournisseur().getDevise()
                         : (String) params.getOrDefault("devise", "MAD"));
         params.put("devise", devise);
-        params.put("montantEnLettres", FrenchNumberToWords.convertir(ttc, devise));
 
         boolean isInternational = (commande.getFournisseur() != null && commande.getFournisseur().getTypeFournisseur() == TypeFournisseur.INTERNATIONAL)
                 || (!"MAD".equalsIgnoreCase(devise));
