@@ -26,10 +26,30 @@ public class BonLivraisonClientDTO {
     private Long factureId;
     private String factureNumero;
     private Boolean facturé;
+    private Long depotId;
+    private String depotNom;
     private List<LigneBonLivraisonClientDTO> lignes = new ArrayList<>();
     private List<DocumentComptableDTO> piecesJointes = new ArrayList<>();
 
     public BonLivraisonClientDTO() {}
+
+    public Long getDepotId() {
+        if (depotId != null) return depotId;
+        if (lignes != null && !lignes.isEmpty() && lignes.get(0).getDepotId() != null) {
+            return lignes.get(0).getDepotId();
+        }
+        return null;
+    }
+    public void setDepotId(Long depotId) { this.depotId = depotId; }
+
+    public String getDepotNom() {
+        if (depotNom != null) return depotNom;
+        if (lignes != null && !lignes.isEmpty() && lignes.get(0).getDepotNom() != null) {
+            return lignes.get(0).getDepotNom();
+        }
+        return null;
+    }
+    public void setDepotNom(String depotNom) { this.depotNom = depotNom; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
