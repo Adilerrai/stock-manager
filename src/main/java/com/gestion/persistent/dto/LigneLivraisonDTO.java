@@ -20,8 +20,9 @@ public class LigneLivraisonDTO {
     private BigDecimal prixProduit;
 
     private DepotDTO depot;
+    private Long depotId;
+    private String depotNom;
     private QualiteProduit qualiteProduit;
-
 
     // Getters and Setters
     public QualiteProduit getQualiteProduit() {
@@ -75,11 +76,39 @@ public class LigneLivraisonDTO {
     }
 
     public DepotDTO getDepot() {
-        return depot;
+        if (depot != null) return depot;
+        return null;
     }
 
     public void setDepot(DepotDTO depot) {
         this.depot = depot;
+    }
+
+    public Long getDepotId() {
+        if (depotId != null) return depotId;
+        if (depot != null && depot.getId() != null) return depot.getId();
+        return null;
+    }
+
+    public void setDepotId(Long depotId) {
+        this.depotId = depotId;
+        if (this.depot == null && depotId != null) {
+            this.depot = new DepotDTO();
+            this.depot.setId(depotId);
+        }
+    }
+
+    public String getDepotNom() {
+        if (depotNom != null) return depotNom;
+        if (depot != null && depot.getNom() != null) return depot.getNom();
+        return null;
+    }
+
+    public void setDepotNom(String depotNom) {
+        this.depotNom = depotNom;
+        if (this.depot != null && depotNom != null) {
+            this.depot.setNom(depotNom);
+        }
     }
 }
 

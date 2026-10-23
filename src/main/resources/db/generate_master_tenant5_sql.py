@@ -148,13 +148,23 @@ def map_unite(u_str):
     return 'PIECE'
 
 def get_depot_subquery(doc_ref_or_name=None, location_str=None, picking_type_str=None, tenant_id=5):
+    if isinstance(location_str, int):
+        tenant_id = location_str
+        location_str = None
     combined = f"{doc_ref_or_name or ''} {location_str or ''} {picking_type_str or ''}".upper().strip()
     if 'TAC' in combined or 'TACHAROUK' in combined:
-        return f"(SELECT id FROM depots WHERE description = 'TAC' AND point_de_vente_id = {tenant_id} LIMIT 1)"
+        target = 'TAC'
     elif 'BER' in combined or 'BERRECHID' in combined:
-        return f"(SELECT id FROM depots WHERE description = 'BER' AND point_de_vente_id = {tenant_id} LIMIT 1)"
+        target = 'BER'
     else:
-        return f"(SELECT id FROM depots WHERE description = 'WH' AND point_de_vente_id = {tenant_id} LIMIT 1)"
+        target = 'WH'
+    return (
+        f"COALESCE("
+        f"(SELECT id FROM depots WHERE description = '{target}' AND point_de_vente_id = {tenant_id} LIMIT 1), "
+        f"(SELECT id FROM depots WHERE nom ILIKE '%{target}%' AND point_de_vente_id = {tenant_id} LIMIT 1), "
+        f"(SELECT id FROM depots WHERE point_de_vente_id = {tenant_id} LIMIT 1)"
+        f")"
+    )
 
 def parse_code_nom(display_name):
     code = ""
