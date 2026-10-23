@@ -4,6 +4,8 @@ import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.junit.jupiter.api.Test;
 
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -29,16 +31,16 @@ public class TestRenderPdf {
         params.put("banqueEntreprise", "");
         params.put("ribEntreprise", "");
 
-        java.awt.image.BufferedImage logo = new java.awt.image.BufferedImage(300, 150, java.awt.image.BufferedImage.TYPE_INT_RGB);
-        java.awt.Graphics2D g = logo.createGraphics();
-        g.setColor(new java.awt.Color(0xF0, 0xFD, 0xF4));
-        g.fillRect(0, 0, 300, 150);
-        g.setColor(new java.awt.Color(0x6E, 0x99, 0x7A));
+        BufferedImage logo = new BufferedImage(300, 150, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = logo.createGraphics();
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        // Aucun fond opaque dessiné : logo transparent sans arrière-plan
+        g.setColor(new Color(0x0B, 0x3A, 0x6E));
         g.fillRoundRect(8, 8, 284, 134, 16, 16);
-        g.setColor(java.awt.Color.WHITE);
-        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 42));
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("SansSerif", Font.BOLD, 42));
         g.drawString("TECHNO", 50, 70);
-        g.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 24));
+        g.setFont(new Font("SansSerif", Font.PLAIN, 24));
         g.drawString("GLOBAL LOGO", 65, 110);
         g.dispose();
         params.put("logoImage", logo);

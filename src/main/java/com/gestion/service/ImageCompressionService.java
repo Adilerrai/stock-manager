@@ -39,9 +39,19 @@ public class ImageCompressionService {
                 return originalImage;
             }
 
-            // Redimensionner et convertir en TYPE_INT_RGB sur fond blanc
-            // Cela élimine le canal alpha (ARGB, ABGR) et normalise l'espace colorimétrique,
-            // évitant l'erreur JPEG native "Bogus input colorspace" (notamment pour les logos PNG).
+            // Si l'image est un PNG ou possède un canal alpha (transparence),
+            // on conserve impérativement la transparence sans ajouter aucun fond
+            boolean isPngOrHasAlpha = (contentType != null && contentType.equalsIgnoreCase("image/png"))
+                    || hasAlpha(bufferedImage);
+
+            if (isPngOrHasAlpha) {
+                BufferedImage argbImage = resizePng(bufferedImage);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(argbImage, "png", baos);
+                return baos.toByteArray();
+            }
+
+            // Pour JPEG ou images opaques : Redimensionner et convertir en TYPE_INT_RGB sur fond blanc
             BufferedImage rgbImage = resizeAndConvertToRgb(bufferedImage);
 
             // Compresser en JPEG
@@ -51,6 +61,42 @@ public class ImageCompressionService {
                     contentType, e.getMessage());
             return originalImage;
         }
+    }
+
+    private BufferedImage resizePng(BufferedImage originalImage) {
+        int originalWidth = originalImage.getWidth();
+        int originalHeight = originalImage.getHeight();
+
+        int newWidth = originalWidth;
+        int newHeight = originalHeight;
+
+        if (originalWidth > MAX_WIDTH || originalHeight > MAX_HEIGHT) {
+            double widthRatio = (double) MAX_WIDTH / originalWidth;
+            double heightRatio = (double) MAX_HEIGHT / originalHeight;
+            double ratio = Math.min(widthRatio, heightRatio);
+
+            newWidth = Math.max(1, (int) (originalWidth * ratio));
+            newHeight = Math.max(1, (int) (originalHeight * ratio));
+        }
+
+        if (newWidth == originalWidth && newHeight == originalHeight
+                && originalImage.getType() == BufferedImage.TYPE_INT_ARGB) {
+            return originalImage;
+        }
+
+        BufferedImage argbImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = argbImage.createGraphics();
+        try {
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            // Aucun fond blanc dessiné : la transparence du PNG est préservée intacte
+            g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
+        } finally {
+            g2d.dispose();
+        }
+
+        return argbImage;
     }
 
     private BufferedImage resizeAndConvertToRgb(BufferedImage originalImage) {

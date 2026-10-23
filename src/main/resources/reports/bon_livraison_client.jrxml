@@ -354,9 +354,7 @@
 			<rectangle radius="6">
 				<reportElement x="370" y="6" width="197" height="66" backcolor="#FFFFFF" uuid="b1e2f3a4-0035-4000-8000-000000000035"/>
 				<graphicElement>
-					<pen lineWidth="0.6" lineColor="#0B3A6E">
-						<propertyExpression name="net.sf.jasperreports.style.lineColor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
-					</pen>
+					<pen lineWidth="0.6" lineColor="#0B3A6E"/>
 				</graphicElement>
 			</rectangle>
 			<staticText>
