@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="footer_generique" pageWidth="555" pageHeight="50"
+              columnWidth="555" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0"
+              uuid="f1a2b3c4-0001-4000-8000-000000000001">
+
+	<parameter name="nifEntreprise" class="java.lang.String"/>
+	<parameter name="patenteEntreprise" class="java.lang.String"/>
+	<parameter name="cnssEntreprise" class="java.lang.String"/>
+	<parameter name="rcEntreprise" class="java.lang.String"/>
+	<parameter name="iceEntreprise" class="java.lang.String"/>
+	<parameter name="emailEntreprise" class="java.lang.String"/>
+	<parameter name="telephoneEntreprise" class="java.lang.String"/>
+	<parameter name="piedPage" class="java.lang.String"/>
+
+	<title>
+		<band height="45">
+			<line>
+				<reportElement x="0" y="2" width="555" height="1" forecolor="#CBD5E1" uuid="f1a2b3c4-1111-4000-8000-000000000001"/>
+				<graphicElement>
+					<pen lineWidth="0.8"/>
+				</graphicElement>
+			</line>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="6" width="555" height="24" forecolor="#475569" uuid="f1a2b3c4-2222-4000-8000-000000000002"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" markup="html">
+					<font fontName="DejaVu Sans" size="7.5"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>IF</b>: " + ($P{nifEntreprise} != null && !$P{nifEntreprise}.isEmpty() ? $P{nifEntreprise} : "-") +
+" - <b>Patente</b>: " + ($P{patenteEntreprise} != null && !$P{patenteEntreprise}.isEmpty() ? $P{patenteEntreprise} : "-") +
+" - <b>CNSS</b>: " + ($P{cnssEntreprise} != null && !$P{cnssEntreprise}.isEmpty() ? $P{cnssEntreprise} : "-") +
+" - <b>RC</b>: " + ($P{rcEntreprise} != null && !$P{rcEntreprise}.isEmpty() ? $P{rcEntreprise} : "-") +
+" - <b>ICE</b>: " + ($P{iceEntreprise} != null && !$P{iceEntreprise}.isEmpty() ? $P{iceEntreprise} : "-") +
+($P{emailEntreprise} != null && !$P{emailEntreprise}.isEmpty() ? " | <b>Email</b>: " + $P{emailEntreprise} : "") +
+($P{telephoneEntreprise} != null && !$P{telephoneEntreprise}.isEmpty() ? " | <b>Tél</b>: " + $P{telephoneEntreprise} : "")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="30" width="555" height="11" forecolor="#94A3B8" uuid="f1a2b3c4-3333-4000-8000-000000000003"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="6.5" isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{piedPage} != null ? $P{piedPage} : ""]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>

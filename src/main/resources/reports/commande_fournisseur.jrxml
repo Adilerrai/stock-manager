@@ -24,6 +24,9 @@
 	<parameter name="montantHT" class="java.math.BigDecimal"/>
 	<parameter name="montantTVA" class="java.math.BigDecimal"/>
 	<parameter name="montantTTC" class="java.math.BigDecimal"/>
+	<parameter name="couleurPrimaire" class="java.lang.String">
+		<defaultValueExpression><![CDATA["#0B3A6E"]]></defaultValueExpression>
+	</parameter>
 	<field name="reference" class="java.lang.String"/>
 	<field name="designation" class="java.lang.String"/>
 	<field name="quantite" class="java.math.BigDecimal"/>
@@ -50,7 +53,9 @@
 				<textFieldExpression><![CDATA["<b>" + ($P{nomEntreprise} != null ? $P{nomEntreprise} : "") + "</b><br/><b>SIEGE</b>: " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
-				<reportElement x="360" y="84" width="207" height="28" forecolor="#0B3A6E" uuid="f995c1c3-c652-4f2e-ad0e-29345c136f81"/>
+				<reportElement x="360" y="84" width="207" height="28" forecolor="#0B3A6E" uuid="f995c1c3-c652-4f2e-ad0e-29345c136f81">
+					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="19"/>
 				</textElement>
@@ -150,7 +155,9 @@
 	<columnHeader>
 		<band height="36">
 			<rectangle radius="6">
-				<reportElement x="28" y="4" width="539" height="32" backcolor="#0B3A6E" uuid="b25613bd-6b27-432f-8d35-2c81d51ae488"/>
+				<reportElement x="28" y="4" width="539" height="32" backcolor="#0B3A6E" uuid="b25613bd-6b27-432f-8d35-2c81d51ae488">
+					<propertyExpression name="net.sf.jasperreports.style.backcolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+				</reportElement>
 				<graphicElement>
 					<pen lineWidth="0.0"/>
 				</graphicElement>

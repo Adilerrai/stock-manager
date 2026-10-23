@@ -897,6 +897,21 @@ public class ImpressionService {
         params.put("piedPage", profile.getPiedPage() != null ? profile.getPiedPage() : "");
         params.put("devise", profile.getDevise() != null && !profile.getDevise().trim().isEmpty() ? profile.getDevise() : "MAD");
 
+        // Couleur primaire dynamique du tenant (défaut : Bleu roi #0B3A6E)
+        String couleurPrimaire = "#0B3A6E";
+        if (profile.getCouleursTenant() != null && !profile.getCouleursTenant().isBlank()) {
+            String raw = profile.getCouleursTenant().trim();
+            if (raw.startsWith("#") && raw.length() >= 7) {
+                couleurPrimaire = raw.substring(0, 7);
+            } else if (raw.contains("#")) {
+                int idx = raw.indexOf("#");
+                if (idx + 7 <= raw.length()) {
+                    couleurPrimaire = raw.substring(idx, idx + 7);
+                }
+            }
+        }
+        params.put("couleurPrimaire", couleurPrimaire);
+
         // Injection du Logo en java.awt.Image
         if (profile.hasLogo()) {
             try {

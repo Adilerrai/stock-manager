@@ -223,6 +223,7 @@ public class TestRenderPdf {
         InputStream is = getClass().getClassLoader().getResourceAsStream("reports/commande_fournisseur.jrxml");
         JasperReport jr = JasperCompileManager.compileReport(is);
         Map<String, Object> params = createCommonParams();
+        params.put("couleurPrimaire", "#10B981");
         params.put("numeroCommande", "CF-2026-001");
         params.put("dateCommande", "07/10/2026 10:00");
         params.put("dateLivraisonPrevue", "15/10/2026");
