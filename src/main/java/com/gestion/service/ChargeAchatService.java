@@ -125,7 +125,6 @@ public class ChargeAchatService {
                 .orElseThrow(() -> new ResourceNotFoundException("FactureAchat", "id", factureAchatId));
 
         charge.setFactureAchat(facture);
-        charge.setNumeroFactureAchat(facture.getNumeroFacture());
         if (facture.getMontantTtc() != null) {
             charge.setMontantReelDevise(facture.getMontantHt() != null ? facture.getMontantHt() : facture.getMontantTtc());
             charge.setMontantTvaMad(facture.getMontantTva());
