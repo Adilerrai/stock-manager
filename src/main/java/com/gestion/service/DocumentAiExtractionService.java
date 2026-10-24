@@ -973,7 +973,7 @@ public class DocumentAiExtractionService {
         f.setMontantTtc(dto.getMontantTTC());
         f.setStatut(StatutFacture.EN_ATTENTE);
         f.setPointDeVenteId(tenantId);
-        f.setObservations("Importé automatiquement via OCR & Groq AI");
+        f.setObservations("Importé via l'import intelligent");
 
         for (LigneDocumentOcrDTO l : dto.getLignes()) {
             LigneFactureAchat lf = new LigneFactureAchat();
@@ -1045,7 +1045,7 @@ public class DocumentAiExtractionService {
         c.setMontantTTC(dto.getMontantTTC());
         c.setStatut(StatutCommandeClient.BROUILLON);
         c.setPointDeVenteId(tenantId);
-        c.setObservations("Importé automatiquement via OCR & Groq AI");
+        c.setObservations("Importé via l'import intelligent");
 
         for (LigneDocumentOcrDTO l : dto.getLignes()) {
             LigneCommandeClient lc = new LigneCommandeClient();
@@ -1092,7 +1092,7 @@ public class DocumentAiExtractionService {
         liv.setDateLivraison(dateLiv);
         liv.setMontantTotal(dto.getMontantTTC());
         liv.setPointDeVenteId(tenantId);
-        liv.setObservations("BL fournisseur importé via OCR & Groq AI");
+        liv.setObservations("BL fournisseur importé via l'import intelligent");
 
         for (LigneDocumentOcrDTO l : dto.getLignes()) {
             LigneLivraison ll = new LigneLivraison();
@@ -1177,7 +1177,7 @@ public class DocumentAiExtractionService {
         p.setClient(client);
         p.setEncaissePar(encaissePar);
         p.setPointDeVenteId(tenantId);
-        p.setNotes("Importé automatiquement via OCR & Groq AI (" + typeDoc + ")");
+        p.setNotes("Importé via l'import intelligent (" + typeDoc + ")");
 
         Paiement savedPaiement = paiementRepository.save(p);
 
@@ -1197,7 +1197,7 @@ public class DocumentAiExtractionService {
         cheque.setFournisseur(fournisseur);
         cheque.setPointDeVenteId(tenantId);
         cheque.setDateCreation(LocalDateTime.now());
-        cheque.setNotes("Importé via OCR & Groq AI");
+        cheque.setNotes("Importé via l'import intelligent");
 
         ChequeEffet savedCheque = chequeEffetRepository.save(cheque);
 
