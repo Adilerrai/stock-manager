@@ -84,7 +84,7 @@
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="18" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Bon de réception #" + ($P{numeroReception} != null ? $P{numeroReception} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["B D. réception #" + ($P{numeroReception} != null ? $P{numeroReception} : "")]]></textFieldExpression>
 			</textField>
 
 			<!-- Informations Fournisseur (colonne gauche) -->

@@ -99,7 +99,7 @@
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="18" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA["Bon de livraison #" + ($P{numeroBl} != null ? $P{numeroBl} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["B . L  #" + ($P{numeroBl} != null ? $P{numeroBl} : "")]]></textFieldExpression>
 			</textField>
 
 			<!-- Informations Client (colonne gauche) -->
