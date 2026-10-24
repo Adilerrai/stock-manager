@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 041 :
+      - Charges d'approche sur commandes fournisseur (globales ou par ligne, estimées / réelles)
+      - Allocations (répartition des charges sur les lignes, pour audit et recalcul)
+    -->
+    <changeSet id="041-create-charges-achat" author="erp-achats">
+        <sql splitStatements="true">
+            CREATE TABLE IF NOT EXISTS charges_achat (
+                id                       BIGSERIAL PRIMARY KEY,
+                commande_id              BIGINT NOT NULL,
+                ligne_commande_id        BIGINT,
+                type_charge              VARCHAR(30)  NOT NULL,
+                libelle                  VARCHAR(255),
+                prestataire_id           BIGINT,
+                facture_achat_id         BIGINT,
+                numero_facture_externe   VARCHAR(50),
+                devise                   VARCHAR(10)  DEFAULT 'MAD',
+                taux_change              NUMERIC(12, 6) DEFAULT 1,
+                montant_estime_devise    NUMERIC(15, 2) DEFAULT 0.00,
+                montant_reel_devise      NUMERIC(15, 2),
+                montant_retenu_mad       NUMERIC(15, 2) DEFAULT 0.00,
+                montant_tva_mad          NUMERIC(15, 2) DEFAULT 0.00,
+                cle_repartition          VARCHAR(20)  DEFAULT 'VALEUR',
+                incorporable             BOOLEAN DEFAULT TRUE,
+                statut                   VARCHAR(20)  DEFAULT 'ESTIMEE',
+                date_charge              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                appliquee_au_stock       BOOLEAN DEFAULT FALSE,
+                observations             TEXT,
+                point_de_vente_id        BIGINT NOT NULL,
+                CONSTRAINT fk_charge_commande    FOREIGN KEY (commande_id)       REFERENCES commandes(id)       ON DELETE CASCADE,
+                CONSTRAINT fk_charge_ligne       FOREIGN KEY (ligne_commande_id) REFERENCES lignes_commande(id) ON DELETE SET NULL,
+                CONSTRAINT fk_charge_prestataire FOREIGN KEY (prestataire_id)    REFERENCES fournisseurs(id)    ON DELETE SET NULL,
+                CONSTRAINT fk_charge_facture     FOREIGN KEY (facture_achat_id)  REFERENCES factures_achat(id)  ON DELETE SET NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS allocations_charge (
+                id                  BIGSERIAL PRIMARY KEY,
+                charge_id           BIGINT NOT NULL,
+                ligne_commande_id   BIGINT NOT NULL,
+                base_repartition    NUMERIC(18, 4) DEFAULT 0,
+                pourcentage         NUMERIC(9, 6)  DEFAULT 0,
+                montant_mad         NUMERIC(15, 2) DEFAULT 0.00,
+                CONSTRAINT fk_alloc_charge FOREIGN KEY (charge_id)         REFERENCES charges_achat(id)   ON DELETE CASCADE,
+                CONSTRAINT fk_alloc_ligne  FOREIGN KEY (ligne_commande_id) REFERENCES lignes_commande(id) ON DELETE CASCADE
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_charges_achat_commande ON charges_achat(commande_id);
+            CREATE INDEX IF NOT EXISTS idx_charges_achat_tenant_statut ON charges_achat(point_de_vente_id, statut);
+            CREATE INDEX IF NOT EXISTS idx_charges_achat_prestataire ON charges_achat(prestataire_id);
+            CREATE INDEX IF NOT EXISTS idx_alloc_charge ON allocations_charge(charge_id);
+            CREATE INDEX IF NOT EXISTS idx_alloc_ligne ON allocations_charge(ligne_commande_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

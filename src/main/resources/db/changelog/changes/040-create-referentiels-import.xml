@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 040 :
+      - Référentiel des lieux logistiques (ports / aéroports de destination)
+      - Référentiel des conditions de paiement (modèles + lignes d'échéance)
+      - Les lignes avec point_de_vente_id NULL sont globales (visibles par tous les tenants)
+    -->
+    <changeSet id="040-create-referentiels-import" author="erp-achats">
+        <sql splitStatements="true">
+            CREATE TABLE IF NOT EXISTS lieux_logistiques (
+                id                  BIGSERIAL PRIMARY KEY,
+                code                VARCHAR(50)  NOT NULL,
+                libelle             VARCHAR(150) NOT NULL,
+                type                VARCHAR(20)  NOT NULL DEFAULT 'PORT',
+                pays                VARCHAR(100) DEFAULT 'Maroc',
+                actif               BOOLEAN DEFAULT TRUE,
+                point_de_vente_id   BIGINT
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS uk_lieux_logistiques_tenant_code
+                ON lieux_logistiques (COALESCE(point_de_vente_id, 0), code);
+
+            CREATE TABLE IF NOT EXISTS conditions_paiement (
+                id                  BIGSERIAL PRIMARY KEY,
+                code                VARCHAR(50)  NOT NULL,
+                libelle             VARCHAR(200) NOT NULL,
+                libelle_en          VARCHAR(200),
+                actif               BOOLEAN DEFAULT TRUE,
+                point_de_vente_id   BIGINT
+            );
+            CREATE UNIQUE INDEX IF NOT EXISTS uk_conditions_paiement_tenant_code
+                ON conditions_paiement (COALESCE(point_de_vente_id, 0), code);
+
+            CREATE TABLE IF NOT EXISTS conditions_paiement_lignes (
+                id                      BIGSERIAL PRIMARY KEY,
+                condition_paiement_id   BIGINT NOT NULL,
+                ordre                   INTEGER NOT NULL DEFAULT 1,
+                pourcentage             NUMERIC(6, 2) NOT NULL,
+                evenement               VARCHAR(30) NOT NULL,
+                delai_jours             INTEGER DEFAULT 0,
+                CONSTRAINT fk_cpl_condition FOREIGN KEY (condition_paiement_id)
+                    REFERENCES conditions_paiement(id) ON DELETE CASCADE
+            );
+            CREATE INDEX IF NOT EXISTS idx_cpl_condition ON conditions_paiement_lignes(condition_paiement_id);
+
+            -- Seed lieux logistiques (globaux)
+            INSERT INTO lieux_logistiques (code, libelle, type, pays, actif, point_de_vente_id)
+            SELECT v.code, v.libelle, v.type, 'Maroc', TRUE, NULL
+            FROM (VALUES
+                ('CASA_PORT',  'Port de Casablanca',           'PORT'),
+                ('TANGER_MED', 'Tanger Med',                   'PORT'),
+                ('AGADIR_PORT','Port d''Agadir',               'PORT'),
+                ('NADOR_WM',   'Nador West Med',               'PORT'),
+                ('CMN_AIRPORT','Aéroport Mohammed V (Casablanca)', 'AEROPORT')
+            ) AS v(code, libelle, type)
+            WHERE NOT EXISTS (
+                SELECT 1 FROM lieux_logistiques l WHERE l.code = v.code AND l.point_de_vente_id IS NULL
+            );
+
+            -- Seed conditions de paiement (globales)
+            INSERT INTO conditions_paiement (code, libelle, libelle_en, actif, point_de_vente_id)
+            SELECT v.code, v.libelle, v.libelle_en, TRUE, NULL
+            FROM (VALUES
+                ('AVANCE_100',             '100% avance',                                   '100% advance payment'),
+                ('30_70_AVANT_EXPEDITION', '30% avance + 70% avant expédition',             '30% advance, 70% before shipment'),
+                ('30_70_CONTRE_DOCUMENTS', '30% avance + solde contre documents',           '30% advance, balance against documents'),
+                ('CREDOC',                 'Crédit documentaire (L/C) à l''expédition',     'Letter of credit at shipment'),
+                ('NET_30_RECEPTION',       '100% à 30 jours après réception',               'Net 30 days after receipt')
+            ) AS v(code, libelle, libelle_en)
+            WHERE NOT EXISTS (
+                SELECT 1 FROM conditions_paiement c WHERE c.code = v.code AND c.point_de_vente_id IS NULL
+            );
+
+            INSERT INTO conditions_paiement_lignes (condition_paiement_id, ordre, pourcentage, evenement, delai_jours)
+            SELECT c.id, v.ordre, v.pourcentage, v.evenement, v.delai
+            FROM (VALUES
+                ('AVANCE_100',             1, 100.00, 'COMMANDE',          0),
+                ('30_70_AVANT_EXPEDITION', 1,  30.00, 'COMMANDE',          0),
+                ('30_70_AVANT_EXPEDITION', 2,  70.00, 'AVANT_EXPEDITION',  0),
+                ('30_70_CONTRE_DOCUMENTS', 1,  30.00, 'COMMANDE',          0),
+                ('30_70_CONTRE_DOCUMENTS', 2,  70.00, 'CONTRE_DOCUMENTS',  0),
+                ('CREDOC',                 1, 100.00, 'EXPEDITION',        0),
+                ('NET_30_RECEPTION',       1, 100.00, 'RECEPTION',        30)
+            ) AS v(code, ordre, pourcentage, evenement, delai)
+            JOIN conditions_paiement c ON c.code = v.code AND c.point_de_vente_id IS NULL
+            WHERE NOT EXISTS (
+                SELECT 1 FROM conditions_paiement_lignes l WHERE l.condition_paiement_id = c.id AND l.ordre = v.ordre
+            );
+
+            -- Clés étrangères depuis commandes / fournisseurs
+            ALTER TABLE commandes DROP CONSTRAINT IF EXISTS fk_commandes_lieu_destination;
+            ALTER TABLE commandes ADD CONSTRAINT fk_commandes_lieu_destination
+                FOREIGN KEY (lieu_destination_id) REFERENCES lieux_logistiques(id) ON DELETE SET NULL;
+
+            ALTER TABLE commandes DROP CONSTRAINT IF EXISTS fk_commandes_condition_paiement;
+            ALTER TABLE commandes ADD CONSTRAINT fk_commandes_condition_paiement
+                FOREIGN KEY (condition_paiement_id) REFERENCES conditions_paiement(id) ON DELETE SET NULL;
+
+            ALTER TABLE fournisseurs DROP CONSTRAINT IF EXISTS fk_fournisseurs_condition_paiement_defaut;
+            ALTER TABLE fournisseurs ADD CONSTRAINT fk_fournisseurs_condition_paiement_defaut
+                FOREIGN KEY (condition_paiement_defaut_id) REFERENCES conditions_paiement(id) ON DELETE SET NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

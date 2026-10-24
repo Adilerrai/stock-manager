@@ -124,6 +124,15 @@
     <!-- Changeset 038 : Autoriser le statut BROUILLON pour les livraisons et BL client -->
     <include file="changes/038-allow-brouillon-in-statut-livraison-check.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 039 : Configuration import (Incoterm, ports, change, DUM) + colonnes coût de revient -->
+    <include file="changes/039-add-commandes-config-import.xml" relativeToChangelogFile="true"/>
+
+    <!-- Changeset 040 : Référentiels lieux logistiques et conditions de paiement -->
+    <include file="changes/040-create-referentiels-import.xml" relativeToChangelogFile="true"/>
+
+    <!-- Changeset 041 : Charges d'approche et allocations sur commandes fournisseur -->
+    <include file="changes/041-create-charges-achat.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

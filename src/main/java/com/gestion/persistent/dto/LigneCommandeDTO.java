@@ -22,6 +22,18 @@ public class LigneCommandeDTO {
     private BigDecimal montantLigne;
     private QualiteProduit qualiteProduit;
 
+    // Logistique (saisie)
+    private BigDecimal poidsTotalKg;
+    private BigDecimal volumeTotalM3;
+    private String codeSh;
+    private BigDecimal tauxDroitDouane;
+
+    // Coût de revient (calculé, lecture seule)
+    private BigDecimal prixUnitaireMad;
+    private BigDecimal fraisAllouesMad;
+    private BigDecimal coutRevientUnitaireMad;
+    private BigDecimal coutRevientTotalMad;
+
     // Constructors
     public LigneCommandeDTO() {}
 
@@ -77,5 +89,29 @@ public class LigneCommandeDTO {
 
     public BigDecimal getMontantLigne() { return montantLigne; }
     public void setMontantLigne(BigDecimal montantLigne) { this.montantLigne = montantLigne; }
+
+    public BigDecimal getPoidsTotalKg() { return poidsTotalKg; }
+    public void setPoidsTotalKg(BigDecimal poidsTotalKg) { this.poidsTotalKg = poidsTotalKg; }
+
+    public BigDecimal getVolumeTotalM3() { return volumeTotalM3; }
+    public void setVolumeTotalM3(BigDecimal volumeTotalM3) { this.volumeTotalM3 = volumeTotalM3; }
+
+    public String getCodeSh() { return codeSh; }
+    public void setCodeSh(String codeSh) { this.codeSh = codeSh; }
+
+    public BigDecimal getTauxDroitDouane() { return tauxDroitDouane; }
+    public void setTauxDroitDouane(BigDecimal tauxDroitDouane) { this.tauxDroitDouane = tauxDroitDouane; }
+
+    public BigDecimal getPrixUnitaireMad() { return prixUnitaireMad; }
+    public void setPrixUnitaireMad(BigDecimal prixUnitaireMad) { this.prixUnitaireMad = prixUnitaireMad; }
+
+    public BigDecimal getFraisAllouesMad() { return fraisAllouesMad; }
+    public void setFraisAllouesMad(BigDecimal fraisAllouesMad) { this.fraisAllouesMad = fraisAllouesMad; }
+
+    public BigDecimal getCoutRevientUnitaireMad() { return coutRevientUnitaireMad; }
+    public void setCoutRevientUnitaireMad(BigDecimal coutRevientUnitaireMad) { this.coutRevientUnitaireMad = coutRevientUnitaireMad; }
+
+    public BigDecimal getCoutRevientTotalMad() { return coutRevientTotalMad; }
+    public void setCoutRevientTotalMad(BigDecimal coutRevientTotalMad) { this.coutRevientTotalMad = coutRevientTotalMad; }
 }
 

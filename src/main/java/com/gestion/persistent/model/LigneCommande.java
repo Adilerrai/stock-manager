@@ -51,6 +51,32 @@ public class LigneCommande {
     @Column(name = "qualite_produit")
     private QualiteProduit qualiteProduit;
 
+    // ===== Logistique / coût de revient =====
+
+    @Column(name = "prix_unitaire_mad", precision = 14, scale = 4)
+    private BigDecimal prixUnitaireMad;
+
+    @Column(name = "poids_total_kg", precision = 12, scale = 3)
+    private BigDecimal poidsTotalKg;
+
+    @Column(name = "volume_total_m3", precision = 12, scale = 4)
+    private BigDecimal volumeTotalM3;
+
+    @Column(name = "code_sh", length = 12)
+    private String codeSh;
+
+    @Column(name = "taux_droit_douane", precision = 6, scale = 2)
+    private BigDecimal tauxDroitDouane;
+
+    @Column(name = "frais_alloues_mad", precision = 15, scale = 2)
+    private BigDecimal fraisAllouesMad = BigDecimal.ZERO;
+
+    @Column(name = "cout_revient_unitaire_mad", precision = 14, scale = 4)
+    private BigDecimal coutRevientUnitaireMad;
+
+    @Column(name = "cout_revient_total_mad", precision = 15, scale = 2)
+    private BigDecimal coutRevientTotalMad;
+
     // Constructors, getters, setters
     public LigneCommande() {}
 
@@ -90,6 +116,30 @@ public class LigneCommande {
 
     public QualiteProduit getQualiteProduit() { return qualiteProduit; }
     public void setQualiteProduit(QualiteProduit qualiteProduit) { this.qualiteProduit = qualiteProduit; }
+
+    public BigDecimal getPrixUnitaireMad() { return prixUnitaireMad; }
+    public void setPrixUnitaireMad(BigDecimal prixUnitaireMad) { this.prixUnitaireMad = prixUnitaireMad; }
+
+    public BigDecimal getPoidsTotalKg() { return poidsTotalKg; }
+    public void setPoidsTotalKg(BigDecimal poidsTotalKg) { this.poidsTotalKg = poidsTotalKg; }
+
+    public BigDecimal getVolumeTotalM3() { return volumeTotalM3; }
+    public void setVolumeTotalM3(BigDecimal volumeTotalM3) { this.volumeTotalM3 = volumeTotalM3; }
+
+    public String getCodeSh() { return codeSh; }
+    public void setCodeSh(String codeSh) { this.codeSh = codeSh; }
+
+    public BigDecimal getTauxDroitDouane() { return tauxDroitDouane; }
+    public void setTauxDroitDouane(BigDecimal tauxDroitDouane) { this.tauxDroitDouane = tauxDroitDouane; }
+
+    public BigDecimal getFraisAllouesMad() { return fraisAllouesMad; }
+    public void setFraisAllouesMad(BigDecimal fraisAllouesMad) { this.fraisAllouesMad = fraisAllouesMad; }
+
+    public BigDecimal getCoutRevientUnitaireMad() { return coutRevientUnitaireMad; }
+    public void setCoutRevientUnitaireMad(BigDecimal coutRevientUnitaireMad) { this.coutRevientUnitaireMad = coutRevientUnitaireMad; }
+
+    public BigDecimal getCoutRevientTotalMad() { return coutRevientTotalMad; }
+    public void setCoutRevientTotalMad(BigDecimal coutRevientTotalMad) { this.coutRevientTotalMad = coutRevientTotalMad; }
 
 
 }

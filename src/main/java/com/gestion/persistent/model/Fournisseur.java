@@ -66,6 +66,16 @@ public class Fournisseur {
     @Column(name = "devise", length = 10)
     private String devise = "MAD";
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "incoterm_defaut", length = 10)
+    private com.gestion.persistent.enums.Incoterm incotermDefaut;
+
+    @Column(name = "condition_paiement_defaut_id")
+    private Long conditionPaiementDefautId;
+
+    @Column(name = "port_embarquement_defaut", length = 100)
+    private String portEmbarquementDefaut;
+
     @PrePersist
     @PreUpdate
     public void prePersist() {
@@ -164,4 +174,13 @@ public class Fournisseur {
     public boolean isInternational() {
         return com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL.equals(this.typeFournisseur);
     }
+
+    public com.gestion.persistent.enums.Incoterm getIncotermDefaut() { return incotermDefaut; }
+    public void setIncotermDefaut(com.gestion.persistent.enums.Incoterm incotermDefaut) { this.incotermDefaut = incotermDefaut; }
+
+    public Long getConditionPaiementDefautId() { return conditionPaiementDefautId; }
+    public void setConditionPaiementDefautId(Long conditionPaiementDefautId) { this.conditionPaiementDefautId = conditionPaiementDefautId; }
+
+    public String getPortEmbarquementDefaut() { return portEmbarquementDefaut; }
+    public void setPortEmbarquementDefaut(String portEmbarquementDefaut) { this.portEmbarquementDefaut = portEmbarquementDefaut; }
 }

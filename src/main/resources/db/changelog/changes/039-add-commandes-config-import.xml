@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 039 :
+      - Configuration import sur commandes fournisseur (Incoterm, ports, transport, change, expédition, DUM)
+      - Totaux de coût de revient sur commandes
+      - Colonnes de coût de revient / logistique sur lignes_commande
+      - Valeurs par défaut import sur fournisseurs
+    -->
+    <changeSet id="039-add-commandes-config-import" author="erp-achats">
+        <sql splitStatements="true">
+            ALTER TABLE IF EXISTS commandes
+                ADD COLUMN IF NOT EXISTS type_achat                 VARCHAR(20) DEFAULT 'NATIONAL',
+                ADD COLUMN IF NOT EXISTS incoterm                   VARCHAR(10),
+                ADD COLUMN IF NOT EXISTS lieu_incoterm              VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS port_embarquement          VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS lieu_destination_id        BIGINT,
+                ADD COLUMN IF NOT EXISTS mode_transport             VARCHAR(20),
+                ADD COLUMN IF NOT EXISTS condition_paiement_id      BIGINT,
+                ADD COLUMN IF NOT EXISTS taux_change_commande       NUMERIC(12, 6),
+                ADD COLUMN IF NOT EXISTS taux_change_douane         NUMERIC(12, 6),
+                ADD COLUMN IF NOT EXISTS numero_bl                  VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS numero_conteneur           VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS navire                     VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS date_etd                   TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS date_eta                   TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS numero_dum                 VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS date_dum                   TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS montant_marchandise_devise NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_marchandise_mad    NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS valeur_douane_mad          NUMERIC(15, 2),
+                ADD COLUMN IF NOT EXISTS total_charges_estimees_mad NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS total_charges_reelles_mad  NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS total_charges_mad          NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS cout_revient_total_mad     NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS coefficient_approche       NUMERIC(8, 4),
+                ADD COLUMN IF NOT EXISTS statut_couts               VARCHAR(20) DEFAULT 'ESTIME';
+
+            -- Initialisation du type d'achat à partir du fournisseur
+            UPDATE commandes c
+            SET type_achat = COALESCE(f.type_fournisseur, 'NATIONAL')
+            FROM fournisseurs f
+            WHERE f.id = c.fournisseur_id
+              AND (c.type_achat IS NULL OR c.type_achat = 'NATIONAL');
+
+            UPDATE commandes SET statut_couts = 'ESTIME' WHERE statut_couts IS NULL;
+
+            ALTER TABLE IF EXISTS lignes_commande
+                ADD COLUMN IF NOT EXISTS prix_unitaire_mad          NUMERIC(14, 4),
+                ADD COLUMN IF NOT EXISTS poids_total_kg             NUMERIC(12, 3),
+                ADD COLUMN IF NOT EXISTS volume_total_m3            NUMERIC(12, 4),
+                ADD COLUMN IF NOT EXISTS code_sh                    VARCHAR(12),
+                ADD COLUMN IF NOT EXISTS taux_droit_douane          NUMERIC(6, 2),
+                ADD COLUMN IF NOT EXISTS frais_alloues_mad          NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS cout_revient_unitaire_mad  NUMERIC(14, 4),
+                ADD COLUMN IF NOT EXISTS cout_revient_total_mad     NUMERIC(15, 2);
+
+            ALTER TABLE IF EXISTS fournisseurs
+                ADD COLUMN IF NOT EXISTS incoterm_defaut               VARCHAR(10),
+                ADD COLUMN IF NOT EXISTS condition_paiement_defaut_id  BIGINT,
+                ADD COLUMN IF NOT EXISTS port_embarquement_defaut      VARCHAR(100);
+
+            CREATE INDEX IF NOT EXISTS idx_commandes_type_achat ON commandes(point_de_vente_id, type_achat);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
