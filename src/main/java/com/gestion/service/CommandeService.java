@@ -44,6 +44,9 @@ public class CommandeService {
     private final CodificationService codificationService;
     private final EntrepriseProfileService entrepriseProfileService;
     private final ImpressionService impressionService;
+    private final LieuLogistiqueRepository lieuLogistiqueRepository;
+    private final ConditionPaiementRepository conditionPaiementRepository;
+    private final CoutRevientService coutRevientService;
 
     public CommandeService(CommandeRepository commandeRepository,
                           LigneCommandeRepository ligneCommandeRepository,
@@ -55,7 +58,8 @@ public class CommandeService {
                           ProduitMapper produitMapper,
                           CodificationService codificationService) {
         this(commandeRepository, ligneCommandeRepository, fournisseurRepository, produitRepository,
-             livraisonService, livraisonRepository, livraisonMapper, produitMapper, codificationService, null, null);
+             livraisonService, livraisonRepository, livraisonMapper, produitMapper, codificationService,
+             null, null, null, null, null);
     }
 
     @org.springframework.beans.factory.annotation.Autowired
@@ -69,7 +73,10 @@ public class CommandeService {
                           ProduitMapper produitMapper,
                           CodificationService codificationService,
                           EntrepriseProfileService entrepriseProfileService,
-                          @org.springframework.context.annotation.Lazy ImpressionService impressionService) {
+                          @org.springframework.context.annotation.Lazy ImpressionService impressionService,
+                          LieuLogistiqueRepository lieuLogistiqueRepository,
+                          ConditionPaiementRepository conditionPaiementRepository,
+                          @org.springframework.context.annotation.Lazy CoutRevientService coutRevientService) {
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.fournisseurRepository = fournisseurRepository;
@@ -81,6 +88,9 @@ public class CommandeService {
         this.codificationService = codificationService;
         this.entrepriseProfileService = entrepriseProfileService;
         this.impressionService = impressionService;
+        this.lieuLogistiqueRepository = lieuLogistiqueRepository;
+        this.conditionPaiementRepository = conditionPaiementRepository;
+        this.coutRevientService = coutRevientService;
     }
 
     private Long getTenantId() {
@@ -103,7 +113,35 @@ public class CommandeService {
         commande.setObservations(commandeDTO.getObservations());
         commande.setPointDeVenteId(getTenantId());
 
-        boolean isInternational = fournisseur.getTypeFournisseur() == com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL;
+        boolean isInternational = fournisseur.getTypeFournisseur() == com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL
+                || commandeDTO.getTypeAchat() == com.gestion.persistent.enums.TypeAchat.INTERNATIONAL;
+        commande.setTypeAchat(isInternational ? com.gestion.persistent.enums.TypeAchat.INTERNATIONAL : com.gestion.persistent.enums.TypeAchat.NATIONAL);
+
+        // Paramètres import / international
+        if (isInternational) {
+            commande.setIncoterm(commandeDTO.getIncoterm() != null ? commandeDTO.getIncoterm()
+                    : (fournisseur.getIncotermDefaut() != null ? fournisseur.getIncotermDefaut() : com.gestion.persistent.enums.Incoterm.FOB));
+            commande.setLieuIncoterm(commandeDTO.getLieuIncoterm());
+            commande.setPortEmbarquement(commandeDTO.getPortEmbarquement() != null ? commandeDTO.getPortEmbarquement() : fournisseur.getPortEmbarquementDefaut());
+            if (commandeDTO.getLieuDestinationId() != null && lieuLogistiqueRepository != null) {
+                lieuLogistiqueRepository.findById(commandeDTO.getLieuDestinationId()).ifPresent(commande::setLieuDestination);
+            }
+            commande.setModeTransport(commandeDTO.getModeTransport() != null ? commandeDTO.getModeTransport() : com.gestion.persistent.enums.ModeTransport.MARITIME);
+            Long conditionId = commandeDTO.getConditionPaiementId() != null ? commandeDTO.getConditionPaiementId() : fournisseur.getConditionPaiementDefautId();
+            if (conditionId != null && conditionPaiementRepository != null) {
+                conditionPaiementRepository.findById(conditionId).ifPresent(commande::setConditionPaiement);
+            }
+            commande.setTauxChangeCommande(commandeDTO.getTauxChangeCommande());
+            commande.setTauxChangeDouane(commandeDTO.getTauxChangeDouane());
+            commande.setNumeroBl(commandeDTO.getNumeroBl());
+            commande.setNumeroConteneur(commandeDTO.getNumeroConteneur());
+            commande.setNavire(commandeDTO.getNavire());
+            commande.setDateEtd(commandeDTO.getDateEtd());
+            commande.setDateEta(commandeDTO.getDateEta());
+            commande.setNumeroDum(commandeDTO.getNumeroDum());
+            commande.setDateDum(commandeDTO.getDateDum());
+        }
+
         String devise = (commandeDTO.getDevise() != null && !commandeDTO.getDevise().isBlank())
                 ? commandeDTO.getDevise()
                 : (fournisseur.getDevise() != null ? fournisseur.getDevise() : "MAD");
@@ -154,7 +192,19 @@ public class CommandeService {
         commande.setMontantTTC(finalTTC);
         commande.setMontantTotal(finalTTC);
 
-        return commandeRepository.save(commande);
+        commande = commandeRepository.save(commande);
+
+        // Déclencher le calcul du coût de revient
+        if (coutRevientService != null) {
+            try {
+                coutRevientService.recalculerEtPersister(commande.getId());
+                commande = commandeRepository.findById(commande.getId()).orElse(commande);
+            } catch (Exception e) {
+                // Silencieux si pas de charges initiales
+            }
+        }
+
+        return commande;
     }
 
     @Transactional
@@ -179,7 +229,32 @@ public class CommandeService {
             commande.setObservations(commandeDTO.getObservations());
         }
 
-        boolean isInternational = fournisseur != null && fournisseur.getTypeFournisseur() == com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL;
+        boolean isInternational = (fournisseur != null && fournisseur.getTypeFournisseur() == com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL)
+                || commandeDTO.getTypeAchat() == com.gestion.persistent.enums.TypeAchat.INTERNATIONAL;
+        commande.setTypeAchat(isInternational ? com.gestion.persistent.enums.TypeAchat.INTERNATIONAL : com.gestion.persistent.enums.TypeAchat.NATIONAL);
+
+        if (isInternational) {
+            if (commandeDTO.getIncoterm() != null) commande.setIncoterm(commandeDTO.getIncoterm());
+            if (commandeDTO.getLieuIncoterm() != null) commande.setLieuIncoterm(commandeDTO.getLieuIncoterm());
+            if (commandeDTO.getPortEmbarquement() != null) commande.setPortEmbarquement(commandeDTO.getPortEmbarquement());
+            if (commandeDTO.getLieuDestinationId() != null && lieuLogistiqueRepository != null) {
+                lieuLogistiqueRepository.findById(commandeDTO.getLieuDestinationId()).ifPresent(commande::setLieuDestination);
+            }
+            if (commandeDTO.getModeTransport() != null) commande.setModeTransport(commandeDTO.getModeTransport());
+            if (commandeDTO.getConditionPaiementId() != null && conditionPaiementRepository != null) {
+                conditionPaiementRepository.findById(commandeDTO.getConditionPaiementId()).ifPresent(commande::setConditionPaiement);
+            }
+            if (commandeDTO.getTauxChangeCommande() != null) commande.setTauxChangeCommande(commandeDTO.getTauxChangeCommande());
+            if (commandeDTO.getTauxChangeDouane() != null) commande.setTauxChangeDouane(commandeDTO.getTauxChangeDouane());
+            if (commandeDTO.getNumeroBl() != null) commande.setNumeroBl(commandeDTO.getNumeroBl());
+            if (commandeDTO.getNumeroConteneur() != null) commande.setNumeroConteneur(commandeDTO.getNumeroConteneur());
+            if (commandeDTO.getNavire() != null) commande.setNavire(commandeDTO.getNavire());
+            if (commandeDTO.getDateEtd() != null) commande.setDateEtd(commandeDTO.getDateEtd());
+            if (commandeDTO.getDateEta() != null) commande.setDateEta(commandeDTO.getDateEta());
+            if (commandeDTO.getNumeroDum() != null) commande.setNumeroDum(commandeDTO.getNumeroDum());
+            if (commandeDTO.getDateDum() != null) commande.setDateDum(commandeDTO.getDateDum());
+        }
+
         if (commandeDTO.getDevise() != null && !commandeDTO.getDevise().isBlank()) {
             commande.setDevise(commandeDTO.getDevise());
         } else if (fournisseur != null && fournisseur.getDevise() != null) {
@@ -233,7 +308,19 @@ public class CommandeService {
             commande.setMontantTotal(finalTTC);
         }
 
-        return commandeRepository.save(commande);
+        commande = commandeRepository.save(commande);
+
+        // Recalculer le coût de revient
+        if (coutRevientService != null) {
+            try {
+                coutRevientService.recalculerEtPersister(commande.getId());
+                commande = commandeRepository.findById(commande.getId()).orElse(commande);
+            } catch (Exception e) {
+                // Silencieux
+            }
+        }
+
+        return commande;
     }
 
     private LigneCommande createLigneCommande(Commande commande, LigneCommandeDTO ligneDTO, boolean appliquerTva, BigDecimal defaultTauxTva) {
@@ -245,6 +332,10 @@ public class CommandeService {
         ligne.setProduit(produit);
         ligne.setQuantiteCommandee(ligneDTO.getQuantiteCommandee() != null ? ligneDTO.getQuantiteCommandee() : 1);
         ligne.setQualiteProduit(ligneDTO.getQualiteProduit());
+        ligne.setPoidsTotalKg(ligneDTO.getPoidsTotalKg());
+        ligne.setVolumeTotalM3(ligneDTO.getVolumeTotalM3());
+        ligne.setCodeSh(ligneDTO.getCodeSh());
+        ligne.setTauxDroitDouane(ligneDTO.getTauxDroitDouane());
 
         BigDecimal qte = BigDecimal.valueOf(ligne.getQuantiteCommandee());
         BigDecimal prixUnitaire = ligneDTO.getPrixUnitaire() != null ? ligneDTO.getPrixUnitaire() : BigDecimal.ZERO;
