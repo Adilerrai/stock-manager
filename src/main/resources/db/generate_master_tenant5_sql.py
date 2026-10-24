@@ -1,4 +1,5 @@
 import openpyxl
+import hashlib
 import os
 import sys
 import re
@@ -11,7 +12,7 @@ from datetime import datetime
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
 
 BASE_URL = 'https://sit-transmission1.odoo.com'
-COOKIE = 'frontend_lang=fr_FR; tz=Africa/Casablanca; cids=1; color_scheme=dark; session_id=l57Zdx51vyF-rrohotCUcl3OQ7ecqnIsf66ITyBs-rSjwcOE6HhlgbDEWmmUQ0AzJr-T2YhjAtuefHrasPp_Xw'
+COOKIE = 'frontend_lang=fr_FR; tz=Africa/Casablanca; cids=1; color_scheme=dark; session_id=naZo4NYbCnDa5CR5XxKBGoFVBfHia4rlbrNOlACz3221groCGfB0H4mc2iC9T4HEB8U6eCYVuxN-x31aqYUoQg'
 
 HEADERS = {
     'Accept': 'application/json',
@@ -146,6 +147,25 @@ def map_unite(u_str):
         return 'ROULEAU'
     return 'PIECE'
 
+def get_depot_subquery(doc_ref_or_name=None, location_str=None, picking_type_str=None, tenant_id=5):
+    if isinstance(location_str, int):
+        tenant_id = location_str
+        location_str = None
+    combined = f"{doc_ref_or_name or ''} {location_str or ''} {picking_type_str or ''}".upper().strip()
+    if 'TAC' in combined or 'TACHAROUK' in combined:
+        target = 'TAC'
+    elif 'BER' in combined or 'BERRECHID' in combined:
+        target = 'BER'
+    else:
+        target = 'WH'
+    return (
+        f"COALESCE("
+        f"(SELECT id FROM depots WHERE description = '{target}' AND point_de_vente_id = {tenant_id} LIMIT 1), "
+        f"(SELECT id FROM depots WHERE nom ILIKE '%{target}%' AND point_de_vente_id = {tenant_id} LIMIT 1), "
+        f"(SELECT id FROM depots WHERE point_de_vente_id = {tenant_id} LIMIT 1)"
+        f")"
+    )
+
 def parse_code_nom(display_name):
     code = ""
     nom = display_name or ""
@@ -269,6 +289,7 @@ DELETE FROM clients WHERE point_de_vente_id = {TENANT_ID};
 DELETE FROM produits WHERE point_de_vente_id = {TENANT_ID};
 DELETE FROM fournisseurs WHERE point_de_vente_id = {TENANT_ID};
 DELETE FROM categories WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM depots WHERE point_de_vente_id = {TENANT_ID};
 """)
 
     # 1. Validation Point de Vente / Tenant #5
@@ -285,30 +306,64 @@ SET nom_point_de_vente = EXCLUDED.nom_point_de_vente,
 
 SELECT setval('point_de_vente_id_seq', GREATEST((SELECT COALESCE(MAX(id), 1) FROM point_de_vente), {TENANT_ID}));
 
--- Dépôt principal pour le Tenant {TENANT_ID}
-INSERT INTO depots (nom, adresse, point_de_vente_id, actif, date_creation)
-VALUES ('Dépôt Principal', 'Casablanca', {TENANT_ID}, TRUE, CURRENT_TIMESTAMP)
+-- 3 Dépôts réels d'Odoo pour le Tenant {TENANT_ID}
+INSERT INTO depots (nom, description, adresse, point_de_vente_id, actif, date_creation)
+VALUES 
+  ('SIT TRANSMISSION', 'WH', 'Siège / Dépôt Central Casablanca', {TENANT_ID}, TRUE, CURRENT_TIMESTAMP),
+  ('MAGASIN TACHAROUK', 'TAC', 'Magasin Tacharouk Casablanca', {TENANT_ID}, TRUE, CURRENT_TIMESTAMP),
+  ('DÉPÔT BERRECHID', 'BER', 'Dépôt Berrechid', {TENANT_ID}, TRUE, CURRENT_TIMESTAMP)
 ON CONFLICT DO NOTHING;
 """)
 
-    # 2. Catégories
+    # 2. Catégories Hiérarchiques (Arbre Parent-Enfant complet)
     sql_lines.append("-- -----------------------------------------------------------------------------")
-    sql_lines.append(f"-- 2. CATÉGORIES D'ARTICLES (TENANT #{TENANT_ID})")
+    sql_lines.append(f"-- 2. CATÉGORIES D'ARTICLES HIÉRARCHIQUES (TENANT #{TENANT_ID})")
     sql_lines.append("-- -----------------------------------------------------------------------------")
     ws_prod = wb['Produits']
-    categories = set()
+    raw_cats = set()
     for r in list(ws_prod.iter_rows(values_only=True))[1:]:
         c = str(r[7] or '').strip()
         if c and c.lower() not in ['false', 'none', '']:
-            categories.add(c)
+            raw_cats.add(c)
 
-    print(f"Catégories trouvées : {len(categories)}")
-    for cat in sorted(categories):
-        escaped_cat = cat[:255].replace("'", "''")
-        code = cat[:10].upper().replace(" ", "_").replace("'", "_")
+    nodes = {}
+    for raw in raw_cats:
+        parts = [p.strip() for p in raw.split('/') if p.strip()]
+        if not parts:
+            continue
+        curr = []
+        parent_p = None
+        for p in parts:
+            curr.append(p)
+            t = tuple(curr)
+            if t not in nodes:
+                full_s = ' / '.join(curr)
+                h = hashlib.md5(full_s.encode('utf-8')).hexdigest()[:8].upper()
+                nodes[t] = {
+                    'nom': p,
+                    'parent_path': parent_p,
+                    'depth': len(curr) - 1,
+                    'code': f'CAT_{h}',
+                    'full_str': full_s
+                }
+            parent_p = t
+
+    sorted_nodes = sorted(nodes.values(), key=lambda n: (n['depth'], n['full_str']))
+    print(f"Arborescence hiérarchique : {len(sorted_nodes)} nœuds créés à partir de {len(raw_cats)} chemins Odoo.")
+
+    for node in sorted_nodes:
+        escaped_nom = node['nom'][:255].replace("'", "''")
+        c_code = node['code']
+        escaped_desc = node['full_str'][:255].replace("'", "''")
+        if node['parent_path'] is None:
+            parent_subquery = 'NULL'
+        else:
+            parent_code = nodes[node['parent_path']]['code']
+            parent_subquery = f"(SELECT id FROM categories WHERE code = '{parent_code}' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+
         sql_lines.append(
-            f"INSERT INTO categories (nom, code, actif, point_de_vente_id, date_creation) "
-            f"VALUES ('{escaped_cat}', '{code}', TRUE, {TENANT_ID}, CURRENT_TIMESTAMP) "
+            f"INSERT INTO categories (nom, code, description, parent_id, actif, point_de_vente_id, date_creation) "
+            f"VALUES ('{escaped_nom}', '{c_code}', '{escaped_desc}', {parent_subquery}, TRUE, {TENANT_ID}, CURRENT_TIMESTAMP) "
             f"ON CONFLICT DO NOTHING;"
         )
     sql_lines.append("")
@@ -524,18 +579,32 @@ ON CONFLICT DO NOTHING;
         e_designation = raw_nom[:255].replace("'", "''")
         e_description = raw_nom.replace("'", "''")
         e_cb = sql_escape(cb, 255)
-        e_cat_nom = sql_escape(cat_nom[:255] if cat_nom.lower() not in ['false', 'none', ''] else None, 255)
-
+        leaf_code = None
+        leaf_nom = None
+        root_nom = None
         if cat_nom and cat_nom.lower() not in ['false', 'none', '']:
-            cat_subquery = f"(SELECT id FROM categories WHERE nom = '{cat_nom[:255].replace('\'', '\'\'')}' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+            parts = [p.strip() for p in cat_nom.split('/') if p.strip()]
+            if parts:
+                leaf_t = tuple(parts)
+                if leaf_t in nodes:
+                    leaf_code = nodes[leaf_t]['code']
+                    leaf_nom = parts[-1]
+                    root_nom = parts[0]
+
+        if leaf_code:
+            cat_subquery = f"(SELECT id FROM categories WHERE code = '{leaf_code}' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
+            e_cat_nom = sql_escape(leaf_nom, 255)
+            e_grp_nom = sql_escape(root_nom, 255)
         else:
             cat_subquery = "NULL"
+            e_cat_nom = "NULL"
+            e_grp_nom = "NULL"
 
         sql_lines.append(
-            f"INSERT INTO produits (reference, designation, description, code_barre, categorie_id, categorie_article, "
+            f"INSERT INTO produits (reference, designation, description, code_barre, categorie_id, categorie_article, groupe_article, "
             f"prix_achat_ht, prix_achat_ttc, prix_vente_ht, prix_vente_ttc, prix_achat, prix_vente, "
             f"unite_mesure_stock, stock_minimum, point_de_vente_id, actif, date_creation) "
-            f"VALUES ('{e_ref}', '{e_designation}', '{e_description}', {e_cb}, {cat_subquery}, {e_cat_nom}, "
+            f"VALUES ('{e_ref}', '{e_designation}', '{e_description}', {e_cb}, {cat_subquery}, {e_cat_nom}, {e_grp_nom}, "
             f"{pa:.2f}, {pa:.2f}, {pv:.2f}, {pv:.2f}, {pa:.2f}, {pv:.2f}, "
             f"'{unite}', 0.00, {TENANT_ID}, TRUE, CURRENT_TIMESTAMP);"
         )
@@ -700,6 +769,8 @@ ON CONFLICT DO NOTHING;
                 "id": {}, "name": {}, "origin": {},
                 "purchase_id": {"fields": {"display_name": {}}},
                 "partner_id": {"fields": {"display_name": {}}},
+                "location_dest_id": {"fields": {"display_name": {}}},
+                "picking_type_id": {"fields": {"display_name": {}}},
                 "date_done": {}, "scheduled_date": {},
                 "state": {}, "picking_type_code": {}
             },
@@ -783,6 +854,12 @@ ON CONFLICT DO NOTHING;
 
         e_obs = obs[:255].replace("'", "''")
 
+        loc_dest_obj = p.get("location_dest_id")
+        loc_dest_name = loc_dest_obj.get("display_name") if isinstance(loc_dest_obj, dict) else (loc_dest_obj[1] if isinstance(loc_dest_obj, (list, tuple)) else str(loc_dest_obj or ""))
+        pt_obj = p.get("picking_type_id")
+        pt_name = pt_obj.get("display_name") if isinstance(pt_obj, dict) else (pt_obj[1] if isinstance(pt_obj, (list, tuple)) else str(pt_obj or ""))
+        depot_subquery = get_depot_subquery(num_bl, loc_dest_name, pt_name, TENANT_ID)
+
         sql_lines.append(
             f"INSERT INTO livraisons (numero_livraison, commande_id, date_livraison, statut, "
             f"montant_total, observations, point_de_vente_id) "
@@ -805,8 +882,6 @@ ON CONFLICT DO NOTHING;
                 prod_subquery = f"(SELECT id FROM produits WHERE (reference = '{e_code}' OR reference LIKE '{e_code}%') AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
             else:
                 prod_subquery = f"(SELECT id FROM produits WHERE designation = '{e_pnom}' AND point_de_vente_id = {TENANT_ID} LIMIT 1)"
-
-            depot_subquery = f"(SELECT id FROM depots WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)"
 
             # qualite_produit = NULL (la qualité n'est pas prise en compte conformément à la demande)
             sql_lines.append(
@@ -887,7 +962,7 @@ ON CONFLICT DO NOTHING;
             f"reference_document, motif, date_mouvement, utilisateur, qualite_produit, point_de_vente_id) "
             f"VALUES ("
             f"COALESCE({prod_sub}, (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
-            f"{depot_sub}, '{type_mvt}', {qte_mv:.2f}, 0.00, {qte_mv:.2f}, "
+            f"{get_depot_subquery(mv.get('reference'), TENANT_ID)}, '{type_mvt}', {qte_mv:.2f}, 0.00, {qte_mv:.2f}, "
             f"{ref_doc}, {e_motif}, {dt_mv}, 'Odoo Import', NULL, {TENANT_ID});"
         )
         mv_count += 1
@@ -1167,7 +1242,8 @@ WHERE c.point_de_vente_id = {TENANT_ID};
         {
             "fields": [
                 "name", "partner_id", "sale_id", "origin", "date_done",
-                "scheduled_date", "state", "x_studio_n_de_commande_client"
+                "scheduled_date", "state", "x_studio_n_de_commande_client",
+                "location_id", "picking_type_id"
             ],
             "limit": 1000,
             "order": "date_done asc, id asc"
@@ -1208,6 +1284,13 @@ WHERE c.point_de_vente_id = {TENANT_ID};
         num_bl = str(p.get("name") or f"BLC-{p_id}").strip()
         e_bl = num_bl[:100].replace("'", "''")
         dt_bl = date_val(p.get("date_done") or p.get("scheduled_date"))
+
+        # Résolution du dépôt source Odoo pour ce BL client
+        loc_src_obj = p.get("location_id")
+        loc_src_name = loc_src_obj[1] if isinstance(loc_src_obj, (list, tuple)) else str(loc_src_obj or "")
+        pt_obj = p.get("picking_type_id")
+        pt_name = pt_obj[1] if isinstance(pt_obj, (list, tuple)) else str(pt_obj or "")
+        depot_subquery = get_depot_subquery(num_bl, loc_src_name, pt_name, TENANT_ID)
 
         p_obj = p.get("partner_id")
         p_name = p_obj[1] if (p_obj and isinstance(p_obj, (list, tuple))) else "CLIENT DIVERS"
@@ -1258,7 +1341,7 @@ WHERE c.point_de_vente_id = {TENANT_ID};
                 f"ON CONFLICT DO NOTHING;"
             )
 
-        # Lignes du BL
+        # Lignes du BL avec affectation au dépôt
         for m in moves_by_pick.get(p_id, []):
             prod_obj = m.get("product_id")
             p_display = prod_obj[1] if (prod_obj and isinstance(prod_obj, (list, tuple))) else ""
@@ -1278,9 +1361,9 @@ WHERE c.point_de_vente_id = {TENANT_ID};
             mt_mv = round(q_liv * pu_mv, 2)
 
             sql_lines.append(
-                f"INSERT INTO lignes_bon_livraison_client (bon_livraison_client_id, produit_id, quantite_livree, "
+                f"INSERT INTO lignes_bon_livraison_client (bon_livraison_client_id, depot_id, produit_id, quantite_livree, "
                 f"prix_vente, prix_vente_brut, remise_pourcentage, remise_montant, montant_ligne) "
-                f"SELECT bl.id, COALESCE({prod_sub}, (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
+                f"SELECT bl.id, {depot_subquery}, COALESCE({prod_sub}, (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
                 f"{q_liv:.3f}, {pu_mv:.2f}, {pu_mv:.2f}, 0.00, 0.00, {mt_mv:.2f} "
                 f"FROM bons_livraison_client bl WHERE bl.numero_bl = '{e_bl}' AND bl.point_de_vente_id = {TENANT_ID} LIMIT 1;"
             )

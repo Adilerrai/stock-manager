@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="header_generique" pageWidth="595" pageHeight="115"
+              columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0"
+              uuid="a8b7c6d5-0001-4000-8000-000000000001">
+
+	<parameter name="logoImage" class="java.awt.Image"/>
+	<parameter name="nomEntreprise" class="java.lang.String"/>
+	<parameter name="activiteEntreprise" class="java.lang.String"/>
+	<parameter name="adresseEntreprise" class="java.lang.String"/>
+	<parameter name="titreDocument" class="java.lang.String">
+		<defaultValueExpression><![CDATA["DOCUMENT"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="numeroDocument" class="java.lang.String"/>
+	<parameter name="couleurPrimaire" class="java.lang.String">
+		<defaultValueExpression><![CDATA["#0B3A6E"]]></defaultValueExpression>
+	</parameter>
+
+	<title>
+		<band height="115">
+			<!-- Image de fond avec transition en biseau/courbe douce (style Odoo) -->
+			<image scaleImage="FillFrame" onErrorType="Blank">
+				<reportElement x="0" y="0" width="595" height="113" uuid="e1f2a3b4-1111-4000-8000-000000000001"/>
+				<imageExpression><![CDATA[com.gestion.util.ReportGraphicUtils.getDefaultHeaderBanner()]]></imageExpression>
+			</image>
+
+			<!-- Logo Entreprise -->
+			<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
+				<reportElement x="20" y="10" width="190" height="64" uuid="e1f2a3b4-2222-4000-8000-000000000002"/>
+				<imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
+			</image>
+
+			<!-- Nom & Adresse Entreprise (en haut à droite, dans le bandeau) -->
+			<textField isBlankWhenNull="true">
+				<reportElement x="300" y="18" width="267" height="62" forecolor="#1F2937" uuid="e1f2a3b4-3333-4000-8000-000000000003"/>
+				<textElement textAlignment="Right" verticalAlignment="Top" markup="html">
+					<font fontName="DejaVu Sans" size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>" + ($P{nomEntreprise} != null ? $P{nomEntreprise} : "") + "</b>" +
+(($P{activiteEntreprise} != null && !$P{activiteEntreprise}.trim().isEmpty()) ? "<br/>" + $P{activiteEntreprise} : "") +
+"<br/><b>SIEGE</b>: " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
+			</textField>
+
+			<!-- Titre & Numéro du Document (dans la découpe blanche, couleur dynamique) -->
+			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
+				<reportElement x="350" y="84" width="217" height="28" forecolor="#0B3A6E" uuid="e1f2a3b4-4444-4000-8000-000000000004">
+					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="19" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($P{titreDocument} != null ? $P{titreDocument} : "Document") + " #" + ($P{numeroDocument} != null ? $P{numeroDocument} : "")]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+</jasperReport>

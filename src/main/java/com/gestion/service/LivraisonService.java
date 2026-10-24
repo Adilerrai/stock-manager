@@ -102,11 +102,15 @@ public class LivraisonService {
 
         // Get depot from DTO or use default depot
         Depot depot = null;
-        if (ligneDTO.getDepot() != null && ligneDTO.getDepot().getId() != null) {
-            depot = depotRepository.findById(ligneDTO.getDepot().getId())
+        Long targetDepotId = ligneDTO.getDepotId();
+        if (targetDepotId == null && ligneDTO.getDepot() != null) {
+            targetDepotId = ligneDTO.getDepot().getId();
+        }
+        if (targetDepotId != null) {
+            depot = depotRepository.findById(targetDepotId)
                     .orElse(null);
             if (depot == null) {
-                log.warn("Depot with id {} not found for pointDeVente {} - falling back to first active depot", ligneDTO.getDepot().getId());
+                log.warn("Depot with id {} not found for pointDeVente {} - falling back to first active depot", targetDepotId);
                 List<Depot> depots = depotRepository.findByActifTrue();
                 if (!depots.isEmpty()) {
                     depot = depots.get(0);

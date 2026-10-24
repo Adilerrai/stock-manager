@@ -21,9 +21,7 @@ class ImageCompressionServiceTest {
     }
 
     @Test
-    void testCompressTransparentPngSmallImage_NoBogusColorspaceException() throws IOException {
-        // Reproduit exactement le cas qui provoquait "Bogus input colorspace" :
-        // Un logo PNG de petite taille (<= 800x600) avec canal alpha / transparence (TYPE_4BYTE_ABGR)
+    void testCompressTransparentPngSmallImage_PreservesPngAndAlpha() throws IOException {
         BufferedImage img = new BufferedImage(200, 200, BufferedImage.TYPE_4BYTE_ABGR);
         Graphics2D g = img.createGraphics();
         g.setColor(new Color(255, 0, 0, 128)); // Rouge semi-transparent
@@ -39,13 +37,17 @@ class ImageCompressionServiceTest {
 
         assertNotNull(result);
         assertTrue(result.length > 0);
-        // Doit être un JPEG valide (magic bytes FF D8)
-        assertEquals((byte) 0xFF, result[0]);
-        assertEquals((byte) 0xD8, result[1]);
+        // Doit rester un PNG valide (magic bytes 0x89 'P' 'N' 'G')
+        assertEquals((byte) 0x89, result[0]);
+        assertEquals((byte) 0x50, result[1]);
+
+        BufferedImage readBack = ImageIO.read(new java.io.ByteArrayInputStream(result));
+        assertNotNull(readBack);
+        assertTrue(readBack.getColorModel().hasAlpha(), "Le PNG doit conserver son canal alpha sans fond opaque");
     }
 
     @Test
-    void testCompressLargeTransparentPng_ResizedAndCompressed() throws IOException {
+    void testCompressLargeTransparentPng_ResizedAndPreservesAlpha() throws IOException {
         BufferedImage img = new BufferedImage(1200, 900, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = img.createGraphics();
         g.setColor(new Color(0, 128, 255, 200));
@@ -60,13 +62,14 @@ class ImageCompressionServiceTest {
 
         assertNotNull(result);
         assertTrue(result.length > 0);
-        assertEquals((byte) 0xFF, result[0]);
-        assertEquals((byte) 0xD8, result[1]);
+        assertEquals((byte) 0x89, result[0]);
+        assertEquals((byte) 0x50, result[1]);
 
         BufferedImage readBack = ImageIO.read(new java.io.ByteArrayInputStream(result));
         assertNotNull(readBack);
         assertTrue(readBack.getWidth() <= 800);
         assertTrue(readBack.getHeight() <= 600);
+        assertTrue(readBack.getColorModel().hasAlpha(), "Le PNG redimensionné doit conserver son canal alpha");
     }
 
     @Test

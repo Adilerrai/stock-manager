@@ -8,11 +8,14 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(componentModel = "spring", uses = {LigneLivraisonMapper.class})
+@Mapper(componentModel = "spring", uses = {LigneLivraisonMapper.class, DepotMapper.class})
 public interface LivraisonMapper {
 
     @Mapping(target = "commandeId", source = "commande.id")
     @Mapping(target = "commandeNumero", source = "commande.numeroCommande")
+    @Mapping(target = "depot", expression = "java(livraison.getLignesLivraison() != null && !livraison.getLignesLivraison().isEmpty() && livraison.getLignesLivraison().get(0).getDepot() != null ? org.mapstruct.factory.Mappers.getMapper(DepotMapper.class).toDto(livraison.getLignesLivraison().get(0).getDepot()) : null)")
+    @Mapping(target = "depotId", expression = "java(livraison.getLignesLivraison() != null && !livraison.getLignesLivraison().isEmpty() && livraison.getLignesLivraison().get(0).getDepot() != null ? livraison.getLignesLivraison().get(0).getDepot().getId() : null)")
+    @Mapping(target = "depotNom", expression = "java(livraison.getLignesLivraison() != null && !livraison.getLignesLivraison().isEmpty() && livraison.getLignesLivraison().get(0).getDepot() != null ? livraison.getLignesLivraison().get(0).getDepot().getNom() : null)")
     LivraisonDTO toDto(Livraison livraison);
 
     @Mapping(target = "commande.id", source = "commandeId")

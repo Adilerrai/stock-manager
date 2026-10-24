@@ -10,6 +10,8 @@ import org.mapstruct.MappingTarget;
 public interface LigneLivraisonMapper {
 
 
+    @Mapping(target = "depotId", source = "depot.id")
+    @Mapping(target = "depotNom", source = "depot.nom")
     LigneLivraisonDTO toDto(LigneLivraison ligneLivraison);
 
 
