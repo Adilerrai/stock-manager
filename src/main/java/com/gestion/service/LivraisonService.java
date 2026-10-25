@@ -270,7 +270,7 @@ public class LivraisonService {
 
     public List<Livraison> getAllLivraisons() {
         Long tenantId = TenantContext.getCurrentTenant();
-        return livraisonRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        return livraisonRepository.findByPointDeVenteIdAndStatutNot(tenantId != null ? tenantId : 1L, StatutLivraison.ANNULEE);
     }
 
     public org.springframework.data.domain.Page<Livraison> searchLivraisons(LivraisonSearchCriteria criteria, org.springframework.data.domain.Pageable pageable) {

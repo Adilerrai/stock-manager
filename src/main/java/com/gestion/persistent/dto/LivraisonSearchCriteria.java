@@ -12,11 +12,14 @@ public class LivraisonSearchCriteria {
     private LocalDateTime dateDebutLivraison;
     private LocalDateTime dateFinLivraison;
     private Long societeId;
+    private Boolean inclureAnnulees;
 
     // Constructors
     public LivraisonSearchCriteria() {}
 
     // Getters et Setters
+    public Boolean getInclureAnnulees() { return inclureAnnulees; }
+    public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
     public String getNumeroLivraison() { return numeroLivraison; }
     public void setNumeroLivraison(String numeroLivraison) { this.numeroLivraison = numeroLivraison; }
 

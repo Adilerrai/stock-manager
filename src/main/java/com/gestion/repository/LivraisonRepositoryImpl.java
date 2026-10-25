@@ -2,6 +2,7 @@ package com.gestion.repository;
 
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.LivraisonSearchCriteria;
+import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.model.Livraison;
 import com.gestion.persistent.model.Commande;
 import jakarta.persistence.EntityManager;
@@ -92,6 +93,7 @@ public class LivraisonRepositoryImpl implements LivraisonRepositoryCustom {
         }
 
         if (criteria == null) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutLivraison.ANNULEE));
             return predicates;
         }
 
@@ -116,6 +118,8 @@ public class LivraisonRepositoryImpl implements LivraisonRepositoryCustom {
 
         if (criteria.getStatut() != null) {
             predicates.add(cb.equal(root.get("statut"), criteria.getStatut()));
+        } else if (!Boolean.TRUE.equals(criteria.getInclureAnnulees())) {
+            predicates.add(cb.notEqual(root.get("statut"), StatutLivraison.ANNULEE));
         }
 
         if (criteria.getDateDebutLivraison() != null) {

@@ -78,8 +78,8 @@ public class LivraisonRetardService {
             if (c.getStatut() == StatutCommande.ANNULEE) continue;
             if (c.getStatut() == StatutCommande.LIVREE && c.getStatutLivraison() == StatutLivraison.LIVREE) continue;
 
-            // BLs liés
-            List<Livraison> livs = livraisonRepository.findByCommande_Id(c.getId());
+            // BLs liés (non annulés)
+            List<Livraison> livs = livraisonRepository.findByCommande_IdAndStatutNot(c.getId(), StatutLivraison.ANNULEE);
             String numeroBl = (livs != null && !livs.isEmpty())
                     ? livs.stream().map(Livraison::getNumeroLivraison).filter(Objects::nonNull).collect(Collectors.joining(", "))
                     : "-";
