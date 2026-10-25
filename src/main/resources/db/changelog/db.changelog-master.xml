@@ -136,6 +136,9 @@
     <!-- Changeset 042 : Index de performance pour recherches règlements fournisseur (ReglementFournisseurSearchCriteria) -->
     <include file="changes/042-add-reglement-fournisseur-search-indexes.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 043 : Index de performance pour recherche par numéro de commande externe (BC client externe) -->
+    <include file="changes/043-add-cmd-client-num-externe-index.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

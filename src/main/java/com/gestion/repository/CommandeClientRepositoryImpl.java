@@ -24,7 +24,7 @@ public class CommandeClientRepositoryImpl implements CommandeClientRepositoryCus
     private EntityManager entityManager;
 
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
-            "id", "numeroCommande", "dateCommande", "dateLivraisonPrevue",
+            "id", "numeroCommande", "numeroCommandeExterne", "dateCommande", "dateLivraisonPrevue",
             "montantHT", "montantTTC", "statut", "clientNom"
     );
 
@@ -87,6 +87,10 @@ public class CommandeClientRepositoryImpl implements CommandeClientRepositoryCus
 
         if (criteria.getNumeroCommande() != null && !criteria.getNumeroCommande().trim().isEmpty()) {
             predicates.add(cb.like(cb.lower(root.get("numeroCommande")), "%" + criteria.getNumeroCommande().trim().toLowerCase() + "%"));
+        }
+
+        if (criteria.getNumeroCommandeExterne() != null && !criteria.getNumeroCommandeExterne().trim().isEmpty()) {
+            predicates.add(cb.like(cb.lower(root.get("numeroCommandeExterne")), "%" + criteria.getNumeroCommandeExterne().trim().toLowerCase() + "%"));
         }
 
         if (criteria.getClientNom() != null && !criteria.getClientNom().trim().isEmpty()) {

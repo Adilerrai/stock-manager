@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 043 : Index de performance pour la recherche sur numero_commande_externe (BC client externe)
+    -->
+
+    <!-- Index B-tree composite : filtre point_de_vente_id + numero_commande_externe -->
+    <changeSet id="043-a-add-cmd-client-num-externe-btree-index" author="erp-pointvente" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <sql splitStatements="true"><![CDATA[
+            CREATE INDEX IF NOT EXISTS idx_cmd_client_pdv_num_ext ON commandes_client (point_de_vente_id, numero_commande_externe);
+        ]]></sql>
+    </changeSet>
+
+    <!-- Index GIN trigram pour la recherche ILIKE '%...%' insensible à la casse -->
+    <changeSet id="043-b-add-cmd-client-num-externe-trigram-index" author="erp-pointvente" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM pg_available_extensions WHERE name = 'pg_trgm'</sqlCheck>
+        </preConditions>
+        <sql splitStatements="true"><![CDATA[
+            CREATE EXTENSION IF NOT EXISTS pg_trgm;
+            CREATE INDEX IF NOT EXISTS idx_trgm_cmd_client_num_ext ON commandes_client USING gin (lower(numero_commande_externe) gin_trgm_ops);
+        ]]></sql>
+    </changeSet>
+
+</databaseChangeLog>

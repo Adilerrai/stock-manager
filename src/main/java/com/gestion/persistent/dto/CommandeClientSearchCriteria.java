@@ -9,6 +9,9 @@ import java.time.LocalDateTime;
  */
 public class CommandeClientSearchCriteria {
     private String numeroCommande;
+    private String numeroCommandeExterne;
+    private String bcClient;
+    private String referenceClient;
     private String clientNom;
     private String clientTelephone;
     private Long clientId;
@@ -27,6 +30,46 @@ public class CommandeClientSearchCriteria {
 
     public String getNumeroCommande() { return numeroCommande; }
     public void setNumeroCommande(String numeroCommande) { this.numeroCommande = numeroCommande; }
+
+    public String getNumeroCommandeExterne() {
+        if (numeroCommandeExterne != null && !numeroCommandeExterne.trim().isEmpty()) {
+            return numeroCommandeExterne;
+        }
+        if (bcClient != null && !bcClient.trim().isEmpty()) {
+            return bcClient;
+        }
+        return referenceClient;
+    }
+    public void setNumeroCommandeExterne(String numeroCommandeExterne) {
+        this.numeroCommandeExterne = numeroCommandeExterne;
+    }
+
+    public String getBcClient() {
+        return getNumeroCommandeExterne();
+    }
+    public void setBcClient(String bcClient) {
+        this.bcClient = bcClient;
+        if (this.numeroCommandeExterne == null) {
+            this.numeroCommandeExterne = bcClient;
+        }
+    }
+
+    public String getReferenceClient() {
+        return getNumeroCommandeExterne();
+    }
+    public void setReferenceClient(String referenceClient) {
+        this.referenceClient = referenceClient;
+        if (this.numeroCommandeExterne == null) {
+            this.numeroCommandeExterne = referenceClient;
+        }
+    }
+
+    public String getBcClientExterne() {
+        return getNumeroCommandeExterne();
+    }
+    public void setBcClientExterne(String bcClientExterne) {
+        setBcClient(bcClientExterne);
+    }
 
     public String getClientNom() { return clientNom; }
     public void setClientNom(String clientNom) { this.clientNom = clientNom; }

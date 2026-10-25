@@ -10,6 +10,11 @@ import java.util.List;
 @Entity
 @Table(name = "commandes_client", uniqueConstraints = {
     @UniqueConstraint(name = "uk_commandes_client_tenant_numero", columnNames = {"point_de_vente_id", "numero_commande"})
+}, indexes = {
+    @Index(name = "idx_cmd_client_pdv_date", columnList = "point_de_vente_id, date_commande DESC"),
+    @Index(name = "idx_cmd_client_pdv_id", columnList = "point_de_vente_id, id DESC"),
+    @Index(name = "idx_cmd_client_client_date", columnList = "client_id, date_commande DESC"),
+    @Index(name = "idx_cmd_client_pdv_num_ext", columnList = "point_de_vente_id, numero_commande_externe")
 })
 public class CommandeClient {
     @Id
