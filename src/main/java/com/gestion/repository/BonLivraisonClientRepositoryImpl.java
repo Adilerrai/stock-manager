@@ -4,6 +4,8 @@ import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.BonLivraisonClientSearchCriteria;
 import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.model.BonLivraisonClient;
+import com.gestion.persistent.model.Client;
+import com.gestion.persistent.model.CommandeClient;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -23,7 +25,7 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
     private EntityManager entityManager;
 
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
-            "id", "numeroBL", "numeroBl", "dateBl", "statut"
+            "id", "numeroBL", "numeroBl", "dateBl", "statut", "montantTotal", "clientNom", "client"
     );
 
     @Override
@@ -37,7 +39,7 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
         root.fetch("commandeClient", JoinType.LEFT);
         root.fetch("facture", JoinType.LEFT);
 
-        List<Predicate> predicates = buildPredicates(cb, root, criteria);
+        List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
 
         if (pageable.getSort().isSorted()) {
@@ -45,8 +47,12 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
             pageable.getSort().forEach(order -> {
                 String prop = order.getProperty();
                 if (ALLOWED_SORT_PROPERTIES.contains(prop)) {
-                    String actualProp = "numeroBL".equals(prop) ? "numeroBl" : prop;
-                    orders.add(order.isAscending() ? cb.asc(root.get(actualProp)) : cb.desc(root.get(actualProp)));
+                    if ("clientNom".equals(prop) || "client".equals(prop)) {
+                        orders.add(order.isAscending() ? cb.asc(root.get("client").get("nom")) : cb.desc(root.get("client").get("nom")));
+                    } else {
+                        String actualProp = "numeroBL".equals(prop) ? "numeroBl" : prop;
+                        orders.add(order.isAscending() ? cb.asc(root.get(actualProp)) : cb.desc(root.get(actualProp)));
+                    }
                 }
             });
             if (!orders.isEmpty()) {
@@ -65,14 +71,14 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<BonLivraisonClient> countRoot = countQuery.from(BonLivraisonClient.class);
-        List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria);
+        List<Predicate> countPredicates = buildPredicates(cb, countQuery, countRoot, criteria);
         countQuery.select(cb.count(countRoot)).where(countPredicates.toArray(new Predicate[0]));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(results, pageable, total);
     }
 
-    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<BonLivraisonClient> root, BonLivraisonClientSearchCriteria criteria) {
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, CommonAbstractCriteria query, Root<BonLivraisonClient> root, BonLivraisonClientSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
         Long tenantId = (criteria != null && criteria.getSocieteId() != null)
@@ -89,16 +95,94 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
             return predicates;
         }
 
-        if (criteria.getNumeroBL() != null && !criteria.getNumeroBL().trim().isEmpty()) {
-            predicates.add(cb.like(cb.lower(root.get("numeroBL")), "%" + criteria.getNumeroBL().trim().toLowerCase() + "%"));
+        String numBl = criteria.getNumeroBl();
+        if (numBl != null && !numBl.trim().isEmpty()) {
+            predicates.add(cb.like(cb.lower(root.get("numeroBl")), "%" + numBl.trim().toLowerCase() + "%"));
+        }
+
+        String numCmd = criteria.getNumeroCommande();
+        String numCmdExt = criteria.getNumeroCommandeExterne();
+        if (numCmd != null && !numCmd.trim().isEmpty()) {
+            String cmdPattern = "%" + numCmd.trim().toLowerCase() + "%";
+            Path<CommandeClient> directCmd = root.get("commandeClient");
+            Predicate directMatch = cb.and(
+                    cb.isNotNull(directCmd),
+                    cb.or(
+                            cb.like(cb.lower(directCmd.get("numeroCommande")), cmdPattern),
+                            cb.and(
+                                    cb.isNotNull(directCmd.get("numeroCommandeExterne")),
+                                    cb.like(cb.lower(directCmd.get("numeroCommandeExterne")), cmdPattern)
+                            )
+                    )
+            );
+
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<BonLivraisonClient> subRoot = subquery.from(BonLivraisonClient.class);
+            Join<BonLivraisonClient, CommandeClient> cmdJoin = subRoot.join("commandes");
+            subquery.select(cb.literal(1L));
+            subquery.where(
+                    cb.equal(subRoot.get("id"), root.get("id")),
+                    cb.or(
+                            cb.like(cb.lower(cmdJoin.get("numeroCommande")), cmdPattern),
+                            cb.and(
+                                    cb.isNotNull(cmdJoin.get("numeroCommandeExterne")),
+                                    cb.like(cb.lower(cmdJoin.get("numeroCommandeExterne")), cmdPattern)
+                            )
+                    )
+            );
+
+            predicates.add(cb.or(directMatch, cb.exists(subquery)));
+        } else if (numCmdExt != null && !numCmdExt.trim().isEmpty()) {
+            String cmdExtPattern = "%" + numCmdExt.trim().toLowerCase() + "%";
+            Path<CommandeClient> directCmd = root.get("commandeClient");
+            Predicate directMatch = cb.and(
+                    cb.isNotNull(directCmd),
+                    cb.isNotNull(directCmd.get("numeroCommandeExterne")),
+                    cb.like(cb.lower(directCmd.get("numeroCommandeExterne")), cmdExtPattern)
+            );
+
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<BonLivraisonClient> subRoot = subquery.from(BonLivraisonClient.class);
+            Join<BonLivraisonClient, CommandeClient> cmdJoin = subRoot.join("commandes");
+            subquery.select(cb.literal(1L));
+            subquery.where(
+                    cb.equal(subRoot.get("id"), root.get("id")),
+                    cb.and(
+                            cb.isNotNull(cmdJoin.get("numeroCommandeExterne")),
+                            cb.like(cb.lower(cmdJoin.get("numeroCommandeExterne")), cmdExtPattern)
+                    )
+            );
+
+            predicates.add(cb.or(directMatch, cb.exists(subquery)));
+        }
+
+        if (criteria.getCommandeClientId() != null) {
+            Long targetCmdId = criteria.getCommandeClientId();
+            Predicate directCmdIdMatch = cb.equal(root.get("commandeClient").get("id"), targetCmdId);
+
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<BonLivraisonClient> subRoot = subquery.from(BonLivraisonClient.class);
+            Join<BonLivraisonClient, CommandeClient> cmdJoin = subRoot.join("commandes");
+            subquery.select(cb.literal(1L));
+            subquery.where(
+                    cb.equal(subRoot.get("id"), root.get("id")),
+                    cb.equal(cmdJoin.get("id"), targetCmdId)
+            );
+
+            predicates.add(cb.or(directCmdIdMatch, cb.exists(subquery)));
         }
 
         if (criteria.getClientId() != null) {
             predicates.add(cb.equal(root.get("client").get("id"), criteria.getClientId()));
         }
 
-        if (criteria.getCommandeClientId() != null) {
-            predicates.add(cb.equal(root.get("commandeClient").get("id"), criteria.getCommandeClientId()));
+        if (criteria.getClientNom() != null && !criteria.getClientNom().trim().isEmpty()) {
+            String clientPattern = "%" + criteria.getClientNom().trim().toLowerCase() + "%";
+            Path<Client> clientPath = root.get("client");
+            predicates.add(cb.or(
+                    cb.like(cb.lower(clientPath.get("nom")), clientPattern),
+                    cb.like(cb.lower(clientPath.get("nomComplet")), clientPattern)
+            ));
         }
 
         if (criteria.getStatut() != null) {

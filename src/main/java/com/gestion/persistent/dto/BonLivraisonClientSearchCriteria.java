@@ -4,7 +4,13 @@ import com.gestion.persistent.enums.StatutLivraison;
 import java.time.LocalDateTime;
 
 public class BonLivraisonClientSearchCriteria {
+    private String numeroBl;
     private String numeroBL;
+    private String numeroCommande;
+    private String numeroCommandeClient;
+    private String numeroCommandeExterne;
+    private String bcClient;
+    private String clientNom;
     private Long clientId;
     private Long commandeClientId;
     private StatutLivraison statut;
@@ -19,8 +25,77 @@ public class BonLivraisonClientSearchCriteria {
     public Boolean getInclureAnnulees() { return inclureAnnulees; }
     public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
 
-    public String getNumeroBL() { return numeroBL; }
-    public void setNumeroBL(String numeroBL) { this.numeroBL = numeroBL; }
+    public String getNumeroBl() {
+        if (numeroBl != null && !numeroBl.trim().isEmpty()) {
+            return numeroBl;
+        }
+        return numeroBL;
+    }
+    public void setNumeroBl(String numeroBl) {
+        this.numeroBl = numeroBl;
+        if (this.numeroBL == null) {
+            this.numeroBL = numeroBl;
+        }
+    }
+
+    public String getNumeroBL() {
+        return getNumeroBl();
+    }
+    public void setNumeroBL(String numeroBL) {
+        this.numeroBL = numeroBL;
+        if (this.numeroBl == null) {
+            this.numeroBl = numeroBL;
+        }
+    }
+
+    public String getNumeroCommande() {
+        if (numeroCommande != null && !numeroCommande.trim().isEmpty()) {
+            return numeroCommande;
+        }
+        return numeroCommandeClient;
+    }
+    public void setNumeroCommande(String numeroCommande) {
+        this.numeroCommande = numeroCommande;
+        if (this.numeroCommandeClient == null) {
+            this.numeroCommandeClient = numeroCommande;
+        }
+    }
+
+    public String getNumeroCommandeClient() {
+        return getNumeroCommande();
+    }
+    public void setNumeroCommandeClient(String numeroCommandeClient) {
+        this.numeroCommandeClient = numeroCommandeClient;
+        if (this.numeroCommande == null) {
+            this.numeroCommande = numeroCommandeClient;
+        }
+    }
+
+    public String getNumeroCommandeExterne() {
+        if (numeroCommandeExterne != null && !numeroCommandeExterne.trim().isEmpty()) {
+            return numeroCommandeExterne;
+        }
+        return bcClient;
+    }
+    public void setNumeroCommandeExterne(String numeroCommandeExterne) {
+        this.numeroCommandeExterne = numeroCommandeExterne;
+        if (this.bcClient == null) {
+            this.bcClient = numeroCommandeExterne;
+        }
+    }
+
+    public String getBcClient() {
+        return getNumeroCommandeExterne();
+    }
+    public void setBcClient(String bcClient) {
+        this.bcClient = bcClient;
+        if (this.numeroCommandeExterne == null) {
+            this.numeroCommandeExterne = bcClient;
+        }
+    }
+
+    public String getClientNom() { return clientNom; }
+    public void setClientNom(String clientNom) { this.clientNom = clientNom; }
 
     public Long getClientId() { return clientId; }
     public void setClientId(Long clientId) { this.clientId = clientId; }
