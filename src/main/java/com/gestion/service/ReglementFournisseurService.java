@@ -5,6 +5,9 @@ import com.gestion.persistent.model.FactureAchat;
 import com.gestion.persistent.model.ReglementFournisseur;
 import com.gestion.repository.ReglementFournisseurRepository;
 import com.gestion.persistent.enums.ModePaiement;
+import com.gestion.persistent.dto.ReglementFournisseurSearchCriteria;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -117,6 +120,14 @@ public class ReglementFournisseurService {
     public List<ReglementFournisseur> getReglementsByFacture(Long factureId) {
         Long tenantId = TenantContext.getCurrentTenant();
         return reglementFournisseurRepository.findByFactureAchatIdAndPointDeVenteId(factureId, tenantId != null ? tenantId : 1L);
+    }
+
+    public Page<ReglementFournisseur> searchReglements(ReglementFournisseurSearchCriteria criteria, Pageable pageable) {
+        return reglementFournisseurRepository.findByCriteria(criteria, pageable);
+    }
+
+    public List<ReglementFournisseur> searchReglements(ReglementFournisseurSearchCriteria criteria) {
+        return reglementFournisseurRepository.findByCriteria(criteria);
     }
 
     private String genererNumeroReglement() {

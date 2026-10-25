@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ReglementFournisseurRepository extends JpaRepository<ReglementFournisseur, Long> {
+public interface ReglementFournisseurRepository extends JpaRepository<ReglementFournisseur, Long>, ReglementFournisseurRepositoryCustom {
     List<ReglementFournisseur> findByPointDeVenteId(Long pointDeVenteId);
     Optional<ReglementFournisseur> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
     @org.springframework.data.jpa.repository.Query("SELECT r FROM ReglementFournisseur r WHERE r.factureAchat.id = :factureAchatId AND r.pointDeVenteId = :pointDeVenteId")

@@ -6,7 +6,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "reglements_fournisseur")
+@Table(name = "reglements_fournisseur", indexes = {
+    @Index(name = "idx_regl_frn_pdv_date", columnList = "point_de_vente_id, date_reglement DESC"),
+    @Index(name = "idx_regl_frn_pdv_id", columnList = "point_de_vente_id, id DESC"),
+    @Index(name = "idx_regl_frn_facture", columnList = "facture_achat_id"),
+    @Index(name = "idx_regl_frn_pdv_mode", columnList = "point_de_vente_id, mode_paiement"),
+    @Index(name = "idx_regl_frn_pdv_echeance", columnList = "point_de_vente_id, date_echeance")
+})
 public class ReglementFournisseur {
 
     @Id

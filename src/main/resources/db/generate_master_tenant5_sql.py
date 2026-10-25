@@ -12,7 +12,7 @@ from datetime import datetime
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
 
 BASE_URL = 'https://sit-transmission1.odoo.com'
-COOKIE = 'frontend_lang=fr_FR; tz=Africa/Casablanca; cids=1; color_scheme=dark; session_id=naZo4NYbCnDa5CR5XxKBGoFVBfHia4rlbrNOlACz3221groCGfB0H4mc2iC9T4HEB8U6eCYVuxN-x31aqYUoQg'
+COOKIE = 'cids=1; color_scheme=dark; frontend_lang=fr_FR; tz=Africa/Casablanca; session_id=-Tm7b-536YN6UsmBk-cy0XkBA8MJ5glay5q00VXsd60XX04VNX8nyYFz0KgqGIBQkeKZDtQ-GixueFQTaMwbnw'
 
 HEADERS = {
     'Accept': 'application/json',
@@ -205,92 +205,12 @@ def generate():
     sql_lines.append("-- =============================================================================")
     sql_lines.append(f"-- SCRIPT MASTER D'IMPORTATION ODOO -> TENANT #{TENANT_ID} : {TENANT_NAME}")
     sql_lines.append(f"-- Généré le : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    sql_lines.append("-- PRÉSERVE INTÉGRALEMENT LES PRODUITS, CLIENTS, FOURNISSEURS DU CLOUD VPS")
+    sql_lines.append("-- ZÉRO SUPPRESSION (AUCUN DELETE FROM), INSERTIONS SANS DOUBLONS")
     sql_lines.append("-- ISOLATION MULTI-TENANT : Impacte UNIQUEMENT point_de_vente_id = 5")
     sql_lines.append("-- SÉCURITÉ : Ne touche PAS aux autres tenants (1, 2, 3, 4) et NE TOUCHE PAS à la table USERS")
     sql_lines.append("-- =============================================================================\n")
     sql_lines.append("BEGIN;\n")
-
-    # 0. Nettoyage ciblé exclusivement sur le Tenant 5 (sans toucher aux autres tenants ni aux users)
-    sql_lines.append("-- -----------------------------------------------------------------------------")
-    sql_lines.append(f"-- 0. RÉINITIALISATION CIBLÉE SUR LE TENANT #{TENANT_ID} (AUCUN IMPACT AUTRES TENANTS)")
-    sql_lines.append("-- -----------------------------------------------------------------------------")
-    sql_lines.append(f"""
--- 1. Comparateur & Demandes de prix
-DELETE FROM lignes_offre_fournisseur WHERE offre_fournisseur_id IN (SELECT id FROM offres_fournisseurs WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM offres_fournisseurs WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM lignes_demande_prix WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM demandes_prix WHERE point_de_vente_id = {TENANT_ID};
-
--- 2. Factures d'achat, règlements fournisseur, chèques & effets
-DELETE FROM lignes_facture_achat WHERE facture_achat_id IN (SELECT id FROM factures_achat WHERE point_de_vente_id = {TENANT_ID}) 
-   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM reglements_fournisseur WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM factures_achat WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM cheques_effets WHERE point_de_vente_id = {TENANT_ID};
-
--- 3. Ventes, Factures clients, Paiements, Devis, Commandes clients, BLs clients, Avoirs
-DELETE FROM paiement_affectations WHERE paiement_id IN (SELECT id FROM paiements WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM paiements WHERE point_de_vente_id = {TENANT_ID} OR facture_id IN (SELECT id FROM factures WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM lignes_facture WHERE facture_id IN (SELECT id FROM factures WHERE point_de_vente_id = {TENANT_ID}) 
-   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM factures WHERE point_de_vente_id = {TENANT_ID};
-
-DELETE FROM bons_livraison_client_commandes WHERE bon_livraison_id IN (SELECT id FROM bons_livraison_client WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM lignes_bon_livraison_client WHERE bon_livraison_client_id IN (SELECT id FROM bons_livraison_client WHERE point_de_vente_id = {TENANT_ID})
-   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM bons_livraison_client WHERE point_de_vente_id = {TENANT_ID};
-
-DELETE FROM lignes_commande_client WHERE commande_client_id IN (SELECT id FROM commandes_client WHERE point_de_vente_id = {TENANT_ID})
-   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM commandes_client WHERE point_de_vente_id = {TENANT_ID};
-
-DELETE FROM lignes_bon_preparation WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM bons_preparation WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM lignes_vente WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM ventes WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM lignes_devis WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM devis WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM lignes_avoir WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM avoirs WHERE point_de_vente_id = {TENANT_ID};
-
--- 4. Transferts & Inventaires
-DELETE FROM lignes_transfert_stock WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM transferts_stock WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM lignes_inventaire WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM inventaires WHERE point_de_vente_id = {TENANT_ID};
-
--- 5. Réceptions & Lignes de réceptions (Livraisons)
-DELETE FROM lignes_livraison WHERE livraison_id IN (SELECT id FROM livraisons WHERE point_de_vente_id = {TENANT_ID})
-   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM livraisons WHERE point_de_vente_id = {TENANT_ID};
-
--- 6. Commandes d'achat & Lignes de commande
-DELETE FROM lignes_commande WHERE commande_id IN (SELECT id FROM commandes WHERE point_de_vente_id = {TENANT_ID})
-   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM commandes WHERE point_de_vente_id = {TENANT_ID};
-
--- 7. Stocks, Mouvements, Lots & Variantes
-DELETE FROM mouvements_stock WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM lots WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM stock_qualites WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM stocks WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
-DELETE FROM produit_images WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
--- 8. Module CRM & Clients du Tenant {TENANT_ID}
-DELETE FROM crm_activites WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM crm_taches WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM crm_rapports_visite WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM crm_visites WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM crm_opportunites WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM crm_contacts WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM crm_entreprises WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM clients WHERE point_de_vente_id = {TENANT_ID};
-
--- 9. Produits, Fournisseurs & Catégories du Tenant {TENANT_ID}
-DELETE FROM produits WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM fournisseurs WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM categories WHERE point_de_vente_id = {TENANT_ID};
-DELETE FROM depots WHERE point_de_vente_id = {TENANT_ID};
-""")
 
     # 1. Validation Point de Vente / Tenant #5
     sql_lines.append("-- -----------------------------------------------------------------------------")
@@ -455,8 +375,9 @@ ON CONFLICT DO NOTHING;
         sql_lines.append(
             f"INSERT INTO fournisseurs (raison_social, adresse, ville, code_postal, pays, ice, email, telephone, "
             f"point_de_vente_id, actif, type_fournisseur, devise, date_creation) "
-            f"VALUES ('{e_nom}', {e_adr}, {e_vil}, {e_cp}, {e_pay}, {e_ice}, {e_em}, {e_tel}, "
-            f"{TENANT_ID}, TRUE, '{type_frn}', '{default_devise}', CURRENT_TIMESTAMP);"
+            f"SELECT '{e_nom}', {e_adr}, {e_vil}, {e_cp}, {e_pay}, {e_ice}, {e_em}, {e_tel}, "
+            f"{TENANT_ID}, TRUE, '{type_frn}', '{default_devise}', CURRENT_TIMESTAMP "
+            f"WHERE NOT EXISTS (SELECT 1 FROM fournisseurs WHERE raison_social = '{e_nom}' AND point_de_vente_id = {TENANT_ID});"
         )
 
     print(f"Classification des fournisseurs : {nat_count} Nationaux, {inter_count} Internationaux.")
@@ -606,13 +527,15 @@ ON CONFLICT DO NOTHING;
             f"unite_mesure_stock, stock_minimum, point_de_vente_id, actif, date_creation) "
             f"VALUES ('{e_ref}', '{e_designation}', '{e_description}', {e_cb}, {cat_subquery}, {e_cat_nom}, {e_grp_nom}, "
             f"{pa:.2f}, {pa:.2f}, {pv:.2f}, {pv:.2f}, {pa:.2f}, {pv:.2f}, "
-            f"'{unite}', 0.00, {TENANT_ID}, TRUE, CURRENT_TIMESTAMP);"
+            f"'{unite}', 0.00, {TENANT_ID}, TRUE, CURRENT_TIMESTAMP) "
+            f"ON CONFLICT (point_de_vente_id, reference) DO NOTHING;"
         )
 
         sql_lines.append(
             f"INSERT INTO stocks (produit_id, quantite_disponible, quantite_reservee, seuil_alerte, derniere_maj) "
-            f"VALUES ((SELECT id FROM produits WHERE reference = '{e_ref}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
-            f"{qte_stock:.2f}, 0.00, 0.00, CURRENT_TIMESTAMP);"
+            f"SELECT (SELECT id FROM produits WHERE reference = '{e_ref}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
+            f"{qte_stock:.2f}, 0.00, 0.00, CURRENT_TIMESTAMP "
+            f"WHERE NOT EXISTS (SELECT 1 FROM stocks WHERE produit_id = (SELECT id FROM produits WHERE reference = '{e_ref}' AND point_de_vente_id = {TENANT_ID} LIMIT 1));"
         )
 
     sql_lines.append("")
@@ -864,7 +787,8 @@ ON CONFLICT DO NOTHING;
             f"INSERT INTO livraisons (numero_livraison, commande_id, date_livraison, statut, "
             f"montant_total, observations, point_de_vente_id) "
             f"VALUES ('{e_bl}', {po_subquery}, {dt_liv}, '{statut}', "
-            f"{montant_total:.2f}, '{e_obs}', {TENANT_ID});"
+            f"{montant_total:.2f}, '{e_obs}', {TENANT_ID}) "
+            f"ON CONFLICT DO NOTHING;"
         )
 
         for m in p_moves:

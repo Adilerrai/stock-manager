@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 042 : Index de performance pour les recherches paginées de règlements fournisseur (ReglementFournisseurSearchCriteria)
+    -->
+
+    <!-- ===================================================================== -->
+    <!-- 042-a : Index B-tree composites (tenant / tri / FK filtrées)          -->
+    <!-- ===================================================================== -->
+    <changeSet id="042-a-add-reglement-fournisseur-btree-indexes" author="erp-pointvente" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <sql splitStatements="true"><![CDATA[
+            -- REGLEMENTS FOURNISSEUR (ReglementFournisseurSearchCriteria) : tri date_reglement DESC ou id DESC
+            CREATE INDEX IF NOT EXISTS idx_regl_frn_pdv_date      ON reglements_fournisseur (point_de_vente_id, date_reglement DESC);
+            CREATE INDEX IF NOT EXISTS idx_regl_frn_pdv_id        ON reglements_fournisseur (point_de_vente_id, id DESC);
+            CREATE INDEX IF NOT EXISTS idx_regl_frn_facture       ON reglements_fournisseur (facture_achat_id);
+            CREATE INDEX IF NOT EXISTS idx_regl_frn_pdv_mode      ON reglements_fournisseur (point_de_vente_id, mode_paiement, date_reglement DESC);
+            CREATE INDEX IF NOT EXISTS idx_regl_frn_pdv_echeance  ON reglements_fournisseur (point_de_vente_id, date_echeance);
+
+            -- FACTURES ACHAT : filtres fournisseur et tenant pour les jointures
+            CREATE INDEX IF NOT EXISTS idx_factures_achat_fournisseur ON factures_achat (fournisseur_id);
+            CREATE INDEX IF NOT EXISTS idx_factures_achat_pdv_date    ON factures_achat (point_de_vente_id, date_facture DESC);
+        ]]></sql>
+    </changeSet>
+
+    <!-- ===================================================================== -->
+    <!-- 042-b : Index GIN trigram pour LOWER(col) LIKE '%...%'                -->
+    <!-- Ignore (MARK_RAN) si pg_trgm n'est pas disponible sur le serveur.     -->
+    <!-- ===================================================================== -->
+    <changeSet id="042-b-add-reglement-fournisseur-trigram-indexes" author="erp-pointvente" runOnChange="true">
+        <validCheckSum>ANY</validCheckSum>
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+            <sqlCheck expectedResult="1">SELECT COUNT(*) FROM pg_available_extensions WHERE name = 'pg_trgm'</sqlCheck>
+        </preConditions>
+        <sql splitStatements="true"><![CDATA[
+            CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+            -- Règlements fournisseur : recherche textuelle insensible à la casse
+            CREATE INDEX IF NOT EXISTS idx_trgm_regl_frn_numero ON reglements_fournisseur USING gin (lower(numero_reglement) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_regl_frn_ref    ON reglements_fournisseur USING gin (lower(reference_paiement) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_regl_frn_cheque ON reglements_fournisseur USING gin (lower(numero_cheque) gin_trgm_ops);
+            CREATE INDEX IF NOT EXISTS idx_trgm_regl_frn_banque ON reglements_fournisseur USING gin (lower(nom_banque) gin_trgm_ops);
+
+            -- Factures achat : recherche numero_facture
+            CREATE INDEX IF NOT EXISTS idx_trgm_fact_achat_num  ON factures_achat         USING gin (lower(numero_facture) gin_trgm_ops);
+        ]]></sql>
+    </changeSet>
+
+</databaseChangeLog>
