@@ -41,13 +41,18 @@ public class LigneTransfertStockDTO {
     public void setQuantiteRecue(BigDecimal quantiteRecue) { this.quantiteRecue = quantiteRecue; }
 
     public BigDecimal getQuantite() {
-        return quantite != null ? quantite : quantiteDemandee;
+        if (quantite != null) return quantite;
+        if (quantiteExpediee != null) return quantiteExpediee;
+        return quantiteDemandee;
     }
 
     public void setQuantite(BigDecimal quantite) {
         this.quantite = quantite;
         if (this.quantiteDemandee == null) {
             this.quantiteDemandee = quantite;
+        }
+        if (this.quantiteExpediee == null) {
+            this.quantiteExpediee = quantite;
         }
     }
 

@@ -80,6 +80,7 @@ public class ImpressionService {
     private final LivraisonRepository livraisonRepository;
     private final FactureAchatRepository factureAchatRepository;
     private final TresorerieService tresorerieService;
+    private final TransfertStockRepository transfertStockRepository;
 
     public ImpressionService(EntrepriseProfileService entrepriseProfileService,
             FactureRepository factureRepository,
@@ -93,7 +94,8 @@ public class ImpressionService {
             ChequeEffetRepository chequeEffetRepository,
             LivraisonRepository livraisonRepository,
             FactureAchatRepository factureAchatRepository,
-            @org.springframework.context.annotation.Lazy TresorerieService tresorerieService) {
+            @org.springframework.context.annotation.Lazy TresorerieService tresorerieService,
+            TransfertStockRepository transfertStockRepository) {
         this.entrepriseProfileService = entrepriseProfileService;
         this.factureRepository = factureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -107,6 +109,7 @@ public class ImpressionService {
         this.livraisonRepository = livraisonRepository;
         this.factureAchatRepository = factureAchatRepository;
         this.tresorerieService = tresorerieService;
+        this.transfertStockRepository = transfertStockRepository;
     }
 
     // ==========================================
@@ -877,6 +880,67 @@ public class ImpressionService {
         }
 
         return exportToPdf("releve_compte_fournisseur", params, lignes);
+    }
+
+    // ==========================================
+    // 12. Impression Bon de Transfert de Stock
+    // ==========================================
+    public byte[] genererTransfertStockPdf(Long transfertId) {
+        TransfertStock transfert = transfertStockRepository.findByIdWithDetails(transfertId)
+                .orElseThrow(() -> new RuntimeException("Transfert de stock non trouvé avec l'id: " + transfertId));
+
+        Map<String, Object> params = initCommonTenantParams();
+        params.put("numeroTransfert", transfert.getNumeroTransfert());
+        params.put("dateTransfert", transfert.getDateTransfert() != null ? transfert.getDateTransfert().format(DATE_FORMATTER) : "-");
+        params.put("dateExpedition", transfert.getDateExpedition() != null ? transfert.getDateExpedition().format(DATETIME_FORMATTER) : "-");
+        params.put("dateReception", transfert.getDateReception() != null ? transfert.getDateReception().format(DATE_FORMATTER) : "-");
+        params.put("statut", transfert.getStatut() != null ? transfert.getStatut().toString() : "BROUILLON");
+        params.put("depotSourceNom", transfert.getDepotSource() != null ? transfert.getDepotSource().getNom() : "-");
+        params.put("depotDestinationNom", transfert.getDepotDestination() != null ? transfert.getDepotDestination().getNom() : "-");
+        params.put("motif", transfert.getMotif() != null ? transfert.getMotif() : "-");
+        params.put("notes", transfert.getNotes() != null ? transfert.getNotes() : "");
+
+        String creePar = (transfert.getCreePar() != null)
+                ? (transfert.getCreePar().getNomComplet() != null ? transfert.getCreePar().getNomComplet() : transfert.getCreePar().getUsername())
+                : "-";
+        params.put("creeParNom", creePar);
+
+        String expediePar = (transfert.getExpediePar() != null)
+                ? (transfert.getExpediePar().getNomComplet() != null ? transfert.getExpediePar().getNomComplet() : transfert.getExpediePar().getUsername())
+                : (transfert.getValidePar() != null ? (transfert.getValidePar().getNomComplet() != null ? transfert.getValidePar().getNomComplet() : transfert.getValidePar().getUsername()) : "-");
+        params.put("expedieParNom", expediePar);
+
+        String recuPar = (transfert.getRecuPar() != null)
+                ? (transfert.getRecuPar().getNomComplet() != null ? transfert.getRecuPar().getNomComplet() : transfert.getRecuPar().getUsername())
+                : "-";
+        params.put("recuParNom", recuPar);
+
+        List<Map<String, Object>> lignes = new ArrayList<>();
+        BigDecimal totalQuantite = BigDecimal.ZERO;
+        int totalArticles = 0;
+
+        if (transfert.getLignes() != null) {
+            for (LigneTransfertStock l : transfert.getLignes()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("reference", l.getProduit() != null ? l.getProduit().getReference() : "");
+                map.put("designation", l.getProduit() != null ? l.getProduit().getDesignation() : "Article");
+                BigDecimal qte = l.getQuantite() != null ? l.getQuantite() : BigDecimal.ZERO;
+                map.put("quantite", qte);
+                map.put("quantiteDemandee", l.getQuantiteDemandee());
+                map.put("quantiteExpediee", l.getQuantiteExpediee());
+                map.put("quantiteRecue", l.getQuantiteRecue());
+                map.put("notes", l.getNotes() != null ? l.getNotes() : "");
+
+                totalQuantite = totalQuantite.add(qte);
+                totalArticles++;
+                lignes.add(map);
+            }
+        }
+
+        params.put("totalQuantite", totalQuantite);
+        params.put("totalArticles", totalArticles);
+
+        return exportToPdf("transfert_stock", params, lignes);
     }
 
     // ==========================================

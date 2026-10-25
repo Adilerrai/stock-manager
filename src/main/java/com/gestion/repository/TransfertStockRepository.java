@@ -26,4 +26,12 @@ public interface TransfertStockRepository extends JpaRepository<TransfertStock, 
 
     @Query("SELECT COUNT(t) FROM TransfertStock t WHERE t.pointDeVenteId = :tenantId AND t.numeroTransfert LIKE :prefix%")
     Long countByPrefixAndTenant(@Param("prefix") String prefix, @Param("tenantId") Long tenantId);
+
+    @Query("SELECT t FROM TransfertStock t " +
+           "LEFT JOIN FETCH t.depotSource " +
+           "LEFT JOIN FETCH t.depotDestination " +
+           "LEFT JOIN FETCH t.lignes l " +
+           "LEFT JOIN FETCH l.produit " +
+           "WHERE t.id = :id")
+    Optional<TransfertStock> findByIdWithDetails(@Param("id") Long id);
 }

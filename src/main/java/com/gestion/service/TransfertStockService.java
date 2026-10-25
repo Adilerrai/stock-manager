@@ -28,18 +28,21 @@ public class TransfertStockService {
     private final DepotRepository depotRepository;
     private final ProduitRepository produitRepository;
     private final UserRepository userRepository;
-    private final MouvementStockRepository mouvementStockRepository;
+    private final MouvementStockService mouvementStockService;
+    private final ImpressionService impressionService;
 
     public TransfertStockService(TransfertStockRepository transfertRepository,
                                  DepotRepository depotRepository,
                                  ProduitRepository produitRepository,
                                  UserRepository userRepository,
-                                 MouvementStockRepository mouvementStockRepository) {
+                                 MouvementStockService mouvementStockService,
+                                 ImpressionService impressionService) {
         this.transfertRepository = transfertRepository;
         this.depotRepository = depotRepository;
         this.produitRepository = produitRepository;
         this.userRepository = userRepository;
-        this.mouvementStockRepository = mouvementStockRepository;
+        this.mouvementStockService = mouvementStockService;
+        this.impressionService = impressionService;
     }
 
     private Long getTenantId() {
@@ -61,7 +64,7 @@ public class TransfertStockService {
 
     @Transactional(readOnly = true)
     public TransfertStockDTO getTransfertById(Long id) {
-        TransfertStock t = transfertRepository.findById(id)
+        TransfertStock t = transfertRepository.findByIdWithDetails(id)
             .orElseThrow(() -> new IllegalArgumentException("Transfert introuvable: " + id));
         return toDto(t);
     }
@@ -94,6 +97,7 @@ public class TransfertStockService {
         transfert.setDepotDestination(destination);
         transfert.setDateTransfert(dto.getDateTransfert() != null ? dto.getDateTransfert() : LocalDate.now());
         transfert.setMotif(dto.getMotif());
+        transfert.setNotes(dto.getNotes());
         transfert.setCreePar(user);
         transfert.setPointDeVenteId(tenantId);
         transfert.setDateCreation(LocalDateTime.now());
@@ -111,10 +115,82 @@ public class TransfertStockService {
             BigDecimal qte = lDto.getQuantite() != null && lDto.getQuantite().compareTo(BigDecimal.ZERO) > 0
                 ? lDto.getQuantite() : BigDecimal.ONE;
 
-            transfert.addLigne(new LigneTransfertStock(produit, qte, lDto.getNotes(), tenantId));
+            LigneTransfertStock ligne = new LigneTransfertStock(produit, qte, lDto.getNotes(), tenantId);
+            if (lDto.getQuantiteDemandee() != null) ligne.setQuantiteDemandee(lDto.getQuantiteDemandee());
+            if (lDto.getQuantiteExpediee() != null) ligne.setQuantiteExpediee(lDto.getQuantiteExpediee());
+            if (lDto.getQuantiteRecue() != null) ligne.setQuantiteRecue(lDto.getQuantiteRecue());
+            transfert.addLigne(ligne);
         }
 
         TransfertStock saved = transfertRepository.save(transfert);
+
+        if (dto.getStatut() == StatutTransfert.RECU_VALIDE) {
+            return validerTransfertDirect(saved.getId(), userId);
+        } else if (dto.getStatut() == StatutTransfert.EN_TRANSIT) {
+            return expedierTransfert(saved.getId(), userId);
+        }
+
+        return toDto(saved);
+    }
+
+    public TransfertStockDTO modifierTransfert(Long id, TransfertStockDTO dto, Long userId) {
+        TransfertStock transfert = transfertRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Transfert introuvable: " + id));
+
+        if (transfert.getStatut() != StatutTransfert.BROUILLON) {
+            throw new IllegalStateException("Seul un transfert en statut BROUILLON peut être modifié");
+        }
+
+        if (dto.getDepotSourceId() != null) {
+            Depot source = depotRepository.findById(dto.getDepotSourceId())
+                .orElseThrow(() -> new IllegalArgumentException("Dépôt source introuvable: " + dto.getDepotSourceId()));
+            transfert.setDepotSource(source);
+        }
+        if (dto.getDepotDestinationId() != null) {
+            Depot dest = depotRepository.findById(dto.getDepotDestinationId())
+                .orElseThrow(() -> new IllegalArgumentException("Dépôt destination introuvable: " + dto.getDepotDestinationId()));
+            transfert.setDepotDestination(dest);
+        }
+        if (Objects.equals(transfert.getDepotSource().getId(), transfert.getDepotDestination().getId())) {
+            throw new IllegalArgumentException("Le dépôt source et le dépôt destination doivent être distincts");
+        }
+
+        if (dto.getDateTransfert() != null) {
+            transfert.setDateTransfert(dto.getDateTransfert());
+        }
+        if (dto.getMotif() != null) {
+            transfert.setMotif(dto.getMotif());
+        }
+        if (dto.getNotes() != null) {
+            transfert.setNotes(dto.getNotes());
+        }
+
+        if (dto.getLignes() != null && !dto.getLignes().isEmpty()) {
+            transfert.getLignes().clear();
+            Long tenantId = getTenantId();
+            for (LigneTransfertStockDTO lDto : dto.getLignes()) {
+                if (lDto.getProduitId() == null) continue;
+                Produit produit = produitRepository.findById(lDto.getProduitId())
+                    .orElseThrow(() -> new IllegalArgumentException("Produit introuvable ID: " + lDto.getProduitId()));
+                BigDecimal qte = lDto.getQuantite() != null && lDto.getQuantite().compareTo(BigDecimal.ZERO) > 0
+                    ? lDto.getQuantite() : BigDecimal.ONE;
+
+                LigneTransfertStock ligne = new LigneTransfertStock(produit, qte, lDto.getNotes(), tenantId);
+                if (lDto.getQuantiteDemandee() != null) ligne.setQuantiteDemandee(lDto.getQuantiteDemandee());
+                if (lDto.getQuantiteExpediee() != null) ligne.setQuantiteExpediee(lDto.getQuantiteExpediee());
+                if (lDto.getQuantiteRecue() != null) ligne.setQuantiteRecue(lDto.getQuantiteRecue());
+                transfert.addLigne(ligne);
+            }
+        }
+
+        TransfertStock saved = transfertRepository.save(transfert);
+
+        if (dto.getStatut() == StatutTransfert.RECU_VALIDE) {
+            return validerTransfertDirect(saved.getId(), userId);
+        } else if (dto.getStatut() == StatutTransfert.EN_TRANSIT) {
+            return expedierTransfert(saved.getId(), userId);
+        }
+
         return toDto(saved);
     }
 
@@ -128,23 +204,24 @@ public class TransfertStockService {
 
         User user = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
         transfert.setValidePar(user);
+        transfert.setExpediePar(user);
+        transfert.setDateExpedition(LocalDateTime.now());
         transfert.setStatut(StatutTransfert.EN_TRANSIT);
 
-        // Sortie de stock du dépôt source
+        // Sortie de stock du dépôt source pour chaque produit
         for (LigneTransfertStock ligne : transfert.getLignes()) {
             Produit p = ligne.getProduit();
-            MouvementStock mvt = new MouvementStock();
-            mvt.setProduit(p);
-            mvt.setTypeMouvement(TypeMouvement.TRANSFERT_SORTIE);
-            mvt.setQuantite(ligne.getQuantite());
-            mvt.setReferenceDocument(transfert.getNumeroTransfert());
-            mvt.setMotif("Expédition transfert vers " + transfert.getDepotDestination().getNom());
-            mvt.setDateMouvement(LocalDateTime.now());
-            mvt.setUtilisateur(user != null ? (user.getNomComplet() != null ? user.getNomComplet() : user.getUsername()) : "Système");
-            mvt.setDepot(transfert.getDepotSource());
-            mvt.setPointDeVenteId(transfert.getPointDeVenteId());
+            BigDecimal qte = ligne.getQuantite();
+            ligne.setQuantiteExpediee(qte);
 
-            mouvementStockRepository.save(mvt);
+            mouvementStockService.creerMouvement(
+                p.getId(),
+                transfert.getDepotSource().getId(),
+                TypeMouvement.TRANSFERT_SORTIE,
+                qte,
+                transfert.getNumeroTransfert(),
+                "Expédition transfert " + transfert.getNumeroTransfert() + " vers " + transfert.getDepotDestination().getNom()
+            );
         }
 
         return toDto(transfertRepository.save(transfert));
@@ -159,27 +236,49 @@ public class TransfertStockService {
         }
 
         User user = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
+        transfert.setRecuPar(user);
         transfert.setStatut(StatutTransfert.RECU_VALIDE);
         transfert.setDateReception(LocalDate.now());
 
-        // Entrée en stock sur le dépôt de destination
+        // Entrée en stock sur le dépôt de destination pour chaque produit
         for (LigneTransfertStock ligne : transfert.getLignes()) {
             Produit p = ligne.getProduit();
-            MouvementStock mvt = new MouvementStock();
-            mvt.setProduit(p);
-            mvt.setTypeMouvement(TypeMouvement.TRANSFERT_ENTREE);
-            mvt.setQuantite(ligne.getQuantite());
-            mvt.setReferenceDocument(transfert.getNumeroTransfert());
-            mvt.setMotif("Réception transfert depuis " + transfert.getDepotSource().getNom());
-            mvt.setDateMouvement(LocalDateTime.now());
-            mvt.setUtilisateur(user != null ? (user.getNomComplet() != null ? user.getNomComplet() : user.getUsername()) : "Système");
-            mvt.setDepot(transfert.getDepotDestination());
-            mvt.setPointDeVenteId(transfert.getPointDeVenteId());
+            BigDecimal qte = (ligne.getQuantiteExpediee() != null && ligne.getQuantiteExpediee().compareTo(BigDecimal.ZERO) > 0)
+                ? ligne.getQuantiteExpediee()
+                : ligne.getQuantite();
+            ligne.setQuantiteRecue(qte);
 
-            mouvementStockRepository.save(mvt);
+            mouvementStockService.creerMouvement(
+                p.getId(),
+                transfert.getDepotDestination().getId(),
+                TypeMouvement.TRANSFERT_ENTREE,
+                qte,
+                transfert.getNumeroTransfert(),
+                "Réception transfert " + transfert.getNumeroTransfert() + " depuis " + transfert.getDepotSource().getNom()
+            );
         }
 
         return toDto(transfertRepository.save(transfert));
+    }
+
+    public TransfertStockDTO validerTransfertDirect(Long id, Long userId) {
+        TransfertStock transfert = transfertRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Transfert introuvable: " + id));
+
+        if (transfert.getStatut() == StatutTransfert.RECU_VALIDE) {
+            return toDto(transfert);
+        }
+        if (transfert.getStatut() == StatutTransfert.ANNULE) {
+            throw new IllegalStateException("Impossible de valider un transfert annulé");
+        }
+
+        if (transfert.getStatut() == StatutTransfert.BROUILLON) {
+            expedierTransfert(id, userId);
+            return recevoirTransfert(id, userId);
+        } else if (transfert.getStatut() == StatutTransfert.EN_TRANSIT) {
+            return recevoirTransfert(id, userId);
+        }
+        return toDto(transfert);
     }
 
     public TransfertStockDTO annulerTransfert(Long id, Long userId) {
@@ -190,29 +289,31 @@ public class TransfertStockService {
             throw new IllegalStateException("Impossible d'annuler un transfert déjà réceptionné et validé");
         }
 
-        User user = (userId != null) ? userRepository.findById(userId).orElse(null) : null;
-
         // Si était déjà expédié (en transit), on remet le stock à la source
         if (transfert.getStatut() == StatutTransfert.EN_TRANSIT) {
             for (LigneTransfertStock ligne : transfert.getLignes()) {
                 Produit p = ligne.getProduit();
-                MouvementStock mvt = new MouvementStock();
-                mvt.setProduit(p);
-                mvt.setTypeMouvement(TypeMouvement.AJUSTEMENT_POSITIF);
-                mvt.setQuantite(ligne.getQuantite());
-                mvt.setReferenceDocument(transfert.getNumeroTransfert());
-                mvt.setMotif("Annulation du transfert en transit " + transfert.getNumeroTransfert());
-                mvt.setDateMouvement(LocalDateTime.now());
-                mvt.setUtilisateur(user != null ? (user.getNomComplet() != null ? user.getNomComplet() : user.getUsername()) : "Système");
-                mvt.setDepot(transfert.getDepotSource());
-                mvt.setPointDeVenteId(transfert.getPointDeVenteId());
+                BigDecimal qte = (ligne.getQuantiteExpediee() != null && ligne.getQuantiteExpediee().compareTo(BigDecimal.ZERO) > 0)
+                    ? ligne.getQuantiteExpediee()
+                    : ligne.getQuantite();
 
-                mouvementStockRepository.save(mvt);
+                mouvementStockService.creerMouvement(
+                    p.getId(),
+                    transfert.getDepotSource().getId(),
+                    TypeMouvement.AJUSTEMENT_POSITIF,
+                    qte,
+                    transfert.getNumeroTransfert(),
+                    "Annulation du transfert en transit " + transfert.getNumeroTransfert()
+                );
             }
         }
 
         transfert.setStatut(StatutTransfert.ANNULE);
         return toDto(transfertRepository.save(transfert));
+    }
+
+    public byte[] genererTransfertPdf(Long id) {
+        return impressionService.genererTransfertStockPdf(id);
     }
 
     private String genererNumeroTransfert(Long tenantId) {
@@ -227,9 +328,11 @@ public class TransfertStockService {
         dto.setId(t.getId());
         dto.setNumeroTransfert(t.getNumeroTransfert());
         dto.setDateTransfert(t.getDateTransfert());
+        dto.setDateExpedition(t.getDateExpedition());
         dto.setDateReception(t.getDateReception());
         dto.setStatut(t.getStatut());
         dto.setMotif(t.getMotif());
+        dto.setNotes(t.getNotes());
 
         if (t.getDepotSource() != null) {
             dto.setDepotSourceId(t.getDepotSource().getId());
@@ -247,18 +350,30 @@ public class TransfertStockService {
             dto.setValideParUserId(t.getValidePar().getId());
             dto.setValideParNom(t.getValidePar().getNomComplet() != null ? t.getValidePar().getNomComplet() : t.getValidePar().getUsername());
         }
+        if (t.getExpediePar() != null) {
+            dto.setExpedieParUserId(t.getExpediePar().getId());
+            dto.setExpedieParNom(t.getExpediePar().getNomComplet() != null ? t.getExpediePar().getNomComplet() : t.getExpediePar().getUsername());
+        }
+        if (t.getRecuPar() != null) {
+            dto.setRecuParUserId(t.getRecuPar().getId());
+            dto.setRecuParNom(t.getRecuPar().getNomComplet() != null ? t.getRecuPar().getNomComplet() : t.getRecuPar().getUsername());
+        }
 
         if (t.getLignes() != null) {
             List<LigneTransfertStockDTO> lignesDto = new ArrayList<>();
             for (LigneTransfertStock l : t.getLignes()) {
                 LigneTransfertStockDTO lDto = new LigneTransfertStockDTO();
                 lDto.setId(l.getId());
+                lDto.setQuantiteDemandee(l.getQuantiteDemandee());
+                lDto.setQuantiteExpediee(l.getQuantiteExpediee());
+                lDto.setQuantiteRecue(l.getQuantiteRecue());
                 lDto.setQuantite(l.getQuantite());
                 lDto.setNotes(l.getNotes());
                 if (l.getProduit() != null) {
                     lDto.setProduitId(l.getProduit().getId());
                     lDto.setProduitReference(l.getProduit().getReference());
                     lDto.setProduitDesignation(l.getProduit().getDesignation());
+                    lDto.setProduitNom(l.getProduit().getNom());
                 }
                 lignesDto.add(lDto);
             }

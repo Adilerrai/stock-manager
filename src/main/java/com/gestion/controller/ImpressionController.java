@@ -26,6 +26,7 @@ public class ImpressionController {
     private final FournisseurRepository fournisseurRepository;
     private final LivraisonRepository livraisonRepository;
     private final FactureAchatRepository factureAchatRepository;
+    private final TransfertStockRepository transfertStockRepository;
 
     public ImpressionController(ImpressionService impressionService,
                                 FactureRepository factureRepository,
@@ -37,7 +38,8 @@ public class ImpressionController {
                                 ClientRepository clientRepository,
                                 FournisseurRepository fournisseurRepository,
                                 LivraisonRepository livraisonRepository,
-                                FactureAchatRepository factureAchatRepository) {
+                                FactureAchatRepository factureAchatRepository,
+                                TransfertStockRepository transfertStockRepository) {
         this.impressionService = impressionService;
         this.factureRepository = factureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -49,6 +51,7 @@ public class ImpressionController {
         this.fournisseurRepository = fournisseurRepository;
         this.livraisonRepository = livraisonRepository;
         this.factureAchatRepository = factureAchatRepository;
+        this.transfertStockRepository = transfertStockRepository;
     }
 
     @GetMapping("/factures/{id}")
@@ -153,6 +156,17 @@ public class ImpressionController {
     public ResponseEntity<byte[]> imprimerBordereauRemise(@PathVariable Long id) {
         byte[] pdf = impressionService.genererBordereauRemisePdf(id);
         return createPdfResponse(pdf, "bordereau-remise-" + id + ".pdf");
+    }
+
+    @GetMapping({"/transferts-stock/{id}", "/transferts/{id}"})
+    public ResponseEntity<byte[]> imprimerTransfertStock(@PathVariable Long id) {
+        TransfertStock t = transfertStockRepository.findById(id).orElse(null);
+        String code = (t != null && t.getNumeroTransfert() != null) ? t.getNumeroTransfert() : "TRF-" + id;
+        String depot = (t != null && t.getDepotDestination() != null) ? t.getDepotDestination().getNom() : "";
+        String fileName = buildPdfFileName(code, depot);
+
+        byte[] pdf = impressionService.genererTransfertStockPdf(id);
+        return createPdfResponse(pdf, fileName);
     }
 
     @GetMapping("/releve-client/{clientId}")
