@@ -15,6 +15,9 @@ public class Depot {
     @Column(nullable = false)
     private String nom;
 
+    @Column(name = "code", length = 50)
+    private String code;
+
     private String description;
 
     @Column(nullable = false)
@@ -45,6 +48,29 @@ public class Depot {
 
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
+
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+
+    @Transient
+    public String getCodeOrDefault() {
+        if (code != null && !code.isBlank()) {
+            return code.trim().toUpperCase();
+        }
+        if (description != null && !description.isBlank() && description.trim().length() <= 10) {
+            return description.trim().toUpperCase();
+        }
+        if (nom != null) {
+            String upper = nom.toUpperCase();
+            if (upper.contains("TACHAROUK")) return "TAC";
+            if (upper.contains("BERRECHID")) return "BER";
+            if (upper.contains("SIT") || upper.contains("CENTRAL") || upper.contains("PRINCIPAL")) return "WH";
+            String cleaned = upper.replaceAll("[^A-Z0-9]", "");
+            if (cleaned.length() >= 3) return cleaned.substring(0, 3);
+            if (!cleaned.isEmpty()) return cleaned;
+        }
+        return "DEP";
+    }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

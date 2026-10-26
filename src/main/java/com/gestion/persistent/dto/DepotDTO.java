@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 public class DepotDTO {
     private Long id;
     private String nom;
+    private String code;
     private String description;
     private String adresse;
     private LocalDateTime dateCreation;
@@ -18,6 +19,9 @@ public class DepotDTO {
 
     public String getNom() { return nom; }
     public void setNom(String nom) { this.nom = nom; }
+
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

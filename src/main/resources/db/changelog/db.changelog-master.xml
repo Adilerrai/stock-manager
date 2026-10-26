@@ -142,6 +142,9 @@
     <!-- Changeset 044 : Sauvegarde HT, TVA et TTC (BL client) et disponibilité stock (Devis) -->
     <include file="changes/044-add-bl-client-tva-ht-ttc-and-devis-dispo.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 045 : Ajout code dépôt et codification BL Achat / Vente ({DEPOT}/{PREFIX}/{NUM}) -->
+    <include file="changes/045-add-code-depot-and-update-bl-codifications.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

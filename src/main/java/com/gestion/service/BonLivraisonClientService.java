@@ -88,7 +88,11 @@ public class BonLivraisonClientService {
         Long tenantId = TenantContext.getCurrentTenant();
         bl.setPointDeVenteId(tenantId != null ? tenantId : 1L);
         bl.setDateBl(LocalDateTime.now());
-        bl.setNumeroBl(genererNumeroBL());
+        if (dto.getNumeroBl() != null && !dto.getNumeroBl().isBlank()) {
+            bl.setNumeroBl(dto.getNumeroBl());
+        } else {
+            bl.setNumeroBl(genererNumeroBL(dto.getDepotId()));
+        }
         bl.setStatut(StatutLivraison.EN_ATTENTE);
 
         // If order(s) linked, load them
@@ -671,15 +675,19 @@ public class BonLivraisonClientService {
                 .collect(Collectors.toList());
     }
 
-    private String genererNumeroBL() {
+    private String genererNumeroBL(Long depotId) {
         Long tenantId = TenantContext.getCurrentTenant();
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
         String numero;
         int attempts = 0;
         do {
-            numero = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.BL_CLIENT, effectiveTenantId);
+            numero = codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.BL_CLIENT, effectiveTenantId, depotId);
             attempts++;
         } while (bonLivraisonClientRepository.findByPointDeVenteIdAndNumeroBl(effectiveTenantId, numero).isPresent() && attempts < 1000);
         return numero;
+    }
+
+    private String genererNumeroBL() {
+        return genererNumeroBL(null);
     }
 }

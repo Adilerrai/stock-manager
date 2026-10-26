@@ -33,6 +33,9 @@ public class DepotService {
 
         Depot depot = new Depot();
         depot.setNom(depotDTO.getNom());
+        if (depotDTO.getCode() != null && !depotDTO.getCode().isBlank()) {
+            depot.setCode(depotDTO.getCode().trim().toUpperCase());
+        }
         depot.setDescription(depotDTO.getDescription());
         depot.setAdresse(depotDTO.getAdresse());
         depot.setActif(true);
@@ -57,6 +60,9 @@ public class DepotService {
         Depot depot = getDepotById(depotId);
         
         depot.setNom(depotDTO.getNom());
+        if (depotDTO.getCode() != null) {
+            depot.setCode(depotDTO.getCode().trim().toUpperCase());
+        }
         depot.setDescription(depotDTO.getDescription());
         depot.setAdresse(depotDTO.getAdresse());
         depot.setActif(depotDTO.getActif());

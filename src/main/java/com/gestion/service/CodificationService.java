@@ -24,9 +24,12 @@ public class CodificationService {
     private static final Logger log = LoggerFactory.getLogger(CodificationService.class);
 
     private final CodificationDocumentRepository repository;
+    private final com.gestion.repository.DepotRepository depotRepository;
 
-    public CodificationService(CodificationDocumentRepository repository) {
+    public CodificationService(CodificationDocumentRepository repository,
+                               @org.springframework.context.annotation.Lazy com.gestion.repository.DepotRepository depotRepository) {
         this.repository = repository;
+        this.depotRepository = depotRepository;
     }
 
     public Long getCurrentTenantId() {
@@ -87,20 +90,51 @@ public class CodificationService {
             entity.setPrefixe(typeDoc.getPrefixeDefaut());
             entity.setModeleFormat(typeDoc.getFormatDefaut());
             entity.setLongueurSequence(typeDoc.getLongueurSequenceDefaut());
-            entity.setTypeReinitialisation(TypeReinitialisationCodification.ANNUELLE);
+            if (typeDoc == TypeDocumentCodification.BL_CLIENT || typeDoc == TypeDocumentCodification.BL_FOURNISSEUR) {
+                entity.setTypeReinitialisation(TypeReinitialisationCodification.CONTINUE);
+            } else {
+                entity.setTypeReinitialisation(TypeReinitialisationCodification.ANNUELLE);
+            }
             entity.setActif(true);
             entity.setDateDerniereMaj(LocalDateTime.now());
             repository.save(entity);
         }
     }
 
+    public String getCodeDepot(Long depotId, Long tenantId) {
+        if (depotId != null && depotRepository != null) {
+            return depotRepository.findById(depotId)
+                    .map(com.gestion.persistent.model.Depot::getCodeOrDefault)
+                    .orElse("DEP");
+        }
+        if (depotRepository != null) {
+            Long effectiveTenant = (tenantId != null) ? tenantId : getCurrentTenantId();
+            List<com.gestion.persistent.model.Depot> depots = depotRepository.findByPointDeVenteIdAndActifTrue(effectiveTenant);
+            if (!depots.isEmpty()) {
+                return depots.get(0).getCodeOrDefault();
+            }
+        }
+        return "TAC";
+    }
+
     @Transactional
     public String genererNumero(TypeDocumentCodification typeDoc) {
-        return genererNumero(typeDoc, getCurrentTenantId());
+        return genererNumero(typeDoc, getCurrentTenantId(), (String) null);
     }
 
     @Transactional
     public String genererNumero(TypeDocumentCodification typeDoc, Long pointDeVenteId) {
+        return genererNumero(typeDoc, pointDeVenteId, (String) null);
+    }
+
+    @Transactional
+    public String genererNumero(TypeDocumentCodification typeDoc, Long pointDeVenteId, Long depotId) {
+        String codeDepot = getCodeDepot(depotId, pointDeVenteId);
+        return genererNumero(typeDoc, pointDeVenteId, codeDepot);
+    }
+
+    @Transactional
+    public String genererNumero(TypeDocumentCodification typeDoc, Long pointDeVenteId, String codeDepot) {
         Long tenantId = (pointDeVenteId != null) ? pointDeVenteId : getCurrentTenantId();
         LocalDate now = LocalDate.now();
         int anneeCourante = now.getYear();
@@ -110,6 +144,9 @@ public class CodificationService {
         CodificationDocument codif = repository.findByPointDeVenteIdAndTypeDocumentForUpdate(tenantId, typeDoc)
                 .orElseGet(() -> {
                     CodificationDocument nouveau = new CodificationDocument(tenantId, typeDoc);
+                    if (typeDoc == TypeDocumentCodification.BL_CLIENT || typeDoc == TypeDocumentCodification.BL_FOURNISSEUR) {
+                        nouveau.setTypeReinitialisation(TypeReinitialisationCodification.CONTINUE);
+                    }
                     return repository.save(nouveau);
                 });
 
@@ -135,16 +172,21 @@ public class CodificationService {
         codif.setDateDerniereMaj(LocalDateTime.now());
         repository.save(codif);
 
+        String effectiveDepotCode = (codeDepot != null && !codeDepot.isBlank())
+                ? codeDepot.trim().toUpperCase()
+                : getCodeDepot(null, tenantId);
+
         String code = formaterCode(
                 codif.getModeleFormat(),
                 codif.getPrefixe(),
+                effectiveDepotCode,
                 anneeCourante,
                 moisCourant,
                 nouveauNumero,
                 codif.getLongueurSequence()
         );
 
-        log.info("Codification générée pour tenant {} - type {}: {}", tenantId, typeDoc, code);
+        log.info("Codification générée pour tenant {} - type {} (dépôt {}): {}", tenantId, typeDoc, effectiveDepotCode, code);
         return code;
     }
 
@@ -164,20 +206,37 @@ public class CodificationService {
                 ? dto.getProchainNumero()
                 : 1L;
 
-        return formaterCode(modele, prefixe, now.getYear(), now.getMonthValue(), num, longueur);
+        String codeDepot = (dto.getCodeDepot() != null && !dto.getCodeDepot().isBlank())
+                ? dto.getCodeDepot().trim().toUpperCase()
+                : getCodeDepot(dto.getDepotId(), getCurrentTenantId());
+
+        return formaterCode(modele, prefixe, codeDepot, now.getYear(), now.getMonthValue(), num, longueur);
     }
 
     public String formaterCode(String modele, String prefixe, int annee, int mois, long numero, int longueurSequence) {
+        return formaterCode(modele, prefixe, null, annee, mois, numero, longueurSequence);
+    }
+
+    public String formaterCode(String modele, String prefixe, String codeDepot, int annee, int mois, long numero, int longueurSequence) {
         String paddedNum = String.format("%0" + longueurSequence + "d", numero);
         String resultat = (modele != null && !modele.isBlank()) ? modele : "{PREFIX}-{AAAA}-{NUM}";
 
+        String depotVal = (codeDepot != null && !codeDepot.isBlank()) ? codeDepot.trim().toUpperCase() : "";
+
+        // Tokens pour le dépôt
+        resultat = resultat.replaceAll("(?i)\\{(depot|code_depot|codedepot|depot_code)\\}", depotVal);
         resultat = resultat.replaceAll("(?i)\\{prefix\\}", prefixe != null ? prefixe : "");
         resultat = resultat.replaceAll("(?i)\\{(aaaa|yyyy)\\}", String.valueOf(annee));
         resultat = resultat.replaceAll("(?i)\\{(aa|yy)\\}", String.format("%02d", annee % 100));
         resultat = resultat.replaceAll("(?i)\\{mm\\}", String.format("%02d", mois));
         resultat = resultat.replaceAll("(?i)\\{(num|n)\\}", paddedNum);
 
-        // Fallback de sécurité si le format n'inclut pas le numéro ou le préfixe
+        // Nettoyage de double slash si le dépôt était vide
+        if (depotVal.isEmpty()) {
+            resultat = resultat.replaceAll("^/+", "").replaceAll("//+", "/");
+        }
+
+        // Fallback de sécurité si le format n'inclut pas le numéro
         if (!resultat.contains(paddedNum)) {
             resultat = resultat + "-" + paddedNum;
         }
@@ -188,6 +247,9 @@ public class CodificationService {
         for (TypeDocumentCodification typeDoc : TypeDocumentCodification.values()) {
             if (!repository.existsByPointDeVenteIdAndTypeDocument(tenantId, typeDoc)) {
                 CodificationDocument nouveau = new CodificationDocument(tenantId, typeDoc);
+                if (typeDoc == TypeDocumentCodification.BL_CLIENT || typeDoc == TypeDocumentCodification.BL_FOURNISSEUR) {
+                    nouveau.setTypeReinitialisation(TypeReinitialisationCodification.CONTINUE);
+                }
                 repository.save(nouveau);
             }
         }
@@ -206,12 +268,16 @@ public class CodificationService {
         dto.setTypeReinitialisation(entity.getTypeReinitialisation());
         dto.setActif(entity.getActif());
 
+        String sampleDepot = getCodeDepot(null, entity.getPointDeVenteId());
+        dto.setCodeDepot(sampleDepot);
+
         LocalDate now = LocalDate.now();
         int annee = entity.getAnneeCourante() != null ? entity.getAnneeCourante() : now.getYear();
         int mois = entity.getMoisCourant() != null ? entity.getMoisCourant() : now.getMonthValue();
         dto.setApercu(formaterCode(
                 entity.getModeleFormat(),
                 entity.getPrefixe(),
+                sampleDepot,
                 annee,
                 mois,
                 dto.getProchainNumero(),

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 045 :
+      1. Ajout de la colonne 'code' dans la table 'depots'
+      2. Initialisation des codes dépôts existants (WH, TAC, BER, etc.)
+      3. Mise à jour du format de codification pour BL Fournisseur (IN) et BL Client (OUT) : {DEPOT}/{PREFIX}/{NUM}
+    -->
+    <changeSet id="045-add-code-depot-and-update-bl-codifications" author="erp-commercial">
+        <sql splitStatements="false">
+            DO $$
+            BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns 
+                    WHERE table_name = 'depots' AND column_name = 'code'
+                ) THEN
+                    ALTER TABLE depots ADD COLUMN code VARCHAR(50);
+                END IF;
+            END $$;
+
+            -- Initialisation intelligente du code dépôt
+            UPDATE depots 
+            SET code = UPPER(TRIM(description)) 
+            WHERE (code IS NULL OR code = '') 
+              AND description IS NOT NULL 
+              AND LENGTH(TRIM(description)) &lt;= 10;
+
+            UPDATE depots 
+            SET code = 'TAC' 
+            WHERE (code IS NULL OR code = '') AND nom ILIKE '%TACHAROUK%';
+
+            UPDATE depots 
+            SET code = 'BER' 
+            WHERE (code IS NULL OR code = '') AND nom ILIKE '%BERRECHID%';
+
+            UPDATE depots 
+            SET code = 'WH' 
+            WHERE (code IS NULL OR code = '') AND (nom ILIKE '%SIT%' OR nom ILIKE '%CENTRAL%' OR nom ILIKE '%PRINCIPAL%');
+
+            UPDATE depots 
+            SET code = 'DEP' 
+            WHERE (code IS NULL OR code = '');
+
+            -- Mise à jour codification BL Fournisseur (BL IN / BL Achat) -> Ex: TAC/IN/00319
+            UPDATE codifications_document
+            SET prefixe = 'IN',
+                modele_format = '{DEPOT}/{PREFIX}/{NUM}',
+                longueur_sequence = 5,
+                type_reinitialisation = 'CONTINUE'
+            WHERE type_document = 'BL_FOURNISSEUR';
+
+            -- Si point de vente 5 (SIT Transmission), aligner dernier_numero au moins sur 318
+            UPDATE codifications_document
+            SET dernier_numero = GREATEST(dernier_numero, 318)
+            WHERE type_document = 'BL_FOURNISSEUR' AND point_de_vente_id = 5;
+
+            -- Mise à jour codification BL Client (BL OUT / BL Vente) -> Ex: TAC/OUT/00319
+            UPDATE codifications_document
+            SET prefixe = 'OUT',
+                modele_format = '{DEPOT}/{PREFIX}/{NUM}',
+                longueur_sequence = 5,
+                type_reinitialisation = 'CONTINUE'
+            WHERE type_document = 'BL_CLIENT';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

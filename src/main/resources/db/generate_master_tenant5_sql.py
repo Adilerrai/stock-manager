@@ -12,7 +12,7 @@ from datetime import datetime
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
 
 BASE_URL = 'https://sit-transmission1.odoo.com'
-COOKIE = 'cids=1; color_scheme=dark; frontend_lang=fr_FR; tz=Africa/Casablanca; session_id=-Tm7b-536YN6UsmBk-cy0XkBA8MJ5glay5q00VXsd60XX04VNX8nyYFz0KgqGIBQkeKZDtQ-GixueFQTaMwbnw'
+COOKIE = 'frontend_lang=fr_FR; _ga=GA1.2.288871012.1792416034; _ga_SF317W7ESF=GS2.2.s1792416034$o1$g1$t1792416046$j48$l0$h0; cids=1; color_scheme=dark; tz=Africa/Casablanca; session_id=nuqD8NS9iu8FFLbsthUzdVKOmdzs-UvDkW53NORh7anK9HhQQLvWamydzX-JUwg8Sd4a1BRMZIwqEBveP--quQ'
 
 HEADERS = {
     'Accept': 'application/json',
@@ -41,8 +41,11 @@ def odoo_call(model, method, args, kwargs):
     with urllib.request.urlopen(req, context=CTX) as resp:
         res = json.loads(resp.read().decode('utf-8'))
         if "error" in res:
-            print(f"[ERREUR Odoo {model}.{method}]: {res['error']}")
-            return []
+            err = res["error"]
+            print(f"[ERREUR Odoo {model}.{method}]: {err}")
+            if isinstance(err, dict) and (err.get("code") == 100 or "Session Expired" in str(err)):
+                raise RuntimeError("SESSION ODOO EXPIRÉE ! Mettre à jour le COOKIE dans generate_master_tenant5_sql.py")
+            return {}
         return res.get("result", {})
 
 def sql_escape(val, max_len=None):
@@ -205,12 +208,92 @@ def generate():
     sql_lines.append("-- =============================================================================")
     sql_lines.append(f"-- SCRIPT MASTER D'IMPORTATION ODOO -> TENANT #{TENANT_ID} : {TENANT_NAME}")
     sql_lines.append(f"-- Généré le : {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    sql_lines.append("-- PRÉSERVE INTÉGRALEMENT LES PRODUITS, CLIENTS, FOURNISSEURS DU CLOUD VPS")
-    sql_lines.append("-- ZÉRO SUPPRESSION (AUCUN DELETE FROM), INSERTIONS SANS DOUBLONS")
     sql_lines.append("-- ISOLATION MULTI-TENANT : Impacte UNIQUEMENT point_de_vente_id = 5")
     sql_lines.append("-- SÉCURITÉ : Ne touche PAS aux autres tenants (1, 2, 3, 4) et NE TOUCHE PAS à la table USERS")
     sql_lines.append("-- =============================================================================\n")
     sql_lines.append("BEGIN;\n")
+
+    # 0. Nettoyage ciblé exclusivement sur le Tenant 5 (sans toucher aux autres tenants ni aux users)
+    sql_lines.append("-- -----------------------------------------------------------------------------")
+    sql_lines.append(f"-- 0. RÉINITIALISATION CIBLÉE SUR LE TENANT #{TENANT_ID} (AUCUN IMPACT AUTRES TENANTS)")
+    sql_lines.append("-- -----------------------------------------------------------------------------")
+    sql_lines.append(f"""
+-- 1. Comparateur & Demandes de prix
+DELETE FROM lignes_offre_fournisseur WHERE offre_fournisseur_id IN (SELECT id FROM offres_fournisseurs WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM offres_fournisseurs WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM lignes_demande_prix WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM demandes_prix WHERE point_de_vente_id = {TENANT_ID};
+
+-- 2. Factures d'achat, règlements fournisseur, chèques & effets
+DELETE FROM lignes_facture_achat WHERE facture_achat_id IN (SELECT id FROM factures_achat WHERE point_de_vente_id = {TENANT_ID}) 
+   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM reglements_fournisseur WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM factures_achat WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM cheques_effets WHERE point_de_vente_id = {TENANT_ID};
+
+-- 3. Ventes, Factures clients, Paiements, Devis, Commandes clients, BLs clients, Avoirs
+DELETE FROM paiement_affectations WHERE paiement_id IN (SELECT id FROM paiements WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM paiements WHERE point_de_vente_id = {TENANT_ID} OR facture_id IN (SELECT id FROM factures WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM lignes_facture WHERE facture_id IN (SELECT id FROM factures WHERE point_de_vente_id = {TENANT_ID}) 
+   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM factures WHERE point_de_vente_id = {TENANT_ID};
+
+DELETE FROM bons_livraison_client_commandes WHERE bon_livraison_id IN (SELECT id FROM bons_livraison_client WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM lignes_bon_livraison_client WHERE bon_livraison_client_id IN (SELECT id FROM bons_livraison_client WHERE point_de_vente_id = {TENANT_ID})
+   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM bons_livraison_client WHERE point_de_vente_id = {TENANT_ID};
+
+DELETE FROM lignes_commande_client WHERE commande_client_id IN (SELECT id FROM commandes_client WHERE point_de_vente_id = {TENANT_ID})
+   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM commandes_client WHERE point_de_vente_id = {TENANT_ID};
+
+DELETE FROM lignes_bon_preparation WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM bons_preparation WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM lignes_vente WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM ventes WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM lignes_devis WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM devis WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM lignes_avoir WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM avoirs WHERE point_de_vente_id = {TENANT_ID};
+
+-- 4. Transferts & Inventaires
+DELETE FROM lignes_transfert_stock WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM transferts_stock WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM lignes_inventaire WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM inventaires WHERE point_de_vente_id = {TENANT_ID};
+
+-- 5. Réceptions & Lignes de réceptions (Livraisons)
+DELETE FROM lignes_livraison WHERE livraison_id IN (SELECT id FROM livraisons WHERE point_de_vente_id = {TENANT_ID})
+   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM livraisons WHERE point_de_vente_id = {TENANT_ID};
+
+-- 6. Commandes d'achat & Lignes de commande
+DELETE FROM lignes_commande WHERE commande_id IN (SELECT id FROM commandes WHERE point_de_vente_id = {TENANT_ID})
+   OR produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM commandes WHERE point_de_vente_id = {TENANT_ID};
+
+-- 7. Stocks, Mouvements, Lots & Variantes
+DELETE FROM mouvements_stock WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM lots WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM stock_qualites WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM stocks WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+DELETE FROM produit_images WHERE produit_id IN (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID});
+-- 8. Module CRM & Clients du Tenant {TENANT_ID}
+DELETE FROM crm_activites WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM crm_taches WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM crm_rapports_visite WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM crm_visites WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM crm_opportunites WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM crm_contacts WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM crm_entreprises WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM clients WHERE point_de_vente_id = {TENANT_ID};
+
+-- 9. Produits, Fournisseurs & Catégories du Tenant {TENANT_ID}
+DELETE FROM produits WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM fournisseurs WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM categories WHERE point_de_vente_id = {TENANT_ID};
+DELETE FROM depots WHERE point_de_vente_id = {TENANT_ID};
+""")
 
     # 1. Validation Point de Vente / Tenant #5
     sql_lines.append("-- -----------------------------------------------------------------------------")
@@ -375,9 +458,8 @@ ON CONFLICT DO NOTHING;
         sql_lines.append(
             f"INSERT INTO fournisseurs (raison_social, adresse, ville, code_postal, pays, ice, email, telephone, "
             f"point_de_vente_id, actif, type_fournisseur, devise, date_creation) "
-            f"SELECT '{e_nom}', {e_adr}, {e_vil}, {e_cp}, {e_pay}, {e_ice}, {e_em}, {e_tel}, "
-            f"{TENANT_ID}, TRUE, '{type_frn}', '{default_devise}', CURRENT_TIMESTAMP "
-            f"WHERE NOT EXISTS (SELECT 1 FROM fournisseurs WHERE raison_social = '{e_nom}' AND point_de_vente_id = {TENANT_ID});"
+            f"VALUES ('{e_nom}', {e_adr}, {e_vil}, {e_cp}, {e_pay}, {e_ice}, {e_em}, {e_tel}, "
+            f"{TENANT_ID}, TRUE, '{type_frn}', '{default_devise}', CURRENT_TIMESTAMP);"
         )
 
     print(f"Classification des fournisseurs : {nat_count} Nationaux, {inter_count} Internationaux.")
@@ -527,15 +609,13 @@ ON CONFLICT DO NOTHING;
             f"unite_mesure_stock, stock_minimum, point_de_vente_id, actif, date_creation) "
             f"VALUES ('{e_ref}', '{e_designation}', '{e_description}', {e_cb}, {cat_subquery}, {e_cat_nom}, {e_grp_nom}, "
             f"{pa:.2f}, {pa:.2f}, {pv:.2f}, {pv:.2f}, {pa:.2f}, {pv:.2f}, "
-            f"'{unite}', 0.00, {TENANT_ID}, TRUE, CURRENT_TIMESTAMP) "
-            f"ON CONFLICT (point_de_vente_id, reference) DO NOTHING;"
+            f"'{unite}', 0.00, {TENANT_ID}, TRUE, CURRENT_TIMESTAMP);"
         )
 
         sql_lines.append(
             f"INSERT INTO stocks (produit_id, quantite_disponible, quantite_reservee, seuil_alerte, derniere_maj) "
-            f"SELECT (SELECT id FROM produits WHERE reference = '{e_ref}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
-            f"{qte_stock:.2f}, 0.00, 0.00, CURRENT_TIMESTAMP "
-            f"WHERE NOT EXISTS (SELECT 1 FROM stocks WHERE produit_id = (SELECT id FROM produits WHERE reference = '{e_ref}' AND point_de_vente_id = {TENANT_ID} LIMIT 1));"
+            f"VALUES ((SELECT id FROM produits WHERE reference = '{e_ref}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
+            f"{qte_stock:.2f}, 0.00, 0.00, CURRENT_TIMESTAMP);"
         )
 
     sql_lines.append("")
@@ -787,8 +867,7 @@ ON CONFLICT DO NOTHING;
             f"INSERT INTO livraisons (numero_livraison, commande_id, date_livraison, statut, "
             f"montant_total, observations, point_de_vente_id) "
             f"VALUES ('{e_bl}', {po_subquery}, {dt_liv}, '{statut}', "
-            f"{montant_total:.2f}, '{e_obs}', {TENANT_ID}) "
-            f"ON CONFLICT DO NOTHING;"
+            f"{montant_total:.2f}, '{e_obs}', {TENANT_ID});"
         )
 
         for m in p_moves:
@@ -1049,6 +1128,7 @@ WHERE c.point_de_vente_id = {TENANT_ID};
     print("   Récupération des lignes de commandes clients (sale.order.line)...")
     so_ids = [so["id"] for so in odoo_so]
     lines_by_so = {}
+    sale_lines_by_id = {}
     for i in range(0, len(so_ids), 250):
         batch = so_ids[i:i + 250]
         so_lines_batch = odoo_call(
@@ -1065,6 +1145,7 @@ WHERE c.point_de_vente_id = {TENANT_ID};
         )
         if isinstance(so_lines_batch, list):
             for l in so_lines_batch:
+                sale_lines_by_id[l["id"]] = l
                 oid = l.get("order_id")[0] if isinstance(l.get("order_id"), (list, tuple)) else l.get("order_id")
                 if oid not in lines_by_so:
                     lines_by_so[oid] = []
@@ -1178,22 +1259,47 @@ WHERE c.point_de_vente_id = {TENANT_ID};
     print("   Récupération des lignes de BLs clients (stock.move)...")
     pick_ids = [p["id"] for p in odoo_out_pickings]
     moves_by_pick = {}
+    missing_sl_ids = set()
     for i in range(0, len(pick_ids), 250):
         batch = pick_ids[i:i + 250]
         moves_batch = odoo_call(
             "stock.move", "search_read",
             [[["picking_id", "in", batch]]],
             {
-                "fields": ["picking_id", "product_id", "product_uom_qty", "quantity", "price_unit", "state"],
+                "fields": ["picking_id", "product_id", "product_uom_qty", "quantity", "price_unit", "sale_line_id", "state"],
                 "limit": 10000
             }
         )
         if isinstance(moves_batch, list):
             for m in moves_batch:
+                sl_ref = m.get("sale_line_id")
+                if sl_ref:
+                    sl_id = sl_ref[0] if isinstance(sl_ref, (list, tuple)) else sl_ref
+                    if sl_id and sl_id not in sale_lines_by_id:
+                        missing_sl_ids.add(sl_id)
                 pid = m.get("picking_id")[0] if isinstance(m.get("picking_id"), (list, tuple)) else m.get("picking_id")
                 if pid not in moves_by_pick:
                     moves_by_pick[pid] = []
                 moves_by_pick[pid].append(m)
+
+    # Récupération en lot des sale.order.line associées aux BLs qui n'étaient pas dans odoo_so
+    if missing_sl_ids:
+        missing_list = list(missing_sl_ids)
+        for i in range(0, len(missing_list), 250):
+            sl_batch = odoo_call(
+                "sale.order.line", "search_read",
+                [[["id", "in", missing_list[i:i + 250]]]],
+                {
+                    "fields": [
+                        "order_id", "product_id", "name", "product_uom_qty",
+                        "price_unit", "discount", "price_subtotal"
+                    ],
+                    "limit": 10000
+                }
+            )
+            if isinstance(sl_batch, list):
+                for l in sl_batch:
+                    sale_lines_by_id[l["id"]] = l
 
     sql_lines.append("\n-- -----------------------------------------------------------------------------")
     sql_lines.append(f"-- 12. BONS DE LIVRAISON CLIENTS & LIGNES (TENANT #{TENANT_ID})")
@@ -1248,24 +1354,9 @@ WHERE c.point_de_vente_id = {TENANT_ID};
         obs = p.get("x_studio_n_de_commande_client") or p.get("origin") or ""
         e_obs = str(obs)[:255].replace("'", "''")
 
-        sql_lines.append(
-            f"INSERT INTO bons_livraison_client (numero_bl, date_bl, client_id, commande_client_id, "
-            f"statut, montant_total, observations, point_de_vente_id) "
-            f"VALUES ('{e_bl}', {dt_bl}, COALESCE({client_sub}, (SELECT id FROM clients WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
-            f"{cmd_sub}, '{statut_bl}', 0.00, '{e_obs}', {TENANT_ID}) "
-            f"ON CONFLICT DO NOTHING;"
-        )
-
-        if so_num:
-            sql_lines.append(
-                f"INSERT INTO bons_livraison_client_commandes (bon_livraison_id, commande_id) "
-                f"SELECT (SELECT id FROM bons_livraison_client WHERE numero_bl = '{e_bl}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
-                f"{cmd_sub} "
-                f"WHERE {cmd_sub} IS NOT NULL "
-                f"ON CONFLICT DO NOTHING;"
-            )
-
-        # Lignes du BL avec affectation au dépôt
+        # Lignes du BL et calcul du montant total réel
+        total_bl_ht = 0.0
+        bl_lines_sql = []
         for m in moves_by_pick.get(p_id, []):
             prod_obj = m.get("product_id")
             p_display = prod_obj[1] if (prod_obj and isinstance(prod_obj, (list, tuple))) else ""
@@ -1281,21 +1372,68 @@ WHERE c.point_de_vente_id = {TENANT_ID};
             q_done = float(m.get("quantity") or 0.0)
             q_dem = float(m.get("product_uom_qty") or 0.0)
             q_liv = q_done if q_done > 0.0 else q_dem
-            pu_mv = float(m.get("price_unit") or 0.0)
-            mt_mv = round(q_liv * pu_mv, 2)
 
-            sql_lines.append(
+            # Récupérer le vrai prix de vente et remise depuis la ligne de commande rattachée sale.order.line
+            sl_ref = m.get("sale_line_id")
+            sl_id = sl_ref[0] if (sl_ref and isinstance(sl_ref, (list, tuple))) else sl_ref
+            sl_info = sale_lines_by_id.get(sl_id) if sl_id else None
+
+            if sl_info:
+                pu_brut = float(sl_info.get("price_unit") or 0.0)
+                remise_pct = float(sl_info.get("discount") or 0.0)
+            else:
+                pu_brut = float(m.get("price_unit") or 0.0)
+                remise_pct = 0.0
+
+            remise_mt = round(q_liv * pu_brut * (remise_pct / 100.0), 2)
+            pu_net = round(pu_brut * (1.0 - remise_pct / 100.0), 4)
+            mt_mv = round(q_liv * pu_net, 2)
+            total_bl_ht += mt_mv
+
+            if pu_brut > 0:
+                pu_net_expr = f"{pu_net:.4f}"
+                pu_brut_expr = f"{pu_brut:.2f}"
+                remise_pct_expr = f"{remise_pct:.2f}"
+                remise_mt_expr = f"{remise_mt:.2f}"
+                mt_mv_expr = f"{mt_mv:.2f}"
+            else:
+                # Fallback dynamique sur le prix de vente du catalogue produit
+                pu_brut_expr = f"COALESCE((SELECT prix_vente FROM produits WHERE id = COALESCE({prod_sub}, (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID} LIMIT 1))), 0.00)"
+                pu_net_expr = pu_brut_expr
+                remise_pct_expr = "0.00"
+                remise_mt_expr = "0.00"
+                mt_mv_expr = f"ROUND({q_liv:.3f} * {pu_brut_expr}, 2)"
+
+            bl_lines_sql.append(
                 f"INSERT INTO lignes_bon_livraison_client (bon_livraison_client_id, depot_id, produit_id, quantite_livree, "
                 f"prix_vente, prix_vente_brut, remise_pourcentage, remise_montant, montant_ligne) "
                 f"SELECT bl.id, {depot_subquery}, COALESCE({prod_sub}, (SELECT id FROM produits WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
-                f"{q_liv:.3f}, {pu_mv:.2f}, {pu_mv:.2f}, 0.00, 0.00, {mt_mv:.2f} "
+                f"{q_liv:.3f}, {pu_net_expr}, {pu_brut_expr}, {remise_pct_expr}, {remise_mt_expr}, {mt_mv_expr} "
                 f"FROM bons_livraison_client bl WHERE bl.numero_bl = '{e_bl}' AND bl.point_de_vente_id = {TENANT_ID} LIMIT 1;"
             )
             nb_bl_lines += 1
 
+        sql_lines.append(
+            f"INSERT INTO bons_livraison_client (numero_bl, date_bl, client_id, commande_client_id, "
+            f"statut, montant_total, observations, point_de_vente_id) "
+            f"VALUES ('{e_bl}', {dt_bl}, COALESCE({client_sub}, (SELECT id FROM clients WHERE point_de_vente_id = {TENANT_ID} LIMIT 1)), "
+            f"{cmd_sub}, '{statut_bl}', {total_bl_ht:.2f}, '{e_obs}', {TENANT_ID}) "
+            f"ON CONFLICT DO NOTHING;"
+        )
+
+        if so_num:
+            sql_lines.append(
+                f"INSERT INTO bons_livraison_client_commandes (bon_livraison_id, commande_id) "
+                f"SELECT (SELECT id FROM bons_livraison_client WHERE numero_bl = '{e_bl}' AND point_de_vente_id = {TENANT_ID} LIMIT 1), "
+                f"{cmd_sub} "
+                f"WHERE {cmd_sub} IS NOT NULL "
+                f"ON CONFLICT DO NOTHING;"
+            )
+
+        sql_lines.extend(bl_lines_sql)
         nb_bl_cli += 1
 
-    # Recalcul des montants totaux des BLs à partir des lignes
+    # Recalcul précis et synchronisation des montants totaux des BLs à partir des lignes réelles
     sql_lines.append(
         f"\nUPDATE bons_livraison_client bl "
         f"SET montant_total = COALESCE((SELECT SUM(lbl.montant_ligne) FROM lignes_bon_livraison_client lbl WHERE lbl.bon_livraison_client_id = bl.id), 0.00) "

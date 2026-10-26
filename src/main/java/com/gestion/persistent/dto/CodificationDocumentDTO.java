@@ -16,6 +16,8 @@ public class CodificationDocumentDTO {
     private TypeReinitialisationCodification typeReinitialisation;
     private Boolean actif;
     private String apercu;
+    private String codeDepot;
+    private Long depotId;
 
     public CodificationDocumentDTO() {}
 
@@ -51,4 +53,10 @@ public class CodificationDocumentDTO {
 
     public String getApercu() { return apercu; }
     public void setApercu(String apercu) { this.apercu = apercu; }
+
+    public String getCodeDepot() { return codeDepot; }
+    public void setCodeDepot(String codeDepot) { this.codeDepot = codeDepot; }
+
+    public Long getDepotId() { return depotId; }
+    public void setDepotId(Long depotId) { this.depotId = depotId; }
 }

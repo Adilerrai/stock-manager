@@ -71,7 +71,12 @@ public class LivraisonService {
     @Transactional
     public Livraison createLivraison(LivraisonDTO livraisonDTO) {
         Livraison livraison = new Livraison();
-        livraison.setNumeroLivraison(generateNumeroLivraison());
+        Long targetDepotId = livraisonDTO.getDepotId();
+        if (livraisonDTO.getNumeroLivraison() != null && !livraisonDTO.getNumeroLivraison().isBlank()) {
+            livraison.setNumeroLivraison(livraisonDTO.getNumeroLivraison());
+        } else {
+            livraison.setNumeroLivraison(generateNumeroLivraison(targetDepotId));
+        }
         livraison.setTransporteur(livraisonDTO.getTransporteur());
         livraison.setNumeroSuivi(livraisonDTO.getNumeroSuivi());
         livraison.setObservations(livraisonDTO.getObservations());
@@ -264,8 +269,24 @@ public class LivraisonService {
         return getLivraisonById(livraisonId);
     }
 
+    private String generateNumeroLivraison(Long depotId) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        String numero;
+        int attempts = 0;
+        do {
+            numero = codificationService.genererNumero(
+                    com.gestion.persistent.enums.TypeDocumentCodification.BL_FOURNISSEUR,
+                    effectiveTenantId,
+                    depotId
+            );
+            attempts++;
+        } while (livraisonRepository.findByPointDeVenteIdAndNumeroLivraison(effectiveTenantId, numero).isPresent() && attempts < 1000);
+        return numero;
+    }
+
     private String generateNumeroLivraison() {
-        return codificationService.genererNumero(com.gestion.persistent.enums.TypeDocumentCodification.BL_FOURNISSEUR);
+        return generateNumeroLivraison(null);
     }
 
     public List<Livraison> getAllLivraisons() {
@@ -325,7 +346,13 @@ public class LivraisonService {
         List<LigneLivraison> originalLignes = new ArrayList<>(livraison.getLignesLivraison());
         livraison.getLignesLivraison().clear();
 
-        livraison.setNumeroLivraison(generateNumeroLivraison());
+        Long targetDepotId = null;
+        if (!originalLignes.isEmpty() && originalLignes.get(0).getDepot() != null) {
+            targetDepotId = originalLignes.get(0).getDepot().getId();
+        }
+        if (livraison.getNumeroLivraison() == null || livraison.getNumeroLivraison().isBlank()) {
+            livraison.setNumeroLivraison(generateNumeroLivraison(targetDepotId));
+        }
         livraison.setCommande(commande);
         livraison.setStatut(StatutLivraison.EN_ATTENTE);
         livraison.setDateLivraison(livraison.getDateLivraison() != null ?
