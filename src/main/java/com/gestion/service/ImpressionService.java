@@ -461,7 +461,7 @@ public class ImpressionService {
                 String etatStock = ld.getEtatStock();
                 Boolean disponible = ld.getDisponible();
 
-                if (etatStock == null || etatStock.trim().isEmpty()) {
+                if (etatStock == null || etatStock.trim().isEmpty() || "AUTO".equalsIgnoreCase(etatStock.trim())) {
                     if (ld.getProduit() != null && ld.getProduit().getId() != null) {
                         Optional<Stock> stockOpt = stockRepository.findByProduitId(ld.getProduit().getId());
                         BigDecimal stockDispo = stockOpt.map(Stock::getQuantiteDisponible).orElse(BigDecimal.ZERO);

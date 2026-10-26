@@ -71,7 +71,7 @@ public class DevisService {
                 }
                 ld.setStockDisponible(stockDispo);
 
-                if (ld.getEtatStock() == null || ld.getEtatStock().trim().isEmpty()) {
+                if (ld.getEtatStock() == null || ld.getEtatStock().trim().isEmpty() || "AUTO".equalsIgnoreCase(ld.getEtatStock().trim())) {
                     BigDecimal qte = ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO;
                     if (stockDispo.compareTo(qte) >= 0 && stockDispo.compareTo(BigDecimal.ZERO) > 0) {
                         ld.setDisponibleEnStock(true);
