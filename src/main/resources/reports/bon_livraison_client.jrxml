@@ -32,6 +32,8 @@
 	<parameter name="dateBl" class="java.lang.String"/>
 	<parameter name="statut" class="java.lang.String"/>
 	<parameter name="commandeReference" class="java.lang.String"/>
+	<parameter name="numeroCommandeExterne" class="java.lang.String"/>
+	<parameter name="bcClient" class="java.lang.String"/>
 	<parameter name="depotNom" class="java.lang.String"/>
 	<parameter name="chauffeurNom" class="java.lang.String"/>
 	<parameter name="vehiculeImmatriculation" class="java.lang.String"/>
@@ -119,12 +121,13 @@
 			</textField>
 
 			<!-- Informations Livraison Complémentaires (colonne droite) -->
-			<textField isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="300" y="132" width="267" height="55" forecolor="#1F2937" uuid="b1e2f3a4-0006-4000-8000-000000000006"/>
 				<textElement verticalAlignment="Top" markup="html">
 					<font fontName="DejaVu Sans" size="8.5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[($P{chauffeurNom} != null && !$P{chauffeurNom}.isEmpty() ? "<b>Chauffeur :</b> " + $P{chauffeurNom} + "<br/>" : "") +
+				<textFieldExpression><![CDATA[(($P{numeroCommandeExterne} != null && !$P{numeroCommandeExterne}.trim().isEmpty()) ? "<b>BC Client :</b> " + $P{numeroCommandeExterne} + "<br/>" : (($P{bcClient} != null && !$P{bcClient}.trim().isEmpty()) ? "<b>BC Client :</b> " + $P{bcClient} + "<br/>" : "")) +
+($P{chauffeurNom} != null && !$P{chauffeurNom}.isEmpty() ? "<b>Chauffeur :</b> " + $P{chauffeurNom} + "<br/>" : "") +
 ($P{vehiculeImmatriculation} != null && !$P{vehiculeImmatriculation}.isEmpty() ? "<b>Véhicule :</b> " + $P{vehiculeImmatriculation} + "<br/>" : "") +
 ($P{statut} != null && !$P{statut}.isEmpty() ? "<b>Statut :</b> " + $P{statut} + "<br/>" : "") +
 ($P{notes} != null && !$P{notes}.isEmpty() ? "<b>Obs :</b> " + $P{notes} : "")]]></textFieldExpression>
@@ -154,7 +157,7 @@
 				<textFieldExpression><![CDATA[$P{dateBl} != null ? $P{dateBl} : "-"]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="210" y="200" width="160" height="14" forecolor="#0B3A6E" uuid="b1e2f3a4-0010-4000-8000-000000000010">
+				<reportElement x="205" y="200" width="175" height="14" forecolor="#0B3A6E" uuid="b1e2f3a4-0010-4000-8000-000000000010">
 					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
 				</reportElement>
 				<textElement verticalAlignment="Middle">
@@ -162,12 +165,12 @@
 				</textElement>
 				<textFieldExpression><![CDATA["Réf. Commande / Dépôt :"]]></textFieldExpression>
 			</textField>
-			<textField isBlankWhenNull="true">
-				<reportElement x="210" y="215" width="160" height="14" forecolor="#1F2937" uuid="b1e2f3a4-0011-4000-8000-000000000011"/>
+			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
+				<reportElement x="205" y="215" width="175" height="14" forecolor="#1F2937" uuid="b1e2f3a4-0011-4000-8000-000000000011"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[($P{commandeReference} != null && !$P{commandeReference}.isEmpty() ? $P{commandeReference} : "-") + ($P{depotNom} != null && !$P{depotNom}.isEmpty() ? " (" + $P{depotNom} + ")" : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA[($P{commandeReference} != null && !$P{commandeReference}.isEmpty() ? $P{commandeReference} : "-") + (($P{numeroCommandeExterne} != null && !$P{numeroCommandeExterne}.trim().isEmpty()) ? " (BC: " + $P{numeroCommandeExterne} + ")" : (($P{bcClient} != null && !$P{bcClient}.trim().isEmpty()) ? " (BC: " + $P{bcClient} + ")" : "")) + ($P{depotNom} != null && !$P{depotNom}.isEmpty() ? " (" + $P{depotNom} + ")" : "")]]></textFieldExpression>
 			</textField>
 			<textField>
 				<reportElement x="390" y="200" width="170" height="14" forecolor="#0B3A6E" uuid="b1e2f3a4-0012-4000-8000-000000000012">

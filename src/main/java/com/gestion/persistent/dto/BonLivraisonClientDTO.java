@@ -15,6 +15,8 @@ public class BonLivraisonClientDTO {
     private String clientTelephone;
     private Long commandeClientId;
     private String commandeClientNumero;
+    private String numeroCommandeExterne;
+    private String bcClient;
     private List<Long> commandeClientIds = new ArrayList<>();
     private List<String> commandeClientNumeros = new ArrayList<>();
     private StatutLivraison statut;
@@ -78,6 +80,18 @@ public class BonLivraisonClientDTO {
 
     public String getCommandeClientNumero() { return commandeClientNumero; }
     public void setCommandeClientNumero(String commandeClientNumero) { this.commandeClientNumero = commandeClientNumero; }
+
+    public String getNumeroCommandeExterne() { return numeroCommandeExterne != null ? numeroCommandeExterne : bcClient; }
+    public void setNumeroCommandeExterne(String numeroCommandeExterne) {
+        this.numeroCommandeExterne = numeroCommandeExterne;
+        if (this.bcClient == null) this.bcClient = numeroCommandeExterne;
+    }
+
+    public String getBcClient() { return bcClient != null ? bcClient : numeroCommandeExterne; }
+    public void setBcClient(String bcClient) {
+        this.bcClient = bcClient;
+        if (this.numeroCommandeExterne == null) this.numeroCommandeExterne = bcClient;
+    }
 
     public StatutLivraison getStatut() { return statut; }
     public void setStatut(StatutLivraison statut) { this.statut = statut; }

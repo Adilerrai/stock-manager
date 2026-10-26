@@ -261,8 +261,33 @@ public class ImpressionService {
         params.put("numeroBl", bl.getNumeroBl());
         params.put("dateBl", bl.getDateBl() != null ? bl.getDateBl().format(DATETIME_FORMATTER) : "-");
         params.put("statut", bl.getStatut() != null ? bl.getStatut().toString() : "LIVRÉ");
-        params.put("commandeReference",
-                bl.getCommandeClient() != null ? bl.getCommandeClient().getNumeroCommande() : "-");
+        String cmdRef = bl.getCommandeClient() != null ? bl.getCommandeClient().getNumeroCommande() : null;
+        if ((cmdRef == null || cmdRef.trim().isEmpty() || "-".equals(cmdRef)) && bl.getCommandes() != null && !bl.getCommandes().isEmpty()) {
+            cmdRef = bl.getCommandes().stream()
+                    .map(CommandeClient::getNumeroCommande)
+                    .filter(ref -> ref != null && !ref.trim().isEmpty())
+                    .distinct()
+                    .collect(Collectors.joining(", "));
+        }
+        if (cmdRef == null || cmdRef.trim().isEmpty()) {
+            cmdRef = "-";
+        }
+        params.put("commandeReference", cmdRef);
+
+        String bcClient = null;
+        if (bl.getCommandeClient() != null && bl.getCommandeClient().getNumeroCommandeExterne() != null
+                && !bl.getCommandeClient().getNumeroCommandeExterne().trim().isEmpty()) {
+            bcClient = bl.getCommandeClient().getNumeroCommandeExterne().trim();
+        } else if (bl.getCommandes() != null && !bl.getCommandes().isEmpty()) {
+            for (CommandeClient c : bl.getCommandes()) {
+                if (c != null && c.getNumeroCommandeExterne() != null && !c.getNumeroCommandeExterne().trim().isEmpty()) {
+                    bcClient = c.getNumeroCommandeExterne().trim();
+                    break;
+                }
+            }
+        }
+        params.put("numeroCommandeExterne", bcClient != null ? bcClient : "");
+        params.put("bcClient", bcClient != null ? bcClient : "");
         params.put("notes", bl.getObservations());
 
         if (bl.getClient() != null) {
