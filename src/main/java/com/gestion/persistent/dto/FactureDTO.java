@@ -33,6 +33,9 @@ public class FactureDTO {
     private List<LigneFactureDTO> lignes = new ArrayList<>();
     private List<Long> bonLivraisonIds = new ArrayList<>();
     private List<String> bonLivraisonNumeros = new ArrayList<>();
+    private List<String> commandeClientNumerosExternes = new ArrayList<>();
+    private String numeroCommandeExterne;
+    private String bcClient;
 
     public FactureDTO() {}
 
@@ -110,4 +113,13 @@ public class FactureDTO {
 
     public List<String> getBonLivraisonNumeros() { return bonLivraisonNumeros; }
     public void setBonLivraisonNumeros(List<String> bonLivraisonNumeros) { this.bonLivraisonNumeros = bonLivraisonNumeros; }
+
+    public List<String> getCommandeClientNumerosExternes() { return commandeClientNumerosExternes; }
+    public void setCommandeClientNumerosExternes(List<String> commandeClientNumerosExternes) { this.commandeClientNumerosExternes = commandeClientNumerosExternes; }
+
+    public String getNumeroCommandeExterne() { return numeroCommandeExterne; }
+    public void setNumeroCommandeExterne(String numeroCommandeExterne) { this.numeroCommandeExterne = numeroCommandeExterne; }
+
+    public String getBcClient() { return bcClient; }
+    public void setBcClient(String bcClient) { this.bcClient = bcClient; }
 }

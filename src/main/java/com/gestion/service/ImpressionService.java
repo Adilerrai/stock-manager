@@ -142,15 +142,41 @@ public class ImpressionService {
                                 : facture.getEmisePar().getUsername())
                         : "Direction");
 
-        // Numéros des BLs associés si existants
-        if (facture.getBonsLivraison() != null && !facture.getBonsLivraison().isEmpty()) {
-            String blNums = facture.getBonsLivraison().stream()
-                    .map(BonLivraisonClient::getNumeroBl)
-                    .collect(Collectors.joining(", "));
-            params.put("bonLivraisonNumeros", blNums);
-        } else {
-            params.put("bonLivraisonNumeros", "");
+        // Numéros des BLs et Commandes externes associés
+        List<BonLivraisonClient> bls = facture.getBonsLivraison();
+        if ((bls == null || bls.isEmpty()) && facture.getId() != null) {
+            bls = bonLivraisonClientRepository.findByFactureId(facture.getId());
         }
+
+        Set<String> blNumsSet = new LinkedHashSet<>();
+        Set<String> bcClientNumsSet = new LinkedHashSet<>();
+
+        if (bls != null && !bls.isEmpty()) {
+            for (BonLivraisonClient bl : bls) {
+                if (bl.getNumeroBl() != null && !bl.getNumeroBl().trim().isEmpty()) {
+                    blNumsSet.add(bl.getNumeroBl().trim());
+                }
+                if (bl.getCommandeClient() != null && bl.getCommandeClient().getNumeroCommandeExterne() != null
+                        && !bl.getCommandeClient().getNumeroCommandeExterne().trim().isEmpty()) {
+                    bcClientNumsSet.add(bl.getCommandeClient().getNumeroCommandeExterne().trim());
+                }
+                if (bl.getCommandes() != null && !bl.getCommandes().isEmpty()) {
+                    for (CommandeClient c : bl.getCommandes()) {
+                        if (c != null && c.getNumeroCommandeExterne() != null && !c.getNumeroCommandeExterne().trim().isEmpty()) {
+                            bcClientNumsSet.add(c.getNumeroCommandeExterne().trim());
+                        }
+                    }
+                }
+            }
+        }
+
+        String blNums = String.join(", ", blNumsSet);
+        String bcClientNums = String.join(", ", bcClientNumsSet);
+
+        params.put("bonLivraisonNumeros", blNums);
+        params.put("numeroCommandeExterne", bcClientNums);
+        params.put("bcClient", bcClientNums);
+        params.put("commandeClientNumeros", bcClientNums);
 
         params.put("notes", facture.getNotes());
 

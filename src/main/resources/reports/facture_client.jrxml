@@ -29,6 +29,7 @@
 	<parameter name="modePaiement" class="java.lang.String"/>
 	<parameter name="emiseParNom" class="java.lang.String"/>
 	<parameter name="bonLivraisonNumeros" class="java.lang.String"/>
+	<parameter name="numeroCommandeExterne" class="java.lang.String"/>
 	<parameter name="notes" class="java.lang.String"/>
 	<parameter name="clientNom" class="java.lang.String"/>
 	<parameter name="clientTelephone" class="java.lang.String"/>
@@ -107,14 +108,15 @@
 			</textField>
 
 			<!-- Informations Facture Complémentaires (colonne droite) -->
-			<textField isBlankWhenNull="true">
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="300" y="132" width="267" height="55" forecolor="#1F2937" uuid="f98e1234-0006-4000-8000-000000000006"/>
 				<textElement verticalAlignment="Top" markup="html">
 					<font fontName="DejaVu Sans" size="8.5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[($P{bonLivraisonNumeros} != null && !$P{bonLivraisonNumeros}.isEmpty() ? "<b>BL(s) associé(s) :</b> " + $P{bonLivraisonNumeros} + "<br/>" : "") +
-($P{modePaiement} != null && !$P{modePaiement}.isEmpty() ? "<b>Règlement :</b> " + $P{modePaiement} + "<br/>" : "") +
-($P{statut} != null && !$P{statut}.isEmpty() ? "<b>Statut :</b> " + $P{statut} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA[($P{bonLivraisonNumeros} != null && !$P{bonLivraisonNumeros}.trim().isEmpty() ? "<b>BL(s) associé(s) :</b> " + $P{bonLivraisonNumeros} + "<br/>" : "") +
+($P{numeroCommandeExterne} != null && !$P{numeroCommandeExterne}.trim().isEmpty() ? "<b>BC Client :</b> " + $P{numeroCommandeExterne} + "<br/>" : "") +
+($P{modePaiement} != null && !$P{modePaiement}.trim().isEmpty() ? "<b>Règlement :</b> " + $P{modePaiement} + "<br/>" : "") +
+($P{statut} != null && !$P{statut}.trim().isEmpty() ? "<b>Statut :</b> " + $P{statut} : "")]]></textFieldExpression>
 			</textField>
 
 			<!-- Badge Détails Facture (fond #E9EDF2) -->
