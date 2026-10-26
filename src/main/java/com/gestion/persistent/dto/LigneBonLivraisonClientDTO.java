@@ -17,6 +17,10 @@ public class LigneBonLivraisonClientDTO {
     private BigDecimal remisePourcentage;
     private BigDecimal remiseMontant;
     private BigDecimal montantLigne;
+    private BigDecimal montantHT;
+    private BigDecimal tauxTVA = BigDecimal.valueOf(20);
+    private BigDecimal montantTVA;
+    private BigDecimal montantTTC;
     private BigDecimal prixVenteMin;
 
     public LigneBonLivraisonClientDTO() {}
@@ -62,6 +66,38 @@ public class LigneBonLivraisonClientDTO {
 
     public BigDecimal getMontantLigne() { return montantLigne; }
     public void setMontantLigne(BigDecimal montantLigne) { this.montantLigne = montantLigne; }
+
+    public BigDecimal getMontantHT() {
+        return montantHT != null ? montantHT : (montantLigne != null ? montantLigne : BigDecimal.ZERO);
+    }
+    public void setMontantHT(BigDecimal montantHT) {
+        this.montantHT = montantHT;
+    }
+
+    public BigDecimal getTauxTVA() {
+        return tauxTVA != null ? tauxTVA : BigDecimal.valueOf(20);
+    }
+    public void setTauxTVA(BigDecimal tauxTVA) {
+        this.tauxTVA = tauxTVA;
+    }
+
+    public BigDecimal getMontantTVA() {
+        if (montantTVA != null) return montantTVA;
+        BigDecimal ht = getMontantHT();
+        BigDecimal taux = getTauxTVA();
+        return ht.multiply(taux).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+    }
+    public void setMontantTVA(BigDecimal montantTVA) {
+        this.montantTVA = montantTVA;
+    }
+
+    public BigDecimal getMontantTTC() {
+        if (montantTTC != null) return montantTTC;
+        return getMontantHT().add(getMontantTVA());
+    }
+    public void setMontantTTC(BigDecimal montantTTC) {
+        this.montantTTC = montantTTC;
+    }
 
     public BigDecimal getPrixVenteMin() { return prixVenteMin; }
     public void setPrixVenteMin(BigDecimal prixVenteMin) { this.prixVenteMin = prixVenteMin; }

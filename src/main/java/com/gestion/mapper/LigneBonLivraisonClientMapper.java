@@ -16,6 +16,7 @@ public interface LigneBonLivraisonClientMapper {
     @Mapping(target = "lotId", source = "lot.id")
     @Mapping(target = "numeroLot", source = "lot.numeroLot")
     @Mapping(target = "prixVenteMin", source = "produit.prixVenteMin")
+    @Mapping(target = "montantHT", source = "montantLigne")
     LigneBonLivraisonClientDTO toDto(LigneBonLivraisonClient entity);
 
     @Mapping(target = "bonLivraisonClient", ignore = true)

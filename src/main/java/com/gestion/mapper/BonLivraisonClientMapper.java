@@ -19,6 +19,7 @@ public interface BonLivraisonClientMapper {
     @Mapping(target = "factureNumero", source = "facture.numeroFacture")
     @Mapping(target = "facturé", expression = "java(entity.getFacture() != null)")
     @Mapping(target = "lignes", source = "lignes")
+    @Mapping(target = "montantHT", source = "montantTotal")
     @Mapping(target = "depotId", expression = "java(entity.getLignes() != null && !entity.getLignes().isEmpty() && entity.getLignes().get(0).getDepot() != null ? entity.getLignes().get(0).getDepot().getId() : null)")
     @Mapping(target = "depotNom", expression = "java(entity.getLignes() != null && !entity.getLignes().isEmpty() && entity.getLignes().get(0).getDepot() != null ? entity.getLignes().get(0).getDepot().getNom() : null)")
     @Mapping(target = "piecesJointes", ignore = true)

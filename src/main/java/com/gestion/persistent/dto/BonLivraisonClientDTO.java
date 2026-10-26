@@ -21,6 +21,10 @@ public class BonLivraisonClientDTO {
     private BigDecimal remiseGlobalePourcentage;
     private BigDecimal remiseGlobaleMontant;
     private BigDecimal montantTotal;
+    private BigDecimal montantHT;
+    private BigDecimal tauxTVA = BigDecimal.valueOf(20);
+    private BigDecimal montantTVA;
+    private BigDecimal montantTTC;
     private String observations;
     private Long pointDeVenteId;
     private Long factureId;
@@ -86,6 +90,38 @@ public class BonLivraisonClientDTO {
 
     public BigDecimal getMontantTotal() { return montantTotal; }
     public void setMontantTotal(BigDecimal montantTotal) { this.montantTotal = montantTotal; }
+
+    public BigDecimal getMontantHT() {
+        return montantHT != null ? montantHT : (montantTotal != null ? montantTotal : BigDecimal.ZERO);
+    }
+    public void setMontantHT(BigDecimal montantHT) {
+        this.montantHT = montantHT;
+    }
+
+    public BigDecimal getTauxTVA() {
+        return tauxTVA != null ? tauxTVA : BigDecimal.valueOf(20);
+    }
+    public void setTauxTVA(BigDecimal tauxTVA) {
+        this.tauxTVA = tauxTVA;
+    }
+
+    public BigDecimal getMontantTVA() {
+        if (montantTVA != null) return montantTVA;
+        BigDecimal ht = getMontantHT();
+        BigDecimal taux = getTauxTVA();
+        return ht.multiply(taux).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+    }
+    public void setMontantTVA(BigDecimal montantTVA) {
+        this.montantTVA = montantTVA;
+    }
+
+    public BigDecimal getMontantTTC() {
+        if (montantTTC != null) return montantTTC;
+        return getMontantHT().add(getMontantTVA());
+    }
+    public void setMontantTTC(BigDecimal montantTTC) {
+        this.montantTTC = montantTTC;
+    }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }
