@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 047 :
+      - Ajout explicite des colonnes quantite_en_ddp et statut dans lignes_demande_achat
+    -->
+    <changeSet id="047-add-missing-columns-to-lignes-demande-achat" author="erp-achats">
+        <sql splitStatements="true">
+            ALTER TABLE lignes_demande_achat ADD COLUMN IF NOT EXISTS quantite_en_ddp NUMERIC(12, 2) DEFAULT 0.00 NOT NULL;
+            ALTER TABLE lignes_demande_achat ADD COLUMN IF NOT EXISTS statut VARCHAR(30) DEFAULT 'NON_TRAITEE';
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

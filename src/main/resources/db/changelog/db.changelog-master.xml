@@ -148,6 +148,9 @@
     <!-- Changeset 046 : Demandes d'Achat (DA) et évolution Demandes de Prix (National / International) -->
     <include file="changes/046-create-demandes-achat-and-update-ddp.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 047 : Colonnes quantite_en_ddp et statut dans lignes_demande_achat -->
+    <include file="changes/047-add-missing-columns-to-lignes-demande-achat.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

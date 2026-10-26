@@ -48,7 +48,11 @@
                 CONSTRAINT fk_lda_produit FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE SET NULL
             );
 
-            -- 3. Colonnes type_demande_prix et devise_souhaitee dans demandes_prix si inexistantes
+            -- 3. Ajout des colonnes sur lignes_demande_achat au cas où la table a déjà été créée avant
+            ALTER TABLE lignes_demande_achat ADD COLUMN IF NOT EXISTS quantite_en_ddp NUMERIC(12, 2) DEFAULT 0.00 NOT NULL;
+            ALTER TABLE lignes_demande_achat ADD COLUMN IF NOT EXISTS statut VARCHAR(30) DEFAULT 'NON_TRAITEE';
+
+            -- 4. Colonnes type_demande_prix et devise_souhaitee dans demandes_prix si inexistantes
             ALTER TABLE demandes_prix ADD COLUMN IF NOT EXISTS type_demande_prix VARCHAR(20) DEFAULT 'NATIONAL';
             ALTER TABLE demandes_prix ADD COLUMN IF NOT EXISTS devise_souhaitee VARCHAR(10) DEFAULT 'MAD';
             ALTER TABLE demandes_prix ADD COLUMN IF NOT EXISTS incoterm_souhaite VARCHAR(10);
