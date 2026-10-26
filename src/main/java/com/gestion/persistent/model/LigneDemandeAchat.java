@@ -29,8 +29,15 @@ public class LigneDemandeAchat {
     @Column(name = "quantite_demandee", nullable = false, precision = 12, scale = 2)
     private BigDecimal quantiteDemandee = BigDecimal.ONE;
 
+    @Column(name = "quantite_en_ddp", nullable = false, precision = 12, scale = 2)
+    private BigDecimal quantiteEnDdp = BigDecimal.ZERO;
+
     @Column(name = "unite", length = 20)
     private String unite = "U";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut", length = 30)
+    private com.gestion.persistent.enums.StatutLigneDemandeAchat statut = com.gestion.persistent.enums.StatutLigneDemandeAchat.NON_TRAITEE;
 
     @Column(name = "remarques", length = 255)
     private String remarques;
@@ -65,6 +72,12 @@ public class LigneDemandeAchat {
 
     public BigDecimal getQuantiteDemandee() { return quantiteDemandee; }
     public void setQuantiteDemandee(BigDecimal quantiteDemandee) { this.quantiteDemandee = quantiteDemandee; }
+
+    public BigDecimal getQuantiteEnDdp() { return quantiteEnDdp; }
+    public void setQuantiteEnDdp(BigDecimal quantiteEnDdp) { this.quantiteEnDdp = quantiteEnDdp; }
+
+    public com.gestion.persistent.enums.StatutLigneDemandeAchat getStatut() { return statut; }
+    public void setStatut(com.gestion.persistent.enums.StatutLigneDemandeAchat statut) { this.statut = statut; }
 
     public String getUnite() { return unite; }
     public void setUnite(String unite) { this.unite = unite; }

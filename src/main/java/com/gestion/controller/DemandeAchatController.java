@@ -54,12 +54,14 @@ public class DemandeAchatController {
     }
 
     public static class ConversionNationaleRequest {
+        public List<Long> ligneIds;
         public List<Long> fournisseurIds;
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
         public LocalDateTime dateLimiteReponse;
     }
 
     public static class ConversionInternationaleRequest {
+        public List<Long> ligneIds;
         public String devise;
         public Incoterm incoterm;
         public String lieuLivraison;
@@ -72,9 +74,10 @@ public class DemandeAchatController {
     public ResponseEntity<DemandePrixDTO> convertirEnDdpNationale(
             @PathVariable("id") Long id,
             @RequestBody(required = false) ConversionNationaleRequest request) {
+        List<Long> ligneIds = (request != null) ? request.ligneIds : null;
         List<Long> frnIds = (request != null) ? request.fournisseurIds : null;
         LocalDateTime dateLimite = (request != null) ? request.dateLimiteReponse : null;
-        DemandePrixDTO ddp = demandeAchatService.transformerEnDemandePrixNationale(id, frnIds, dateLimite);
+        DemandePrixDTO ddp = demandeAchatService.transformerEnDemandePrixNationale(id, ligneIds, frnIds, dateLimite);
         return ResponseEntity.ok(ddp);
     }
 
@@ -82,13 +85,14 @@ public class DemandeAchatController {
     public ResponseEntity<DemandePrixDTO> convertirEnDdpInternationale(
             @PathVariable("id") Long id,
             @RequestBody(required = false) ConversionInternationaleRequest request) {
+        List<Long> ligneIds = (request != null) ? request.ligneIds : null;
         String devise = (request != null) ? request.devise : "USD";
         Incoterm incoterm = (request != null) ? request.incoterm : null;
         String lieu = (request != null) ? request.lieuLivraison : null;
         List<Long> frnIds = (request != null) ? request.fournisseurIds : null;
         LocalDateTime dateLimite = (request != null) ? request.dateLimiteReponse : null;
 
-        DemandePrixDTO ddp = demandeAchatService.transformerEnDemandePrixInternationale(id, devise, incoterm, lieu, frnIds, dateLimite);
+        DemandePrixDTO ddp = demandeAchatService.transformerEnDemandePrixInternationale(id, ligneIds, devise, incoterm, lieu, frnIds, dateLimite);
         return ResponseEntity.ok(ddp);
     }
 }

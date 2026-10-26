@@ -17,5 +17,7 @@ public interface DemandePrixRepository extends JpaRepository<DemandePrix, Long> 
 
     Optional<DemandePrix> findByPointDeVenteIdAndNumeroDdp(Long pointDeVenteId, String numeroDdp);
 
+    List<DemandePrix> findByPointDeVenteIdAndDemandeAchatId(Long pointDeVenteId, String demandeAchatId);
+
     List<DemandePrix> findByStatutAndPointDeVenteId(StatutDemandePrix statut, Long pointDeVenteId);
 }

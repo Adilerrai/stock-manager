@@ -20,6 +20,8 @@ public class DemandeAchatDTO {
     private String observations;
     private Long demandePrixId;
     private String numeroDdpAssociee;
+    private List<Long> ddpIds = new ArrayList<>();
+    private List<String> numerosDdpAssociees = new ArrayList<>();
     private Long pointDeVenteId;
     private List<LigneDemandeAchatDTO> lignes = new ArrayList<>();
 
@@ -60,6 +62,12 @@ public class DemandeAchatDTO {
 
     public String getNumeroDdpAssociee() { return numeroDdpAssociee; }
     public void setNumeroDdpAssociee(String numeroDdpAssociee) { this.numeroDdpAssociee = numeroDdpAssociee; }
+
+    public List<Long> getDdpIds() { return ddpIds; }
+    public void setDdpIds(List<Long> ddpIds) { this.ddpIds = ddpIds; }
+
+    public List<String> getNumerosDdpAssociees() { return numerosDdpAssociees; }
+    public void setNumerosDdpAssociees(List<String> numerosDdpAssociees) { this.numerosDdpAssociees = numerosDdpAssociees; }
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }

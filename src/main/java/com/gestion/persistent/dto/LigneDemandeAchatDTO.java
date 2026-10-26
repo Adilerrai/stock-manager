@@ -9,7 +9,9 @@ public class LigneDemandeAchatDTO {
     private String reference;
     private String designation;
     private BigDecimal quantiteDemandee = BigDecimal.ONE;
+    private BigDecimal quantiteEnDdp = BigDecimal.ZERO;
     private String unite = "U";
+    private com.gestion.persistent.enums.StatutLigneDemandeAchat statut = com.gestion.persistent.enums.StatutLigneDemandeAchat.NON_TRAITEE;
     private String remarques;
 
     public LigneDemandeAchatDTO() {}
@@ -31,6 +33,12 @@ public class LigneDemandeAchatDTO {
 
     public BigDecimal getQuantiteDemandee() { return quantiteDemandee; }
     public void setQuantiteDemandee(BigDecimal quantiteDemandee) { this.quantiteDemandee = quantiteDemandee; }
+
+    public BigDecimal getQuantiteEnDdp() { return quantiteEnDdp; }
+    public void setQuantiteEnDdp(BigDecimal quantiteEnDdp) { this.quantiteEnDdp = quantiteEnDdp; }
+
+    public com.gestion.persistent.enums.StatutLigneDemandeAchat getStatut() { return statut; }
+    public void setStatut(com.gestion.persistent.enums.StatutLigneDemandeAchat statut) { this.statut = statut; }
 
     public String getUnite() { return unite; }
     public void setUnite(String unite) { this.unite = unite; }

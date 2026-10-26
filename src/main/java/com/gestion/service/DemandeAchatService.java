@@ -106,9 +106,8 @@ public class DemandeAchatService {
         DemandeAchat da = demandeAchatRepository.findByIdAndPointDeVenteId(id, tenantId)
                 .orElseThrow(() -> new IllegalArgumentException("Demande d'achat non trouvée avec l'id: " + id));
 
-        if (da.getStatut() == StatutDemandeAchat.TRANSFORMEE_DDP_NATIONALE ||
-            da.getStatut() == StatutDemandeAchat.TRANSFORMEE_DDP_INTERNATIONALE) {
-            throw new IllegalStateException("Impossible de modifier une demande d'achat déjà transformée en demande de prix.");
+        if (da.getStatut() == StatutDemandeAchat.TOTALEMENT_TRANSFORMEE) {
+            throw new IllegalStateException("Impossible de modifier une demande d'achat entièrement transformée en demande de prix.");
         }
 
         if (dto.getDemandeurNom() != null) da.setDemandeurNom(dto.getDemandeurNom());
@@ -182,27 +181,29 @@ public class DemandeAchatService {
     }
 
     /**
-     * Action 1 : Transformer la Demande d'Achat vers une Demande de Prix NATIONALE
+     * Action 1 : Transformer des articles choisis de la Demande d'Achat vers une Demande de Prix NATIONALE
      */
     @Transactional
-    public DemandePrixDTO transformerEnDemandePrixNationale(Long id, List<Long> fournisseurIds, LocalDateTime dateLimiteReponse) {
-        return transformerEnDemandePrix(id, TypeAchat.NATIONAL, "MAD", null, null, fournisseurIds, dateLimiteReponse);
+    public DemandePrixDTO transformerEnDemandePrixNationale(Long id, List<Long> ligneIds, List<Long> fournisseurIds, LocalDateTime dateLimiteReponse) {
+        return transformerEnDemandePrix(id, ligneIds, TypeAchat.NATIONAL, "MAD", null, null, fournisseurIds, dateLimiteReponse);
     }
 
     /**
-     * Action 2 : Transformer la Demande d'Achat vers une Demande de Prix INTERNATIONALE
+     * Action 2 : Transformer des articles choisis de la Demande d'Achat vers une Demande de Prix INTERNATIONALE
      */
     @Transactional
     public DemandePrixDTO transformerEnDemandePrixInternationale(Long id,
+                                                                List<Long> ligneIds,
                                                                 String devise,
                                                                 com.gestion.persistent.enums.Incoterm incoterm,
                                                                 String lieuLivraison,
                                                                 List<Long> fournisseurIds,
                                                                 LocalDateTime dateLimiteReponse) {
-        return transformerEnDemandePrix(id, TypeAchat.INTERNATIONAL, devise != null ? devise : "USD", incoterm, lieuLivraison, fournisseurIds, dateLimiteReponse);
+        return transformerEnDemandePrix(id, ligneIds, TypeAchat.INTERNATIONAL, devise != null ? devise : "USD", incoterm, lieuLivraison, fournisseurIds, dateLimiteReponse);
     }
 
     private DemandePrixDTO transformerEnDemandePrix(Long daId,
+                                                    List<Long> ligneIds,
                                                     TypeAchat typeAchat,
                                                     String devise,
                                                     com.gestion.persistent.enums.Incoterm incoterm,
@@ -217,6 +218,24 @@ public class DemandeAchatService {
             throw new IllegalStateException("Impossible de transformer une demande d'achat annulée.");
         }
 
+        // Filtrer les lignes à inclure dans cette DDP
+        List<LigneDemandeAchat> lignesAConvertir;
+        if (ligneIds != null && !ligneIds.isEmpty()) {
+            lignesAConvertir = da.getLignes().stream()
+                    .filter(l -> ligneIds.contains(l.getId()))
+                    .collect(Collectors.toList());
+        } else {
+            // Par défaut toutes les lignes non encore entièrement traitées
+            lignesAConvertir = da.getLignes().stream()
+                    .filter(l -> l.getStatut() != com.gestion.persistent.enums.StatutLigneDemandeAchat.EN_COURS_DDP
+                              && l.getStatut() != com.gestion.persistent.enums.StatutLigneDemandeAchat.COMMANDEE)
+                    .collect(Collectors.toList());
+        }
+
+        if (lignesAConvertir.isEmpty()) {
+            throw new IllegalStateException("Aucune ligne d'article sélectionnée ou disponible pour la création d'une demande de prix.");
+        }
+
         DemandePrixDTO ddpDto = new DemandePrixDTO();
         ddpDto.setObjet((typeAchat == TypeAchat.INTERNATIONAL ? "[INTERNATIONAL] " : "[NATIONAL] ") + da.getObjet());
         ddpDto.setDemandeAchatId(da.getNumeroDa());
@@ -228,8 +247,8 @@ public class DemandeAchatService {
         ddpDto.setObservations("Origine Demande d'Achat N° " + da.getNumeroDa() + " (Demandeur: " + (da.getDemandeurNom() != null ? da.getDemandeurNom() : "-") + ").\n" + (da.getObservations() != null ? da.getObservations() : ""));
         ddpDto.setFournisseurIds(fournisseurIds);
 
-        // Copier les lignes
-        for (LigneDemandeAchat lda : da.getLignes()) {
+        // Copier les lignes sélectionnées
+        for (LigneDemandeAchat lda : lignesAConvertir) {
             LigneDemandePrixDTO lDto = new LigneDemandePrixDTO();
             if (lda.getProduit() != null) {
                 lDto.setProduitId(lda.getProduit().getId());
@@ -239,17 +258,29 @@ public class DemandeAchatService {
             lDto.setQuantiteDemandee(lda.getQuantiteDemandee());
             lDto.setUnite(lda.getUnite());
             ddpDto.getLignes().add(lDto);
+
+            // Marquer la ligne de la DA comme étant en cours de DDP
+            lda.setQuantiteEnDdp(lda.getQuantiteDemandee());
+            lda.setStatut(com.gestion.persistent.enums.StatutLigneDemandeAchat.EN_COURS_DDP);
         }
 
         DemandePrixDTO createdDdp = demandePrixService.createDemandePrix(ddpDto);
 
-        // Mettre à jour la DA
+        // Mettre à jour la DA (dernière DDP et statut global)
         da.setDemandePrixId(createdDdp.getId());
-        if (typeAchat == TypeAchat.INTERNATIONAL) {
-            da.setStatut(StatutDemandeAchat.TRANSFORMEE_DDP_INTERNATIONALE);
+
+        // Calculer si toutes les lignes de la DA sont maintenant traitées
+        boolean toutesTraitees = da.getLignes().stream()
+                .allMatch(l -> l.getStatut() == com.gestion.persistent.enums.StatutLigneDemandeAchat.EN_COURS_DDP
+                            || l.getStatut() == com.gestion.persistent.enums.StatutLigneDemandeAchat.COMMANDEE
+                            || l.getStatut() == com.gestion.persistent.enums.StatutLigneDemandeAchat.ANNULEE);
+
+        if (toutesTraitees) {
+            da.setStatut(StatutDemandeAchat.TOTALEMENT_TRANSFORMEE);
         } else {
-            da.setStatut(StatutDemandeAchat.TRANSFORMEE_DDP_NATIONALE);
+            da.setStatut(StatutDemandeAchat.PARTIELLEMENT_TRANSFORMEE);
         }
+
         demandeAchatRepository.save(da);
 
         return createdDdp;
@@ -270,10 +301,13 @@ public class DemandeAchatService {
         dto.setDemandePrixId(da.getDemandePrixId());
         dto.setPointDeVenteId(da.getPointDeVenteId());
 
-        if (da.getDemandePrixId() != null) {
-            demandePrixRepository.findById(da.getDemandePrixId()).ifPresent(ddp -> {
-                dto.setNumeroDdpAssociee(ddp.getNumeroDdp());
-            });
+        if (da.getNumeroDa() != null) {
+            List<DemandePrix> ddps = demandePrixRepository.findByPointDeVenteIdAndDemandeAchatId(da.getPointDeVenteId(), da.getNumeroDa());
+            if (ddps != null && !ddps.isEmpty()) {
+                dto.setDdpIds(ddps.stream().map(DemandePrix::getId).collect(Collectors.toList()));
+                dto.setNumerosDdpAssociees(ddps.stream().map(DemandePrix::getNumeroDdp).collect(Collectors.toList()));
+                dto.setNumeroDdpAssociee(ddps.get(ddps.size() - 1).getNumeroDdp());
+            }
         }
 
         if (da.getLignes() != null) {
@@ -285,6 +319,8 @@ public class DemandeAchatService {
                 lDto.setReference(l.getReference());
                 lDto.setDesignation(l.getDesignation());
                 lDto.setQuantiteDemandee(l.getQuantiteDemandee());
+                lDto.setQuantiteEnDdp(l.getQuantiteEnDdp());
+                lDto.setStatut(l.getStatut());
                 lDto.setUnite(l.getUnite());
                 lDto.setRemarques(l.getRemarques());
                 return lDto;
