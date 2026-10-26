@@ -27,13 +27,5 @@ public interface FactureAchatRepository extends JpaRepository<FactureAchat, Long
     List<FactureAchat> findByPeriodeAndPointDeVenteId(@org.springframework.data.repository.query.Param("dateDebut") java.time.LocalDateTime dateDebut,
                                                       @org.springframework.data.repository.query.Param("dateFin") java.time.LocalDateTime dateFin,
                                                       @org.springframework.data.repository.query.Param("pointDeVenteId") Long pointDeVenteId);
-
-    @org.springframework.data.jpa.repository.Query("SELECT f FROM FactureAchat f WHERE f.pointDeVenteId = :pointDeVenteId " +
-            "AND (:dateDebut IS NULL OR f.dateFacture >= :dateDebut) " +
-            "AND (:dateFin IS NULL OR f.dateFacture <= :dateFin) " +
-            "ORDER BY f.dateFacture DESC")
-    List<FactureAchat> findByFiltresPeriode(@org.springframework.data.repository.query.Param("dateDebut") java.time.LocalDateTime dateDebut,
-                                            @org.springframework.data.repository.query.Param("dateFin") java.time.LocalDateTime dateFin,
-                                            @org.springframework.data.repository.query.Param("pointDeVenteId") Long pointDeVenteId);
 }
 

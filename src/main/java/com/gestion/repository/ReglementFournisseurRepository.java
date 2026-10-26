@@ -24,7 +24,7 @@ public interface ReglementFournisseurRepository extends JpaRepository<ReglementF
     List<ReglementFournisseur> findByFournisseurIdAndPointDeVenteId(@org.springframework.data.repository.query.Param("fournisseurId") Long fournisseurId,
                                                                     @org.springframework.data.repository.query.Param("pointDeVenteId") Long pointDeVenteId);
 
-    @org.springframework.data.jpa.repository.Query("SELECT r.factureAchat.id, COALESCE(SUM(r.montant), 0) FROM ReglementFournisseur r " +
+    @org.springframework.data.jpa.repository.Query("SELECT r.factureAchat.id, SUM(r.montant) FROM ReglementFournisseur r " +
             "WHERE r.pointDeVenteId = :pointDeVenteId AND r.factureAchat.id IN :factureIds GROUP BY r.factureAchat.id")
     List<Object[]> sumMontantPayeByFactureIds(@org.springframework.data.repository.query.Param("factureIds") java.util.Collection<Long> factureIds,
                                              @org.springframework.data.repository.query.Param("pointDeVenteId") Long pointDeVenteId);

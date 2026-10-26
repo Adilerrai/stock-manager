@@ -122,17 +122,10 @@ public class FactureAchatService {
     }
 
     public List<FactureAchatDTO> getFacturesAchat(java.time.LocalDate dateDebut, java.time.LocalDate dateFin) {
-        Long tenantId = TenantContext.getCurrentTenant();
-        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
-        java.time.LocalDateTime dtDebut = (dateDebut != null) ? dateDebut.atStartOfDay() : null;
-        java.time.LocalDateTime dtFin = (dateFin != null) ? dateFin.atTime(23, 59, 59, 999999999) : null;
-
-        List<FactureAchat> factures = factureAchatRepository.findByFiltresPeriode(dtDebut, dtFin, effectiveTenantId);
-        List<FactureAchatDTO> dtos = factures.stream()
-                .map(factureAchatMapper::toDto)
-                .collect(Collectors.toList());
-        enrichirSoldes(dtos);
-        return dtos;
+        FactureAchatSearchCriteria criteria = new FactureAchatSearchCriteria();
+        criteria.setDateDebut(dateDebut);
+        criteria.setDateFin(dateFin);
+        return searchFacturesAchat(criteria);
     }
 
     public Page<FactureAchatDTO> searchFacturesAchat(FactureAchatSearchCriteria criteria, Pageable pageable) {
@@ -192,12 +185,20 @@ public class FactureAchatService {
                 .collect(Collectors.toSet());
         if (ids.isEmpty()) return;
 
-        List<Object[]> sums = reglementFournisseurRepository.sumMontantPayeByFactureIds(ids, effectiveTenantId);
         java.util.Map<Long, BigDecimal> mapPaye = new java.util.HashMap<>();
-        for (Object[] row : sums) {
-            Long fId = (Long) row[0];
-            BigDecimal sum = (BigDecimal) row[1];
-            mapPaye.put(fId, sum != null ? sum : BigDecimal.ZERO);
+        try {
+            List<Object[]> sums = reglementFournisseurRepository.sumMontantPayeByFactureIds(ids, effectiveTenantId);
+            if (sums != null) {
+                for (Object[] row : sums) {
+                    if (row != null && row.length >= 2 && row[0] != null) {
+                        Long fId = (Long) row[0];
+                        BigDecimal sum = row[1] != null ? (BigDecimal) row[1] : BigDecimal.ZERO;
+                        mapPaye.put(fId, sum);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log fallback without failing request
         }
 
         for (FactureAchatDTO dto : dtoList) {
