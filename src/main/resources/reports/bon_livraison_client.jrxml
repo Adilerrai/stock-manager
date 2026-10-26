@@ -493,8 +493,8 @@
 			<!-- Bloc Total TTC mis en avant avec couleur dynamique -->
 			<rectangle radius="6">
 				<reportElement x="370" y="50" width="197" height="22" backcolor="#0B3A6E" uuid="b1e2f3a4-0041-4000-8000-000000000041">
-					<printWhenExpression><![CDATA[$P{afficherPrix} == null || $P{afficherPrix}.booleanValue()]]></printWhenExpression>
 					<propertyExpression name="net.sf.jasperreports.style.backcolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+					<printWhenExpression><![CDATA[$P{afficherPrix} == null || $P{afficherPrix}.booleanValue()]]></printWhenExpression>
 				</reportElement>
 				<graphicElement>
 					<pen lineWidth="0.0"/>
@@ -530,8 +530,8 @@
 			</rectangle>
 			<staticText>
 				<reportElement x="378" y="10" width="181" height="14" forecolor="#0B3A6E" uuid="b1e2f3a4-0036-4000-8000-000000000098">
-					<printWhenExpression><![CDATA[$P{afficherPrix} != null && !$P{afficherPrix}.booleanValue()]]></printWhenExpression>
 					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+					<printWhenExpression><![CDATA[$P{afficherPrix} != null && !$P{afficherPrix}.booleanValue()]]></printWhenExpression>
 				</reportElement>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8" isBold="true"/>

@@ -66,13 +66,23 @@ public class ImpressionController {
     }
 
     @GetMapping("/bons-livraison/{id}")
-    public ResponseEntity<byte[]> imprimerBonLivraison(@PathVariable Long id) {
+    public ResponseEntity<byte[]> imprimerBonLivraison(
+            @PathVariable Long id,
+            @RequestParam(required = false) Boolean avecPrix,
+            @RequestParam(required = false) Boolean afficherPrix) {
         BonLivraisonClient bl = bonLivraisonClientRepository.findById(id).orElse(null);
         String rs = (bl != null && bl.getClient() != null) ? bl.getClient().getNomComplet() : "";
         String code = (bl != null && bl.getNumeroBl() != null) ? bl.getNumeroBl() : "BL-" + id;
         String fileName = buildPdfFileName(code, rs);
 
-        byte[] pdf = impressionService.genererBonLivraisonPdf(id);
+        boolean showPrices = true;
+        if (avecPrix != null) {
+            showPrices = avecPrix;
+        } else if (afficherPrix != null) {
+            showPrices = afficherPrix;
+        }
+
+        byte[] pdf = impressionService.genererBonLivraisonPdf(id, showPrices);
         return createPdfResponse(pdf, fileName);
     }
 

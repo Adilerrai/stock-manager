@@ -48,8 +48,17 @@ public class BonLivraisonClientController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> getBonLivraisonPdf(@PathVariable Long id) {
-        byte[] pdf = impressionService.genererBonLivraisonPdf(id);
+    public ResponseEntity<byte[]> getBonLivraisonPdf(
+            @PathVariable Long id,
+            @RequestParam(required = false) Boolean avecPrix,
+            @RequestParam(required = false) Boolean afficherPrix) {
+        boolean showPrices = true;
+        if (avecPrix != null) {
+            showPrices = avecPrix;
+        } else if (afficherPrix != null) {
+            showPrices = afficherPrix;
+        }
+        byte[] pdf = impressionService.genererBonLivraisonPdf(id, showPrices);
         return ResponseEntity.ok()
                 .contentType(org.springframework.http.MediaType.APPLICATION_PDF)
                 .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"bon-livraison-" + id + ".pdf\"")

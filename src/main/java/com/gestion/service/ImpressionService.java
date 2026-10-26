@@ -16,6 +16,7 @@ import java.awt.Image;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -237,6 +238,10 @@ public class ImpressionService {
     // 2. Impression Bon de Livraison Client
     // ==========================================
     public byte[] genererBonLivraisonPdf(Long blId) {
+        return genererBonLivraisonPdf(blId, true);
+    }
+
+    public byte[] genererBonLivraisonPdf(Long blId, Boolean avecPrix) {
         BonLivraisonClient bl = bonLivraisonClientRepository.findById(blId)
                 .orElseThrow(() -> new RuntimeException("Bon de livraison non trouvé avec l'id: " + blId));
 
@@ -244,14 +249,16 @@ public class ImpressionService {
             throw new IllegalStateException("Impossible d'imprimer un bon de livraison en statut Brouillon ou Annulé. Il doit être validé.");
         }
 
+        boolean afficherPrix = avecPrix == null || avecPrix.booleanValue();
+
         Map<String, Object> params = initCommonTenantParams();
+        params.put("afficherPrix", afficherPrix);
         params.put("numeroBl", bl.getNumeroBl());
         params.put("dateBl", bl.getDateBl() != null ? bl.getDateBl().format(DATETIME_FORMATTER) : "-");
         params.put("statut", bl.getStatut() != null ? bl.getStatut().toString() : "LIVRÉ");
         params.put("commandeReference",
                 bl.getCommandeClient() != null ? bl.getCommandeClient().getNumeroCommande() : "-");
         params.put("notes", bl.getObservations());
-        params.put("montantTotal", bl.getMontantTotal());
 
         if (bl.getClient() != null) {
             Client c = bl.getClient();
@@ -265,39 +272,86 @@ public class ImpressionService {
         List<Map<String, Object>> lignes = new ArrayList<>();
         String premierDepot = "Dépôt Principal";
         BigDecimal totalMoPrix = BigDecimal.ZERO;
+        BigDecimal totalQuantite = BigDecimal.ZERO;
+        BigDecimal totalLignesHT = BigDecimal.ZERO;
         boolean hasService = false;
 
         if (bl.getLignes() != null) {
             for (LigneBonLivraisonClient lbl : bl.getLignes()) {
+                BigDecimal qte = lbl.getQuantiteLivree() != null ? lbl.getQuantiteLivree() : BigDecimal.ZERO;
+                BigDecimal pu = lbl.getPrixVente() != null ? lbl.getPrixVente() : BigDecimal.ZERO;
+                BigDecimal montantLigne = lbl.getMontantLigne() != null ? lbl.getMontantLigne() : pu.multiply(qte);
+
+                totalQuantite = totalQuantite.add(qte);
+                totalLignesHT = totalLignesHT.add(montantLigne);
+
                 if (isServiceProduit(lbl.getProduit(), null)) {
                     hasService = true;
-                    BigDecimal qte = lbl.getQuantiteLivree() != null ? lbl.getQuantiteLivree() : BigDecimal.ONE;
-                    BigDecimal pu = lbl.getPrixVente() != null ? lbl.getPrixVente() : BigDecimal.ZERO;
-                    totalMoPrix = totalMoPrix.add(pu.multiply(qte));
+                    totalMoPrix = totalMoPrix.add(pu.multiply(qte.compareTo(BigDecimal.ZERO) > 0 ? qte : BigDecimal.ONE));
                 } else {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("produitReference", lbl.getProduit() != null ? lbl.getProduit().getReference() : "");
-                    map.put("produitDesignation", lbl.getProduit() != null ? lbl.getProduit().getDesignation() : "Article");
+                    String ref = lbl.getProduit() != null ? lbl.getProduit().getReference() : "";
+                    String des = lbl.getProduit() != null ? lbl.getProduit().getDesignation() : "Article";
+                    map.put("reference", ref);
+                    map.put("produitReference", ref);
+                    map.put("designation", des);
+                    map.put("produitDesignation", des);
+
                     String depotNom = lbl.getDepot() != null ? lbl.getDepot().getNom() : "-";
                     map.put("depotNom", depotNom);
                     if (lbl.getDepot() != null)
                         premierDepot = lbl.getDepot().getNom();
-                    map.put("quantiteLivree", lbl.getQuantiteLivree() != null ? lbl.getQuantiteLivree() : BigDecimal.ZERO);
-                    map.put("prixVente", lbl.getPrixVente() != null ? lbl.getPrixVente() : BigDecimal.ZERO);
+
+                    map.put("quantiteLivree", qte);
+                    map.put("quantite", qte);
+                    map.put("prixVente", pu);
+                    map.put("prixUnitaire", pu);
+                    map.put("prixUnitaireHT", pu);
+                    map.put("montantLigne", montantLigne);
+                    map.put("montantHT", montantLigne);
+                    map.put("montantTotal", montantLigne);
                     lignes.add(map);
                 }
             }
         }
         if (hasService) {
             Map<String, Object> mo = new HashMap<>();
+            mo.put("reference", "MO");
             mo.put("produitReference", "MO");
+            mo.put("designation", "MAIN D'ŒUVRE");
             mo.put("produitDesignation", "MAIN D'ŒUVRE");
             mo.put("depotNom", "-");
             mo.put("quantiteLivree", BigDecimal.ONE);
+            mo.put("quantite", BigDecimal.ONE);
             mo.put("prixVente", totalMoPrix);
+            mo.put("prixUnitaire", totalMoPrix);
+            mo.put("prixUnitaireHT", totalMoPrix);
+            mo.put("montantLigne", totalMoPrix);
+            mo.put("montantHT", totalMoPrix);
+            mo.put("montantTotal", totalMoPrix);
             lignes.add(mo);
         }
         params.put("depotNom", premierDepot);
+        params.put("totalQuantite", totalQuantite);
+
+        // Calculs des totaux financiers (HT, TVA, TTC)
+        BigDecimal montantHT = (bl.getMontantTotal() != null && bl.getMontantTotal().compareTo(BigDecimal.ZERO) > 0)
+                ? bl.getMontantTotal()
+                : totalLignesHT;
+
+        BigDecimal tauxTva = (bl.getCommandeClient() != null && bl.getCommandeClient().getTauxTVA() != null)
+                ? bl.getCommandeClient().getTauxTVA()
+                : new BigDecimal("20.00");
+        BigDecimal montantTVA = montantHT.multiply(tauxTva).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        BigDecimal montantTTC = montantHT.add(montantTVA);
+
+        params.put("montantHT", montantHT);
+        params.put("montantTVA", montantTVA);
+        params.put("montantTTC", montantTTC);
+        params.put("montantTotal", montantTTC);
+
+        String devise = (String) params.getOrDefault("devise", "MAD");
+        params.put("montantEnLettres", FrenchNumberToWords.convertir(montantTTC, devise));
 
         return exportToPdf("bon_livraison_client", params, lignes);
     }
@@ -392,11 +446,25 @@ public class ImpressionService {
                         : "À convenir");
         params.put("statut", commande.getStatut() != null ? commande.getStatut().toString() : "ENREGISTRÉE");
         params.put("notes", commande.getObservations());
-        params.put("montantTotal",
-                commande.getMontantTTC() != null ? commande.getMontantTTC() : commande.getMontantHT());
+
+        BigDecimal ht = commande.getMontantHT() != null ? commande.getMontantHT() : BigDecimal.ZERO;
+        BigDecimal ttc = commande.getMontantTTC() != null ? commande.getMontantTTC() : ht;
+        BigDecimal tva = ttc.subtract(ht);
+        if (tva.compareTo(BigDecimal.ZERO) <= 0 && ht.compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal taux = commande.getTauxTVA() != null ? commande.getTauxTVA() : new BigDecimal("20.00");
+            tva = ht.multiply(taux).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            ttc = ht.add(tva);
+        }
+
+        params.put("montantHT", ht);
+        params.put("montantTVA", tva);
+        params.put("montantTTC", ttc);
+        params.put("montantTotal", ttc);
         params.put("acompteVerse", BigDecimal.ZERO);
-        params.put("soldeRestant",
-                commande.getMontantTTC() != null ? commande.getMontantTTC() : commande.getMontantHT());
+        params.put("soldeRestant", ttc);
+
+        String devise = (String) params.getOrDefault("devise", "MAD");
+        params.put("montantEnLettres", FrenchNumberToWords.convertir(ttc, devise));
 
         if (commande.getClient() != null) {
             Client c = commande.getClient();
@@ -410,6 +478,7 @@ public class ImpressionService {
         List<Map<String, Object>> lignes = new ArrayList<>();
         BigDecimal totalMo = BigDecimal.ZERO;
         boolean hasService = false;
+        BigDecimal tauxTvaCmd = commande.getTauxTVA() != null ? commande.getTauxTVA() : new BigDecimal("20.00");
 
         if (commande.getLignesCommande() != null) {
             for (LigneCommandeClient lc : commande.getLignesCommande()) {
@@ -418,11 +487,22 @@ public class ImpressionService {
                     totalMo = totalMo.add(lc.getMontantLigne() != null ? lc.getMontantLigne() : BigDecimal.ZERO);
                 } else {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("reference", lc.getProduit() != null ? lc.getProduit().getReference() : "");
-                    map.put("designation", lc.getProduit() != null ? lc.getProduit().getDesignation() : "Article");
-                    map.put("quantite", lc.getQuantite() != null ? lc.getQuantite() : BigDecimal.ZERO);
-                    map.put("prixUnitaire", lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO);
-                    map.put("montantTotal", lc.getMontantLigne() != null ? lc.getMontantLigne() : BigDecimal.ZERO);
+                    String ref = lc.getProduit() != null ? lc.getProduit().getReference() : "";
+                    String des = lc.getProduit() != null ? lc.getProduit().getDesignation() : "Article";
+                    BigDecimal qte = lc.getQuantite() != null ? lc.getQuantite() : BigDecimal.ZERO;
+                    BigDecimal pu = lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO;
+                    BigDecimal mtLigne = lc.getMontantLigne() != null ? lc.getMontantLigne() : pu.multiply(qte);
+
+                    map.put("reference", ref);
+                    map.put("designation", des);
+                    map.put("quantite", qte);
+                    map.put("prixUnitaire", pu);
+                    map.put("prixUnitaireHT", pu);
+                    map.put("montantTotal", mtLigne);
+                    map.put("montantHT", mtLigne);
+                    map.put("tauxTVA", tauxTvaCmd);
+                    BigDecimal mtTtcLigne = mtLigne.add(mtLigne.multiply(tauxTvaCmd).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP));
+                    map.put("montantTTC", mtTtcLigne);
                     lignes.add(map);
                 }
             }
@@ -433,7 +513,12 @@ public class ImpressionService {
             mo.put("designation", "MAIN D'ŒUVRE");
             mo.put("quantite", BigDecimal.ONE);
             mo.put("prixUnitaire", totalMo);
+            mo.put("prixUnitaireHT", totalMo);
             mo.put("montantTotal", totalMo);
+            mo.put("montantHT", totalMo);
+            mo.put("tauxTVA", tauxTvaCmd);
+            BigDecimal moTtc = totalMo.add(totalMo.multiply(tauxTvaCmd).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP));
+            mo.put("montantTTC", moTtc);
             lignes.add(mo);
         }
 
