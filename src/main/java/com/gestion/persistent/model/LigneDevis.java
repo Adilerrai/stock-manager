@@ -43,6 +43,12 @@ public class LigneDevis {
     @Column(name = "montant_ttc", precision = 15, scale = 2)
     private BigDecimal montantTTC = BigDecimal.ZERO;
 
+    @Column(name = "etat_stock", length = 50)
+    private String etatStock;
+
+    @Column(name = "disponible")
+    private Boolean disponible;
+
     private String description;
 
     public LigneDevis() {
@@ -148,5 +154,21 @@ public class LigneDevis {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getEtatStock() {
+        return etatStock;
+    }
+
+    public void setEtatStock(String etatStock) {
+        this.etatStock = etatStock;
+    }
+
+    public Boolean getDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(Boolean disponible) {
+        this.disponible = disponible;
     }
 }

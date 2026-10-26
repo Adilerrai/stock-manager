@@ -22,6 +22,7 @@ public class LigneDevisDTO {
     private BigDecimal montantFinal;
     private String description;
     private Boolean disponibleEnStock;
+    private Boolean disponible;
     private String etatStock;
     private BigDecimal stockDisponible;
 
@@ -29,6 +30,14 @@ public class LigneDevisDTO {
 
     public Boolean getDisponibleEnStock() { return disponibleEnStock; }
     public void setDisponibleEnStock(Boolean disponibleEnStock) { this.disponibleEnStock = disponibleEnStock; }
+
+    public Boolean getDisponible() { return disponible != null ? disponible : disponibleEnStock; }
+    public void setDisponible(Boolean disponible) {
+        this.disponible = disponible;
+        if (this.disponibleEnStock == null) {
+            this.disponibleEnStock = disponible;
+        }
+    }
 
     public String getEtatStock() { return etatStock; }
     public void setEtatStock(String etatStock) { this.etatStock = etatStock; }

@@ -64,24 +64,37 @@ public class DevisService {
         if (dto == null) return null;
         if (dto.getLignes() != null) {
             for (LigneDevisDTO ld : dto.getLignes()) {
+                BigDecimal stockDispo = BigDecimal.ZERO;
                 if (ld.getProduitId() != null) {
                     java.util.Optional<Stock> stockOpt = stockRepository.findByProduitId(ld.getProduitId());
-                    BigDecimal stockDispo = stockOpt.map(Stock::getQuantiteDisponible).orElse(BigDecimal.ZERO);
-                    ld.setStockDisponible(stockDispo);
+                    stockDispo = stockOpt.map(Stock::getQuantiteDisponible).orElse(BigDecimal.ZERO);
+                }
+                ld.setStockDisponible(stockDispo);
+
+                if (ld.getEtatStock() == null || ld.getEtatStock().trim().isEmpty()) {
                     BigDecimal qte = ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO;
                     if (stockDispo.compareTo(qte) >= 0 && stockDispo.compareTo(BigDecimal.ZERO) > 0) {
                         ld.setDisponibleEnStock(true);
+                        ld.setDisponible(true);
                         ld.setEtatStock("DISPONIBLE");
                     } else if (stockDispo.compareTo(BigDecimal.ZERO) > 0) {
                         ld.setDisponibleEnStock(false);
+                        ld.setDisponible(false);
                         ld.setEtatStock("PARTIEL");
                     } else {
                         ld.setDisponibleEnStock(false);
+                        ld.setDisponible(false);
                         ld.setEtatStock("RUPTURE");
                     }
                 } else {
-                    ld.setDisponibleEnStock(true);
-                    ld.setEtatStock("DISPONIBLE");
+                    boolean isDispo = "DISPONIBLE".equalsIgnoreCase(ld.getEtatStock())
+                            || "En stock".equalsIgnoreCase(ld.getEtatStock())
+                            || "Oui".equalsIgnoreCase(ld.getEtatStock())
+                            || Boolean.TRUE.equals(ld.getDisponible());
+                    ld.setDisponibleEnStock(isDispo);
+                    if (ld.getDisponible() == null) {
+                        ld.setDisponible(isDispo);
+                    }
                 }
             }
         }
@@ -158,6 +171,8 @@ public class DevisService {
                 ligne.setTauxTVA(ligneDTO.getTauxTVA() != null ? ligneDTO.getTauxTVA() : BigDecimal.valueOf(20));
                 ligne.setTauxRemise(ligneDTO.getTauxRemise() != null ? ligneDTO.getTauxRemise() : BigDecimal.ZERO);
                 ligne.setDescription(ligneDTO.getDescription() != null ? ligneDTO.getDescription() : ligneDTO.getDesignation());
+                ligne.setEtatStock(ligneDTO.getEtatStock());
+                ligne.setDisponible(ligneDTO.getDisponible());
 
                 devis.addLigne(ligne);
                 ligne.calculerMontants();
@@ -218,6 +233,8 @@ public class DevisService {
                 ligne.setTauxTVA(l.getTauxTVA() != null ? l.getTauxTVA() : BigDecimal.valueOf(20));
                 ligne.setTauxRemise(l.getTauxRemise() != null ? l.getTauxRemise() : BigDecimal.ZERO);
                 ligne.setDescription(l.getDescription() != null ? l.getDescription() : l.getDesignation());
+                ligne.setEtatStock(l.getEtatStock());
+                ligne.setDisponible(l.getDisponible());
 
                 existant.addLigne(ligne);
                 ligne.calculerMontants();

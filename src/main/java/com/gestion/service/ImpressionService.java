@@ -407,21 +407,27 @@ public class ImpressionService {
 
         if (devis.getLignes() != null) {
             for (LigneDevis ld : devis.getLignes()) {
-                String etatStock = "-";
-                Boolean disponible = null;
-                if (ld.getProduit() != null && ld.getProduit().getId() != null) {
-                    Optional<Stock> stockOpt = stockRepository.findByProduitId(ld.getProduit().getId());
-                    BigDecimal stockDispo = stockOpt.map(Stock::getQuantiteDisponible).orElse(BigDecimal.ZERO);
-                    BigDecimal qte = ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO;
-                    if (stockDispo.compareTo(qte) >= 0 && stockDispo.compareTo(BigDecimal.ZERO) > 0) {
+                String etatStock = ld.getEtatStock();
+                Boolean disponible = ld.getDisponible();
+
+                if (etatStock == null || etatStock.trim().isEmpty()) {
+                    if (ld.getProduit() != null && ld.getProduit().getId() != null) {
+                        Optional<Stock> stockOpt = stockRepository.findByProduitId(ld.getProduit().getId());
+                        BigDecimal stockDispo = stockOpt.map(Stock::getQuantiteDisponible).orElse(BigDecimal.ZERO);
+                        BigDecimal qte = ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO;
+                        if (stockDispo.compareTo(qte) >= 0 && stockDispo.compareTo(BigDecimal.ZERO) > 0) {
+                            etatStock = "En stock";
+                            disponible = true;
+                        } else if (stockDispo.compareTo(BigDecimal.ZERO) > 0) {
+                            etatStock = "Partiel (" + stockDispo.stripTrailingZeros().toPlainString() + ")";
+                            disponible = false;
+                        } else {
+                            etatStock = "Sur commande";
+                            disponible = false;
+                        }
+                    } else {
                         etatStock = "En stock";
                         disponible = true;
-                    } else if (stockDispo.compareTo(BigDecimal.ZERO) > 0) {
-                        etatStock = "Partiel (" + stockDispo.stripTrailingZeros().toPlainString() + ")";
-                        disponible = false;
-                    } else {
-                        etatStock = "Sur commande";
-                        disponible = false;
                     }
                 }
 
