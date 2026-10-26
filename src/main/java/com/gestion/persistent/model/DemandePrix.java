@@ -36,6 +36,20 @@ public class DemandePrix {
     @Column(name = "demande_achat_id", length = 50)
     private String demandeAchatId;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type_demande_prix", length = 20)
+    private com.gestion.persistent.enums.TypeAchat typeDemandePrix = com.gestion.persistent.enums.TypeAchat.NATIONAL;
+
+    @Column(name = "devise_souhaitee", length = 10)
+    private String deviseSouhaitee = "MAD";
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "incoterm_souhaite", length = 10)
+    private com.gestion.persistent.enums.Incoterm incotermSouhaite;
+
+    @Column(name = "lieu_livraison", length = 100)
+    private String lieuLivraison;
+
     @Column(columnDefinition = "TEXT")
     private String observations;
 
@@ -78,6 +92,18 @@ public class DemandePrix {
 
     public String getDemandeAchatId() { return demandeAchatId; }
     public void setDemandeAchatId(String demandeAchatId) { this.demandeAchatId = demandeAchatId; }
+
+    public com.gestion.persistent.enums.TypeAchat getTypeDemandePrix() { return typeDemandePrix; }
+    public void setTypeDemandePrix(com.gestion.persistent.enums.TypeAchat typeDemandePrix) { this.typeDemandePrix = typeDemandePrix; }
+
+    public String getDeviseSouhaitee() { return deviseSouhaitee; }
+    public void setDeviseSouhaitee(String deviseSouhaitee) { this.deviseSouhaitee = deviseSouhaitee; }
+
+    public com.gestion.persistent.enums.Incoterm getIncotermSouhaite() { return incotermSouhaite; }
+    public void setIncotermSouhaite(com.gestion.persistent.enums.Incoterm incotermSouhaite) { this.incotermSouhaite = incotermSouhaite; }
+
+    public String getLieuLivraison() { return lieuLivraison; }
+    public void setLieuLivraison(String lieuLivraison) { this.lieuLivraison = lieuLivraison; }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }

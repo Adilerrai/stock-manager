@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 046 :
+      - Création des tables de Demandes d'Achat (DA)
+      - Ajout des colonnes type_demande_prix et devise_souhaitee dans demandes_prix
+    -->
+    <changeSet id="046-create-demandes-achat-and-update-ddp" author="erp-achats">
+        <sql splitStatements="true">
+            -- 1. Table principale des Demandes d'Achat (DA)
+            CREATE TABLE IF NOT EXISTS demandes_achat (
+                id                             BIGSERIAL PRIMARY KEY,
+                numero_da                      VARCHAR(50) NOT NULL,
+                demandeur_nom                  VARCHAR(100),
+                service_demandeur              VARCHAR(100),
+                objet                          VARCHAR(255) NOT NULL,
+                statut                         VARCHAR(40) DEFAULT 'BROUILLON' NOT NULL,
+                priorite                       VARCHAR(20) DEFAULT 'NORMALE',
+                date_demande                   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                date_souhaitee                 TIMESTAMP,
+                observations                   TEXT,
+                demande_prix_id                BIGINT,
+                point_de_vente_id              BIGINT NOT NULL,
+                CONSTRAINT uk_da_tenant_numero UNIQUE (point_de_vente_id, numero_da)
+            );
+
+            -- 2. Lignes d'articles demandés dans la DA
+            CREATE TABLE IF NOT EXISTS lignes_demande_achat (
+                id                             BIGSERIAL PRIMARY KEY,
+                demande_achat_id               BIGINT NOT NULL,
+                produit_id                     BIGINT,
+                reference                      VARCHAR(100),
+                designation                    VARCHAR(255) NOT NULL,
+                quantite_demandee              NUMERIC(12, 2) DEFAULT 1.00 NOT NULL,
+                unite                          VARCHAR(20) DEFAULT 'U',
+                remarques                      VARCHAR(255),
+                point_de_vente_id              BIGINT NOT NULL,
+                CONSTRAINT fk_lda_da FOREIGN KEY (demande_achat_id) REFERENCES demandes_achat(id) ON DELETE CASCADE,
+                CONSTRAINT fk_lda_produit FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE SET NULL
+            );
+
+            -- 3. Colonnes type_demande_prix et devise_souhaitee dans demandes_prix si inexistantes
+            ALTER TABLE demandes_prix ADD COLUMN IF NOT EXISTS type_demande_prix VARCHAR(20) DEFAULT 'NATIONAL';
+            ALTER TABLE demandes_prix ADD COLUMN IF NOT EXISTS devise_souhaitee VARCHAR(10) DEFAULT 'MAD';
+            ALTER TABLE demandes_prix ADD COLUMN IF NOT EXISTS incoterm_souhaite VARCHAR(10);
+            ALTER TABLE demandes_prix ADD COLUMN IF NOT EXISTS lieu_livraison VARCHAR(100);
+
+            -- 4. Index de performance
+            CREATE INDEX IF NOT EXISTS idx_da_point_de_vente ON demandes_achat(point_de_vente_id);
+            CREATE INDEX IF NOT EXISTS idx_lda_da ON lignes_demande_achat(demande_achat_id);
+            CREATE INDEX IF NOT EXISTS idx_ddp_type ON demandes_prix(type_demande_prix);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

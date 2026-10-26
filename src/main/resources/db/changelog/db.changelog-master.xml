@@ -145,6 +145,9 @@
     <!-- Changeset 045 : Ajout code dépôt et codification BL Achat / Vente ({DEPOT}/{PREFIX}/{NUM}) -->
     <include file="changes/045-add-code-depot-and-update-bl-codifications.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 046 : Demandes d'Achat (DA) et évolution Demandes de Prix (National / International) -->
+    <include file="changes/046-create-demandes-achat-and-update-ddp.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

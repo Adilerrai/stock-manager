@@ -27,6 +27,7 @@ public class ImpressionController {
     private final LivraisonRepository livraisonRepository;
     private final FactureAchatRepository factureAchatRepository;
     private final TransfertStockRepository transfertStockRepository;
+    private final DemandePrixRepository demandePrixRepository;
 
     public ImpressionController(ImpressionService impressionService,
                                 FactureRepository factureRepository,
@@ -39,7 +40,8 @@ public class ImpressionController {
                                 FournisseurRepository fournisseurRepository,
                                 LivraisonRepository livraisonRepository,
                                 FactureAchatRepository factureAchatRepository,
-                                TransfertStockRepository transfertStockRepository) {
+                                TransfertStockRepository transfertStockRepository,
+                                DemandePrixRepository demandePrixRepository) {
         this.impressionService = impressionService;
         this.factureRepository = factureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -52,6 +54,7 @@ public class ImpressionController {
         this.livraisonRepository = livraisonRepository;
         this.factureAchatRepository = factureAchatRepository;
         this.transfertStockRepository = transfertStockRepository;
+        this.demandePrixRepository = demandePrixRepository;
     }
 
     @GetMapping("/factures/{id}")
@@ -202,6 +205,23 @@ public class ImpressionController {
         String fileName = buildPdfFileName("RELEVE-FOUR-" + fournisseurId, rs);
 
         byte[] pdf = impressionService.genererReleveFournisseurPdf(fournisseurId, dateDebut, dateFin);
+        return createPdfResponse(pdf, fileName);
+    }
+
+    @GetMapping("/demandes-prix/{id}")
+    public ResponseEntity<byte[]> imprimerDemandePrix(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long fournisseurId) {
+        DemandePrix ddp = demandePrixRepository.findById(id).orElse(null);
+        String code = (ddp != null && ddp.getNumeroDdp() != null) ? ddp.getNumeroDdp() : "DDP-" + id;
+        String rs = "";
+        if (fournisseurId != null) {
+            Fournisseur f = fournisseurRepository.findById(fournisseurId).orElse(null);
+            rs = f != null ? (f.getRaisonSociale() != null ? f.getRaisonSociale() : f.getNom()) : "";
+        }
+        String fileName = buildPdfFileName(code, rs);
+
+        byte[] pdf = impressionService.genererDemandePrixPdf(id, fournisseurId);
         return createPdfResponse(pdf, fileName);
     }
 

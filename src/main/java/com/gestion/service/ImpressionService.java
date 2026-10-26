@@ -85,6 +85,8 @@ public class ImpressionService {
     private final TresorerieService tresorerieService;
     private final TransfertStockRepository transfertStockRepository;
     private final StockRepository stockRepository;
+    private final DemandePrixRepository demandePrixRepository;
+    private final FournisseurRepository fournisseurRepository;
 
     public ImpressionService(EntrepriseProfileService entrepriseProfileService,
             FactureRepository factureRepository,
@@ -100,7 +102,9 @@ public class ImpressionService {
             FactureAchatRepository factureAchatRepository,
             @org.springframework.context.annotation.Lazy TresorerieService tresorerieService,
             TransfertStockRepository transfertStockRepository,
-            @org.springframework.context.annotation.Lazy StockRepository stockRepository) {
+            @org.springframework.context.annotation.Lazy StockRepository stockRepository,
+            DemandePrixRepository demandePrixRepository,
+            FournisseurRepository fournisseurRepository) {
         this.entrepriseProfileService = entrepriseProfileService;
         this.factureRepository = factureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -116,6 +120,8 @@ public class ImpressionService {
         this.tresorerieService = tresorerieService;
         this.transfertStockRepository = transfertStockRepository;
         this.stockRepository = stockRepository;
+        this.demandePrixRepository = demandePrixRepository;
+        this.fournisseurRepository = fournisseurRepository;
     }
 
     // ==========================================
@@ -1182,6 +1188,49 @@ public class ImpressionService {
         }
 
         return params;
+    }
+
+    // ==========================================
+    // 14. Impression Demande de Prix (DDP)
+    // ==========================================
+    public byte[] genererDemandePrixPdf(Long ddpId, Long fournisseurId) {
+        DemandePrix ddp = demandePrixRepository.findById(ddpId)
+                .orElseThrow(() -> new RuntimeException("Demande de prix introuvable avec l'id: " + ddpId));
+
+        Map<String, Object> params = initCommonTenantParams();
+        params.put("numeroDdp", ddp.getNumeroDdp());
+        params.put("dateCreation", ddp.getDateCreation() != null ? ddp.getDateCreation().format(DATETIME_FORMATTER) : "-");
+        params.put("dateLimiteReponse", ddp.getDateLimiteReponse() != null ? ddp.getDateLimiteReponse().format(DATETIME_FORMATTER) : "Dès que possible");
+        params.put("typeDdp", ddp.getTypeDemandePrix() != null ? ("(" + ddp.getTypeDemandePrix().name() + ")") : "");
+        params.put("deviseSouhaitee", ddp.getDeviseSouhaitee() != null ? ddp.getDeviseSouhaitee() : "MAD");
+        params.put("incotermSouhaite", ddp.getIncotermSouhaite() != null ? ddp.getIncotermSouhaite().name() : "");
+        params.put("lieuLivraison", ddp.getLieuLivraison() != null ? ddp.getLieuLivraison() : "");
+        params.put("demandeAchatOrigine", ddp.getDemandeAchatId() != null ? ddp.getDemandeAchatId() : "");
+        params.put("observations", ddp.getObservations() != null ? ddp.getObservations() : "");
+
+        if (fournisseurId != null) {
+            Fournisseur frn = fournisseurRepository.findById(fournisseurId).orElse(null);
+            if (frn != null) {
+                params.put("fournisseurNom", frn.getRaisonSociale() != null ? frn.getRaisonSociale() : frn.getNom());
+                params.put("fournisseurAdresse", frn.getAdresse());
+                params.put("fournisseurPays", frn.getPays());
+                params.put("fournisseurEmail", frn.getEmail());
+            }
+        }
+
+        List<Map<String, Object>> lignes = new ArrayList<>();
+        if (ddp.getLignes() != null) {
+            for (LigneDemandePrix ligne : ddp.getLignes()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("reference", ligne.getReference() != null ? ligne.getReference() : "-");
+                map.put("designation", ligne.getDesignation());
+                map.put("quantite", ligne.getQuantiteDemandee());
+                map.put("unite", ligne.getUnite() != null ? ligne.getUnite() : "U");
+                lignes.add(map);
+            }
+        }
+
+        return exportToPdf("demande_prix", params, lignes);
     }
 
     private byte[] exportToPdf(String reportName, Map<String, Object> params, List<Map<String, Object>> dataList) {

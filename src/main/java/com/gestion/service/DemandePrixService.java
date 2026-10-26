@@ -69,6 +69,10 @@ public class DemandePrixService {
         ddp.setDateCreation(LocalDateTime.now());
         ddp.setDateLimiteReponse(dto.getDateLimiteReponse());
         ddp.setDemandeAchatId(dto.getDemandeAchatId());
+        ddp.setTypeDemandePrix(dto.getTypeDemandePrix() != null ? dto.getTypeDemandePrix() : com.gestion.persistent.enums.TypeAchat.NATIONAL);
+        ddp.setDeviseSouhaitee(dto.getDeviseSouhaitee() != null ? dto.getDeviseSouhaitee() : "MAD");
+        ddp.setIncotermSouhaite(dto.getIncotermSouhaite());
+        ddp.setLieuLivraison(dto.getLieuLivraison());
         ddp.setObservations(dto.getObservations());
         ddp.setPointDeVenteId(tenantId);
 
@@ -368,6 +372,10 @@ public class DemandePrixService {
         dto.setDateCreation(entity.getDateCreation());
         dto.setDateLimiteReponse(entity.getDateLimiteReponse());
         dto.setDemandeAchatId(entity.getDemandeAchatId());
+        dto.setTypeDemandePrix(entity.getTypeDemandePrix());
+        dto.setDeviseSouhaitee(entity.getDeviseSouhaitee());
+        dto.setIncotermSouhaite(entity.getIncotermSouhaite());
+        dto.setLieuLivraison(entity.getLieuLivraison());
         dto.setObservations(entity.getObservations());
         dto.setPointDeVenteId(entity.getPointDeVenteId());
 

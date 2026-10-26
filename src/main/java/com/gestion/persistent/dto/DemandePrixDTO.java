@@ -13,6 +13,10 @@ public class DemandePrixDTO {
     private LocalDateTime dateCreation;
     private LocalDateTime dateLimiteReponse;
     private String demandeAchatId;
+    private com.gestion.persistent.enums.TypeAchat typeDemandePrix = com.gestion.persistent.enums.TypeAchat.NATIONAL;
+    private String deviseSouhaitee = "MAD";
+    private com.gestion.persistent.enums.Incoterm incotermSouhaite;
+    private String lieuLivraison;
     private String observations;
     private Long pointDeVenteId;
     private List<LigneDemandePrixDTO> lignes = new ArrayList<>();
@@ -41,6 +45,18 @@ public class DemandePrixDTO {
 
     public String getDemandeAchatId() { return demandeAchatId; }
     public void setDemandeAchatId(String demandeAchatId) { this.demandeAchatId = demandeAchatId; }
+
+    public com.gestion.persistent.enums.TypeAchat getTypeDemandePrix() { return typeDemandePrix; }
+    public void setTypeDemandePrix(com.gestion.persistent.enums.TypeAchat typeDemandePrix) { this.typeDemandePrix = typeDemandePrix; }
+
+    public String getDeviseSouhaitee() { return deviseSouhaitee; }
+    public void setDeviseSouhaitee(String deviseSouhaitee) { this.deviseSouhaitee = deviseSouhaitee; }
+
+    public com.gestion.persistent.enums.Incoterm getIncotermSouhaite() { return incotermSouhaite; }
+    public void setIncotermSouhaite(com.gestion.persistent.enums.Incoterm incotermSouhaite) { this.incotermSouhaite = incotermSouhaite; }
+
+    public String getLieuLivraison() { return lieuLivraison; }
+    public void setLieuLivraison(String lieuLivraison) { this.lieuLivraison = lieuLivraison; }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }
