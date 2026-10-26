@@ -38,6 +38,7 @@ public class DevisService {
     private final CommandeClientRepository commandeClientRepository;
     private final FactureRepository factureRepository;
     private final CodificationService codificationService;
+    private final StockRepository stockRepository;
 
     public DevisService(DevisRepository devisRepository,
                         LigneDevisRepository ligneDevisRepository,
@@ -46,7 +47,8 @@ public class DevisService {
                         UserRepository userRepository,
                         @Lazy CommandeClientRepository commandeClientRepository,
                         @Lazy FactureRepository factureRepository,
-                        CodificationService codificationService) {
+                        CodificationService codificationService,
+                        @Lazy StockRepository stockRepository) {
         this.devisRepository = devisRepository;
         this.ligneDevisRepository = ligneDevisRepository;
         this.clientRepository = clientRepository;
@@ -55,6 +57,35 @@ public class DevisService {
         this.commandeClientRepository = commandeClientRepository;
         this.factureRepository = factureRepository;
         this.codificationService = codificationService;
+        this.stockRepository = stockRepository;
+    }
+
+    public DevisDTO enrichirDevisDto(DevisDTO dto) {
+        if (dto == null) return null;
+        if (dto.getLignes() != null) {
+            for (LigneDevisDTO ld : dto.getLignes()) {
+                if (ld.getProduitId() != null) {
+                    java.util.Optional<Stock> stockOpt = stockRepository.findByProduitId(ld.getProduitId());
+                    BigDecimal stockDispo = stockOpt.map(Stock::getQuantiteDisponible).orElse(BigDecimal.ZERO);
+                    ld.setStockDisponible(stockDispo);
+                    BigDecimal qte = ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO;
+                    if (stockDispo.compareTo(qte) >= 0 && stockDispo.compareTo(BigDecimal.ZERO) > 0) {
+                        ld.setDisponibleEnStock(true);
+                        ld.setEtatStock("DISPONIBLE");
+                    } else if (stockDispo.compareTo(BigDecimal.ZERO) > 0) {
+                        ld.setDisponibleEnStock(false);
+                        ld.setEtatStock("PARTIEL");
+                    } else {
+                        ld.setDisponibleEnStock(false);
+                        ld.setEtatStock("RUPTURE");
+                    }
+                } else {
+                    ld.setDisponibleEnStock(true);
+                    ld.setEtatStock("DISPONIBLE");
+                }
+            }
+        }
+        return dto;
     }
 
     public Devis creerDevis(DevisDTO dto, Long userId) {
@@ -67,9 +98,17 @@ public class DevisService {
         Devis devis = new Devis();
         devis.setClient(client);
 
-        if (userId != null) {
-            User user = userRepository.findById(userId).orElse(null);
+        Long effectiveUserId = userId != null ? userId : (dto.getUserId() != null ? dto.getUserId() : dto.getCreeParId());
+        if (effectiveUserId != null) {
+            User user = userRepository.findById(effectiveUserId).orElse(null);
             devis.setCreePar(user);
+        } else {
+            try {
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName())) {
+                    userRepository.findByUsername(auth.getName()).ifPresent(devis::setCreePar);
+                }
+            } catch (Exception ignored) {}
         }
 
         Long tenantId = TenantContext.getCurrentTenant();
@@ -140,6 +179,11 @@ public class DevisService {
         if (maj.getNumeroAchatClient() != null) existant.setNumeroAchatClient(maj.getNumeroAchatClient());
         if (maj.getConditionsPaiement() != null) existant.setConditionsPaiement(maj.getConditionsPaiement());
         if (maj.getStatut() != null) existant.setStatut(maj.getStatut());
+        if (maj.getCreeParId() != null) {
+            userRepository.findById(maj.getCreeParId()).ifPresent(existant::setCreePar);
+        } else if (maj.getUserId() != null) {
+            userRepository.findById(maj.getUserId()).ifPresent(existant::setCreePar);
+        }
 
         if (maj.getClientId() != null) {
             Client c = clientRepository.findById(maj.getClientId())

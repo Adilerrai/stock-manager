@@ -21,8 +21,20 @@ public class LigneDevisDTO {
     private BigDecimal montantTTC;
     private BigDecimal montantFinal;
     private String description;
+    private Boolean disponibleEnStock;
+    private String etatStock;
+    private BigDecimal stockDisponible;
 
     public LigneDevisDTO() {}
+
+    public Boolean getDisponibleEnStock() { return disponibleEnStock; }
+    public void setDisponibleEnStock(Boolean disponibleEnStock) { this.disponibleEnStock = disponibleEnStock; }
+
+    public String getEtatStock() { return etatStock; }
+    public void setEtatStock(String etatStock) { this.etatStock = etatStock; }
+
+    public BigDecimal getStockDisponible() { return stockDisponible; }
+    public void setStockDisponible(BigDecimal stockDisponible) { this.stockDisponible = stockDisponible; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

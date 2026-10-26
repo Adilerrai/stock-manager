@@ -62,6 +62,8 @@ public class ImpressionService {
             emptyRow.put("montantHT", null);
             emptyRow.put("montantTTC", null);
             emptyRow.put("montantTotal", null);
+            emptyRow.put("etatStock", "");
+            emptyRow.put("disponible", null);
             lignes.add(emptyRow);
         }
     }
@@ -82,6 +84,7 @@ public class ImpressionService {
     private final FactureAchatRepository factureAchatRepository;
     private final TresorerieService tresorerieService;
     private final TransfertStockRepository transfertStockRepository;
+    private final StockRepository stockRepository;
 
     public ImpressionService(EntrepriseProfileService entrepriseProfileService,
             FactureRepository factureRepository,
@@ -96,7 +99,8 @@ public class ImpressionService {
             LivraisonRepository livraisonRepository,
             FactureAchatRepository factureAchatRepository,
             @org.springframework.context.annotation.Lazy TresorerieService tresorerieService,
-            TransfertStockRepository transfertStockRepository) {
+            TransfertStockRepository transfertStockRepository,
+            @org.springframework.context.annotation.Lazy StockRepository stockRepository) {
         this.entrepriseProfileService = entrepriseProfileService;
         this.factureRepository = factureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -111,6 +115,7 @@ public class ImpressionService {
         this.factureAchatRepository = factureAchatRepository;
         this.tresorerieService = tresorerieService;
         this.transfertStockRepository = transfertStockRepository;
+        this.stockRepository = stockRepository;
     }
 
     // ==========================================
@@ -378,6 +383,15 @@ public class ImpressionService {
         params.put("montantTVA", devis.getMontantTVA());
         params.put("montantTTC", devis.getMontantFinal() != null ? devis.getMontantFinal() : devis.getMontantTTC());
 
+        String etabliPar = "-";
+        if (devis.getCreePar() != null) {
+            etabliPar = (devis.getCreePar().getNomComplet() != null && !devis.getCreePar().getNomComplet().isBlank())
+                    ? devis.getCreePar().getNomComplet()
+                    : devis.getCreePar().getUsername();
+        }
+        params.put("etabliPar", etabliPar);
+        params.put("creeParNom", etabliPar);
+
         if (devis.getClient() != null) {
             Client c = devis.getClient();
             params.put("clientNom", c.getNomComplet());
@@ -393,6 +407,24 @@ public class ImpressionService {
 
         if (devis.getLignes() != null) {
             for (LigneDevis ld : devis.getLignes()) {
+                String etatStock = "-";
+                Boolean disponible = null;
+                if (ld.getProduit() != null && ld.getProduit().getId() != null) {
+                    Optional<Stock> stockOpt = stockRepository.findByProduitId(ld.getProduit().getId());
+                    BigDecimal stockDispo = stockOpt.map(Stock::getQuantiteDisponible).orElse(BigDecimal.ZERO);
+                    BigDecimal qte = ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO;
+                    if (stockDispo.compareTo(qte) >= 0 && stockDispo.compareTo(BigDecimal.ZERO) > 0) {
+                        etatStock = "En stock";
+                        disponible = true;
+                    } else if (stockDispo.compareTo(BigDecimal.ZERO) > 0) {
+                        etatStock = "Partiel (" + stockDispo.stripTrailingZeros().toPlainString() + ")";
+                        disponible = false;
+                    } else {
+                        etatStock = "Sur commande";
+                        disponible = false;
+                    }
+                }
+
                 if (isServiceProduit(ld.getProduit(), ld.getDescription())) {
                     hasService = true;
                     totalMoHT = totalMoHT.add(ld.getMontantHT() != null ? ld.getMontantHT() : BigDecimal.ZERO);
@@ -407,6 +439,8 @@ public class ImpressionService {
                     map.put("prixUnitaireHT", ld.getPrixUnitaireHT() != null ? ld.getPrixUnitaireHT() : BigDecimal.ZERO);
                     map.put("tauxTVA", ld.getTauxTVA() != null ? ld.getTauxTVA() : new BigDecimal("20.00"));
                     map.put("montantHT", ld.getMontantHT() != null ? ld.getMontantHT() : BigDecimal.ZERO);
+                    map.put("etatStock", etatStock);
+                    map.put("disponible", disponible);
                     lignes.add(map);
                 }
             }
@@ -419,6 +453,8 @@ public class ImpressionService {
             mo.put("prixUnitaireHT", totalMoHT);
             mo.put("tauxTVA", moTauxTVA != null ? moTauxTVA : new BigDecimal("20.00"));
             mo.put("montantHT", totalMoHT);
+            mo.put("etatStock", "Disponible");
+            mo.put("disponible", true);
             lignes.add(mo);
         }
 

@@ -44,22 +44,25 @@ public class DevisController {
     @PostMapping
     public ResponseEntity<DevisDTO> creerDevis(@RequestBody DevisDTO devisDTO,
                                                @RequestParam(required = false) Long userId) {
-        Long effectiveUserId = userId != null ? userId : devisDTO.getUserId();
+        Long effectiveUserId = userId != null ? userId : (devisDTO.getUserId() != null ? devisDTO.getUserId() : devisDTO.getCreeParId());
         Devis nouveauDevis = devisService.creerDevis(devisDTO, effectiveUserId);
-        return new ResponseEntity<>(devisMapper.toDto(nouveauDevis), HttpStatus.CREATED);
+        DevisDTO dto = devisMapper.toDto(nouveauDevis);
+        return new ResponseEntity<>(devisService.enrichirDevisDto(dto), HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<DevisDTO> modifierDevis(@PathVariable Long id,
                                                   @RequestBody DevisDTO devisDTO) {
         Devis modifie = devisService.modifierDevis(id, devisDTO);
-        return ResponseEntity.ok(devisMapper.toDto(modifie));
+        DevisDTO dto = devisMapper.toDto(modifie);
+        return ResponseEntity.ok(devisService.enrichirDevisDto(dto));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DevisDTO> getDevisById(@PathVariable Long id) {
         Devis devis = devisService.getDevisById(id);
-        return ResponseEntity.ok(devisMapper.toDto(devis));
+        DevisDTO dto = devisMapper.toDto(devis);
+        return ResponseEntity.ok(devisService.enrichirDevisDto(dto));
     }
 
     @GetMapping
@@ -67,6 +70,7 @@ public class DevisController {
         List<Devis> devisList = devisService.getAllDevis();
         List<DevisDTO> dtos = devisList.stream()
                 .map(devisMapper::toDto)
+                .map(devisService::enrichirDevisDto)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
@@ -75,7 +79,7 @@ public class DevisController {
     public ResponseEntity<Page<DevisDTO>> searchDevis(
             @RequestBody DevisSearchCriteria criteria, Pageable pageable) {
         Page<Devis> page = devisService.searchDevis(criteria, pageable);
-        return ResponseEntity.ok(page.map(devisMapper::toDto));
+        return ResponseEntity.ok(page.map(d -> devisService.enrichirDevisDto(devisMapper.toDto(d))));
     }
 
     @GetMapping("/client/{clientId}")
