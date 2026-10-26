@@ -1235,7 +1235,6 @@ public class ImpressionService {
 
     private byte[] exportToPdf(String reportName, Map<String, Object> params, List<Map<String, Object>> dataList) {
         try {
-            // Seuls les vrais articles sont envoyés au rapport (pas de lignes vides forcées)
             JasperReport report = getCompiledReport(reportName);
             JRDataSource dataSource = (dataList != null && !dataList.isEmpty())
                     ? new JRBeanCollectionDataSource(dataList)
