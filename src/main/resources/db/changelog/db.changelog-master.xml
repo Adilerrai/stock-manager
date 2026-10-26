@@ -139,6 +139,9 @@
     <!-- Changeset 043 : Index de performance pour recherche par numéro de commande externe (BC client externe) -->
     <include file="changes/043-add-cmd-client-num-externe-index.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 044 : Sauvegarde HT, TVA et TTC (BL client) et disponibilité stock (Devis) -->
+    <include file="changes/044-add-bl-client-tva-ht-ttc-and-devis-dispo.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

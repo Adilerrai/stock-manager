@@ -44,6 +44,18 @@ public class BonLivraisonClient {
     @Column(name = "montant_total", precision = 15, scale = 2)
     private BigDecimal montantTotal = BigDecimal.ZERO;
 
+    @Column(name = "montant_ht", precision = 15, scale = 2)
+    private BigDecimal montantHT = BigDecimal.ZERO;
+
+    @Column(name = "taux_tva", precision = 5, scale = 2)
+    private BigDecimal tauxTVA = BigDecimal.valueOf(20);
+
+    @Column(name = "montant_tva", precision = 15, scale = 2)
+    private BigDecimal montantTVA = BigDecimal.ZERO;
+
+    @Column(name = "montant_ttc", precision = 15, scale = 2)
+    private BigDecimal montantTTC = BigDecimal.ZERO;
+
     @Column(name = "observations")
     private String observations;
 
@@ -92,6 +104,12 @@ public class BonLivraisonClient {
         }
 
         this.montantTotal = netTotal.compareTo(BigDecimal.ZERO) >= 0 ? netTotal : BigDecimal.ZERO;
+        this.montantHT = this.montantTotal;
+        if (this.tauxTVA == null) {
+            this.tauxTVA = BigDecimal.valueOf(20);
+        }
+        this.montantTVA = this.montantHT.multiply(this.tauxTVA).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+        this.montantTTC = this.montantHT.add(this.montantTVA);
     }
 
     public BonLivraisonClient() {}
@@ -116,6 +134,34 @@ public class BonLivraisonClient {
 
     public BigDecimal getMontantTotal() { return montantTotal; }
     public void setMontantTotal(BigDecimal montantTotal) { this.montantTotal = montantTotal; }
+
+    public BigDecimal getMontantHT() {
+        return montantHT != null ? montantHT : montantTotal;
+    }
+    public void setMontantHT(BigDecimal montantHT) {
+        this.montantHT = montantHT;
+    }
+
+    public BigDecimal getTauxTVA() {
+        return tauxTVA != null ? tauxTVA : BigDecimal.valueOf(20);
+    }
+    public void setTauxTVA(BigDecimal tauxTVA) {
+        this.tauxTVA = tauxTVA;
+    }
+
+    public BigDecimal getMontantTVA() {
+        return montantTVA;
+    }
+    public void setMontantTVA(BigDecimal montantTVA) {
+        this.montantTVA = montantTVA;
+    }
+
+    public BigDecimal getMontantTTC() {
+        return montantTTC;
+    }
+    public void setMontantTTC(BigDecimal montantTTC) {
+        this.montantTTC = montantTTC;
+    }
 
     public BigDecimal getRemiseGlobalePourcentage() { return remiseGlobalePourcentage != null ? remiseGlobalePourcentage : BigDecimal.ZERO; }
     public void setRemiseGlobalePourcentage(BigDecimal remiseGlobalePourcentage) { this.remiseGlobalePourcentage = remiseGlobalePourcentage; }

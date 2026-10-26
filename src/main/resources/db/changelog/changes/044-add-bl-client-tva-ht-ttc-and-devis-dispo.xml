@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 044 :
+      - Sauvegarde des montants HT, TVA et TTC dans bons_livraison_client et lignes_bon_livraison_client
+      - Colonnes etat_stock et disponible dans lignes_devis
+    -->
+    <changeSet id="044-add-bl-client-tva-ht-ttc-and-devis-dispo" author="erp-ventes">
+        <sql splitStatements="true">
+            -- 1. Colonnes sur table bons_livraison_client
+            ALTER TABLE IF EXISTS bons_livraison_client
+                ADD COLUMN IF NOT EXISTS montant_ht NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS taux_tva NUMERIC(5, 2) DEFAULT 20.00,
+                ADD COLUMN IF NOT EXISTS montant_tva NUMERIC(15, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_ttc NUMERIC(15, 2) DEFAULT 0.00;
+
+            -- Rétrocompatibilité : initialisation des BL existants
+            UPDATE bons_livraison_client
+            SET montant_ht = COALESCE(montant_total, 0.00),
+                taux_tva = 20.00,
+                montant_tva = ROUND(COALESCE(montant_total, 0.00) * 0.20, 2),
+                montant_ttc = ROUND(COALESCE(montant_total, 0.00) * 1.20, 2)
+            WHERE montant_ht IS NULL OR montant_ht = 0.00;
+
+            -- 2. Colonnes sur table lignes_bon_livraison_client
+            ALTER TABLE IF EXISTS lignes_bon_livraison_client
+                ADD COLUMN IF NOT EXISTS montant_ht NUMERIC(15, 2),
+                ADD COLUMN IF NOT EXISTS taux_tva NUMERIC(5, 2) DEFAULT 20.00,
+                ADD COLUMN IF NOT EXISTS montant_tva NUMERIC(15, 2),
+                ADD COLUMN IF NOT EXISTS montant_ttc NUMERIC(15, 2);
+
+            -- Rétrocompatibilité : initialisation des lignes BL existantes
+            UPDATE lignes_bon_livraison_client
+            SET montant_ht = COALESCE(montant_ligne, 0.00),
+                taux_tva = 20.00,
+                montant_tva = ROUND(COALESCE(montant_ligne, 0.00) * 0.20, 2),
+                montant_ttc = ROUND(COALESCE(montant_ligne, 0.00) * 1.20, 2)
+            WHERE montant_ht IS NULL;
+
+            -- 3. Colonnes état de stock et disponibilité sur lignes_devis
+            ALTER TABLE IF EXISTS lignes_devis
+                ADD COLUMN IF NOT EXISTS etat_stock VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS disponible BOOLEAN DEFAULT TRUE;
+
+            UPDATE lignes_devis
+            SET disponible = TRUE,
+                etat_stock = 'DISPONIBLE'
+            WHERE disponible IS NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

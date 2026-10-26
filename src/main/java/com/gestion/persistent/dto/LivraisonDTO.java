@@ -10,6 +10,8 @@ public class LivraisonDTO {
     private String numeroLivraison;
     private Long commandeId;
     private String commandeNumero;
+    private Long fournisseurId;
+    private String fournisseurNom;
     private LocalDateTime dateLivraison;
     private String transporteur;
     private String numeroSuivi;
@@ -35,6 +37,12 @@ public class LivraisonDTO {
 
     public String getCommandeNumero() { return commandeNumero; }
     public void setCommandeNumero(String commandeNumero) { this.commandeNumero = commandeNumero; }
+
+    public Long getFournisseurId() { return fournisseurId; }
+    public void setFournisseurId(Long fournisseurId) { this.fournisseurId = fournisseurId; }
+
+    public String getFournisseurNom() { return fournisseurNom; }
+    public void setFournisseurNom(String fournisseurNom) { this.fournisseurNom = fournisseurNom; }
 
     public LocalDateTime getDateLivraison() { return dateLivraison; }
     public void setDateLivraison(LocalDateTime dateLivraison) { this.dateLivraison = dateLivraison; }

@@ -16,7 +16,10 @@ public interface LigneBonLivraisonClientMapper {
     @Mapping(target = "lotId", source = "lot.id")
     @Mapping(target = "numeroLot", source = "lot.numeroLot")
     @Mapping(target = "prixVenteMin", source = "produit.prixVenteMin")
-    @Mapping(target = "montantHT", source = "montantLigne")
+    @Mapping(target = "montantHT", expression = "java(entity.getMontantHT() != null ? entity.getMontantHT() : entity.getMontantLigne())")
+    @Mapping(target = "tauxTVA", expression = "java(entity.getTauxTVA() != null ? entity.getTauxTVA() : java.math.BigDecimal.valueOf(20))")
+    @Mapping(target = "montantTVA", expression = "java(entity.getMontantTVA() != null ? entity.getMontantTVA() : (entity.getMontantHT() != null ? entity.getMontantHT().multiply(java.math.BigDecimal.valueOf(0.20)).setScale(2, java.math.RoundingMode.HALF_UP) : java.math.BigDecimal.ZERO))")
+    @Mapping(target = "montantTTC", expression = "java(entity.getMontantTTC() != null ? entity.getMontantTTC() : (entity.getMontantLigne() != null ? entity.getMontantLigne().multiply(java.math.BigDecimal.valueOf(1.20)).setScale(2, java.math.RoundingMode.HALF_UP) : java.math.BigDecimal.ZERO))")
     LigneBonLivraisonClientDTO toDto(LigneBonLivraisonClient entity);
 
     @Mapping(target = "bonLivraisonClient", ignore = true)

@@ -47,6 +47,18 @@ public class LigneBonLivraisonClient {
     @Column(name = "montant_ligne", precision = 15, scale = 2)
     private BigDecimal montantLigne;
 
+    @Column(name = "montant_ht", precision = 15, scale = 2)
+    private BigDecimal montantHT;
+
+    @Column(name = "taux_tva", precision = 5, scale = 2)
+    private BigDecimal tauxTVA = BigDecimal.valueOf(20);
+
+    @Column(name = "montant_tva", precision = 15, scale = 2)
+    private BigDecimal montantTVA;
+
+    @Column(name = "montant_ttc", precision = 15, scale = 2)
+    private BigDecimal montantTTC;
+
     @PrePersist
     @PreUpdate
     public void prePersist() {
@@ -71,6 +83,12 @@ public class LigneBonLivraisonClient {
         }
 
         this.montantLigne = montantApresRemise.compareTo(BigDecimal.ZERO) >= 0 ? montantApresRemise : BigDecimal.ZERO;
+        this.montantHT = this.montantLigne;
+        if (this.tauxTVA == null) {
+            this.tauxTVA = BigDecimal.valueOf(20);
+        }
+        this.montantTVA = this.montantHT.multiply(this.tauxTVA).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+        this.montantTTC = this.montantHT.add(this.montantTVA);
 
         // Prix net unitaire effectif
         if (qte.compareTo(BigDecimal.ZERO) > 0) {
@@ -114,5 +132,33 @@ public class LigneBonLivraisonClient {
 
     public BigDecimal getMontantLigne() { return montantLigne; }
     public void setMontantLigne(BigDecimal montantLigne) { this.montantLigne = montantLigne; }
+
+    public BigDecimal getMontantHT() {
+        return montantHT != null ? montantHT : montantLigne;
+    }
+    public void setMontantHT(BigDecimal montantHT) {
+        this.montantHT = montantHT;
+    }
+
+    public BigDecimal getTauxTVA() {
+        return tauxTVA != null ? tauxTVA : BigDecimal.valueOf(20);
+    }
+    public void setTauxTVA(BigDecimal tauxTVA) {
+        this.tauxTVA = tauxTVA;
+    }
+
+    public BigDecimal getMontantTVA() {
+        return montantTVA;
+    }
+    public void setMontantTVA(BigDecimal montantTVA) {
+        this.montantTVA = montantTVA;
+    }
+
+    public BigDecimal getMontantTTC() {
+        return montantTTC;
+    }
+    public void setMontantTTC(BigDecimal montantTTC) {
+        this.montantTTC = montantTTC;
+    }
 }
 
