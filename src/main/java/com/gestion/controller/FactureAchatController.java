@@ -26,9 +26,18 @@ public class FactureAchatController {
         return ResponseEntity.ok(factureAchatService.creerFactureAchat(dto));
     }
 
+    @PostMapping("/search")
+    public ResponseEntity<org.springframework.data.domain.Page<FactureAchatDTO>> searchFacturesAchat(
+            @RequestBody(required = false) com.gestion.persistent.dto.FactureAchatSearchCriteria criteria,
+            org.springframework.data.domain.Pageable pageable) {
+        return ResponseEntity.ok(factureAchatService.searchFacturesAchat(criteria, pageable));
+    }
+
     @GetMapping
-    public ResponseEntity<List<FactureAchatDTO>> getFacturesAchat() {
-        return ResponseEntity.ok(factureAchatService.getFacturesAchat());
+    public ResponseEntity<List<FactureAchatDTO>> getFacturesAchat(
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateDebut,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate dateFin) {
+        return ResponseEntity.ok(factureAchatService.getFacturesAchat(dateDebut, dateFin));
     }
 
     @GetMapping("/impayees")

@@ -3,7 +3,10 @@ package com.gestion.service;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.mapper.FactureAchatMapper;
 import com.gestion.persistent.dto.FactureAchatDTO;
+import com.gestion.persistent.dto.FactureAchatSearchCriteria;
 import com.gestion.persistent.enums.StatutFacture;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.gestion.persistent.model.FactureAchat;
 import com.gestion.persistent.model.Fournisseur;
 import com.gestion.persistent.model.LigneFactureAchat;
@@ -115,8 +118,34 @@ public class FactureAchatService {
     }
 
     public List<FactureAchatDTO> getFacturesAchat() {
+        return getFacturesAchat(null, null);
+    }
+
+    public List<FactureAchatDTO> getFacturesAchat(java.time.LocalDate dateDebut, java.time.LocalDate dateFin) {
         Long tenantId = TenantContext.getCurrentTenant();
-        List<FactureAchat> factures = factureAchatRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+        java.time.LocalDateTime dtDebut = (dateDebut != null) ? dateDebut.atStartOfDay() : null;
+        java.time.LocalDateTime dtFin = (dateFin != null) ? dateFin.atTime(23, 59, 59, 999999999) : null;
+
+        List<FactureAchat> factures = factureAchatRepository.findByFiltresPeriode(dtDebut, dtFin, effectiveTenantId);
+        List<FactureAchatDTO> dtos = factures.stream()
+                .map(factureAchatMapper::toDto)
+                .collect(Collectors.toList());
+        enrichirSoldes(dtos);
+        return dtos;
+    }
+
+    public Page<FactureAchatDTO> searchFacturesAchat(FactureAchatSearchCriteria criteria, Pageable pageable) {
+        Page<FactureAchat> page = factureAchatRepository.findByCriteria(criteria, pageable);
+        List<FactureAchatDTO> dtos = page.getContent().stream()
+                .map(factureAchatMapper::toDto)
+                .collect(Collectors.toList());
+        enrichirSoldes(dtos);
+        return new org.springframework.data.domain.PageImpl<>(dtos, pageable, page.getTotalElements());
+    }
+
+    public List<FactureAchatDTO> searchFacturesAchat(FactureAchatSearchCriteria criteria) {
+        List<FactureAchat> factures = factureAchatRepository.findByCriteria(criteria);
         List<FactureAchatDTO> dtos = factures.stream()
                 .map(factureAchatMapper::toDto)
                 .collect(Collectors.toList());
@@ -155,13 +184,22 @@ public class FactureAchatService {
     private void enrichirSoldes(List<FactureAchatDTO> dtoList) {
         if (dtoList == null || dtoList.isEmpty()) return;
         Long tenantId = TenantContext.getCurrentTenant();
-        List<com.gestion.persistent.model.ReglementFournisseur> allRegs = reglementFournisseurRepository.findByPointDeVenteId(tenantId != null ? tenantId : 1L);
-        java.util.Map<Long, BigDecimal> mapPaye = allRegs.stream()
-                .filter(r -> r.getFactureAchat() != null && r.getFactureAchat().getId() != null && r.getMontant() != null)
-                .collect(Collectors.groupingBy(
-                        r -> r.getFactureAchat().getId(),
-                        Collectors.reducing(BigDecimal.ZERO, com.gestion.persistent.model.ReglementFournisseur::getMontant, BigDecimal::add)
-                ));
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+
+        java.util.Set<Long> ids = dtoList.stream()
+                .map(FactureAchatDTO::getId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (ids.isEmpty()) return;
+
+        List<Object[]> sums = reglementFournisseurRepository.sumMontantPayeByFactureIds(ids, effectiveTenantId);
+        java.util.Map<Long, BigDecimal> mapPaye = new java.util.HashMap<>();
+        for (Object[] row : sums) {
+            Long fId = (Long) row[0];
+            BigDecimal sum = (BigDecimal) row[1];
+            mapPaye.put(fId, sum != null ? sum : BigDecimal.ZERO);
+        }
+
         for (FactureAchatDTO dto : dtoList) {
             BigDecimal paye = mapPaye.getOrDefault(dto.getId(), BigDecimal.ZERO);
             dto.setMontantPaye(paye);
