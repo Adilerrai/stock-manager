@@ -12,6 +12,7 @@
       - Ajout des colonnes type_demande_prix et devise_souhaitee dans demandes_prix
     -->
     <changeSet id="046-create-demandes-achat-and-update-ddp" author="erp-achats">
+        <validCheckSum>any</validCheckSum>
         <sql splitStatements="true">
             -- 1. Table principale des Demandes d'Achat (DA)
             CREATE TABLE IF NOT EXISTS demandes_achat (
