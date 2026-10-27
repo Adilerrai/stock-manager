@@ -28,6 +28,7 @@ public class CodificationService {
     private final com.gestion.repository.DepotRepository depotRepository;
     private final com.gestion.repository.NumeroReserveRepository numeroReserveRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public CodificationService(CodificationDocumentRepository repository,
                                @org.springframework.context.annotation.Lazy com.gestion.repository.DepotRepository depotRepository,
                                com.gestion.repository.NumeroReserveRepository numeroReserveRepository) {
