@@ -91,13 +91,13 @@
 "<br/><b>SIEGE</b>: " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
-				<reportElement x="378" y="74" width="189" height="24" forecolor="#0B3A6E" uuid="b1e2f3a4-0004-4000-8000-000000000004">
+				<reportElement x="300" y="76" width="267" height="24" forecolor="#0B3A6E" uuid="b1e2f3a4-0004-4000-8000-000000000004">
 					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
 				</reportElement>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="10.5" isBold="false"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="17" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA["BON LIVRAISON #" + ($P{numeroBl} != null ? $P{numeroBl} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["Bon de Livraison #" + ($P{numeroBl} != null ? $P{numeroBl} : "")]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement x="28" y="110" width="250" height="48" forecolor="#1F2937" uuid="b1e2f3a4-0005-4000-8000-000000000005"/>
@@ -117,7 +117,7 @@
 				<textFieldExpression><![CDATA[(($P{numeroCommandeExterne} != null && !$P{numeroCommandeExterne}.trim().isEmpty()) ? "<b>BC Client :</b> " + $P{numeroCommandeExterne} + "<br/>" : (($P{bcClient} != null && !$P{bcClient}.trim().isEmpty()) ? "<b>BC Client :</b> " + $P{bcClient} + "<br/>" : "")) +
 ($P{chauffeurNom} != null && !$P{chauffeurNom}.isEmpty() ? "<b>Chauffeur :</b> " + $P{chauffeurNom} + "<br/>" : "") +
 ($P{vehiculeImmatriculation} != null && !$P{vehiculeImmatriculation}.isEmpty() ? "<b>Véhicule :</b> " + $P{vehiculeImmatriculation} + "<br/>" : "") +
-($P{statut} != null && !$P{statut}.isEmpty() ? "<b>Statut :</b> " + $P{statut} + "<br/>" : "") +
+($P{statut} != null && !$P{statut}.isEmpty() ? "<b>Statut :</b> " + $P{statut} : "") +
 ($P{notes} != null && !$P{notes}.isEmpty() ? "<b>Obs :</b> " + $P{notes} : "")]]></textFieldExpression>
 			</textField>
 			<rectangle radius="5">
@@ -176,6 +176,39 @@
 			</textField>
 		</band>
 	</title>
+
+	<!-- En-tête allégé pour les pages suivantes (Page 2+) identique à facture_client -->
+	<pageHeader>
+		<band height="46">
+			<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+			<rectangle radius="4">
+				<reportElement x="28" y="4" width="539" height="38" backcolor="#F8FAFC" uuid="b1e2f3a4-ba01-4000-8000-000000000001"/>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#E2E8F0"/>
+				</graphicElement>
+			</rectangle>
+			<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
+				<reportElement x="36" y="8" width="100" height="30" uuid="b1e2f3a4-ba02-4000-8000-000000000002"/>
+				<imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
+			</image>
+			<textField isBlankWhenNull="true">
+				<reportElement x="142" y="14" width="190" height="18" forecolor="#1F2937" uuid="b1e2f3a4-ba03-4000-8000-000000000003"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="9" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Client : " + ($P{clientNom} != null ? $P{clientNom} : "-")]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
+				<reportElement x="340" y="14" width="218" height="18" forecolor="#0B3A6E" uuid="b1e2f3a4-ba04-4000-8000-000000000004">
+					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+				</reportElement>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Bon de Livraison #" + ($P{numeroBl} != null ? $P{numeroBl} : "") + " (suite)"]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
 	<columnHeader>
 		<band height="30">
 			<rectangle radius="4">
@@ -349,37 +382,6 @@
 		</band>
 	</detail>
 	<pageFooter>
-		<band height="30">
-			<line>
-				<reportElement x="28" y="2" width="539" height="1" forecolor="#E5E7EB" uuid="b1e2f3a4-0027-4000-8000-000000000027"/>
-				<graphicElement>
-					<pen lineWidth="0.8"/>
-				</graphicElement>
-			</line>
-			<textField isBlankWhenNull="true">
-				<reportElement x="28" y="6" width="350" height="12" forecolor="#6B7280" uuid="b1e2f3a4-0028-4000-8000-000000000028"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{nomEntreprise}]]></textFieldExpression>
-			</textField>
-			<textField>
-				<reportElement x="447" y="6" width="60" height="12" forecolor="#6B7280" uuid="b1e2f3a4-0029-4000-8000-000000000029"/>
-				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
-				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " /"]]></textFieldExpression>
-			</textField>
-			<textField evaluationTime="Report">
-				<reportElement x="509" y="6" width="58" height="12" forecolor="#6B7280" uuid="b1e2f3a4-0030-4000-8000-000000000030"/>
-				<textElement textAlignment="Left" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7.5"/>
-				</textElement>
-				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
-			</textField>
-		</band>
-	</pageFooter>
-	<lastPageFooter>
 		<band height="130">
 			<rectangle radius="4">
 				<reportElement x="28" y="4" width="260" height="58" backcolor="#FFFFFF" uuid="b1e2f3a4-0031-4000-8000-000000000031"/>
@@ -513,15 +515,6 @@
 				</textElement>
 				<textFieldExpression><![CDATA[($P{totalQuantite} != null ? $P{totalQuantite} : java.math.BigDecimal.ZERO) + " unité(s)"]]></textFieldExpression>
 			</textField>
-			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="28" y="66" width="539" height="14" forecolor="#475569" uuid="b1e2f3a4-0044-4000-8000-000000000044">
-					<printWhenExpression><![CDATA[$P{afficherPrix} == null || $P{afficherPrix}.booleanValue()]]></printWhenExpression>
-				</reportElement>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="7" isItalic="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.isEmpty() ? "Arrêté le présent bon de livraison à la somme de : " + $P{montantEnLettres} : ""]]></textFieldExpression>
-			</textField>
 			<line>
 				<reportElement x="28" y="82" width="539" height="1" forecolor="#1F2937" uuid="b1e2f3a4-0045-4000-8000-000000000045"/>
 				<graphicElement>
@@ -550,5 +543,25 @@
 				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
 			</textField>
 		</band>
-	</lastPageFooter>
+	</pageFooter>
+
+	<!-- Dernière page : Arrêté de BL en toutes lettres si présent (identique à facture_client) -->
+	<summary>
+		<band height="28">
+			<printWhenExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
+			<rectangle radius="4">
+				<reportElement x="28" y="2" width="539" height="22" backcolor="#F1F5F9" uuid="b1e2f3a4-0047-4000-8000-000000000047"/>
+				<graphicElement>
+					<pen lineWidth="0.8" lineColor="#94A3B8"/>
+				</graphicElement>
+			</rectangle>
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="34" y="4" width="527" height="18" forecolor="#0F172A" uuid="b1e2f3a4-0044-4000-8000-000000000044"/>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>Arrêté le présent bon de livraison à la somme de : </b>" + $P{montantEnLettres}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
 </jasperReport>
