@@ -84,7 +84,16 @@ public class CommandeClientService {
 
         CommandeClient commande = new CommandeClient();
         if (commandeDTO.getNumeroCommande() != null && !commandeDTO.getNumeroCommande().isBlank()) {
-            commande.setNumeroCommande(commandeDTO.getNumeroCommande().trim());
+            String customNum = commandeDTO.getNumeroCommande().trim();
+            if (!entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                throw new CommonException("La saisie manuelle du numéro de commande client n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+            }
+            Long tenantId = getTenantId();
+            var existant = commandeClientRepository.findByPointDeVenteIdAndNumeroCommande(tenantId, customNum);
+            if (existant.isPresent()) {
+                throw new CommonException("Une commande client avec le numéro '" + customNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+            }
+            commande.setNumeroCommande(customNum);
         } else {
             commande.setNumeroCommande(generateNumeroCommandeClient());
         }
@@ -225,6 +234,22 @@ public class CommandeClientService {
             com.gestion.persistent.model.Client client = clientRepository.findById(dto.getClientId())
                     .orElseThrow(() -> new CommonException("Client non trouvé avec l'id: " + dto.getClientId(), HttpStatus.NOT_FOUND));
             commande.setClient(client);
+        }
+
+        // Modification manuelle du numéro de commande client
+        if (dto.getNumeroCommande() != null && !dto.getNumeroCommande().isBlank()) {
+            String nouveauNum = dto.getNumeroCommande().trim();
+            if (!nouveauNum.equalsIgnoreCase(commande.getNumeroCommande())) {
+                if (!entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                    throw new CommonException("La modification du numéro de commande client n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+                }
+                Long tenantId = getTenantId();
+                var existant = commandeClientRepository.findByPointDeVenteIdAndNumeroCommande(tenantId, nouveauNum);
+                if (existant.isPresent() && !existant.get().getId().equals(commande.getId())) {
+                    throw new CommonException("Une commande client avec le numéro '" + nouveauNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+                }
+                commande.setNumeroCommande(nouveauNum);
+            }
         }
 
         if (dto.getDateCommande() != null) {

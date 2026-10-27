@@ -121,6 +121,10 @@ public class EntrepriseProfile {
     @Column(name = "tolerance_ecart_pourcentage", precision = 5, scale = 2)
     private BigDecimal toleranceEcartPourcentage = new BigDecimal("5.00");
 
+    // Paramètre global : Autoriser la modification manuelle des numéros de documents (BL, Commande, Facture)
+    @Column(name = "modification_numero_document_active")
+    private Boolean modificationNumeroDocumentActive = false;
+
     @Column(name = "date_mise_a_jour")
     private LocalDateTime dateMiseAJour = LocalDateTime.now();
 
@@ -436,5 +440,13 @@ public class EntrepriseProfile {
 
     public void setCouleursTenant(String couleursTenant) {
         this.couleursTenant = couleursTenant;
+    }
+
+    public Boolean getModificationNumeroDocumentActive() {
+        return modificationNumeroDocumentActive != null && modificationNumeroDocumentActive;
+    }
+
+    public void setModificationNumeroDocumentActive(Boolean modificationNumeroDocumentActive) {
+        this.modificationNumeroDocumentActive = modificationNumeroDocumentActive;
     }
 }

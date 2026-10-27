@@ -121,6 +121,9 @@ public class EntrepriseProfileService {
         if (dto.getToleranceEcartPourcentage() != null) {
             profile.setToleranceEcartPourcentage(dto.getToleranceEcartPourcentage());
         }
+        if (dto.getModificationNumeroDocumentActive() != null) {
+            profile.setModificationNumeroDocumentActive(dto.getModificationNumeroDocumentActive());
+        }
 
         profile.setDateMiseAJour(LocalDateTime.now());
 
@@ -223,6 +226,15 @@ public class EntrepriseProfileService {
             return tol != null ? tol : new BigDecimal("5.00");
         } catch (Exception e) {
             return new BigDecimal("5.00");
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isModificationNumeroDocumentActive() {
+        try {
+            return Boolean.TRUE.equals(getProfileEntityByCurrentTenant().getModificationNumeroDocumentActive());
+        } catch (Exception e) {
+            return false;
         }
     }
 

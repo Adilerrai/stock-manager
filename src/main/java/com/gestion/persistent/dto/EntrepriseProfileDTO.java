@@ -41,6 +41,7 @@ public class EntrepriseProfileDTO {
     private Boolean interdictionAutoApprobation = false;
     private Boolean toleranceEcartReceptionActive = false;
     private BigDecimal toleranceEcartPourcentage = new BigDecimal("5.00");
+    private Boolean modificationNumeroDocumentActive = false;
 
     private LocalDateTime dateMiseAJour;
 
@@ -163,4 +164,7 @@ public class EntrepriseProfileDTO {
 
     public String getCouleursTenant() { return couleursTenant; }
     public void setCouleursTenant(String couleursTenant) { this.couleursTenant = couleursTenant; }
+
+    public Boolean getModificationNumeroDocumentActive() { return modificationNumeroDocumentActive != null && modificationNumeroDocumentActive; }
+    public void setModificationNumeroDocumentActive(Boolean modificationNumeroDocumentActive) { this.modificationNumeroDocumentActive = modificationNumeroDocumentActive; }
 }

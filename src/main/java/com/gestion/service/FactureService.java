@@ -48,6 +48,7 @@ public class FactureService {
     private final ComptabiliteService comptabiliteService;
     private final CodificationService codificationService;
     private final AuditService auditService;
+    private final EntrepriseProfileService entrepriseProfileService;
 
     public FactureService(FactureRepository factureRepository,
             LigneFactureRepository ligneFactureRepository,
@@ -59,7 +60,8 @@ public class FactureService {
             BonLivraisonClientMapper bonLivraisonClientMapper,
             @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService,
             CodificationService codificationService,
-            AuditService auditService) {
+            AuditService auditService,
+            @org.springframework.context.annotation.Lazy EntrepriseProfileService entrepriseProfileService) {
         this.factureRepository = factureRepository;
         this.ligneFactureRepository = ligneFactureRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
@@ -71,6 +73,7 @@ public class FactureService {
         this.comptabiliteService = comptabiliteService;
         this.codificationService = codificationService;
         this.auditService = auditService;
+        this.entrepriseProfileService = entrepriseProfileService;
     }
 
     public Page<Facture> searchFactures(FactureSearchCriteria criteria, Pageable pageable) {
@@ -361,9 +364,17 @@ public class FactureService {
         Long effectiveTenant = tenantIdCreer != null ? tenantIdCreer : 1L;
 
         if (dto.getNumeroFacture() != null && !dto.getNumeroFacture().isBlank()) {
-            facture.setNumeroFacture(dto.getNumeroFacture().trim());
+            String customNum = dto.getNumeroFacture().trim();
+            if (entrepriseProfileService != null && !entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                throw new CommonException("La saisie manuelle du numéro de facture n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+            }
+            var existant = factureRepository.findByPointDeVenteIdAndNumeroFacture(effectiveTenant, customNum);
+            if (existant.isPresent()) {
+                throw new CommonException("Une facture avec le numéro '" + customNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+            }
+            facture.setNumeroFacture(customNum);
             codificationService.marquerNumeroReserveUtilise(
-                    dto.getNumeroFacture().trim(), TypeDocumentCodification.FACTURE_CLIENT, effectiveTenant, null);
+                    customNum, TypeDocumentCodification.FACTURE_CLIENT, effectiveTenant, null);
         } else {
             facture.setNumeroFacture(genererNumeroFacture(effectiveTenant, dateFacture));
         }
@@ -395,6 +406,21 @@ public class FactureService {
 
         if (Boolean.TRUE.equals(facture.getAnnulee()) || facture.getStatut() == StatutFacture.ANNULEE) {
             throw new CommonException("Impossible de modifier une facture annulée.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Modification manuelle du numéro de facture
+        if (dto.getNumeroFacture() != null && !dto.getNumeroFacture().isBlank()) {
+            String nouveauNum = dto.getNumeroFacture().trim();
+            if (!nouveauNum.equalsIgnoreCase(facture.getNumeroFacture())) {
+                if (entrepriseProfileService != null && !entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                    throw new CommonException("La modification du numéro de facture n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+                }
+                var existant = factureRepository.findByPointDeVenteIdAndNumeroFacture(tenantId, nouveauNum);
+                if (existant.isPresent() && !existant.get().getId().equals(facture.getId())) {
+                    throw new CommonException("Une facture avec le numéro '" + nouveauNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+                }
+                facture.setNumeroFacture(nouveauNum);
+            }
         }
 
         // Client

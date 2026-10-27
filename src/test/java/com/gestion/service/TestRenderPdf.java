@@ -326,4 +326,33 @@ public class TestRenderPdf {
         System.out.println("Generated uploads/test_commande_fournisseur_25lignes_page2.pdf with page count: " + jp.getPages().size());
         org.junit.jupiter.api.Assertions.assertTrue(jp.getPages().size() >= 2, "29 items must produce multi-page document!");
     }
+
+    @Test
+    public void testBonLivraisonClient19Items() throws Exception {
+        List<Map<String, Object>> nineteenItems = createSampleItems().subList(0, 19);
+
+        InputStream is = getClass().getClassLoader().getResourceAsStream("reports/bon_livraison_client.jrxml");
+        JasperReport jr = JasperCompileManager.compileReport(is);
+        Map<String, Object> params = createCommonParams();
+        params.put("numeroBl", "WH/OUT/00003");
+        params.put("dateBl", "22/10/2026 17:41");
+        params.put("commandeReference", "-");
+        params.put("depotNom", "Dépôt Principal");
+        params.put("clientNom", "ESPANO CERAME");
+        params.put("clientAdresse", "Route 106 De Ben Slimane , KM 21");
+        params.put("clientTelephone", "0613300665");
+        params.put("clientIce", "001538070000041");
+        params.put("statut", "LIVREE");
+        params.put("montantHT", new BigDecimal("5482.00"));
+        params.put("montantTVA", new BigDecimal("1096.40"));
+        params.put("montantTTC", new BigDecimal("6578.40"));
+        params.put("montantTotal", new BigDecimal("6578.40"));
+        params.put("totalQuantite", new BigDecimal("442"));
+        params.put("montantEnLettres", "SIX MILLE CINQ CENT SOIXANTE-DIX-HUIT DIRHAMS ET QUARANTE CENTIMES");
+
+        JasperPrint jp = JasperFillManager.fillReport(jr, params, new JRBeanCollectionDataSource(nineteenItems));
+        JasperExportManager.exportReportToPdfFile(jp, "uploads/test_bon_livraison_client_19items.pdf");
+        System.out.println("Generated uploads/test_bon_livraison_client_19items.pdf with page count: " + jp.getPages().size());
+        org.junit.jupiter.api.Assertions.assertTrue(jp.getPages().size() >= 1, "PDF généré avec succès");
+    }
 }

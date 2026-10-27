@@ -157,6 +157,9 @@
     <!-- Changeset 049 : Table des numéros réservés / recyclés lors d'annulations -->
     <include file="changes/049-create-table-numeros-reserves.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 050 : Paramètre de modification manuelle des numéros BL, Commande et Facture -->
+    <include file="changes/050-add-modification-numero-document-param.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

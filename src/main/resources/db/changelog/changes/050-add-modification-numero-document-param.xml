@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 050 : Paramètre de configuration permettant la modification manuelle des numéros de pièces (BL, Commande, Facture)
+    -->
+    <changeSet id="050-add-modification-numero-document-param" author="antigravity">
+        <sql splitStatements="false">
+            ALTER TABLE IF EXISTS entreprise_profiles 
+                ADD COLUMN IF NOT EXISTS modification_numero_document_active BOOLEAN DEFAULT FALSE;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

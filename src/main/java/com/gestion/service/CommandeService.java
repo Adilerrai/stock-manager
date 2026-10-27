@@ -106,12 +106,25 @@ public class CommandeService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", commandeDTO.getFournisseurId()));
 
         Commande commande = new Commande();
-        commande.setNumeroCommande(generateNumeroCommande());
+        Long tenantId = getTenantId();
+        if (commandeDTO.getNumeroCommande() != null && !commandeDTO.getNumeroCommande().isBlank()) {
+            String customNum = commandeDTO.getNumeroCommande().trim();
+            if (entrepriseProfileService != null && !entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                throw new CommonException("La saisie manuelle du numéro de commande fournisseur n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+            }
+            var existant = commandeRepository.findByPointDeVenteIdAndNumeroCommande(tenantId, customNum);
+            if (existant.isPresent()) {
+                throw new CommonException("Une commande fournisseur avec le numéro '" + customNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+            }
+            commande.setNumeroCommande(customNum);
+        } else {
+            commande.setNumeroCommande(generateNumeroCommande());
+        }
         commande.setFournisseur(fournisseur);
         commande.setStatut(StatutCommande.BROUILLON);
         commande.setDateLivraisonPrevue(commandeDTO.getDateLivraisonPrevue());
         commande.setObservations(commandeDTO.getObservations());
-        commande.setPointDeVenteId(getTenantId());
+        commande.setPointDeVenteId(tenantId);
 
         boolean isInternational = fournisseur.getTypeFournisseur() == com.gestion.persistent.enums.TypeFournisseur.INTERNATIONAL
                 || commandeDTO.getTypeAchat() == com.gestion.persistent.enums.TypeAchat.INTERNATIONAL;
@@ -220,6 +233,22 @@ public class CommandeService {
             fournisseur = fournisseurRepository.findById(commandeDTO.getFournisseurId())
                     .orElseThrow(() -> new ResourceNotFoundException("Fournisseur", "id", commandeDTO.getFournisseurId()));
             commande.setFournisseur(fournisseur);
+        }
+
+        // Modification manuelle du numéro de commande fournisseur
+        if (commandeDTO.getNumeroCommande() != null && !commandeDTO.getNumeroCommande().isBlank()) {
+            String nouveauNum = commandeDTO.getNumeroCommande().trim();
+            if (!nouveauNum.equalsIgnoreCase(commande.getNumeroCommande())) {
+                if (entrepriseProfileService != null && !entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                    throw new CommonException("La modification du numéro de commande fournisseur n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+                }
+                Long tenantId = getTenantId();
+                var existant = commandeRepository.findByPointDeVenteIdAndNumeroCommande(tenantId, nouveauNum);
+                if (existant.isPresent() && !existant.get().getId().equals(commande.getId())) {
+                    throw new CommonException("Une commande fournisseur avec le numéro '" + nouveauNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+                }
+                commande.setNumeroCommande(nouveauNum);
+            }
         }
 
         if (commandeDTO.getDateLivraisonPrevue() != null) {

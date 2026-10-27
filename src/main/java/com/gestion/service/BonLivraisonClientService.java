@@ -51,6 +51,7 @@ public class BonLivraisonClientService {
     private final com.gestion.repository.StockRepository stockRepository;
     private final AuditService auditService;
     private final GedService gedService;
+    private final EntrepriseProfileService entrepriseProfileService;
 
     public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
                                      ClientRepository clientRepository,
@@ -62,7 +63,8 @@ public class BonLivraisonClientService {
                                      CodificationService codificationService,
                                      com.gestion.repository.StockRepository stockRepository,
                                      AuditService auditService,
-                                     GedService gedService) {
+                                     GedService gedService,
+                                     @org.springframework.context.annotation.Lazy EntrepriseProfileService entrepriseProfileService) {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.clientRepository = clientRepository;
         this.commandeClientRepository = commandeClientRepository;
@@ -74,6 +76,7 @@ public class BonLivraisonClientService {
         this.stockRepository = stockRepository;
         this.auditService = auditService;
         this.gedService = gedService;
+        this.entrepriseProfileService = entrepriseProfileService;
     }
 
     public Page<BonLivraisonClient> searchBonsLivraison(BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
@@ -86,10 +89,19 @@ public class BonLivraisonClientService {
             bl.setLignes(new java.util.ArrayList<>());
         }
         Long tenantId = TenantContext.getCurrentTenant();
-        bl.setPointDeVenteId(tenantId != null ? tenantId : 1L);
+        Long effectiveTenant = tenantId != null ? tenantId : 1L;
+        bl.setPointDeVenteId(effectiveTenant);
         bl.setDateBl(LocalDateTime.now());
         if (dto.getNumeroBl() != null && !dto.getNumeroBl().isBlank()) {
-            bl.setNumeroBl(dto.getNumeroBl());
+            String customNum = dto.getNumeroBl().trim();
+            if (!entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                throw new CommonException("La saisie manuelle du numéro de bon de livraison n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+            }
+            var existant = bonLivraisonClientRepository.findByPointDeVenteIdAndNumeroBl(effectiveTenant, customNum);
+            if (existant.isPresent()) {
+                throw new CommonException("Un bon de livraison avec le numéro '" + customNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+            }
+            bl.setNumeroBl(customNum);
         } else {
             bl.setNumeroBl(genererNumeroBL(dto.getDepotId()));
         }
@@ -528,6 +540,21 @@ public class BonLivraisonClientService {
 
         if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE) {
             throw new CommonException("Ce bon de livraison est déjà expédié. Veuillez d'abord le remettre en brouillon pour le modifier.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Modification manuelle du numéro de bon de livraison
+        if (dto.getNumeroBl() != null && !dto.getNumeroBl().isBlank()) {
+            String nouveauNum = dto.getNumeroBl().trim();
+            if (!nouveauNum.equalsIgnoreCase(bl.getNumeroBl())) {
+                if (!entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                    throw new CommonException("La modification du numéro de bon de livraison n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+                }
+                var existant = bonLivraisonClientRepository.findByPointDeVenteIdAndNumeroBl(effectiveTenantId, nouveauNum);
+                if (existant.isPresent() && !existant.get().getId().equals(bl.getId())) {
+                    throw new CommonException("Un bon de livraison avec le numéro '" + nouveauNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+                }
+                bl.setNumeroBl(nouveauNum);
+            }
         }
 
         if (dto.getClientId() != null && (bl.getClient() == null || !bl.getClient().getId().equals(dto.getClientId()))) {
