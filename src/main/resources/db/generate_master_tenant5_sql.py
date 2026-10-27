@@ -12,7 +12,7 @@ from datetime import datetime
 sys.stdout.reconfigure(encoding='utf-8', errors='backslashreplace')
 
 BASE_URL = 'https://sit-transmission1.odoo.com'
-COOKIE = 'frontend_lang=fr_FR; _ga=GA1.2.288871012.1792416034; _ga_SF317W7ESF=GS2.2.s1792416034$o1$g1$t1792416046$j48$l0$h0; cids=1; color_scheme=dark; tz=Africa/Casablanca; session_id=nuqD8NS9iu8FFLbsthUzdVKOmdzs-UvDkW53NORh7anK9HhQQLvWamydzX-JUwg8Sd4a1BRMZIwqEBveP--quQ'
+COOKIE = 'frontend_lang=fr_FR; _ga=GA1.2.288871012.1792416034; _ga_SF317W7ESF=GS2.2.s1792416034$o1$g1$t1792416046$j48$l0$h0; cids=1; color_scheme=dark; tz=Africa/Casablanca; session_id=nuqD8NS9iu8FFLbsthUzdVKOmdzs-UvDkW53NORh7aLvtW3IIIICNQStRBu5_dXtmTcjFNEWeF8MpN3I9AK-Dw'
 
 HEADERS = {
     'Accept': 'application/json',
