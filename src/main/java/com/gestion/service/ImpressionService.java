@@ -267,7 +267,6 @@ public class ImpressionService {
             mo.put("montantTTC", totalMoTTC.compareTo(BigDecimal.ZERO) > 0 ? totalMoTTC : totalMoHT);
             lignes.add(mo);
         }
-
         return exportToPdf("facture_client", params, lignes);
     }
 
