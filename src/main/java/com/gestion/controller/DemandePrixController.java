@@ -37,6 +37,20 @@ public class DemandePrixController {
         return ResponseEntity.ok(demandePrixService.getDemandePrixById(id));
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<DemandePrixDTO> updateDemandePrix(
+            @PathVariable("id") Long id,
+            @RequestBody DemandePrixDTO dto) {
+        DemandePrixDTO updated = demandePrixService.updateDemandePrix(id, dto);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteDemandePrix(@PathVariable("id") Long id) {
+        demandePrixService.deleteDemandePrix(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{id}/offres")
     public ResponseEntity<OffreFournisseurDTO> enregistrerOffre(
             @PathVariable("id") Long id,

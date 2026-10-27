@@ -1,5 +1,6 @@
 package com.gestion.service;
 
+import com.acommon.exception.CommonException;
 import com.acommon.exception.ResourceNotFoundException;
 import com.acommon.persistant.model.CurrentRequestContext;
 import com.acommon.persistant.model.TenantContext;
@@ -11,6 +12,8 @@ import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,19 +34,22 @@ public class DemandePrixService {
     private final ProduitRepository produitRepository;
     private final CodificationService codificationService;
     private final CommandeService commandeService;
+    private final EntrepriseProfileService entrepriseProfileService;
 
     public DemandePrixService(DemandePrixRepository demandePrixRepository,
                               OffreFournisseurRepository offreFournisseurRepository,
                               FournisseurRepository fournisseurRepository,
                               ProduitRepository produitRepository,
                               CodificationService codificationService,
-                              CommandeService commandeService) {
+                              CommandeService commandeService,
+                              @Lazy EntrepriseProfileService entrepriseProfileService) {
         this.demandePrixRepository = demandePrixRepository;
         this.offreFournisseurRepository = offreFournisseurRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.produitRepository = produitRepository;
         this.codificationService = codificationService;
         this.commandeService = commandeService;
+        this.entrepriseProfileService = entrepriseProfileService;
     }
 
     private Long getTenantId() {
@@ -134,6 +140,165 @@ public class DemandePrixService {
         DemandePrix ddp = demandePrixRepository.findByIdAndPointDeVenteId(id, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("DemandePrix", "id", id));
         return toDTO(ddp);
+    }
+
+    @Transactional
+    public DemandePrixDTO updateDemandePrix(Long id, DemandePrixDTO dto) {
+        Long tenantId = getTenantId();
+        DemandePrix ddp = demandePrixRepository.findByIdAndPointDeVenteId(id, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("DemandePrix", "id", id));
+
+        if (ddp.getStatut() == StatutDemandePrix.CLOTUREE || ddp.getStatut() == StatutDemandePrix.ANNULEE) {
+            throw new CommonException("Impossible de modifier une demande de prix clôturée ou annulée.", HttpStatus.BAD_REQUEST);
+        }
+
+        boolean hasRetenue = ddp.getOffres().stream().anyMatch(o -> o.getStatut() == StatutOffreFournisseur.RETENUE);
+        if (hasRetenue) {
+            throw new CommonException("Impossible de modifier une demande de prix dont une offre a déjà été retenue et commandée.", HttpStatus.BAD_REQUEST);
+        }
+
+        // Modification manuelle du numéro de document
+        if (dto.getNumeroDdp() != null && !dto.getNumeroDdp().isBlank()) {
+            String nouveauNum = dto.getNumeroDdp().trim();
+            if (!nouveauNum.equalsIgnoreCase(ddp.getNumeroDdp())) {
+                if (entrepriseProfileService != null && !entrepriseProfileService.isModificationNumeroDocumentActive()) {
+                    throw new CommonException("La modification du numéro de document n'est pas autorisée par la configuration de l'entreprise.", HttpStatus.BAD_REQUEST);
+                }
+                var existant = demandePrixRepository.findByPointDeVenteIdAndNumeroDdp(tenantId, nouveauNum);
+                if (existant.isPresent() && !existant.get().getId().equals(ddp.getId())) {
+                    throw new CommonException("Une demande de prix avec le numéro '" + nouveauNum + "' existe déjà.", HttpStatus.BAD_REQUEST);
+                }
+                ddp.setNumeroDdp(nouveauNum);
+            }
+        }
+
+        if (dto.getObjet() != null) {
+            ddp.setObjet(dto.getObjet());
+        }
+        if (dto.getDateLimiteReponse() != null) {
+            ddp.setDateLimiteReponse(dto.getDateLimiteReponse());
+        }
+        ddp.setDemandeAchatId(dto.getDemandeAchatId());
+        if (dto.getTypeDemandePrix() != null) {
+            ddp.setTypeDemandePrix(dto.getTypeDemandePrix());
+        }
+        if (dto.getDeviseSouhaitee() != null) {
+            ddp.setDeviseSouhaitee(dto.getDeviseSouhaitee());
+        }
+        ddp.setIncotermSouhaite(dto.getIncotermSouhaite());
+        ddp.setLieuLivraison(dto.getLieuLivraison());
+        ddp.setObservations(dto.getObservations());
+
+        // 1. Synchronisation des lignes d'articles
+        if (dto.getLignes() != null) {
+            Set<Long> dtoLigneIds = dto.getLignes().stream()
+                    .map(LigneDemandePrixDTO::getId)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet());
+
+            // Suppression des anciennes lignes
+            List<LigneDemandePrix> linesToRemove = ddp.getLignes().stream()
+                    .filter(l -> l.getId() != null && !dtoLigneIds.contains(l.getId()))
+                    .collect(Collectors.toList());
+
+            for (LigneDemandePrix lRem : linesToRemove) {
+                for (OffreFournisseur ofr : ddp.getOffres()) {
+                    ofr.getLignes().removeIf(lof -> lof.getLigneDemandePrix() != null
+                            && lRem.getId().equals(lof.getLigneDemandePrix().getId()));
+                }
+            }
+            ddp.getLignes().removeAll(linesToRemove);
+
+            // Mise à jour ou ajout
+            for (LigneDemandePrixDTO ligneDTO : dto.getLignes()) {
+                LigneDemandePrix ligne;
+                if (ligneDTO.getId() != null) {
+                    ligne = ddp.getLignes().stream()
+                            .filter(l -> ligneDTO.getId().equals(l.getId()))
+                            .findFirst()
+                            .orElse(null);
+                    if (ligne == null) {
+                        ligne = new LigneDemandePrix();
+                        ligne.setDemandePrix(ddp);
+                        ligne.setPointDeVenteId(tenantId);
+                        ddp.getLignes().add(ligne);
+                    }
+                } else {
+                    ligne = new LigneDemandePrix();
+                    ligne.setDemandePrix(ddp);
+                    ligne.setPointDeVenteId(tenantId);
+                    ddp.getLignes().add(ligne);
+                }
+
+                ligne.setQuantiteDemandee(ligneDTO.getQuantiteDemandee() != null ? ligneDTO.getQuantiteDemandee() : BigDecimal.ONE);
+                ligne.setUnite(ligneDTO.getUnite() != null ? ligneDTO.getUnite() : "U");
+
+                if (ligneDTO.getProduitId() != null) {
+                    Produit prod = produitRepository.findById(ligneDTO.getProduitId()).orElse(null);
+                    ligne.setProduit(prod);
+                    ligne.setDesignation(prod != null && prod.getNom() != null ? prod.getNom() : ligneDTO.getDesignation());
+                    ligne.setReference(prod != null ? prod.getReference() : ligneDTO.getReference());
+                } else {
+                    ligne.setProduit(null);
+                    ligne.setDesignation(ligneDTO.getDesignation() != null ? ligneDTO.getDesignation() : "Article");
+                    ligne.setReference(ligneDTO.getReference());
+                }
+            }
+        }
+
+        // 2. Synchronisation des Fournisseurs / Offres
+        if (dto.getFournisseurIds() != null) {
+            Set<Long> targetFrnIds = new HashSet<>(dto.getFournisseurIds());
+
+            List<OffreFournisseur> offresToRemove = ddp.getOffres().stream()
+                    .filter(o -> o.getFournisseur() != null
+                            && !targetFrnIds.contains(o.getFournisseur().getId())
+                            && o.getStatut() == StatutOffreFournisseur.EN_ATTENTE)
+                    .collect(Collectors.toList());
+            ddp.getOffres().removeAll(offresToRemove);
+
+            Set<Long> existingFrnIds = ddp.getOffres().stream()
+                    .filter(o -> o.getFournisseur() != null)
+                    .map(o -> o.getFournisseur().getId())
+                    .collect(Collectors.toSet());
+
+            for (Long frnId : targetFrnIds) {
+                if (!existingFrnIds.contains(frnId)) {
+                    fournisseurRepository.findById(frnId).ifPresent(frn -> {
+                        OffreFournisseur offre = new OffreFournisseur();
+                        offre.setDemandePrix(ddp);
+                        offre.setFournisseur(frn);
+                        offre.setStatut(StatutOffreFournisseur.EN_ATTENTE);
+                        offre.setPointDeVenteId(tenantId);
+                        ddp.getOffres().add(offre);
+                    });
+                }
+            }
+
+            if (!ddp.getOffres().isEmpty() && ddp.getStatut() == StatutDemandePrix.BROUILLON) {
+                ddp.setStatut(StatutDemandePrix.ENVOYEE);
+            }
+        }
+
+        DemandePrix saved = demandePrixRepository.save(ddp);
+        return toDTO(saved);
+    }
+
+    @Transactional
+    public void deleteDemandePrix(Long id) {
+        Long tenantId = getTenantId();
+        DemandePrix ddp = demandePrixRepository.findByIdAndPointDeVenteId(id, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("DemandePrix", "id", id));
+
+        if (ddp.getStatut() == StatutDemandePrix.CLOTUREE) {
+            throw new CommonException("Impossible de supprimer une demande de prix déjà clôturée.", HttpStatus.BAD_REQUEST);
+        }
+        boolean hasRetenue = ddp.getOffres().stream().anyMatch(o -> o.getStatut() == StatutOffreFournisseur.RETENUE);
+        if (hasRetenue) {
+            throw new CommonException("Impossible de supprimer une demande de prix dont une offre a déjà été retenue et commandée.", HttpStatus.BAD_REQUEST);
+        }
+
+        demandePrixRepository.delete(ddp);
     }
 
     @Transactional
@@ -384,6 +549,10 @@ public class DemandePrixService {
         }
         if (entity.getOffres() != null) {
             dto.setOffres(entity.getOffres().stream().map(this::toOffreDTO).collect(Collectors.toList()));
+            dto.setFournisseurIds(entity.getOffres().stream()
+                    .filter(o -> o.getFournisseur() != null)
+                    .map(o -> o.getFournisseur().getId())
+                    .collect(Collectors.toList()));
         }
         return dto;
     }
