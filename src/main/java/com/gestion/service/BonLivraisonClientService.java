@@ -421,7 +421,7 @@ public class BonLivraisonClientService {
         BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
 
         codificationService.libererNumero(
-                TypeDocumentCodification.BL_CLIENT,
+                com.gestion.persistent.enums.TypeDocumentCodification.BL_CLIENT,
                 effectiveTenantId,
                 saved.getNumeroBl(),
                 saved.getId(),

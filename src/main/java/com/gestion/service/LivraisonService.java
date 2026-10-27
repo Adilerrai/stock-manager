@@ -225,7 +225,8 @@ public class LivraisonService {
             mettreAJourStatutLivraisonCommande(saved.getCommande());
         }
 
-        Long effectiveTenantId = saved.getPointDeVenteId() != null ? saved.getPointDeVenteId() : getTenantId();
+        Long currentTenant = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = saved.getPointDeVenteId() != null ? saved.getPointDeVenteId() : (currentTenant != null ? currentTenant : 1L);
         codificationService.libererNumero(
                 com.gestion.persistent.enums.TypeDocumentCodification.BL_FOURNISSEUR,
                 effectiveTenantId,
