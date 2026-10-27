@@ -20,6 +20,17 @@ public interface LivraisonMapper {
     @Mapping(target = "depotNom", expression = "java(livraison.getLignesLivraison() != null && !livraison.getLignesLivraison().isEmpty() && livraison.getLignesLivraison().get(0).getDepot() != null ? livraison.getLignesLivraison().get(0).getDepot().getNom() : null)")
     LivraisonDTO toDto(Livraison livraison);
 
+    @org.mapstruct.Named("toSummaryDto")
+    @Mapping(target = "commandeId", source = "commande.id")
+    @Mapping(target = "commandeNumero", source = "commande.numeroCommande")
+    @Mapping(target = "fournisseurId", source = "commande.fournisseur.id")
+    @Mapping(target = "fournisseurNom", source = "commande.fournisseur.raisonSociale")
+    @Mapping(target = "depotId", expression = "java(livraison.getLignesLivraison() != null && !livraison.getLignesLivraison().isEmpty() && livraison.getLignesLivraison().get(0).getDepot() != null ? livraison.getLignesLivraison().get(0).getDepot().getId() : null)")
+    @Mapping(target = "depotNom", expression = "java(livraison.getLignesLivraison() != null && !livraison.getLignesLivraison().isEmpty() && livraison.getLignesLivraison().get(0).getDepot() != null ? livraison.getLignesLivraison().get(0).getDepot().getNom() : null)")
+    @Mapping(target = "depot", ignore = true)
+    @Mapping(target = "lignesLivraison", ignore = true)
+    LivraisonDTO toSummaryDto(Livraison livraison);
+
     @Mapping(target = "commande.id", source = "commandeId")
     @Mapping(target = "dateLivraison", ignore = true)
     Livraison toEntity(LivraisonDTO livraisonDTO);

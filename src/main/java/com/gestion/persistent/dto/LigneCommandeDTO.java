@@ -3,7 +3,9 @@ package com.gestion.persistent.dto;
 import com.gestion.persistent.enums.QualiteProduit;
 
 import java.math.BigDecimal;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class LigneCommandeDTO {
     private Long id;
     private Long commandeId;

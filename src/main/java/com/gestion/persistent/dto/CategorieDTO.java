@@ -1,7 +1,9 @@
 package com.gestion.persistent.dto;
 
 import java.time.LocalDateTime;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CategorieDTO {
     private Long id;
     private String nom;

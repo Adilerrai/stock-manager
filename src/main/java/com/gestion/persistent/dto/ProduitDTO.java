@@ -7,7 +7,9 @@ import com.gestion.persistent.model.GroupeArticle;
 
 import java.math.BigDecimal;
 import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProduitDTO {
     private Long id;
     private String reference;

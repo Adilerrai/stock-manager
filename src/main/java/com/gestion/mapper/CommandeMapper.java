@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(componentModel = "spring", uses = {LigneCommandeMapper.class, LivraisonMapper.class})
+@Mapper(componentModel = "spring", uses = { LigneCommandeMapper.class, LivraisonMapper.class })
 public interface CommandeMapper {
 
     @Mapping(target = "fournisseurId", source = "fournisseur.id")
@@ -34,12 +34,13 @@ public interface CommandeMapper {
     @Mapping(target = "conditionPaiement", ignore = true)
     void updateEntityFromDto(CommandeDTO commandeDTO, @MappingTarget Commande commande);
 
-    default java.util.List<com.gestion.persistent.dto.LivraisonDTO> mapLivraisonsIfNotAnnulee(java.util.List<com.gestion.persistent.model.Livraison> livraisons) {
+    default java.util.List<com.gestion.persistent.dto.LivraisonDTO> mapLivraisonsIfNotAnnulee(
+            java.util.List<com.gestion.persistent.model.Livraison> livraisons) {
         if (livraisons == null) {
             return java.util.Collections.emptyList();
         }
-        com.gestion.mapper.LivraisonMapper mapper =
-                com.acommon.config.ApplicationContextProvider.getBean(com.gestion.mapper.LivraisonMapper.class);
+        com.gestion.mapper.LivraisonMapper mapper = com.acommon.config.ApplicationContextProvider
+                .getBean(com.gestion.mapper.LivraisonMapper.class);
         if (mapper == null) {
             mapper = org.mapstruct.factory.Mappers.getMapper(com.gestion.mapper.LivraisonMapper.class);
         }
