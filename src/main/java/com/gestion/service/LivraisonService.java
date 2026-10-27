@@ -219,7 +219,13 @@ public class LivraisonService {
         }
 
         livraison.setStatut(StatutLivraison.ANNULEE);
-        return livraisonRepository.save(livraison);
+        Livraison saved = livraisonRepository.save(livraison);
+
+        if (saved.getCommande() != null) {
+            mettreAJourStatutLivraisonCommande(saved.getCommande());
+        }
+
+        return saved;
     }
 
     @Transactional
@@ -455,6 +461,10 @@ public class LivraisonService {
             commande.setStatutLivraison(StatutLivraison.PARTIELLE);
         } else {
             commande.setStatutLivraison(StatutLivraison.EN_ATTENTE);
+            if (commande.getStatut() != StatutCommande.BROUILLON && commande.getStatut() != StatutCommande.ANNULEE) {
+                commande.setStatut(StatutCommande.VALIDEE);
+            }
+            commande.setDateLivraisonReelle(null);
         }
         
         commandeRepository.save(commande);
