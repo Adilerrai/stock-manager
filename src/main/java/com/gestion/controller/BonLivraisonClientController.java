@@ -187,4 +187,19 @@ public class BonLivraisonClientController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/numeros-reserves")
+    public ResponseEntity<List<com.gestion.persistent.dto.NumeroReserveDTO>> getNumerosReservesBlClient() {
+        List<com.gestion.persistent.dto.NumeroReserveDTO> list = bonLivraisonClientService.getCodificationService()
+                .getNumerosReservesDisponibles(com.gestion.persistent.enums.TypeDocumentCodification.BL_CLIENT, null);
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/reserver-numero")
+    public ResponseEntity<Void> reserverNumeroBlClient(
+            @RequestParam String numero,
+            @RequestParam(required = false, defaultValue = "Réservation manuelle") String motif) {
+        bonLivraisonClientService.getCodificationService().libererNumero(
+                com.gestion.persistent.enums.TypeDocumentCodification.BL_CLIENT, null, numero, null, motif);
+        return ResponseEntity.ok().build();
+    }
 }

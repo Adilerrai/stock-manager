@@ -419,6 +419,15 @@ public class BonLivraisonClientService {
 
         bl.setStatut(StatutLivraison.ANNULEE);
         BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+
+        codificationService.libererNumero(
+                TypeDocumentCodification.BL_CLIENT,
+                effectiveTenantId,
+                saved.getNumeroBl(),
+                saved.getId(),
+                "Annulation de bon de livraison client"
+        );
+
         return bonLivraisonClientMapper.toDto(saved);
     }
 
@@ -689,5 +698,9 @@ public class BonLivraisonClientService {
 
     private String genererNumeroBL() {
         return genererNumeroBL(null);
+    }
+
+    public CodificationService getCodificationService() {
+        return codificationService;
     }
 }
