@@ -35,6 +35,11 @@ public class CodificationService {
         this.numeroReserveRepository = numeroReserveRepository;
     }
 
+    public CodificationService(CodificationDocumentRepository repository,
+                               com.gestion.repository.DepotRepository depotRepository) {
+        this(repository, depotRepository, null);
+    }
+
     public Long getCurrentTenantId() {
         Long tenant = CurrentRequestContext.getSocieteId();
         if (tenant == null) {
@@ -141,17 +146,19 @@ public class CodificationService {
         Long tenantId = (pointDeVenteId != null) ? pointDeVenteId : getCurrentTenantId();
 
         // 1. Vérifier si un numéro recyclé / réservé est disponible dans la file
-        java.util.Optional<com.gestion.persistent.model.NumeroReserve> reserveOpt = numeroReserveRepository
-                .findFirstByPointDeVenteIdAndTypeDocumentAndStatutOrderByValeurSequenceAsc(
-                        tenantId, typeDoc, com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE);
+        if (numeroReserveRepository != null) {
+            java.util.Optional<com.gestion.persistent.model.NumeroReserve> reserveOpt = numeroReserveRepository
+                    .findFirstByPointDeVenteIdAndTypeDocumentAndStatutOrderByValeurSequenceAsc(
+                            tenantId, typeDoc, com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE);
 
-        if (reserveOpt.isPresent()) {
-            com.gestion.persistent.model.NumeroReserve reserve = reserveOpt.get();
-            reserve.setStatut(com.gestion.persistent.enums.StatutNumeroReserve.UTILISE);
-            reserve.setDateUtilisation(LocalDateTime.now());
-            numeroReserveRepository.save(reserve);
-            log.info("Numéro réservé/recyclé utilisé pour tenant {} - type {}: {}", tenantId, typeDoc, reserve.getNumero());
-            return reserve.getNumero();
+            if (reserveOpt.isPresent()) {
+                com.gestion.persistent.model.NumeroReserve reserve = reserveOpt.get();
+                reserve.setStatut(com.gestion.persistent.enums.StatutNumeroReserve.UTILISE);
+                reserve.setDateUtilisation(LocalDateTime.now());
+                numeroReserveRepository.save(reserve);
+                log.info("Numéro réservé/recyclé utilisé pour tenant {} - type {}: {}", tenantId, typeDoc, reserve.getNumero());
+                return reserve.getNumero();
+            }
         }
 
         LocalDate now = LocalDate.now();
@@ -328,7 +335,7 @@ public class CodificationService {
         }
 
         // Sinon, ajouter ce numéro libéré dans la table des numéros réservés/recyclés
-        if (!numeroReserveRepository.existsByPointDeVenteIdAndTypeDocumentAndNumeroAndStatut(
+        if (numeroReserveRepository != null && !numeroReserveRepository.existsByPointDeVenteIdAndTypeDocumentAndNumeroAndStatut(
                 tenantId, typeDoc, numero, com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE)) {
             com.gestion.persistent.model.NumeroReserve reserve = new com.gestion.persistent.model.NumeroReserve();
             reserve.setPointDeVenteId(tenantId);
@@ -346,6 +353,7 @@ public class CodificationService {
     }
 
     public List<com.gestion.persistent.dto.NumeroReserveDTO> getNumerosReservesDisponibles(TypeDocumentCodification typeDoc, Long pointDeVenteId) {
+        if (numeroReserveRepository == null) return Collections.emptyList();
         Long tenantId = (pointDeVenteId != null) ? pointDeVenteId : getCurrentTenantId();
         List<com.gestion.persistent.model.NumeroReserve> reserves = numeroReserveRepository
                 .findByPointDeVenteIdAndTypeDocumentAndStatutOrderByValeurSequenceAsc(
@@ -371,7 +379,7 @@ public class CodificationService {
 
     @Transactional
     public void marquerNumeroReserveUtilise(String numero, TypeDocumentCodification typeDoc, Long pointDeVenteId, Long docId) {
-        if (numero == null) return;
+        if (numero == null || numeroReserveRepository == null) return;
         Long tenantId = (pointDeVenteId != null) ? pointDeVenteId : getCurrentTenantId();
         numeroReserveRepository.findByPointDeVenteIdAndTypeDocumentAndNumeroAndStatut(
                 tenantId, typeDoc, numero, com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE)
