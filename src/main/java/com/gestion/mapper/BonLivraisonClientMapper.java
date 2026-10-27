@@ -42,6 +42,33 @@ public interface BonLivraisonClientMapper {
         if (facture == null || Boolean.TRUE.equals(facture.getAnnulee()) || facture.getStatut() == com.gestion.persistent.enums.StatutFacture.ANNULEE) {
             return null;
         }
-        return org.mapstruct.factory.Mappers.getMapper(FactureMapper.class).toDto(facture);
+        com.gestion.mapper.FactureMapper mapper =
+                com.acommon.config.ApplicationContextProvider.getBean(com.gestion.mapper.FactureMapper.class);
+        if (mapper != null) {
+            return mapper.toDto(facture);
+        }
+        // Fallback: Si le contexte Spring n'est pas encore prêt
+        com.gestion.persistent.dto.FactureDTO dto = new com.gestion.persistent.dto.FactureDTO();
+        dto.setId(facture.getId());
+        dto.setNumeroFacture(facture.getNumeroFacture());
+        dto.setDateFacture(facture.getDateFacture());
+        dto.setDateEcheance(facture.getDateEcheance());
+        dto.setMontantHT(facture.getMontantHT());
+        dto.setMontantTVA(facture.getMontantTVA());
+        dto.setMontantTTC(facture.getMontantTTC());
+        dto.setRemiseGlobale(facture.getRemiseGlobale());
+        dto.setMontantFinal(facture.getMontantFinal());
+        dto.setStatut(facture.getStatut());
+        dto.setMontantPaye(facture.getMontantPaye());
+        dto.setMontantRestant(facture.getMontantRestant());
+        dto.setNotes(facture.getNotes());
+        dto.setAnnulee(facture.getAnnulee());
+        dto.setDateCreation(facture.getDateCreation());
+        if (facture.getClient() != null) {
+            dto.setClientId(facture.getClient().getId());
+            dto.setClientNom(facture.getClient().getNomComplet());
+            dto.setClientTelephone(facture.getClient().getTelephone());
+        }
+        return dto;
     }
 }
