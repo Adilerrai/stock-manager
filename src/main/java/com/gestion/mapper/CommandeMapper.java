@@ -38,10 +38,15 @@ public interface CommandeMapper {
         if (livraisons == null) {
             return java.util.Collections.emptyList();
         }
-        com.gestion.mapper.LivraisonMapper mapper = org.mapstruct.factory.Mappers.getMapper(com.gestion.mapper.LivraisonMapper.class);
+        com.gestion.mapper.LivraisonMapper mapper =
+                com.acommon.config.ApplicationContextProvider.getBean(com.gestion.mapper.LivraisonMapper.class);
+        if (mapper == null) {
+            mapper = org.mapstruct.factory.Mappers.getMapper(com.gestion.mapper.LivraisonMapper.class);
+        }
+        final com.gestion.mapper.LivraisonMapper livraisonMapper = mapper;
         return livraisons.stream()
                 .filter(l -> l.getStatut() != com.gestion.persistent.enums.StatutLivraison.ANNULEE)
-                .map(mapper::toDto)
+                .map(livraisonMapper::toDto)
                 .collect(java.util.stream.Collectors.toList());
     }
 }
