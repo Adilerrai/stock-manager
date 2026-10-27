@@ -173,6 +173,12 @@ public class DevisService {
                 ligne.setDescription(ligneDTO.getDescription() != null ? ligneDTO.getDescription() : ligneDTO.getDesignation());
                 ligne.setEtatStock(ligneDTO.getEtatStock());
                 ligne.setDisponible(ligneDTO.getDisponible());
+                if (ligneDTO.getStatutPrecommande() != null) {
+                    ligne.setStatutPrecommande(ligneDTO.getStatutPrecommande());
+                }
+                ligne.setDemandeAchatId(ligneDTO.getDemandeAchatId());
+                ligne.setNumeroDa(ligneDTO.getNumeroDa());
+                ligne.setDateAjoutPrecommande(ligneDTO.getDateAjoutPrecommande());
 
                 devis.addLigne(ligne);
                 ligne.calculerMontants();
@@ -235,6 +241,12 @@ public class DevisService {
                 ligne.setDescription(l.getDescription() != null ? l.getDescription() : l.getDesignation());
                 ligne.setEtatStock(l.getEtatStock());
                 ligne.setDisponible(l.getDisponible());
+                if (l.getStatutPrecommande() != null) {
+                    ligne.setStatutPrecommande(l.getStatutPrecommande());
+                }
+                ligne.setDemandeAchatId(l.getDemandeAchatId());
+                ligne.setNumeroDa(l.getNumeroDa());
+                ligne.setDateAjoutPrecommande(l.getDateAjoutPrecommande());
 
                 existant.addLigne(ligne);
                 ligne.calculerMontants();
@@ -491,5 +503,19 @@ public class DevisService {
             attempts++;
         } while (devisRepository.findByPointDeVenteIdAndNumeroDevis(tenantId, numero).isPresent() && attempts < 1000);
         return numero;
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public LigneDevis envoyerEnPrecommande(Long devisId, Long ligneId) {
+        Devis devis = getDevisById(devisId);
+        LigneDevis ligne = devis.getLignes().stream()
+                .filter(l -> l.getId().equals(ligneId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Ligne de devis non trouvée: " + ligneId));
+
+        ligne.setStatutPrecommande(com.gestion.persistent.enums.StatutPrecommande.EN_ATTENTE_DA);
+        ligne.setDateAjoutPrecommande(java.time.LocalDateTime.now());
+        devisRepository.save(devis);
+        return ligne;
     }
 }

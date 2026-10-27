@@ -25,6 +25,10 @@ public class LigneDevisDTO {
     private Boolean disponible;
     private String etatStock;
     private BigDecimal stockDisponible;
+    private com.gestion.persistent.enums.StatutPrecommande statutPrecommande = com.gestion.persistent.enums.StatutPrecommande.NON_ENGAGE;
+    private Long demandeAchatId;
+    private String numeroDa;
+    private java.time.LocalDateTime dateAjoutPrecommande;
 
     public LigneDevisDTO() {}
 
@@ -213,5 +217,37 @@ public class LigneDevisDTO {
         map.put("nom", getDesignation());
         map.put("reference", this.produitReference);
         return map;
+    }
+
+    public com.gestion.persistent.enums.StatutPrecommande getStatutPrecommande() {
+        return statutPrecommande;
+    }
+
+    public void setStatutPrecommande(com.gestion.persistent.enums.StatutPrecommande statutPrecommande) {
+        this.statutPrecommande = statutPrecommande;
+    }
+
+    public Long getDemandeAchatId() {
+        return demandeAchatId;
+    }
+
+    public void setDemandeAchatId(Long demandeAchatId) {
+        this.demandeAchatId = demandeAchatId;
+    }
+
+    public String getNumeroDa() {
+        return numeroDa;
+    }
+
+    public void setNumeroDa(String numeroDa) {
+        this.numeroDa = numeroDa;
+    }
+
+    public java.time.LocalDateTime getDateAjoutPrecommande() {
+        return dateAjoutPrecommande;
+    }
+
+    public void setDateAjoutPrecommande(java.time.LocalDateTime dateAjoutPrecommande) {
+        this.dateAjoutPrecommande = dateAjoutPrecommande;
     }
 }

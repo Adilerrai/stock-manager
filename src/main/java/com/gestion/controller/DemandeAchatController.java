@@ -95,4 +95,20 @@ public class DemandeAchatController {
         DemandePrixDTO ddp = demandeAchatService.transformerEnDemandePrixInternationale(id, ligneIds, devise, incoterm, lieu, frnIds, dateLimite);
         return ResponseEntity.ok(ddp);
     }
+
+    @GetMapping("/precommandes-en-attente")
+    public ResponseEntity<List<com.gestion.persistent.dto.PrecommandeItemDTO>> getPrecommandesEnAttente() {
+        return ResponseEntity.ok(demandeAchatService.getPrecommandesEnAttente());
+    }
+
+    @GetMapping("/brouillons")
+    public ResponseEntity<List<DemandeAchatDTO>> getDemandesAchatBrouillon() {
+        return ResponseEntity.ok(demandeAchatService.getDemandesAchatBrouillon());
+    }
+
+    @PostMapping("/convertir-precommandes")
+    public ResponseEntity<DemandeAchatDTO> convertirPrecommandes(@RequestBody com.gestion.persistent.dto.ConvertirPrecommandesRequest request) {
+        return new ResponseEntity<>(demandeAchatService.convertirPrecommandes(request), HttpStatus.CREATED);
+    }
 }
+

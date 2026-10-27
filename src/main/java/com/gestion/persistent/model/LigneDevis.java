@@ -51,6 +51,19 @@ public class LigneDevis {
 
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "statut_precommande", length = 30)
+    private com.gestion.persistent.enums.StatutPrecommande statutPrecommande = com.gestion.persistent.enums.StatutPrecommande.NON_ENGAGE;
+
+    @Column(name = "demande_achat_id")
+    private Long demandeAchatId;
+
+    @Column(name = "numero_da", length = 50)
+    private String numeroDa;
+
+    @Column(name = "date_ajout_precommande")
+    private java.time.LocalDateTime dateAjoutPrecommande;
+
     public LigneDevis() {
     }
 
@@ -170,5 +183,37 @@ public class LigneDevis {
 
     public void setDisponible(Boolean disponible) {
         this.disponible = disponible;
+    }
+
+    public com.gestion.persistent.enums.StatutPrecommande getStatutPrecommande() {
+        return statutPrecommande;
+    }
+
+    public void setStatutPrecommande(com.gestion.persistent.enums.StatutPrecommande statutPrecommande) {
+        this.statutPrecommande = statutPrecommande;
+    }
+
+    public Long getDemandeAchatId() {
+        return demandeAchatId;
+    }
+
+    public void setDemandeAchatId(Long demandeAchatId) {
+        this.demandeAchatId = demandeAchatId;
+    }
+
+    public String getNumeroDa() {
+        return numeroDa;
+    }
+
+    public void setNumeroDa(String numeroDa) {
+        this.numeroDa = numeroDa;
+    }
+
+    public java.time.LocalDateTime getDateAjoutPrecommande() {
+        return dateAjoutPrecommande;
+    }
+
+    public void setDateAjoutPrecommande(java.time.LocalDateTime dateAjoutPrecommande) {
+        this.dateAjoutPrecommande = dateAjoutPrecommande;
     }
 }

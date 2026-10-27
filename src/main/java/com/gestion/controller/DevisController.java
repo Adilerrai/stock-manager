@@ -126,4 +126,14 @@ public class DevisController {
         devisService.supprimerDevis(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/{devisId}/lignes/{ligneId}/envoyer-en-precommande")
+    public ResponseEntity<com.gestion.persistent.dto.LigneDevisDTO> envoyerEnPrecommande(
+            @PathVariable Long devisId,
+            @PathVariable Long ligneId) {
+        com.gestion.persistent.model.LigneDevis ligne = devisService.envoyerEnPrecommande(devisId, ligneId);
+        com.gestion.mapper.LigneDevisMapper ligneDevisMapper = org.mapstruct.factory.Mappers.getMapper(com.gestion.mapper.LigneDevisMapper.class);
+        return ResponseEntity.ok(ligneDevisMapper.toDto(ligne));
+    }
 }
+

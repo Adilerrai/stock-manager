@@ -66,7 +66,7 @@
 		<band height="822" splitType="Stretch">
 			<!-- Grand cadre extérieur du tableau qui descend jusqu'en bas -->
 			<rectangle radius="6">
-				<reportElement x="28" y="281" width="539" height="345" backcolor="#FFFFFF" uuid="f98e1234-bg01-4000-8000-000000000001"/>
+				<reportElement x="28" y="281" width="539" height="345" backcolor="#FFFFFF" uuid="f98e1234-bc01-4000-8000-000000000001"/>
 				<graphicElement>
 					<pen lineWidth="0.6" lineColor="#E2E8F0"/>
 				</graphicElement>

@@ -33,17 +33,23 @@ public class DemandeAchatService {
     private final DemandePrixService demandePrixService;
     private final ProduitRepository produitRepository;
     private final CodificationService codificationService;
+    private final com.gestion.repository.LigneDevisRepository ligneDevisRepository;
+    private final com.gestion.repository.StockRepository stockRepository;
 
     public DemandeAchatService(DemandeAchatRepository demandeAchatRepository,
                                DemandePrixRepository demandePrixRepository,
                                DemandePrixService demandePrixService,
                                ProduitRepository produitRepository,
-                               CodificationService codificationService) {
+                               CodificationService codificationService,
+                               com.gestion.repository.LigneDevisRepository ligneDevisRepository,
+                               com.gestion.repository.StockRepository stockRepository) {
         this.demandeAchatRepository = demandeAchatRepository;
         this.demandePrixRepository = demandePrixRepository;
         this.demandePrixService = demandePrixService;
         this.produitRepository = produitRepository;
         this.codificationService = codificationService;
+        this.ligneDevisRepository = ligneDevisRepository;
+        this.stockRepository = stockRepository;
     }
 
     private Long getTenantId() {
@@ -328,4 +334,122 @@ public class DemandeAchatService {
         }
         return dto;
     }
+
+    public List<com.gestion.persistent.dto.PrecommandeItemDTO> getPrecommandesEnAttente() {
+        Long tenantId = getTenantId();
+        List<com.gestion.persistent.model.LigneDevis> lignes = ligneDevisRepository.findByStatutPrecommandeAndTenantId(
+                com.gestion.persistent.enums.StatutPrecommande.EN_ATTENTE_DA, tenantId);
+
+        return lignes.stream().map(ld -> {
+            com.gestion.persistent.dto.PrecommandeItemDTO item = new com.gestion.persistent.dto.PrecommandeItemDTO();
+            item.setLigneDevisId(ld.getId());
+            if (ld.getDevis() != null) {
+                item.setDevisId(ld.getDevis().getId());
+                item.setNumeroDevis(ld.getDevis().getNumeroDevis());
+                item.setDateDevis(ld.getDevis().getDateDevis());
+                if (ld.getDevis().getClient() != null) {
+                    item.setClientId(ld.getDevis().getClient().getId());
+                    item.setClientNom(ld.getDevis().getClient().getNomComplet() != null ?
+                            ld.getDevis().getClient().getNomComplet() : ld.getDevis().getClient().getNom());
+                }
+            }
+            if (ld.getProduit() != null) {
+                item.setProduitId(ld.getProduit().getId());
+                item.setReference(ld.getProduit().getReference());
+                item.setDesignation(ld.getProduit().getDesignation() != null ?
+                        ld.getProduit().getDesignation() : ld.getProduit().getNom());
+                java.util.Optional<com.gestion.persistent.model.Stock> stockOpt = stockRepository.findByProduitId(ld.getProduit().getId());
+                item.setStockDisponible(stockOpt.map(com.gestion.persistent.model.Stock::getQuantiteDisponible).orElse(BigDecimal.ZERO));
+            } else {
+                item.setDesignation(ld.getDescription());
+                item.setStockDisponible(BigDecimal.ZERO);
+            }
+            item.setQuantite(ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ONE);
+            item.setEtatStock(ld.getEtatStock());
+            item.setDisponibleEnStock(ld.getDisponible());
+            item.setStatutPrecommande(ld.getStatutPrecommande());
+            item.setDemandeAchatId(ld.getDemandeAchatId());
+            item.setNumeroDa(ld.getNumeroDa());
+            item.setDateAjoutPrecommande(ld.getDateAjoutPrecommande());
+            return item;
+        }).collect(Collectors.toList());
+    }
+
+    public List<DemandeAchatDTO> getDemandesAchatBrouillon() {
+        Long tenantId = getTenantId();
+        List<DemandeAchat> das = demandeAchatRepository.findByPointDeVenteIdAndStatutOrderByDateDemandeDesc(
+                tenantId, StatutDemandeAchat.BROUILLON);
+        return das.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public DemandeAchatDTO convertirPrecommandes(com.gestion.persistent.dto.ConvertirPrecommandesRequest request) {
+        if (request == null || request.getLigneDevisIds() == null || request.getLigneDevisIds().isEmpty()) {
+            throw new IllegalArgumentException("Veuillez sélectionner au moins une ligne de précommande.");
+        }
+        Long tenantId = getTenantId();
+        List<com.gestion.persistent.model.LigneDevis> lignesDevis = ligneDevisRepository.findAllById(request.getLigneDevisIds());
+        if (lignesDevis.isEmpty()) {
+            throw new IllegalArgumentException("Aucune ligne de précommande trouvée pour les IDs fournis.");
+        }
+
+        DemandeAchat da;
+        if (request.getTargetDemandeAchatId() != null) {
+            da = demandeAchatRepository.findByIdAndPointDeVenteId(request.getTargetDemandeAchatId(), tenantId)
+                    .orElseThrow(() -> new RuntimeException("Demande d'achat introuvable avec l'id : " + request.getTargetDemandeAchatId()));
+            if (da.getStatut() != StatutDemandeAchat.BROUILLON) {
+                throw new IllegalStateException("Seule une demande d'achat en statut BROUILLON peut recevoir de nouvelles lignes.");
+            }
+        } else {
+            da = new DemandeAchat();
+            String numero = codificationService.genererNumero(TypeDocumentCodification.DEMANDE_ACHAT, tenantId);
+            da.setNumeroDa(numero);
+            da.setDemandeurNom(request.getDemandeurNom() != null && !request.getDemandeurNom().isBlank() ?
+                    request.getDemandeurNom() : "Acheteur (Précommande)");
+            da.setServiceDemandeur(request.getServiceDemandeur() != null ? request.getServiceDemandeur() : "Commercial / Achats");
+            da.setObjet(request.getObjet() != null && !request.getObjet().isBlank() ?
+                    request.getObjet() : "Demande d'achat issue de précommandes (" + numero + ")");
+            da.setStatut(StatutDemandeAchat.BROUILLON);
+            da.setPriorite(PrioriteDemandeAchat.NORMALE);
+            da.setDateDemande(LocalDateTime.now());
+            da.setDateSouhaitee(request.getDateSouhaitee());
+            da.setObservations(request.getObservations());
+            da.setPointDeVenteId(tenantId);
+        }
+
+        if (da.getLignes() == null) {
+            da.setLignes(new java.util.ArrayList<>());
+        }
+
+        for (com.gestion.persistent.model.LigneDevis ld : lignesDevis) {
+            LigneDemandeAchat lda = new LigneDemandeAchat();
+            lda.setDemandeAchat(da);
+            lda.setProduit(ld.getProduit());
+            lda.setReference(ld.getProduit() != null ? ld.getProduit().getReference() : "");
+            lda.setDesignation(ld.getProduit() != null && ld.getProduit().getDesignation() != null ?
+                    ld.getProduit().getDesignation() : (ld.getDescription() != null ? ld.getDescription() : "Article"));
+            lda.setQuantiteDemandee(ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ONE);
+            lda.setQuantiteEnDdp(BigDecimal.ZERO);
+            lda.setUnite("U");
+            lda.setStatut(com.gestion.persistent.enums.StatutLigneDemandeAchat.NON_TRAITEE);
+
+            String devisRef = (ld.getDevis() != null) ? ld.getDevis().getNumeroDevis() : "";
+            lda.setRemarques("Issu du devis: " + devisRef);
+            lda.setPointDeVenteId(tenantId);
+
+            da.getLignes().add(lda);
+        }
+
+        DemandeAchat savedDa = demandeAchatRepository.save(da);
+
+        for (com.gestion.persistent.model.LigneDevis ld : lignesDevis) {
+            ld.setStatutPrecommande(com.gestion.persistent.enums.StatutPrecommande.EN_COURS_DA);
+            ld.setDemandeAchatId(savedDa.getId());
+            ld.setNumeroDa(savedDa.getNumeroDa());
+            ligneDevisRepository.save(ld);
+        }
+
+        return toDTO(savedDa);
+    }
 }
+
