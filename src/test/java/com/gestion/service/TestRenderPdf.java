@@ -355,4 +355,76 @@ public class TestRenderPdf {
         System.out.println("Generated uploads/test_bon_livraison_client_19items.pdf with page count: " + jp.getPages().size());
         org.junit.jupiter.api.Assertions.assertTrue(jp.getPages().size() >= 1, "PDF généré avec succès");
     }
+
+    @Test
+    public void testDemandePrixInternationalEtNational() throws Exception {
+        List<Map<String, Object>> items = new ArrayList<>();
+        String[][] sampleItems = {
+            {"SKF-6204-2RSH", "Deep Groove Ball Bearing 6204-2RSH", "50", "PCS"},
+            {"FAG-22212-E1", "Spherical Roller Bearing 22212-E1-XL", "10", "PCS"},
+            {"OPTIBELT-SPB-2500", "V-Belt Wedge Wrapped SPB 2500", "20", "PCS"},
+            {"SIEMENS-1LA7096", "Three-Phase Asynchronous Motor 1.5kW 1450RPM", "2", "UNIT"},
+            {"LOCTITE-243-50ML", "Medium Strength Threadlocker Blue 50ml", "15", "BTL"}
+        };
+
+        for (String[] it : sampleItems) {
+            Map<String, Object> row = new HashMap<>();
+            row.put("reference", it[0]);
+            row.put("designation", it[1]);
+            row.put("quantite", new BigDecimal(it[2]));
+            row.put("unite", it[3]);
+            items.add(row);
+        }
+
+        InputStream is = getClass().getClassLoader().getResourceAsStream("reports/demande_prix.jrxml");
+        JasperReport jr = JasperCompileManager.compileReport(is);
+
+        // 1. DDP Internationale (en anglais)
+        {
+            Map<String, Object> params = createCommonParams();
+            params.put("isInternational", Boolean.TRUE);
+            params.put("typeDemandePrix", "INTERNATIONAL");
+            params.put("numeroDdp", "RFQ-2026-0042");
+            params.put("dateCreation", "27/10/2026 14:00");
+            params.put("dateLimiteReponse", "05/11/2026 18:00");
+            params.put("demandeAchatOrigine", "PR-2026-015");
+            params.put("deviseSouhaitee", "USD");
+            params.put("incotermSouhaite", "FOB SHANGHAI");
+            params.put("lieuLivraison", "Casablanca Port / Air Freight");
+            params.put("fournisseurNom", "GLOBAL INDUSTRIAL PARTS LTD");
+            params.put("fournisseurAdresse", "No. 888 Century Avenue, Pudong New Area, Shanghai");
+            params.put("fournisseurPays", "CHINA");
+            params.put("fournisseurEmail", "sales@globalparts-intl.com");
+
+            JasperPrint jp = JasperFillManager.fillReport(jr, params, new JRBeanCollectionDataSource(items));
+            JasperExportManager.exportReportToPdfFile(jp, "uploads/test_ddp_international.pdf");
+            java.awt.image.BufferedImage img = (java.awt.image.BufferedImage) JasperPrintManager.printPageToImage(jp, 0, 1.5f);
+            javax.imageio.ImageIO.write(img, "PNG", new File("uploads/ddp_international.png"));
+            System.out.println("Generated uploads/ddp_international.png (International in English)");
+        }
+
+        // 2. DDP Nationale (en français)
+        {
+            Map<String, Object> params = createCommonParams();
+            params.put("isInternational", Boolean.FALSE);
+            params.put("typeDemandePrix", "NATIONAL");
+            params.put("numeroDdp", "DDP-2026-0089");
+            params.put("dateCreation", "27/10/2026 14:00");
+            params.put("dateLimiteReponse", "31/10/2026 12:00");
+            params.put("demandeAchatOrigine", "DA-2026-033");
+            params.put("deviseSouhaitee", "MAD");
+            params.put("incotermSouhaite", "DDP CASABLANCA");
+            params.put("lieuLivraison", "Dépôt Principal Ain Sebaa");
+            params.put("fournisseurNom", "SOPHATEL MAROC SARL");
+            params.put("fournisseurAdresse", "Zone Industrielle Ain Sebaa, Casablanca");
+            params.put("fournisseurPays", "MAROC");
+            params.put("fournisseurEmail", "contact@sophatel.ma");
+
+            JasperPrint jp = JasperFillManager.fillReport(jr, params, new JRBeanCollectionDataSource(items));
+            JasperExportManager.exportReportToPdfFile(jp, "uploads/test_ddp_national.pdf");
+            java.awt.image.BufferedImage img = (java.awt.image.BufferedImage) JasperPrintManager.printPageToImage(jp, 0, 1.5f);
+            javax.imageio.ImageIO.write(img, "PNG", new File("uploads/ddp_national.png"));
+            System.out.println("Generated uploads/ddp_national.png (National en français)");
+        }
+    }
 }

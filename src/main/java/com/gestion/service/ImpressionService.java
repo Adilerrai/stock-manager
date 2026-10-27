@@ -1197,11 +1197,16 @@ public class ImpressionService {
                 .orElseThrow(() -> new RuntimeException("Demande de prix introuvable avec l'id: " + ddpId));
 
         Map<String, Object> params = initCommonTenantParams();
+        boolean isInternational = ddp.getTypeDemandePrix() == com.gestion.persistent.enums.TypeAchat.INTERNATIONAL;
+        params.put("isInternational", isInternational);
+        params.put("typeDemandePrix", ddp.getTypeDemandePrix() != null ? ddp.getTypeDemandePrix().name() : "NATIONAL");
+        params.put("typeDdp", ddp.getTypeDemandePrix() != null ? ("(" + ddp.getTypeDemandePrix().name() + ")") : "");
         params.put("numeroDdp", ddp.getNumeroDdp());
         params.put("dateCreation", ddp.getDateCreation() != null ? ddp.getDateCreation().format(DATETIME_FORMATTER) : "-");
-        params.put("dateLimiteReponse", ddp.getDateLimiteReponse() != null ? ddp.getDateLimiteReponse().format(DATETIME_FORMATTER) : "Dès que possible");
-        params.put("typeDdp", ddp.getTypeDemandePrix() != null ? ("(" + ddp.getTypeDemandePrix().name() + ")") : "");
-        params.put("deviseSouhaitee", ddp.getDeviseSouhaitee() != null ? ddp.getDeviseSouhaitee() : "MAD");
+        params.put("dateLimiteReponse", ddp.getDateLimiteReponse() != null 
+                ? ddp.getDateLimiteReponse().format(DATETIME_FORMATTER) 
+                : (isInternational ? "As soon as possible" : "Dès que possible"));
+        params.put("deviseSouhaitee", ddp.getDeviseSouhaitee() != null ? ddp.getDeviseSouhaitee() : (isInternational ? "USD" : "MAD"));
         params.put("incotermSouhaite", ddp.getIncotermSouhaite() != null ? ddp.getIncotermSouhaite().name() : "");
         params.put("lieuLivraison", ddp.getLieuLivraison() != null ? ddp.getLieuLivraison() : "");
         params.put("demandeAchatOrigine", ddp.getDemandeAchatId() != null ? ddp.getDemandeAchatId() : "");

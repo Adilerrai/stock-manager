@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.16.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
-<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="demande_prix" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="20" uuid="b1b2c3d4-0002-4000-8000-000000000002">
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="demande_prix" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="20" uuid="d3e4f5a6-0002-4000-8000-000000000002">
 	<parameter name="logoImage" class="java.awt.Image"/>
 	<parameter name="nomEntreprise" class="java.lang.String"/>
+	<parameter name="activiteEntreprise" class="java.lang.String"/>
 	<parameter name="adresseEntreprise" class="java.lang.String"/>
 	<parameter name="telephoneEntreprise" class="java.lang.String"/>
 	<parameter name="emailEntreprise" class="java.lang.String"/>
@@ -15,6 +16,10 @@
 	<parameter name="dateCreation" class="java.lang.String"/>
 	<parameter name="dateLimiteReponse" class="java.lang.String"/>
 	<parameter name="typeDdp" class="java.lang.String"/>
+	<parameter name="typeDemandePrix" class="java.lang.String"/>
+	<parameter name="isInternational" class="java.lang.Boolean">
+		<defaultValueExpression><![CDATA[Boolean.FALSE]]></defaultValueExpression>
+	</parameter>
 	<parameter name="deviseSouhaitee" class="java.lang.String"/>
 	<parameter name="incotermSouhaite" class="java.lang.String"/>
 	<parameter name="lieuLivraison" class="java.lang.String"/>
@@ -27,201 +32,389 @@
 	<parameter name="couleurPrimaire" class="java.lang.String">
 		<defaultValueExpression><![CDATA["#0B3A6E"]]></defaultValueExpression>
 	</parameter>
+
 	<field name="reference" class="java.lang.String"/>
 	<field name="designation" class="java.lang.String"/>
 	<field name="quantite" class="java.math.BigDecimal"/>
 	<field name="unite" class="java.lang.String"/>
 	<field name="remarques" class="java.lang.String"/>
+
+	<!-- ============================================================ -->
+	<!-- BACKGROUND : Cadre de table continu jusqu'en bas (rectangle) -->
+	<!-- ============================================================ -->
+	<background>
+		<band height="822" splitType="Stretch">
+			<!-- PAGE 1 : Grand cadre rectangulaire continu du tableau -->
+			<rectangle radius="4">
+				<reportElement x="28" y="245" width="539" height="447" backcolor="#FFFFFF" uuid="d3e4f5a6-b001-4000-8000-000000000001">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
+			<!-- Séparateurs verticaux de colonnes (Page 1) -->
+			<line>
+				<reportElement x="125" y="245" width="1" height="447" forecolor="#E2E8F0" uuid="d3e4f5a6-b002-4000-8000-000000000002">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="365" y="245" width="1" height="447" forecolor="#E2E8F0" uuid="d3e4f5a6-b003-4000-8000-000000000003">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="430" y="245" width="1" height="447" forecolor="#E2E8F0" uuid="d3e4f5a6-b004-4000-8000-000000000004">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="475" y="245" width="1" height="447" forecolor="#E2E8F0" uuid="d3e4f5a6-b005-4000-8000-000000000005">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+
+			<!-- PAGE 2+ : Grand cadre rectangulaire continu du tableau -->
+			<rectangle radius="4">
+				<reportElement x="28" y="46" width="539" height="646" backcolor="#FFFFFF" uuid="d3e4f5a6-b006-4000-8000-000000000006">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
+			<!-- Séparateurs verticaux de colonnes (Page 2+) -->
+			<line>
+				<reportElement x="125" y="46" width="1" height="646" forecolor="#E2E8F0" uuid="d3e4f5a6-b007-4000-8000-000000000007">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="365" y="46" width="1" height="646" forecolor="#E2E8F0" uuid="d3e4f5a6-b008-4000-8000-000000000008">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="430" y="46" width="1" height="646" forecolor="#E2E8F0" uuid="d3e4f5a6-b009-4000-8000-000000000009">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="475" y="46" width="1" height="646" forecolor="#E2E8F0" uuid="d3e4f5a6-b010-4000-8000-000000000010">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+		</band>
+	</background>
+
 	<title>
 		<band height="245">
+			<!-- Image de fond bandeau supérieur avec courbe S-curve -->
 			<image scaleImage="FillFrame" onErrorType="Blank">
-				<reportElement x="0" y="0" width="595" height="113" uuid="25ee530a-3597-42e4-aaec-c9c6a00d8654"/>
+				<reportElement x="0" y="0" width="595" height="113" uuid="d3e4f5a6-0001-4000-8000-000000000001"/>
 				<imageExpression><![CDATA[com.gestion.util.ReportGraphicUtils.getDefaultHeaderBanner()]]></imageExpression>
 			</image>
+			<!-- Logo Entreprise -->
 			<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
-				<reportElement x="20" y="10" width="190" height="64" uuid="ff6d905e-0c3d-4bca-bb4b-023041332e34"/>
+				<reportElement x="20" y="10" width="190" height="64" uuid="d3e4f5a6-0002-4000-8000-000000000002"/>
 				<imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
 			</image>
+			<!-- Coordonnées Entreprise (en haut à droite) -->
 			<textField isBlankWhenNull="true">
-				<reportElement x="300" y="18" width="267" height="62" forecolor="#1F2937" uuid="bc0c1b49-4da2-43b1-977a-4fa2b182dc3f"/>
+				<reportElement x="300" y="18" width="267" height="62" forecolor="#1F2937" uuid="d3e4f5a6-0003-4000-8000-000000000003"/>
 				<textElement textAlignment="Right" verticalAlignment="Top" markup="html">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>" + ($P{nomEntreprise} != null ? $P{nomEntreprise} : "") + "</b><br/><b>SIEGE</b>: " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b>" + ($P{nomEntreprise} != null ? $P{nomEntreprise} : "") + "</b>" +
+(($P{activiteEntreprise} != null && !$P{activiteEntreprise}.trim().isEmpty()) ? "<br/>" + $P{activiteEntreprise} : "") +
+"<br/><b>" + (($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "HEADQUARTERS" : "SIEGE") + "</b>: " + ($P{adresseEntreprise} != null ? $P{adresseEntreprise} : "")]]></textFieldExpression>
 			</textField>
+			<!-- Titre Principal : INT REQUEST PRICE si International, Demande de Prix sinon (strictement dans la zone blanche) -->
 			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
-				<reportElement x="300" y="84" width="267" height="28" forecolor="#0B3A6E" uuid="f995c1c3-c652-4f2e-ad0e-29345c136f81">
+				<reportElement x="330" y="84" width="237" height="28" forecolor="#0B3A6E" uuid="d3e4f5a6-0004-4000-8000-000000000004">
 					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
 				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="16" isBold="true"/>
+					<font fontName="DejaVu Sans" size="16" isBold="false"/>
 				</textElement>
-				<textFieldExpression><![CDATA["DEMANDE DE PRIX " + ($P{typeDdp} != null ? $P{typeDdp} : "")]]></textFieldExpression>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "INT REQUEST PRICE #" : "Demande de Prix #") + ($P{numeroDdp} != null ? $P{numeroDdp} : "")]]></textFieldExpression>
 			</textField>
-			<!-- Cadre Info Document -->
-			<rectangle>
-				<reportElement mode="Transparent" x="20" y="125" width="265" height="110" forecolor="#E5E7EB" uuid="921f92e7-9bd7-4eef-b8cb-a87754d92437"/>
+
+			<!-- Cadre Info Document (à gauche) -->
+			<rectangle radius="5">
+				<reportElement x="28" y="128" width="260" height="106" backcolor="#F8FAFC" uuid="d3e4f5a6-0005-4000-8000-000000000005"/>
 				<graphicElement>
-					<pen lineWidth="1.0" lineColor="#CBD5E1"/>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
 				</graphicElement>
 			</rectangle>
 			<textField isBlankWhenNull="true">
-				<reportElement x="30" y="130" width="245" height="100" forecolor="#334155" uuid="559fb82d-8ae5-4ecb-99d6-5a7e6c406085"/>
+				<reportElement x="36" y="134" width="244" height="94" forecolor="#334155" uuid="d3e4f5a6-0006-4000-8000-000000000006"/>
 				<textElement verticalAlignment="Top" markup="html">
-					<font fontName="DejaVu Sans" size="9"/>
+					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>N° DDP :</b> " + ($P{numeroDdp} != null ? $P{numeroDdp} : "-") + "<br/>" +
-"<b>Date émission :</b> " + ($P{dateCreation} != null ? $P{dateCreation} : "-") + "<br/>" +
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ?
+("<b>RFQ Reference :</b> " + ($P{numeroDdp} != null ? $P{numeroDdp} : "-") + "<br/>" +
+"<b>Issue Date :</b> " + ($P{dateCreation} != null ? $P{dateCreation} : "-") + "<br/>" +
+"<b>Closing Date :</b> <font color='#B91C1C'><b>" + ($P{dateLimiteReponse} != null ? $P{dateLimiteReponse} : "-") + "</b></font><br/>" +
+($P{demandeAchatOrigine} != null && !$P{demandeAchatOrigine}.isEmpty() ? "<b>Internal Ref :</b> " + $P{demandeAchatOrigine} + "<br/>" : "") +
+"<b>Target Currency :</b> <b>" + ($P{deviseSouhaitee} != null ? $P{deviseSouhaitee} : "USD") + "</b>" +
+($P{incotermSouhaite} != null && !$P{incotermSouhaite}.isEmpty() ? "<br/><b>Incoterm :</b> " + $P{incotermSouhaite} : "") +
+($P{lieuLivraison} != null && !$P{lieuLivraison}.isEmpty() ? "<br/><b>Delivery Place :</b> " + $P{lieuLivraison} : ""))
+:
+("<b>N° Demande :</b> " + ($P{numeroDdp} != null ? $P{numeroDdp} : "-") + "<br/>" +
+"<b>Date d'émission :</b> " + ($P{dateCreation} != null ? $P{dateCreation} : "-") + "<br/>" +
 "<b>Date limite réponse :</b> <font color='#B91C1C'><b>" + ($P{dateLimiteReponse} != null ? $P{dateLimiteReponse} : "-") + "</b></font><br/>" +
 ($P{demandeAchatOrigine} != null && !$P{demandeAchatOrigine}.isEmpty() ? "<b>Réf. DA :</b> " + $P{demandeAchatOrigine} + "<br/>" : "") +
-"<b>Devise :</b> " + ($P{deviseSouhaitee} != null ? $P{deviseSouhaitee} : "MAD") +
+"<b>Devise souhaitée :</b> <b>" + ($P{deviseSouhaitee} != null ? $P{deviseSouhaitee} : "MAD") + "</b>" +
 ($P{incotermSouhaite} != null && !$P{incotermSouhaite}.isEmpty() ? "<br/><b>Incoterm :</b> " + $P{incotermSouhaite} : "") +
-($P{lieuLivraison} != null && !$P{lieuLivraison}.isEmpty() ? "<br/><b>Lieu :</b> " + $P{lieuLivraison} : "")]]></textFieldExpression>
+($P{lieuLivraison} != null && !$P{lieuLivraison}.isEmpty() ? "<br/><b>Lieu de livraison :</b> " + $P{lieuLivraison} : "")))]]></textFieldExpression>
 			</textField>
-			<!-- Cadre Info Fournisseur -->
-			<rectangle>
-				<reportElement mode="Transparent" x="302" y="125" width="265" height="110" forecolor="#E5E7EB" uuid="b4b5c6d7-0001-4000-8000-000000000003"/>
+
+			<!-- Cadre Info Fournisseur (à droite) -->
+			<rectangle radius="5">
+				<reportElement x="307" y="128" width="260" height="106" backcolor="#F8FAFC" uuid="d3e4f5a6-0007-4000-8000-000000000007"/>
 				<graphicElement>
-					<pen lineWidth="1.0" lineColor="#CBD5E1"/>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
 				</graphicElement>
 			</rectangle>
 			<textField isBlankWhenNull="true">
-				<reportElement x="312" y="130" width="245" height="100" forecolor="#334155" uuid="c5c6d7e8-0001-4000-8000-000000000004"/>
+				<reportElement x="315" y="134" width="244" height="94" forecolor="#334155" uuid="d3e4f5a6-0008-4000-8000-000000000008"/>
 				<textElement verticalAlignment="Top" markup="html">
-					<font fontName="DejaVu Sans" size="9"/>
+					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>FOURNISSEUR CONSULTÉ :</b><br/>" +
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ?
+("<b>VENDOR / SUPPLIER :</b><br/>" +
+"<b>" + ($P{fournisseurNom} != null && !$P{fournisseurNom}.isEmpty() ? $P{fournisseurNom} : "General Inquiry") + "</b><br/>" +
+($P{fournisseurAdresse} != null && !$P{fournisseurAdresse}.isEmpty() ? $P{fournisseurAdresse} + "<br/>" : "") +
+($P{fournisseurPays} != null && !$P{fournisseurPays}.isEmpty() ? "<b>Country :</b> " + $P{fournisseurPays} + "<br/>" : "") +
+($P{fournisseurEmail} != null && !$P{fournisseurEmail}.isEmpty() ? "<b>Email :</b> " + $P{fournisseurEmail} : ""))
+:
+("<b>FOURNISSEUR CONSULTÉ :</b><br/>" +
 "<b>" + ($P{fournisseurNom} != null && !$P{fournisseurNom}.isEmpty() ? $P{fournisseurNom} : "Consultation Générale") + "</b><br/>" +
 ($P{fournisseurAdresse} != null && !$P{fournisseurAdresse}.isEmpty() ? $P{fournisseurAdresse} + "<br/>" : "") +
-($P{fournisseurPays} != null && !$P{fournisseurPays}.isEmpty() ? $P{fournisseurPays} + "<br/>" : "") +
-($P{fournisseurEmail} != null && !$P{fournisseurEmail}.isEmpty() ? "Email: " + $P{fournisseurEmail} : "")]]></textFieldExpression>
+($P{fournisseurPays} != null && !$P{fournisseurPays}.isEmpty() ? "<b>Pays :</b> " + $P{fournisseurPays} + "<br/>" : "") +
+($P{fournisseurEmail} != null && !$P{fournisseurEmail}.isEmpty() ? "<b>Email :</b> " + $P{fournisseurEmail} : "")))]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>
-	<columnHeader>
-		<band height="25">
-			<rectangle>
-				<reportElement x="20" y="0" width="547" height="25" backcolor="#F1F5F9" uuid="d6d7e8f9-0001-4000-8000-000000000005"/>
+
+	<!-- En-tête allégé pour la suite (Page 2+) -->
+	<pageHeader>
+		<band height="46">
+			<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+			<rectangle radius="4">
+				<reportElement x="28" y="4" width="539" height="38" backcolor="#F8FAFC" uuid="d3e4f5a6-0009-4000-8000-000000000009"/>
 				<graphicElement>
-					<pen lineWidth="0.5" lineColor="#CBD5E1"/>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
 				</graphicElement>
 			</rectangle>
-			<staticText>
-				<reportElement x="25" y="0" width="95" height="25" forecolor="#1E293B" uuid="e7e8f9a0-0001-4000-8000-000000000006"/>
+			<image scaleImage="RetainShape" hAlign="Left" vAlign="Middle" onErrorType="Blank">
+				<reportElement x="36" y="8" width="100" height="30" uuid="d3e4f5a6-0010-4000-8000-000000000010"/>
+				<imageExpression><![CDATA[$P{logoImage}]]></imageExpression>
+			</image>
+			<textField isBlankWhenNull="true">
+				<reportElement x="142" y="14" width="190" height="18" forecolor="#1F2937" uuid="d3e4f5a6-0011-4000-8000-000000000011"/>
 				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					<font fontName="DejaVu Sans" size="9" isBold="true"/>
 				</textElement>
-				<text><![CDATA[RÉFÉRENCE]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="125" y="0" width="235" height="25" forecolor="#1E293B" uuid="f8f9a0b1-0001-4000-8000-000000000007"/>
-				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
-				</textElement>
-				<text><![CDATA[DÉSIGNATION / ARTICLE DEMANDÉ]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="365" y="0" width="60" height="25" forecolor="#1E293B" uuid="09a0b1c2-0001-4000-8000-000000000008"/>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "Supplier : " : "Fournisseur : ") + ($P{fournisseurNom} != null ? $P{fournisseurNom} : "-")]]></textFieldExpression>
+			</textField>
+			<textField textAdjust="ScaleFont" isBlankWhenNull="true">
+				<reportElement x="340" y="14" width="218" height="18" forecolor="#0B3A6E" uuid="d3e4f5a6-0012-4000-8000-000000000012">
+					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+				</reportElement>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					<font fontName="DejaVu Sans" size="10" isBold="true"/>
 				</textElement>
-				<text><![CDATA[QTÉ DEM.]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="430" y="0" width="35" height="25" forecolor="#1E293B" uuid="1aa0b1c2-0001-4000-8000-000000000009"/>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "INT REQUEST PRICE #" : "Demande de Prix #") + ($P{numeroDdp} != null ? $P{numeroDdp} : "") + " (cont.)"]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+
+	<!-- En-tête des colonnes du tableau -->
+	<columnHeader>
+		<band height="30">
+			<rectangle radius="4">
+				<reportElement x="28" y="3" width="539" height="24" backcolor="#0B3A6E" uuid="d3e4f5a6-0013-4000-8000-000000000013">
+					<propertyExpression name="net.sf.jasperreports.style.backcolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.0"/>
+				</graphicElement>
+			</rectangle>
+			<textField>
+				<reportElement x="36" y="3" width="85" height="24" forecolor="#FFFFFF" uuid="d3e4f5a6-0014-4000-8000-000000000014"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "ITEM / REF" : "RÉFÉRENCE")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="125" y="3" width="235" height="24" forecolor="#FFFFFF" uuid="d3e4f5a6-0015-4000-8000-000000000015"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "DESCRIPTION / SPECIFICATION" : "DÉSIGNATION / ARTICLE DEMANDÉ")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="365" y="3" width="60" height="24" forecolor="#FFFFFF" uuid="d3e4f5a6-0016-4000-8000-000000000016"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "QTY" : "QTÉ DEM.")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="430" y="3" width="40" height="24" forecolor="#FFFFFF" uuid="d3e4f5a6-0017-4000-8000-000000000017"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
-				<text><![CDATA[UNITÉ]]></text>
-			</staticText>
-			<staticText>
-				<reportElement x="470" y="0" width="95" height="25" forecolor="#1E293B" uuid="2ba0b1c2-0001-4000-8000-000000000010"/>
-				<textElement textAlignment="Center" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "UNIT" : "UNITÉ")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="475" y="3" width="84" height="24" forecolor="#FFFFFF" uuid="d3e4f5a6-0018-4000-8000-000000000018"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
-				<text><![CDATA[OFFRE P.U (HT)]]></text>
-			</staticText>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "OFFER PRICE" : "OFFRE P.U (HT)")]]></textFieldExpression>
+			</textField>
 		</band>
 	</columnHeader>
+
+	<!-- Lignes de données des articles demandés -->
 	<detail>
-		<band height="22">
-			<rectangle>
-				<reportElement stretchType="RelativeToTallestObject" x="20" y="0" width="547" height="22" forecolor="#E2E8F0" uuid="3ca0b1c2-0001-4000-8000-000000000011"/>
+		<band height="26">
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="28" y="25" width="539" height="1" forecolor="#E2E8F0" uuid="d3e4f5a6-0019-4000-8000-000000000019"/>
 				<graphicElement>
-					<pen lineWidth="0.5" lineColor="#E2E8F0"/>
+					<pen lineWidth="0.5"/>
 				</graphicElement>
-			</rectangle>
+			</line>
 			<textField isBlankWhenNull="true">
-				<reportElement x="25" y="0" width="95" height="22" uuid="4da0b1c2-0001-4000-8000-000000000012"/>
+				<reportElement x="34" y="3" width="87" height="20" forecolor="#1F2937" uuid="d3e4f5a6-0020-4000-8000-000000000020"/>
 				<textElement verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{reference}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{reference} != null ? $F{reference} : "-"]]></textFieldExpression>
 			</textField>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="125" y="0" width="235" height="22" uuid="5ea0b1c2-0001-4000-8000-000000000013"/>
+				<reportElement x="125" y="3" width="235" height="20" forecolor="#1F2937" uuid="d3e4f5a6-0021-4000-8000-000000000021"/>
 				<textElement verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8"/>
+					<font fontName="DejaVu Sans" size="8.5"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{designation}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{designation} != null ? $F{designation} : "-"]]></textFieldExpression>
 			</textField>
-			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="365" y="0" width="60" height="22" uuid="6fa0b1c2-0001-4000-8000-000000000014"/>
+			<textField pattern="#,##0.##" isBlankWhenNull="true">
+				<reportElement x="365" y="3" width="60" height="20" forecolor="#1F2937" uuid="d3e4f5a6-0022-4000-8000-000000000022"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
-					<font fontName="DejaVu Sans" size="8" isBold="true"/>
+					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
-				<textFieldExpression><![CDATA[$F{quantite}]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{quantite} != null ? $F{quantite} : java.math.BigDecimal.ZERO]]></textFieldExpression>
 			</textField>
 			<textField isBlankWhenNull="true">
-				<reportElement x="430" y="0" width="35" height="22" uuid="70a0b1c2-0001-4000-8000-000000000015"/>
+				<reportElement x="430" y="3" width="40" height="20" forecolor="#1F2937" uuid="d3e4f5a6-0023-4000-8000-000000000023"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
 				<textFieldExpression><![CDATA[$F{unite} != null ? $F{unite} : "U"]]></textFieldExpression>
 			</textField>
-			<!-- Emplacement vide réservé à l'offre du fournisseur -->
-			<rectangle>
-				<reportElement mode="Transparent" x="475" y="2" width="85" height="18" forecolor="#CBD5E1" uuid="81a0b1c2-0001-4000-8000-000000000016"/>
+			<!-- Emplacement réservé pour renseigner le prix unitaire proposé par le fournisseur -->
+			<rectangle radius="3">
+				<reportElement mode="Transparent" x="480" y="3" width="79" height="20" forecolor="#CBD5E1" uuid="d3e4f5a6-0024-4000-8000-000000000024"/>
 				<graphicElement>
-					<pen lineWidth="0.5" lineStyle="Dashed" lineColor="#94A3B8"/>
+					<pen lineWidth="0.6" lineStyle="Dashed" lineColor="#94A3B8"/>
 				</graphicElement>
 			</rectangle>
 		</band>
 	</detail>
+
+	<!-- Pied de page avec Instructions, Visa fournisseur et Mentions Légales -->
 	<pageFooter>
-		<band height="70">
-			<subreport>
-				<reportElement x="0" y="0" width="595" height="70" uuid="92a0b1c2-0001-4000-8000-000000000017"/>
-				<subreportParameter name="nomEntreprise">
-					<subreportParameterExpression><![CDATA[$P{nomEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="adresseEntreprise">
-					<subreportParameterExpression><![CDATA[$P{adresseEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="telephoneEntreprise">
-					<subreportParameterExpression><![CDATA[$P{telephoneEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="emailEntreprise">
-					<subreportParameterExpression><![CDATA[$P{emailEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="rcEntreprise">
-					<subreportParameterExpression><![CDATA[$P{rcEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="nifEntreprise">
-					<subreportParameterExpression><![CDATA[$P{nifEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="iceEntreprise">
-					<subreportParameterExpression><![CDATA[$P{iceEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="patenteEntreprise">
-					<subreportParameterExpression><![CDATA[$P{patenteEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<subreportParameter name="cnssEntreprise">
-					<subreportParameterExpression><![CDATA[$P{cnssEntreprise}]]></subreportParameterExpression>
-				</subreportParameter>
-				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.JREmptyDataSource()]]></dataSourceExpression>
-				<subreportExpression><![CDATA[getClass().getResourceAsStream("/reports/footer_generique.jasper") != null ? getClass().getResourceAsStream("/reports/footer_generique.jasper") : "reports/footer_generique.jasper"]]></subreportExpression>
-			</subreport>
+		<band height="130">
+			<!-- Cadre Instructions Fournisseur (à gauche) -->
+			<rectangle radius="4">
+				<reportElement x="28" y="4" width="310" height="66" backcolor="#F8FAFC" uuid="d3e4f5a6-0025-4000-8000-000000000025"/>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
+			<textField>
+				<reportElement x="36" y="8" width="294" height="13" forecolor="#0B3A6E" uuid="d3e4f5a6-0026-4000-8000-000000000026">
+					<propertyExpression name="net.sf.jasperreports.style.forecolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "INSTRUCTIONS TO BIDDER" : "INSTRUCTIONS & CONDITIONS")]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="36" y="23" width="294" height="42" forecolor="#475569" uuid="d3e4f5a6-0027-4000-8000-000000000027"/>
+				<textElement verticalAlignment="Top" markup="html">
+					<font fontName="DejaVu Sans" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ?
+"• Please submit your best quotation before the closing date.<br/>• Indicate lead time, warranty, packaging and terms of payment.<br/>• All prices should specify currency and agreed Incoterm." :
+"• Prière de nous retourner cette demande complétée avant la date limite.<br/>• Préciser la validité de l'offre, le délai de livraison et les modalités de paiement.<br/>• Indiquer les prix hors taxes selon la devise demandée.")]]></textFieldExpression>
+			</textField>
+
+			<!-- Cadre Cachet & Signature Fournisseur (à droite) -->
+			<rectangle radius="4">
+				<reportElement x="348" y="4" width="219" height="66" backcolor="#FFFFFF" uuid="d3e4f5a6-0028-4000-8000-000000000028"/>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
+			<textField>
+				<reportElement x="356" y="8" width="203" height="13" forecolor="#334155" uuid="d3e4f5a6-0029-4000-8000-000000000029"/>
+				<textElement verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "SUPPLIER STAMP & SIGNATURE" : "VISA & CACHET DU FOURNISSEUR")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="356" y="52" width="203" height="12" forecolor="#94A3B8" uuid="d3e4f5a6-0030-4000-8000-000000000030"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="6" isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[(($P{isInternational} != null && $P{isInternational}.booleanValue()) ? "Date, validity & authorized signature" : "Date, validité de l'offre et signature")]]></textFieldExpression>
+			</textField>
+
+			<!-- Ligne de séparation et pied légal -->
+			<line>
+				<reportElement x="28" y="82" width="539" height="1" forecolor="#1F2937" uuid="d3e4f5a6-0031-4000-8000-000000000031"/>
+				<graphicElement>
+					<pen lineWidth="0.8"/>
+				</graphicElement>
+			</line>
+			<textField isBlankWhenNull="true">
+				<reportElement x="28" y="86" width="539" height="22" forecolor="#1F2937" uuid="d3e4f5a6-0032-4000-8000-000000000032"/>
+				<textElement textAlignment="Center" verticalAlignment="Top" markup="html">
+					<font fontName="DejaVu Sans" size="7"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>IF</b>: " + ($P{nifEntreprise} != null ? $P{nifEntreprise} : "-") + " - <b>Patente</b>: " + ($P{patenteEntreprise} != null ? $P{patenteEntreprise} : "-") + " - <b>CNSS</b>: " + ($P{cnssEntreprise} != null ? $P{cnssEntreprise} : "-") + " - <b>RC</b>: " + ($P{rcEntreprise} != null ? $P{rcEntreprise} : "-") + " - <b>ICE</b>: " + ($P{iceEntreprise} != null ? $P{iceEntreprise} : "-") + " <b>Email</b>: " + ($P{emailEntreprise} != null ? $P{emailEntreprise} : "-") + " <b>Tel</b>: " + ($P{telephoneEntreprise} != null ? $P{telephoneEntreprise} : "-")]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="447" y="110" width="60" height="11" forecolor="#6B7280" uuid="d3e4f5a6-0033-4000-8000-000000000033"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7.5"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " /"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="509" y="110" width="58" height="11" forecolor="#6B7280" uuid="d3e4f5a6-0034-4000-8000-000000000034"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font fontName="DejaVu Sans" size="7.5"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
 		</band>
 	</pageFooter>
 </jasperReport>
