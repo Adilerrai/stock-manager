@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="048-add-statut-precommande-to-lignes-devis" author="antigravity">
+        <addColumn tableName="lignes_devis">
+            <column name="statut_precommande" type="VARCHAR(30)" defaultValue="NON_ENGAGE">
+                <constraints nullable="true"/>
+            </column>
+            <column name="demande_achat_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="numero_da" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="date_ajout_precommande" type="TIMESTAMP">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <createIndex indexName="idx_lignes_devis_statut_precommande" tableName="lignes_devis">
+            <column name="statut_precommande"/>
+        </createIndex>
+
+        <createIndex indexName="idx_lignes_devis_da_id" tableName="lignes_devis">
+            <column name="demande_achat_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

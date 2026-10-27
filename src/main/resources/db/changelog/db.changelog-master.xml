@@ -151,6 +151,9 @@
     <!-- Changeset 047 : Colonnes quantite_en_ddp et statut dans lignes_demande_achat -->
     <include file="changes/047-add-missing-columns-to-lignes-demande-achat.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 048 : Traçabilité statut_precommande et rattachement DA dans lignes_devis -->
+    <include file="changes/048-add-statut-precommande-to-lignes-devis.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

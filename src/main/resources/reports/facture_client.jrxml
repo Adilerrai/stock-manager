@@ -73,19 +73,19 @@
 			</rectangle>
 			<!-- Lignes verticales de colonnes -->
 			<line>
-				<reportElement x="290" y="281" width="1" height="345" forecolor="#E2E8F0" uuid="f98e1234-bg02-4000-8000-000000000002"/>
+				<reportElement x="290" y="281" width="1" height="345" forecolor="#E2E8F0" uuid="f98e1234-b002-4000-8000-000000000002"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 			<line>
-				<reportElement x="354" y="281" width="1" height="345" forecolor="#E2E8F0" uuid="f98e1234-bg03-4000-8000-000000000003"/>
+				<reportElement x="354" y="281" width="1" height="345" forecolor="#E2E8F0" uuid="f98e1234-b003-4000-8000-000000000003"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 			<line>
-				<reportElement x="411" y="281" width="1" height="345" forecolor="#E2E8F0" uuid="f98e1234-bg04-4000-8000-000000000004"/>
+				<reportElement x="411" y="281" width="1" height="345" forecolor="#E2E8F0" uuid="f98e1234-b004-4000-8000-000000000004"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 			<line>
-				<reportElement x="461" y="281" width="1" height="345" forecolor="#E2E8F0" uuid="f98e1234-bg05-4000-8000-000000000005"/>
+				<reportElement x="461" y="281" width="1" height="345" forecolor="#E2E8F0" uuid="f98e1234-b005-4000-8000-000000000005"/>
 				<graphicElement><pen lineWidth="0.5"/></graphicElement>
 			</line>
 		</band>
