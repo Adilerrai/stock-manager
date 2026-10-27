@@ -18,13 +18,13 @@ public class TestRenderPdf {
 
     private Map<String, Object> createCommonParams() {
         Map<String, Object> params = new HashMap<>();
-        params.put("nomEntreprise", "TECHNOFIM GLOBAL");
-        params.put("activiteEntreprise", "Négoce & Fournitures Générales");
+        params.put("nomEntreprise", "SITE TRANSMISSION");
+        params.put("activiteEntreprise", "Fournitures Industrielles & Transmission");
         params.put("adresseEntreprise", "46, Bd Zerktouni Etg 2 Apt 6 - Casablanca");
         params.put("telephoneEntreprise", "05 22 32 93 74");
         params.put("telephoneSecondaire", "06 64 12 44 87");
         params.put("gsmEntreprise", "06 64 12 44 87");
-        params.put("emailEntreprise", "technofimsarl@gmail.com");
+        params.put("emailEntreprise", "contact@sitetransmission.ma");
         params.put("rcEntreprise", "727469");
         params.put("nifEntreprise", "72090385");
         params.put("patenteEntreprise", "34217516");
@@ -37,14 +37,13 @@ public class TestRenderPdf {
         BufferedImage logo = new BufferedImage(300, 150, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = logo.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        // Aucun fond opaque dessiné : logo transparent sans arrière-plan
         g.setColor(new Color(0x0B, 0x3A, 0x6E));
         g.fillRoundRect(8, 8, 284, 134, 16, 16);
         g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.BOLD, 42));
-        g.drawString("TECHNO", 50, 70);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 24));
-        g.drawString("GLOBAL LOGO", 65, 110);
+        g.setFont(new Font("SansSerif", Font.BOLD, 28));
+        g.drawString("SITE", 115, 65);
+        g.setFont(new Font("SansSerif", Font.BOLD, 22));
+        g.drawString("TRANSMISSION", 55, 105);
         g.dispose();
         params.put("logoImage", logo);
 
@@ -164,9 +163,9 @@ public class TestRenderPdf {
             params.put("dateEcheance", "04/11/2026");
             params.put("modePaiement", "Virement Bancaire (30 jours)");
             params.put("bonLivraisonNumeros", "BL-2026-004");
-            params.put("clientNom", "STE MASS CEREALES");
-            params.put("clientAdresse", "20, Rue Mostafa el Maani, CASABLANCA");
-            params.put("clientTelephone", "");
+            params.put("clientNom", "MULTICERAME");
+            params.put("clientAdresse", "Zone Industrielle Ain Sebaa, CASABLANCA");
+            params.put("clientTelephone", "05 22 35 44 12");
             params.put("clientIce", "00152677600001");
             params.put("montantHT", new BigDecimal("15237.48"));
             params.put("montantTVA", new BigDecimal("3047.50"));
@@ -181,10 +180,13 @@ public class TestRenderPdf {
             JasperPrint jp = JasperFillManager.fillReport(jr, params, new JRBeanCollectionDataSource(data));
             JasperExportManager.exportReportToPdfFile(jp, "uploads/test_facture_client_moderne.pdf");
             
+            java.awt.image.BufferedImage imgP1 = (java.awt.image.BufferedImage) JasperPrintManager.printPageToImage(jp, 0, 1.5f);
+            javax.imageio.ImageIO.write(imgP1, "PNG", new File("uploads/test_facture_client_page_1.png"));
+            
             int lastPageIdx = jp.getPages().size() - 1;
             java.awt.image.BufferedImage img = (java.awt.image.BufferedImage) JasperPrintManager.printPageToImage(jp, lastPageIdx, 1.5f);
             javax.imageio.ImageIO.write(img, "PNG", new File("uploads/test_facture_client_page_arrete.png"));
-            System.out.println("Generated uploads/test_facture_client_page_arrete.png (page " + (lastPageIdx + 1) + ")");
+            System.out.println("Generated uploads/test_facture_client_page_1.png and uploads/test_facture_client_page_arrete.png (page " + (lastPageIdx + 1) + ")");
         }
     }
 
