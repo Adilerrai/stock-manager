@@ -143,4 +143,20 @@ public class FactureController {
         FactureDTO facture = factureService.annulerFacture(factureId, motif, userId);
         return ResponseEntity.ok(facture);
     }
+
+    @GetMapping("/numeros-reserves")
+    public ResponseEntity<List<com.gestion.persistent.dto.NumeroReserveDTO>> getNumerosReservesFacture() {
+        List<com.gestion.persistent.dto.NumeroReserveDTO> list = factureService.getCodificationService()
+                .getNumerosReservesDisponibles(com.gestion.persistent.enums.TypeDocumentCodification.FACTURE_CLIENT, null);
+        return ResponseEntity.ok(list);
+    }
+
+    @PostMapping("/reserver-numero")
+    public ResponseEntity<Void> reserverNumeroFacture(
+            @RequestParam String numero,
+            @RequestParam(required = false, defaultValue = "Réservation manuelle") String motif) {
+        factureService.getCodificationService().libererNumero(
+                com.gestion.persistent.enums.TypeDocumentCodification.FACTURE_CLIENT, null, numero, null, motif);
+        return ResponseEntity.ok().build();
+    }
 }

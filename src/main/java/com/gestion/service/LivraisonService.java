@@ -225,6 +225,15 @@ public class LivraisonService {
             mettreAJourStatutLivraisonCommande(saved.getCommande());
         }
 
+        Long effectiveTenantId = saved.getPointDeVenteId() != null ? saved.getPointDeVenteId() : getTenantId();
+        codificationService.libererNumero(
+                com.gestion.persistent.enums.TypeDocumentCodification.BL_FOURNISSEUR,
+                effectiveTenantId,
+                saved.getNumeroLivraison(),
+                saved.getId(),
+                "Annulation de réception"
+        );
+
         return saved;
     }
 

@@ -154,6 +154,9 @@
     <!-- Changeset 048 : Traçabilité statut_precommande et rattachement DA dans lignes_devis -->
     <include file="changes/048-add-statut-precommande-to-lignes-devis.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 049 : Table des numéros réservés / recyclés lors d'annulations -->
+    <include file="changes/049-create-table-numeros-reserves.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
 
 

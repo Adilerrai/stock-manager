@@ -329,6 +329,19 @@ public class FactureService {
             }
         }
 
+        // Recul du compteur ou mise en réserve du numéro de facture
+        Long tenantId = facture.getPointDeVenteId();
+        if (tenantId == null) {
+            tenantId = TenantContext.getCurrentTenant();
+        }
+        codificationService.libererNumero(
+                TypeDocumentCodification.FACTURE_CLIENT,
+                tenantId,
+                facture.getNumeroFacture(),
+                facture.getId(),
+                facture.getMotifAnnulation()
+        );
+
         return factureMapper.toDto(factureRepository.save(facture));
     }
 
@@ -345,7 +358,15 @@ public class FactureService {
         facture.setEmisePar(user);
         LocalDate dateFacture = dto.getDateFacture() != null ? dto.getDateFacture() : LocalDate.now();
         Long tenantIdCreer = TenantContext.getCurrentTenant();
-        facture.setNumeroFacture(genererNumeroFacture(tenantIdCreer != null ? tenantIdCreer : 1L, dateFacture));
+        Long effectiveTenant = tenantIdCreer != null ? tenantIdCreer : 1L;
+
+        if (dto.getNumeroFacture() != null && !dto.getNumeroFacture().isBlank()) {
+            facture.setNumeroFacture(dto.getNumeroFacture().trim());
+            codificationService.marquerNumeroReserveUtilise(
+                    dto.getNumeroFacture().trim(), TypeDocumentCodification.FACTURE_CLIENT, effectiveTenant, null);
+        } else {
+            facture.setNumeroFacture(genererNumeroFacture(effectiveTenant, dateFacture));
+        }
         facture.setDateFacture(dateFacture);
 
         LocalDate echeance = dto.getDateEcheance();
@@ -483,5 +504,9 @@ public class FactureService {
         }
 
         return numero;
+    }
+
+    public CodificationService getCodificationService() {
+        return codificationService;
     }
 }

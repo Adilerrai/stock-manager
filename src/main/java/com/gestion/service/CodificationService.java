@@ -25,11 +25,14 @@ public class CodificationService {
 
     private final CodificationDocumentRepository repository;
     private final com.gestion.repository.DepotRepository depotRepository;
+    private final com.gestion.repository.NumeroReserveRepository numeroReserveRepository;
 
     public CodificationService(CodificationDocumentRepository repository,
-                               @org.springframework.context.annotation.Lazy com.gestion.repository.DepotRepository depotRepository) {
+                               @org.springframework.context.annotation.Lazy com.gestion.repository.DepotRepository depotRepository,
+                               com.gestion.repository.NumeroReserveRepository numeroReserveRepository) {
         this.repository = repository;
         this.depotRepository = depotRepository;
+        this.numeroReserveRepository = numeroReserveRepository;
     }
 
     public Long getCurrentTenantId() {
@@ -136,6 +139,21 @@ public class CodificationService {
     @Transactional
     public String genererNumero(TypeDocumentCodification typeDoc, Long pointDeVenteId, String codeDepot) {
         Long tenantId = (pointDeVenteId != null) ? pointDeVenteId : getCurrentTenantId();
+
+        // 1. Vérifier si un numéro recyclé / réservé est disponible dans la file
+        java.util.Optional<com.gestion.persistent.model.NumeroReserve> reserveOpt = numeroReserveRepository
+                .findFirstByPointDeVenteIdAndTypeDocumentAndStatutOrderByValeurSequenceAsc(
+                        tenantId, typeDoc, com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE);
+
+        if (reserveOpt.isPresent()) {
+            com.gestion.persistent.model.NumeroReserve reserve = reserveOpt.get();
+            reserve.setStatut(com.gestion.persistent.enums.StatutNumeroReserve.UTILISE);
+            reserve.setDateUtilisation(LocalDateTime.now());
+            numeroReserveRepository.save(reserve);
+            log.info("Numéro réservé/recyclé utilisé pour tenant {} - type {}: {}", tenantId, typeDoc, reserve.getNumero());
+            return reserve.getNumero();
+        }
+
         LocalDate now = LocalDate.now();
         int anneeCourante = now.getYear();
         int moisCourant = now.getMonthValue();
@@ -284,5 +302,96 @@ public class CodificationService {
                 entity.getLongueurSequence()
         ));
         return dto;
+    }
+
+    @Transactional
+    public void libererNumero(TypeDocumentCodification typeDoc, Long pointDeVenteId, String numero, Long docId, String motif) {
+        if (numero == null || numero.isBlank()) return;
+        Long tenantId = (pointDeVenteId != null) ? pointDeVenteId : getCurrentTenantId();
+
+        // Extraire la séquence numérique si possible
+        Long sequenceExtraite = extraireSequence(numero);
+
+        // Vérifier si ce numéro correspondait au dernier numéro généré sur la codification
+        java.util.Optional<CodificationDocument> codifOpt = repository.findByPointDeVenteIdAndTypeDocumentForUpdate(tenantId, typeDoc);
+        if (codifOpt.isPresent()) {
+            CodificationDocument codif = codifOpt.get();
+            if (sequenceExtraite != null && sequenceExtraite.equals(codif.getDernierNumero())) {
+                // Le compteur principal recule pour revenir à la normale
+                codif.setDernierNumero(Math.max(0L, codif.getDernierNumero() - 1));
+                codif.setDateDerniereMaj(LocalDateTime.now());
+                repository.save(codif);
+                log.info("Recul direct du compteur pour tenant {} - type {}: nouveau dernier_numero = {}",
+                        tenantId, typeDoc, codif.getDernierNumero());
+                return;
+            }
+        }
+
+        // Sinon, ajouter ce numéro libéré dans la table des numéros réservés/recyclés
+        if (!numeroReserveRepository.existsByPointDeVenteIdAndTypeDocumentAndNumeroAndStatut(
+                tenantId, typeDoc, numero, com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE)) {
+            com.gestion.persistent.model.NumeroReserve reserve = new com.gestion.persistent.model.NumeroReserve();
+            reserve.setPointDeVenteId(tenantId);
+            reserve.setTypeDocument(typeDoc);
+            reserve.setNumero(numero);
+            reserve.setValeurSequence(sequenceExtraite);
+            reserve.setStatut(com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE);
+            reserve.setDocumentOrigineId(docId);
+            reserve.setDocumentOrigineType(typeDoc.name());
+            reserve.setMotifLiberation(motif != null ? motif : "Annulation de document");
+            reserve.setDateReservation(LocalDateTime.now());
+            numeroReserveRepository.save(reserve);
+            log.info("Numéro placé dans la réserve pour tenant {} - type {}: {}", tenantId, typeDoc, numero);
+        }
+    }
+
+    public List<com.gestion.persistent.dto.NumeroReserveDTO> getNumerosReservesDisponibles(TypeDocumentCodification typeDoc, Long pointDeVenteId) {
+        Long tenantId = (pointDeVenteId != null) ? pointDeVenteId : getCurrentTenantId();
+        List<com.gestion.persistent.model.NumeroReserve> reserves = numeroReserveRepository
+                .findByPointDeVenteIdAndTypeDocumentAndStatutOrderByValeurSequenceAsc(
+                        tenantId, typeDoc, com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE);
+
+        return reserves.stream().map(r -> {
+            com.gestion.persistent.dto.NumeroReserveDTO dto = new com.gestion.persistent.dto.NumeroReserveDTO();
+            dto.setId(r.getId());
+            dto.setPointDeVenteId(r.getPointDeVenteId());
+            dto.setTypeDocument(r.getTypeDocument());
+            dto.setNumero(r.getNumero());
+            dto.setValeurSequence(r.getValeurSequence());
+            dto.setStatut(r.getStatut());
+            dto.setMotifLiberation(r.getMotifLiberation());
+            dto.setDocumentOrigineId(r.getDocumentOrigineId());
+            dto.setDocumentOrigineType(r.getDocumentOrigineType());
+            dto.setDateReservation(r.getDateReservation());
+            dto.setDateUtilisation(r.getDateUtilisation());
+            dto.setDocumentUtilisationId(r.getDocumentUtilisationId());
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void marquerNumeroReserveUtilise(String numero, TypeDocumentCodification typeDoc, Long pointDeVenteId, Long docId) {
+        if (numero == null) return;
+        Long tenantId = (pointDeVenteId != null) ? pointDeVenteId : getCurrentTenantId();
+        numeroReserveRepository.findByPointDeVenteIdAndTypeDocumentAndNumeroAndStatut(
+                tenantId, typeDoc, numero, com.gestion.persistent.enums.StatutNumeroReserve.DISPONIBLE)
+                .ifPresent(r -> {
+                    r.setStatut(com.gestion.persistent.enums.StatutNumeroReserve.UTILISE);
+                    r.setDateUtilisation(LocalDateTime.now());
+                    r.setDocumentUtilisationId(docId);
+                    numeroReserveRepository.save(r);
+                });
+    }
+
+    private Long extraireSequence(String numero) {
+        if (numero == null) return null;
+        try {
+            // Chercher le dernier bloc de chiffres
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)$").matcher(numero.trim());
+            if (m.find()) {
+                return Long.parseLong(m.group(1));
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 }

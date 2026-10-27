@@ -440,7 +440,18 @@ public class CommandeService {
         }
         
         commande.setStatut(StatutCommande.ANNULEE);
-        return commandeRepository.save(commande);
+        Commande saved = commandeRepository.save(commande);
+
+        Long effectiveTenantId = commande.getPointDeVenteId() != null ? commande.getPointDeVenteId() : getTenantId();
+        codificationService.libererNumero(
+                com.gestion.persistent.enums.TypeDocumentCodification.COMMANDE_FOURNISSEUR,
+                effectiveTenantId,
+                commande.getNumeroCommande(),
+                commande.getId(),
+                "Annulation de commande"
+        );
+
+        return saved;
     }
 
     @Transactional
