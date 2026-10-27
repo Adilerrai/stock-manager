@@ -37,6 +37,8 @@ public class CommandeClientDTO {
     private Long pointDeVenteId;
     private Long userId;
     private List<LigneCommandeClientDTO> lignesCommande;
+    private List<BonLivraisonClientDTO> bonsLivraison = new java.util.ArrayList<>();
+    private List<FactureDTO> factures = new java.util.ArrayList<>();
 
     // Constructors
     public CommandeClientDTO() {}
@@ -62,6 +64,12 @@ public class CommandeClientDTO {
 
     public List<LigneCommandeClientDTO> getLignesCommande() { return lignesCommande; }
     public void setLignesCommande(List<LigneCommandeClientDTO> lignesCommande) { this.lignesCommande = lignesCommande; }
+
+    public List<BonLivraisonClientDTO> getBonsLivraison() { return bonsLivraison; }
+    public void setBonsLivraison(List<BonLivraisonClientDTO> bonsLivraison) { this.bonsLivraison = bonsLivraison != null ? bonsLivraison : new java.util.ArrayList<>(); }
+
+    public List<FactureDTO> getFactures() { return factures; }
+    public void setFactures(List<FactureDTO> factures) { this.factures = factures != null ? factures : new java.util.ArrayList<>(); }
 
     public String getClientTelephone() {
         return clientTelephone;

@@ -32,6 +32,7 @@ public class BonLivraisonClientDTO {
     private Long factureId;
     private String factureNumero;
     private Boolean facturé;
+    private FactureDTO facture;
     private Long depotId;
     private String depotNom;
     private List<LigneBonLivraisonClientDTO> lignes = new ArrayList<>();
@@ -151,6 +152,9 @@ public class BonLivraisonClientDTO {
 
     public Boolean getFacturé() { return facturé != null ? facturé : (factureId != null); }
     public void setFacturé(Boolean facturé) { this.facturé = facturé; }
+
+    public FactureDTO getFacture() { return facture; }
+    public void setFacture(FactureDTO facture) { this.facture = facture; }
 
     public List<LigneBonLivraisonClientDTO> getLignes() { return lignes; }
     public void setLignes(List<LigneBonLivraisonClientDTO> lignes) { this.lignes = lignes; }

@@ -14,6 +14,8 @@ public interface BonLivraisonClientRepository extends JpaRepository<BonLivraison
     Optional<BonLivraisonClient> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
     List<BonLivraisonClient> findByClientIdAndPointDeVenteId(Long clientId, Long pointDeVenteId);
     List<BonLivraisonClient> findByCommandeClientIdAndPointDeVenteId(Long commandeClientId, Long pointDeVenteId);
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT bl FROM BonLivraisonClient bl LEFT JOIN bl.commandes c WHERE bl.commandeClient.id = :commandeId OR c.id = :commandeId")
+    List<BonLivraisonClient> findAllByCommandeId(@org.springframework.data.repository.query.Param("commandeId") Long commandeId);
     List<BonLivraisonClient> findByStatutAndPointDeVenteId(StatutLivraison statut, Long pointDeVenteId);
     List<BonLivraisonClient> findByClientIdAndFactureIsNullAndPointDeVenteId(Long clientId, Long pointDeVenteId);
     List<BonLivraisonClient> findByFactureIsNullAndPointDeVenteId(Long pointDeVenteId);

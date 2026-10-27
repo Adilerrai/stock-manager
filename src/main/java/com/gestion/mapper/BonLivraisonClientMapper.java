@@ -5,7 +5,7 @@ import com.gestion.persistent.model.BonLivraisonClient;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = {LigneBonLivraisonClientMapper.class})
+@Mapper(componentModel = "spring", uses = {LigneBonLivraisonClientMapper.class, FactureMapper.class})
 public interface BonLivraisonClientMapper {
 
     @Mapping(target = "clientId", source = "client.id")
@@ -19,7 +19,8 @@ public interface BonLivraisonClientMapper {
     @Mapping(target = "commandeClientNumeros", expression = "java(entity.getCommandes() != null ? entity.getCommandes().stream().map(com.gestion.persistent.model.CommandeClient::getNumeroCommande).collect(java.util.stream.Collectors.toList()) : java.util.Collections.emptyList())")
     @Mapping(target = "factureId", source = "facture.id")
     @Mapping(target = "factureNumero", source = "facture.numeroFacture")
-    @Mapping(target = "facturé", expression = "java(entity.getFacture() != null)")
+    @Mapping(target = "facturé", expression = "java(entity.getFacture() != null && !Boolean.TRUE.equals(entity.getFacture().getAnnulee()) && entity.getFacture().getStatut() != com.gestion.persistent.enums.StatutFacture.ANNULEE)")
+    @Mapping(target = "facture", expression = "java(mapFactureIfNotAnnulee(entity.getFacture()))")
     @Mapping(target = "lignes", source = "lignes")
     @Mapping(target = "montantHT", expression = "java(entity.getMontantHT() != null ? entity.getMontantHT() : entity.getMontantTotal())")
     @Mapping(target = "tauxTVA", expression = "java(entity.getTauxTVA() != null ? entity.getTauxTVA() : java.math.BigDecimal.valueOf(20))")
@@ -36,4 +37,11 @@ public interface BonLivraisonClientMapper {
     @Mapping(target = "facture", ignore = true)
     @Mapping(target = "lignes", ignore = true)
     BonLivraisonClient toEntity(BonLivraisonClientDTO dto);
+
+    default com.gestion.persistent.dto.FactureDTO mapFactureIfNotAnnulee(com.gestion.persistent.model.Facture facture) {
+        if (facture == null || Boolean.TRUE.equals(facture.getAnnulee()) || facture.getStatut() == com.gestion.persistent.enums.StatutFacture.ANNULEE) {
+            return null;
+        }
+        return org.mapstruct.factory.Mappers.getMapper(FactureMapper.class).toDto(facture);
+    }
 }

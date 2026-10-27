@@ -29,6 +29,7 @@ public class CommandeDTO {
     private String devise;
     private String observations;
     private List<LigneCommandeDTO> lignesCommande;
+    private List<LivraisonDTO> livraisons = new java.util.ArrayList<>();
 
     // ===== Configuration import =====
     private com.gestion.persistent.enums.TypeAchat typeAchat;
@@ -123,6 +124,9 @@ public class CommandeDTO {
 
     public List<LigneCommandeDTO> getLignesCommande() { return lignesCommande; }
     public void setLignesCommande(List<LigneCommandeDTO> lignesCommande) { this.lignesCommande = lignesCommande; }
+
+    public List<LivraisonDTO> getLivraisons() { return livraisons; }
+    public void setLivraisons(List<LivraisonDTO> livraisons) { this.livraisons = livraisons != null ? livraisons : new java.util.ArrayList<>(); }
 
     public com.gestion.persistent.enums.TypeAchat getTypeAchat() { return typeAchat; }
     public void setTypeAchat(com.gestion.persistent.enums.TypeAchat typeAchat) { this.typeAchat = typeAchat; }

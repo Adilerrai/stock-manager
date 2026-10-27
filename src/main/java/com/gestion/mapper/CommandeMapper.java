@@ -6,7 +6,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
-@Mapper(componentModel = "spring", uses = {LigneCommandeMapper.class})
+@Mapper(componentModel = "spring", uses = {LigneCommandeMapper.class, LivraisonMapper.class})
 public interface CommandeMapper {
 
     @Mapping(target = "fournisseurId", source = "fournisseur.id")
@@ -15,6 +15,7 @@ public interface CommandeMapper {
     @Mapping(target = "lieuDestinationLibelle", source = "lieuDestination.libelle")
     @Mapping(target = "conditionPaiementId", source = "conditionPaiement.id")
     @Mapping(target = "conditionPaiementLibelle", source = "conditionPaiement.libelle")
+    @Mapping(target = "livraisons", expression = "java(mapLivraisonsIfNotAnnulee(commande.getLivraisons()))")
     CommandeDTO toDto(Commande commande);
 
     @Mapping(target = "fournisseur", ignore = true)
@@ -32,4 +33,15 @@ public interface CommandeMapper {
     @Mapping(target = "lieuDestination", ignore = true)
     @Mapping(target = "conditionPaiement", ignore = true)
     void updateEntityFromDto(CommandeDTO commandeDTO, @MappingTarget Commande commande);
+
+    default java.util.List<com.gestion.persistent.dto.LivraisonDTO> mapLivraisonsIfNotAnnulee(java.util.List<com.gestion.persistent.model.Livraison> livraisons) {
+        if (livraisons == null) {
+            return java.util.Collections.emptyList();
+        }
+        com.gestion.mapper.LivraisonMapper mapper = org.mapstruct.factory.Mappers.getMapper(com.gestion.mapper.LivraisonMapper.class);
+        return livraisons.stream()
+                .filter(l -> l.getStatut() != com.gestion.persistent.enums.StatutLivraison.ANNULEE)
+                .map(mapper::toDto)
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
