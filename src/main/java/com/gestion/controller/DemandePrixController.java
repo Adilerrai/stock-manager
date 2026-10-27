@@ -2,6 +2,7 @@ package com.gestion.controller;
 
 import com.gestion.persistent.dto.ComparateurOffresDTO;
 import com.gestion.persistent.dto.DemandePrixDTO;
+import com.gestion.persistent.dto.FusionOffresFournisseurDTO;
 import com.gestion.persistent.dto.OffreFournisseurDTO;
 import com.gestion.persistent.model.Commande;
 import com.gestion.service.DemandePrixService;
@@ -67,8 +68,30 @@ public class DemandePrixController {
     @PostMapping("/{id}/offres/{offreId}/valider-commande")
     public ResponseEntity<Commande> validerEtCommander(
             @PathVariable("id") Long id,
-            @PathVariable("offreId") Long offreId) {
-        Commande commande = demandePrixService.validerEtTransformerEnCommande(id, offreId);
+            @PathVariable("offreId") Long offreId,
+            @RequestParam(value = "commandeId", required = false) Long commandeId) {
+        Commande commande = demandePrixService.validerEtTransformerEnCommande(id, offreId, commandeId);
         return ResponseEntity.ok(commande);
+    }
+
+    @PostMapping("/offres/ajouter-a-commande-brouillon")
+    public ResponseEntity<Commande> ajouterOffresACommandeBrouillon(
+            @RequestParam("commandeId") Long commandeId,
+            @RequestBody List<Long> offreIds) {
+        Commande commande = demandePrixService.ajouterOffresACommandeBrouillon(commandeId, offreIds);
+        return ResponseEntity.ok(commande);
+    }
+
+    @PostMapping("/offres/fusionner-vers-commande")
+    public ResponseEntity<Commande> fusionnerOffresVersCommande(
+            @RequestBody FusionOffresFournisseurDTO dto) {
+        Commande commande = demandePrixService.fusionnerOffresVersCommande(dto);
+        return ResponseEntity.ok(commande);
+    }
+
+    @GetMapping("/offres/fournisseur/{fournisseurId}")
+    public ResponseEntity<List<OffreFournisseurDTO>> getOffresParFournisseur(
+            @PathVariable("fournisseurId") Long fournisseurId) {
+        return ResponseEntity.ok(demandePrixService.getOffresParFournisseur(fournisseurId));
     }
 }

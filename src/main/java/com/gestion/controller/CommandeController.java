@@ -71,6 +71,16 @@ public class CommandeController {
         return ResponseEntity.ok(commandeDTOs);
     }
 
+    @GetMapping("/brouillons")
+    public ResponseEntity<List<CommandeDTO>> getCommandesBrouillon(
+            @RequestParam(value = "fournisseurId", required = false) Long fournisseurId) {
+        List<Commande> commandes = commandeService.getCommandesBrouillonParFournisseur(fournisseurId);
+        List<CommandeDTO> commandeDTOs = commandes.stream()
+                .map(commandeMapper::toDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(commandeDTOs);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<CommandeDTO> getCommandeById(@PathVariable("id") Long id) {
         Commande commande = commandeService.getCommandeById(id);
