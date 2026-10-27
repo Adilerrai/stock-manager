@@ -17,11 +17,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.io.InputStream;
 import net.sf.jasperreports.engine.*;
@@ -410,6 +412,123 @@ public class CommandeService {
     public List<Commande> getCommandesByFournisseur(Long fournisseurId) {
         Long tenantId = getTenantId();
         return commandeRepository.findByFournisseurIdAndPointDeVenteId(fournisseurId, tenantId);
+    }
+
+    public List<Commande> getCommandesBrouillonParFournisseur(Long fournisseurId) {
+        Long tenantId = getTenantId();
+        if (fournisseurId != null) {
+            return commandeRepository.findByFournisseurIdAndStatutAndPointDeVenteId(fournisseurId, StatutCommande.BROUILLON, tenantId);
+        } else {
+            return commandeRepository.findByStatutAndPointDeVenteId(StatutCommande.BROUILLON, tenantId);
+        }
+    }
+
+    @Transactional
+    public Commande ajouterLignesACommandeBrouillon(Long commandeId, List<LigneCommandeDTO> nouvellesLignes, String complementObservations) {
+        Commande commande = getCommandeById(commandeId);
+
+        if (commande.getStatut() != StatutCommande.BROUILLON) {
+            throw new CommonException("Impossible d'ajouter des lignes à la commande #" + commande.getNumeroCommande() + 
+                    " car elle n'est pas au statut BROUILLON (statut actuel : " + commande.getStatut() + ").", HttpStatus.BAD_REQUEST);
+        }
+
+        boolean appliquerTva = Boolean.TRUE.equals(commande.getAppliquerTVA());
+        BigDecimal defaultTauxTva = commande.getTauxTVA() != null ? commande.getTauxTVA() : new BigDecimal("20.00");
+
+        if (nouvellesLignes != null && !nouvellesLignes.isEmpty()) {
+            if (commande.getLignesCommande() == null) {
+                commande.setLignesCommande(new ArrayList<>());
+            }
+
+            for (LigneCommandeDTO ligneDTO : nouvellesLignes) {
+                if (ligneDTO.getProduitId() == null) {
+                    continue;
+                }
+
+                BigDecimal puHT = ligneDTO.getPrixUnitaireHT() != null ? ligneDTO.getPrixUnitaireHT() 
+                        : (ligneDTO.getPrixUnitaire() != null ? ligneDTO.getPrixUnitaire() : BigDecimal.ZERO);
+                BigDecimal tauxTvaLigne = ligneDTO.getTauxTVA() != null ? ligneDTO.getTauxTVA() : (appliquerTva ? defaultTauxTva : BigDecimal.ZERO);
+
+                // Vérifier si le produit existe déjà avec le même prix unitaire HT et taux TVA
+                Optional<LigneCommande> existante = commande.getLignesCommande().stream()
+                        .filter(l -> l.getProduit() != null && l.getProduit().getId().equals(ligneDTO.getProduitId())
+                                && (l.getPrixUnitaireHT() != null ? l.getPrixUnitaireHT().compareTo(puHT) == 0 : (l.getPrixUnitaire() != null && l.getPrixUnitaire().compareTo(puHT) == 0))
+                                && ((l.getTauxTVA() == null && tauxTvaLigne.compareTo(BigDecimal.ZERO) == 0) || (l.getTauxTVA() != null && l.getTauxTVA().compareTo(tauxTvaLigne) == 0)))
+                        .findFirst();
+
+                if (existante.isPresent()) {
+                    LigneCommande l = existante.get();
+                    int qteAjout = ligneDTO.getQuantiteCommandee() != null ? ligneDTO.getQuantiteCommandee() : 1;
+                    l.setQuantiteCommandee(l.getQuantiteCommandee() + qteAjout);
+
+                    BigDecimal qte = BigDecimal.valueOf(l.getQuantiteCommandee());
+                    BigDecimal montantHT = puHT.multiply(qte);
+                    BigDecimal montantTVA = appliquerTva 
+                            ? montantHT.multiply(tauxTvaLigne).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP)
+                            : BigDecimal.ZERO;
+                    BigDecimal montantTTC = appliquerTva ? montantHT.add(montantTVA) : montantHT;
+
+                    l.setMontantHT(montantHT);
+                    l.setMontantTVA(montantTVA);
+                    l.setMontantTTC(montantTTC);
+                    l.setMontantLigne(montantTTC);
+                    ligneCommandeRepository.save(l);
+                } else {
+                    LigneCommande nouvelleLigne = createLigneCommande(commande, ligneDTO, appliquerTva, defaultTauxTva);
+                    commande.getLignesCommande().add(nouvelleLigne);
+                }
+            }
+
+            // Recalculer les totaux de la commande
+            BigDecimal montantHTTotal = BigDecimal.ZERO;
+            BigDecimal montantTVATotal = BigDecimal.ZERO;
+            BigDecimal montantTTCTotal = BigDecimal.ZERO;
+
+            for (LigneCommande l : commande.getLignesCommande()) {
+                if (l.getMontantHT() != null) {
+                    montantHTTotal = montantHTTotal.add(l.getMontantHT());
+                }
+                if (l.getMontantTVA() != null) {
+                    montantTVATotal = montantTVATotal.add(l.getMontantTVA());
+                }
+                if (l.getMontantTTC() != null) {
+                    montantTTCTotal = montantTTCTotal.add(l.getMontantTTC());
+                } else if (l.getMontantLigne() != null) {
+                    montantTTCTotal = montantTTCTotal.add(l.getMontantLigne());
+                }
+            }
+
+            commande.setMontantHT(montantHTTotal);
+            commande.setMontantTVA(appliquerTva ? montantTVATotal : BigDecimal.ZERO);
+            commande.setMontantTTC(appliquerTva ? montantTTCTotal : montantHTTotal);
+            commande.setMontantTotal(commande.getMontantTTC());
+        }
+
+        // Compléter les observations
+        if (complementObservations != null && !complementObservations.isBlank()) {
+            String obsActuelle = commande.getObservations();
+            if (obsActuelle != null && !obsActuelle.isBlank()) {
+                if (!obsActuelle.contains(complementObservations)) {
+                    commande.setObservations(obsActuelle + " | " + complementObservations);
+                }
+            } else {
+                commande.setObservations("Émis suite à : " + complementObservations);
+            }
+        }
+
+        commande = commandeRepository.save(commande);
+
+        // Recalcul du coût de revient si applicable
+        if (coutRevientService != null) {
+            try {
+                coutRevientService.recalculerEtPersister(commande.getId());
+                commande = commandeRepository.findById(commande.getId()).orElse(commande);
+            } catch (Exception e) {
+                // Silencieux
+            }
+        }
+
+        return commande;
     }
 
     @Transactional

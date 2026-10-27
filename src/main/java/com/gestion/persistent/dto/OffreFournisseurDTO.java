@@ -19,6 +19,8 @@ public class OffreFournisseurDTO {
     private String conditionsPaiement;
     private String observations;
     private BigDecimal totalHT;
+    private String ddpNumero;
+    private String ddpObjet;
     private List<LigneOffreFournisseurDTO> lignes = new ArrayList<>();
 
     public OffreFournisseurDTO() {}
@@ -58,6 +60,12 @@ public class OffreFournisseurDTO {
 
     public BigDecimal getTotalHT() { return totalHT; }
     public void setTotalHT(BigDecimal totalHT) { this.totalHT = totalHT; }
+
+    public String getDdpNumero() { return ddpNumero; }
+    public void setDdpNumero(String ddpNumero) { this.ddpNumero = ddpNumero; }
+
+    public String getDdpObjet() { return ddpObjet; }
+    public void setDdpObjet(String ddpObjet) { this.ddpObjet = ddpObjet; }
 
     public List<LigneOffreFournisseurDTO> getLignes() { return lignes; }
     public void setLignes(List<LigneOffreFournisseurDTO> lignes) { this.lignes = lignes; }

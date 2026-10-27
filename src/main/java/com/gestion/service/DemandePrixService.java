@@ -5,6 +5,7 @@ import com.acommon.exception.ResourceNotFoundException;
 import com.acommon.persistant.model.CurrentRequestContext;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.*;
+import com.gestion.persistent.enums.StatutCommande;
 import com.gestion.persistent.enums.StatutDemandePrix;
 import com.gestion.persistent.enums.StatutOffreFournisseur;
 import com.gestion.persistent.enums.TypeDocumentCodification;
@@ -476,10 +477,19 @@ public class DemandePrixService {
     }
 
     /**
-     * Valide l'offre fournisseur gagnante et instancie automatiquement le Bon de Commande Fournisseur
+     * Valide l'offre fournisseur gagnante et instancie automatiquement le Bon de Commande Fournisseur (ou l'ajoute à une commande brouillon existante)
      */
     @Transactional
     public Commande validerEtTransformerEnCommande(Long ddpId, Long offreId) {
+        return validerEtTransformerEnCommande(ddpId, offreId, null);
+    }
+
+    /**
+     * Valide l'offre fournisseur et l'intègre dans une commande fournisseur existante au statut BROUILLON (si commandeId != null),
+     * ou instancie une nouvelle commande fournisseur (si commandeId == null).
+     */
+    @Transactional
+    public Commande validerEtTransformerEnCommande(Long ddpId, Long offreId, Long commandeId) {
         Long tenantId = getTenantId();
         DemandePrix ddp = demandePrixRepository.findByIdAndPointDeVenteId(ddpId, tenantId)
                 .orElseThrow(() -> new ResourceNotFoundException("DemandePrix", "id", ddpId));
@@ -489,10 +499,13 @@ public class DemandePrixService {
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("OffreFournisseur", "id", offreId));
 
-        // 1. Mettre à jour les statuts
+        // 1. Mettre à jour les statuts de l'offre et de la DDP
         for (OffreFournisseur o : ddp.getOffres()) {
             if (o.getId().equals(offreId)) {
                 o.setStatut(StatutOffreFournisseur.RETENUE);
+                if (o.getLignes() != null) {
+                    o.getLignes().forEach(l -> l.setEstRetenue(true));
+                }
             } else if (o.getStatut() == StatutOffreFournisseur.RECUE || o.getStatut() == StatutOffreFournisseur.EN_ATTENTE) {
                 o.setStatut(StatutOffreFournisseur.REJETEE);
             }
@@ -500,16 +513,154 @@ public class DemandePrixService {
         ddp.setStatut(StatutDemandePrix.CLOTUREE);
         demandePrixRepository.save(ddp);
 
-        // 2. Préparer CommandeDTO
+        // 2. Extraire les lignes
+        List<LigneCommandeDTO> lignesCommande = extraireLignesCommande(offreRetenue);
+        String refObs = "DDP " + ddp.getNumeroDdp() + (offreRetenue.getNumeroDevis() != null ? " (Devis: " + offreRetenue.getNumeroDevis() + ")" : "");
+
+        // 3. Intégration dans commande existante brouillon
+        if (commandeId != null) {
+            Commande commandeExistante = commandeService.getCommandeById(commandeId);
+            if (commandeExistante.getStatut() != StatutCommande.BROUILLON) {
+                throw new CommonException("Impossible d'ajouter à la commande #" + commandeExistante.getNumeroCommande() + 
+                        " car elle n'est pas au statut BROUILLON.", HttpStatus.BAD_REQUEST);
+            }
+            if (!commandeExistante.getFournisseur().getId().equals(offreRetenue.getFournisseur().getId())) {
+                throw new CommonException("Le fournisseur de la commande (" + commandeExistante.getFournisseur().getNom() + 
+                        ") ne correspond pas au fournisseur de l'offre (" + offreRetenue.getFournisseur().getNom() + ").", HttpStatus.BAD_REQUEST);
+            }
+            return commandeService.ajouterLignesACommandeBrouillon(commandeId, lignesCommande, refObs);
+        }
+
+        // 4. Création d'une nouvelle commande fournisseur
         CommandeDTO cmdDTO = new CommandeDTO();
         cmdDTO.setFournisseurId(offreRetenue.getFournisseur().getId());
         cmdDTO.setAppliquerTVA(true);
-        cmdDTO.setObservations("Émis suite à la DDP " + ddp.getNumeroDdp() + " (Devis Frn: " + (offreRetenue.getNumeroDevis() != null ? offreRetenue.getNumeroDevis() : "S/N") + ")");
+        cmdDTO.setObservations("Émis suite à la " + refObs);
+        cmdDTO.setLignesCommande(lignesCommande);
 
+        if (ddp.getTypeDemandePrix() == com.gestion.persistent.enums.TypeAchat.INTERNATIONAL) {
+            cmdDTO.setTypeAchat(com.gestion.persistent.enums.TypeAchat.INTERNATIONAL);
+            cmdDTO.setDevise(ddp.getDeviseSouhaitee());
+            cmdDTO.setIncoterm(ddp.getIncotermSouhaite());
+            cmdDTO.setLieuIncoterm(ddp.getLieuLivraison());
+        }
+
+        return commandeService.createCommande(cmdDTO);
+    }
+
+    /**
+     * Ajoute plusieurs offres fournisseurs (issues d'une ou plusieurs demandes de prix) dans une seule commande fournisseur au statut BROUILLON
+     */
+    @Transactional
+    public Commande ajouterOffresACommandeBrouillon(Long commandeId, List<Long> offreIds) {
+        if (commandeId == null) {
+            throw new CommonException("L'identifiant de la commande fournisseur brouillon est obligatoire.", HttpStatus.BAD_REQUEST);
+        }
+        if (offreIds == null || offreIds.isEmpty()) {
+            throw new CommonException("Veuillez sélectionner au moins une offre fournisseur à intégrer.", HttpStatus.BAD_REQUEST);
+        }
+
+        Long tenantId = getTenantId();
+        Commande commande = commandeService.getCommandeById(commandeId);
+        if (commande.getStatut() != StatutCommande.BROUILLON) {
+            throw new CommonException("La commande #" + commande.getNumeroCommande() + " n'est pas au statut BROUILLON (statut actuel: " + commande.getStatut() + ").", HttpStatus.BAD_REQUEST);
+        }
+
+        Long fournisseurId = commande.getFournisseur().getId();
+        List<LigneCommandeDTO> toutesLesLignes = new ArrayList<>();
+        List<String> refsDdp = new ArrayList<>();
+
+        for (Long offreId : offreIds) {
+            OffreFournisseur offre = offreFournisseurRepository.findByIdAndPointDeVenteId(offreId, tenantId)
+                    .orElseThrow(() -> new ResourceNotFoundException("OffreFournisseur", "id", offreId));
+
+            if (!offre.getFournisseur().getId().equals(fournisseurId)) {
+                throw new CommonException("L'offre #" + offreId + " (Fournisseur: " + offre.getFournisseur().getNom() + 
+                        ") ne correspond pas au fournisseur de la commande (" + commande.getFournisseur().getNom() + ").", HttpStatus.BAD_REQUEST);
+            }
+
+            // Marquer l'offre comme retenue et clôturer la DDP
+            DemandePrix ddp = offre.getDemandePrix();
+            if (ddp != null) {
+                for (OffreFournisseur o : ddp.getOffres()) {
+                    if (o.getId().equals(offreId)) {
+                        o.setStatut(StatutOffreFournisseur.RETENUE);
+                        if (o.getLignes() != null) {
+                            o.getLignes().forEach(l -> l.setEstRetenue(true));
+                        }
+                    } else if (o.getStatut() == StatutOffreFournisseur.RECUE || o.getStatut() == StatutOffreFournisseur.EN_ATTENTE) {
+                        o.setStatut(StatutOffreFournisseur.REJETEE);
+                    }
+                }
+                ddp.setStatut(StatutDemandePrix.CLOTUREE);
+                demandePrixRepository.save(ddp);
+
+                String ref = "DDP " + ddp.getNumeroDdp() + (offre.getNumeroDevis() != null ? " (Devis: " + offre.getNumeroDevis() + ")" : "");
+                if (!refsDdp.contains(ref)) {
+                    refsDdp.add(ref);
+                }
+            }
+
+            toutesLesLignes.addAll(extraireLignesCommande(offre));
+        }
+
+        String complementObs = String.join(" | ", refsDdp);
+        return commandeService.ajouterLignesACommandeBrouillon(commandeId, toutesLesLignes, complementObs);
+    }
+
+    /**
+     * Fusionne plusieurs offres fournisseurs vers une commande fournisseur :
+     * - Si dto.getCommandeId() est renseigné : ajoute les offres à cette commande brouillon existante
+     * - Si dto.getCommandeId() est null : crée une nouvelle commande brouillon pour le fournisseur et y ajoute toutes les offres
+     */
+    @Transactional
+    public Commande fusionnerOffresVersCommande(FusionOffresFournisseurDTO dto) {
+        if (dto.getOffreIds() == null || dto.getOffreIds().isEmpty()) {
+            throw new CommonException("Veuillez sélectionner au moins une offre fournisseur à fusionner.", HttpStatus.BAD_REQUEST);
+        }
+
+        Long tenantId = getTenantId();
+
+        // 1. Si une commande brouillon existe déjà :
+        if (dto.getCommandeId() != null) {
+            return ajouterOffresACommandeBrouillon(dto.getCommandeId(), dto.getOffreIds());
+        }
+
+        // 2. Sinon, créer d'abord la commande brouillon avec la 1ère offre, puis ajouter les autres
+        Long premiereOffreId = dto.getOffreIds().get(0);
+        OffreFournisseur premiereOffre = offreFournisseurRepository.findByIdAndPointDeVenteId(premiereOffreId, tenantId)
+                .orElseThrow(() -> new ResourceNotFoundException("OffreFournisseur", "id", premiereOffreId));
+
+        DemandePrix premiereDdp = premiereOffre.getDemandePrix();
+        Commande nouvelleCommande = validerEtTransformerEnCommande(premiereDdp.getId(), premiereOffreId, null);
+
+        // Si d'autres offres sont sélectionnées, les ajouter à la commande créée
+        if (dto.getOffreIds().size() > 1) {
+            List<Long> autresOffres = dto.getOffreIds().subList(1, dto.getOffreIds().size());
+            nouvelleCommande = ajouterOffresACommandeBrouillon(nouvelleCommande.getId(), autresOffres);
+        }
+
+        return nouvelleCommande;
+    }
+
+    /**
+     * Liste les offres fournisseurs disponibles pour un fournisseur donné (avec référence DDP)
+     */
+    public List<OffreFournisseurDTO> getOffresParFournisseur(Long fournisseurId) {
+        Long tenantId = getTenantId();
+        List<OffreFournisseur> offres = offreFournisseurRepository.findByFournisseurIdAndPointDeVenteId(fournisseurId, tenantId);
+        return offres.stream().map(this::toOffreDTO).collect(Collectors.toList());
+    }
+
+    private List<LigneCommandeDTO> extraireLignesCommande(OffreFournisseur offre) {
         List<LigneCommandeDTO> lignesCommande = new ArrayList<>();
-        for (LigneOffreFournisseur lof : offreRetenue.getLignes()) {
+        if (offre.getLignes() == null) {
+            return lignesCommande;
+        }
+
+        for (LigneOffreFournisseur lof : offre.getLignes()) {
             LigneDemandePrix ldp = lof.getLigneDemandePrix();
-            if (ldp.getProduit() != null) {
+            if (ldp != null && ldp.getProduit() != null) {
                 LigneCommandeDTO lcmd = new LigneCommandeDTO();
                 lcmd.setProduitId(ldp.getProduit().getId());
                 lcmd.setDesignation(ldp.getDesignation());
@@ -521,10 +672,7 @@ public class DemandePrixService {
                 lignesCommande.add(lcmd);
             }
         }
-        cmdDTO.setLignesCommande(lignesCommande);
-
-        // 3. Appel de la création de commande existante
-        return commandeService.createCommande(cmdDTO);
+        return lignesCommande;
     }
 
     // ─── Helpers de mapping ──────────────────────────────────────────────────
@@ -573,6 +721,10 @@ public class DemandePrixService {
         OffreFournisseurDTO dto = new OffreFournisseurDTO();
         dto.setId(o.getId());
         dto.setDemandePrixId(o.getDemandePrix() != null ? o.getDemandePrix().getId() : null);
+        if (o.getDemandePrix() != null) {
+            dto.setDdpNumero(o.getDemandePrix().getNumeroDdp());
+            dto.setDdpObjet(o.getDemandePrix().getObjet());
+        }
         dto.setFournisseurId(o.getFournisseur() != null ? o.getFournisseur().getId() : null);
         dto.setFournisseurNom(o.getFournisseur() != null ? o.getFournisseur().getNom() : null);
         dto.setNumeroDevis(o.getNumeroDevis());
