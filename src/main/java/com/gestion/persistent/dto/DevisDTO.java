@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +33,9 @@ public class DevisDTO {
     private String numeroAchatClient;
     private String conditionsPaiement;
     private Long pointDeVenteId;
+    private Long reservationClientId;
+    private LocalDateTime dateReponseClient;
+    private String motifRefusClient;
     private Long commandeGenereeId;
     private Long factureGenereeId;
     private LocalDateTime dateCreation;
@@ -96,6 +98,15 @@ public class DevisDTO {
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }
+
+    public Long getReservationClientId() { return reservationClientId; }
+    public void setReservationClientId(Long reservationClientId) { this.reservationClientId = reservationClientId; }
+
+    public LocalDateTime getDateReponseClient() { return dateReponseClient; }
+    public void setDateReponseClient(LocalDateTime dateReponseClient) { this.dateReponseClient = dateReponseClient; }
+
+    public String getMotifRefusClient() { return motifRefusClient; }
+    public void setMotifRefusClient(String motifRefusClient) { this.motifRefusClient = motifRefusClient; }
 
     public Long getCommandeGenereeId() { return commandeGenereeId; }
     public void setCommandeGenereeId(Long commandeGenereeId) { this.commandeGenereeId = commandeGenereeId; }

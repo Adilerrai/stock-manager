@@ -1,6 +1,7 @@
 package com.acommon.persistant.model;
 
 import com.acommon.persistant.enums.Genre;
+import com.acommon.persistant.enums.TypeUtilisateur;
 import jakarta.persistence.*;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -11,8 +12,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -60,11 +59,27 @@ public class User implements UserDetails {
     @Column(name = "must_change_password")
     private Boolean mustChangePassword = false;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_type", length = 30)
+    private TypeUtilisateur userType = TypeUtilisateur.MEMBRE_TENANT;
+
+    @Column(name = "client_id")
+    private Long clientId;
+
     @PrePersist
     public void prePersist() {
         if (this.tenantId == null) {
             Long tenant = com.acommon.persistant.model.TenantContext.getCurrentTenant();
             this.tenantId = (tenant != null && tenant > 0) ? tenant : 1L;
+        }
+        if (this.userType == null) {
+            if (this.clientId != null || (this.role != null && "ROLE_CLIENT".equalsIgnoreCase(this.role.getNom()))) {
+                this.userType = TypeUtilisateur.CLIENT;
+            } else if (this.role != null && ("ROLE_ADMIN".equalsIgnoreCase(this.role.getNom()) || "ROLE_SUPERADMIN".equalsIgnoreCase(this.role.getNom()))) {
+                this.userType = TypeUtilisateur.TENANT;
+            } else {
+                this.userType = TypeUtilisateur.MEMBRE_TENANT;
+            }
         }
     }
 
@@ -78,6 +93,11 @@ public class User implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Set<GrantedAuthority> authorities = new HashSet<>();
+
+        if (this.userType == TypeUtilisateur.CLIENT || this.clientId != null) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_CLIENT"));
+            authorities.add(new SimpleGrantedAuthority("ESPACE_CLIENT_ACCESS"));
+        }
 
         if (this.role != null && this.role.getNom() != null) {
             String roleName = this.role.getNom();
@@ -226,5 +246,30 @@ public class User implements UserDetails {
 
     public void setMustChangePassword(Boolean mustChangePassword) {
         this.mustChangePassword = mustChangePassword;
+    }
+
+    public TypeUtilisateur getUserType() {
+        if (this.userType != null) {
+            return this.userType;
+        }
+        if (this.clientId != null || (this.role != null && "ROLE_CLIENT".equalsIgnoreCase(this.role.getNom()))) {
+            return TypeUtilisateur.CLIENT;
+        }
+        if (this.role != null && ("ROLE_ADMIN".equalsIgnoreCase(this.role.getNom()) || "ROLE_SUPERADMIN".equalsIgnoreCase(this.role.getNom()))) {
+            return TypeUtilisateur.TENANT;
+        }
+        return TypeUtilisateur.MEMBRE_TENANT;
+    }
+
+    public void setUserType(TypeUtilisateur userType) {
+        this.userType = userType;
+    }
+
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
     }
 }

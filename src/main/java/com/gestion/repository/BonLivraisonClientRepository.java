@@ -12,7 +12,9 @@ import java.util.Optional;
 public interface BonLivraisonClientRepository extends JpaRepository<BonLivraisonClient, Long>, BonLivraisonClientRepositoryCustom {
     List<BonLivraisonClient> findByPointDeVenteId(Long pointDeVenteId);
     Optional<BonLivraisonClient> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
+    Optional<BonLivraisonClient> findByIdAndClientId(Long id, Long clientId);
     List<BonLivraisonClient> findByClientIdAndPointDeVenteId(Long clientId, Long pointDeVenteId);
+    List<BonLivraisonClient> findByClientIdOrderByDateBlDesc(Long clientId);
     List<BonLivraisonClient> findByCommandeClientIdAndPointDeVenteId(Long commandeClientId, Long pointDeVenteId);
     @org.springframework.data.jpa.repository.Query("SELECT DISTINCT bl FROM BonLivraisonClient bl LEFT JOIN bl.commandes c WHERE bl.commandeClient.id = :commandeId OR c.id = :commandeId")
     List<BonLivraisonClient> findAllByCommandeId(@org.springframework.data.repository.query.Param("commandeId") Long commandeId);
@@ -23,4 +25,3 @@ public interface BonLivraisonClientRepository extends JpaRepository<BonLivraison
     boolean existsByNumeroBl(String numeroBl);
     Optional<BonLivraisonClient> findByPointDeVenteIdAndNumeroBl(Long pointDeVenteId, String numeroBl);
 }
-

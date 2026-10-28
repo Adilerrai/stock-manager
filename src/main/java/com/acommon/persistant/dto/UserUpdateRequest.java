@@ -1,6 +1,7 @@
 package com.acommon.persistant.dto;
 
 import com.acommon.persistant.enums.Genre;
+import com.acommon.persistant.enums.TypeUtilisateur;
 import jakarta.validation.constraints.Email;
 
 public class UserUpdateRequest {
@@ -16,6 +17,8 @@ public class UserUpdateRequest {
     private String role;
     private Long pointDeVenteId;
     private Boolean enabled;
+    private TypeUtilisateur userType;
+    private Long clientId;
 
     public UserUpdateRequest() {}
 
@@ -82,5 +85,21 @@ public class UserUpdateRequest {
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public TypeUtilisateur getUserType() {
+        return userType;
+    }
+
+    public void setUserType(TypeUtilisateur userType) {
+        this.userType = userType;
+    }
+
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
     }
 }

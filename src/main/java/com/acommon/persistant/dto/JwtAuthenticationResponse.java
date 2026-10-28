@@ -1,6 +1,7 @@
 package com.acommon.persistant.dto;
 
 import com.acommon.persistant.enums.Genre;
+import com.acommon.persistant.enums.TypeUtilisateur;
 
 public class JwtAuthenticationResponse {
     private String token;
@@ -18,6 +19,8 @@ public class JwtAuthenticationResponse {
     private String nomPointDeVente;
     private Boolean mustChangePassword;
     private String couleursTenant;
+    private TypeUtilisateur userType;
+    private Long clientId;
 
     public JwtAuthenticationResponse() {
     }
@@ -39,6 +42,8 @@ public class JwtAuthenticationResponse {
         this.nomPointDeVente = builder.nomPointDeVente;
         this.mustChangePassword = builder.mustChangePassword;
         this.couleursTenant = builder.couleursTenant;
+        this.userType = builder.userType;
+        this.clientId = builder.clientId;
     }
 
     // Static builder method
@@ -63,6 +68,8 @@ public class JwtAuthenticationResponse {
         private String nomPointDeVente;
         private Boolean mustChangePassword;
         private String couleursTenant;
+        private TypeUtilisateur userType;
+        private Long clientId;
 
         public Builder token(String token) {
             this.token = token;
@@ -136,6 +143,16 @@ public class JwtAuthenticationResponse {
 
         public Builder couleursTenant(String couleursTenant) {
             this.couleursTenant = couleursTenant;
+            return this;
+        }
+
+        public Builder userType(TypeUtilisateur userType) {
+            this.userType = userType;
+            return this;
+        }
+
+        public Builder clientId(Long clientId) {
+            this.clientId = clientId;
             return this;
         }
 
@@ -263,5 +280,21 @@ public class JwtAuthenticationResponse {
 
     public void setCouleursTenant(String couleursTenant) {
         this.couleursTenant = couleursTenant;
+    }
+
+    public TypeUtilisateur getUserType() {
+        return userType;
+    }
+
+    public void setUserType(TypeUtilisateur userType) {
+        this.userType = userType;
+    }
+
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
     }
 }

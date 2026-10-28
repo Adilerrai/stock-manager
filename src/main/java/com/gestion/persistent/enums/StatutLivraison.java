@@ -3,6 +3,7 @@ package com.gestion.persistent.enums;
 public enum StatutLivraison {
     BROUILLON("Brouillon"),
     EN_ATTENTE("En attente"),
+    EXPEDIE("Expédiée"),
     EN_LIVRAISON("En livraison"),
     PARTIELLE("Partiellement livrée"),
     LIVREE("Livrée"),

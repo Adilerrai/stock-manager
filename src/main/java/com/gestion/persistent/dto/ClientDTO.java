@@ -32,6 +32,8 @@ public class ClientDTO {
     private BigDecimal remiseDefaut;
     private Long commercialId;
     private String commercialNom;
+    private Long userId;
+    private Boolean hasUserAccount;
     private BigDecimal creditAutorise;
     private BigDecimal creditUtilise;
     private BigDecimal creditDisponible; // dérivé
@@ -162,4 +164,14 @@ public class ClientDTO {
 
     public String getCommercialNom() { return commercialNom; }
     public void setCommercialNom(String commercialNom) { this.commercialNom = commercialNom; }
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public Boolean getHasUserAccount() {
+        return hasUserAccount != null ? hasUserAccount : (userId != null);
+    }
+    public void setHasUserAccount(Boolean hasUserAccount) {
+        this.hasUserAccount = hasUserAccount;
+    }
 }

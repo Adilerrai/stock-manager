@@ -70,6 +70,48 @@ public class BonLivraisonClientController {
         return ResponseEntity.ok(bonLivraisonClientService.creerBonLivraisonClient(blDto));
     }
 
+    @PostMapping("/{id}/expedier")
+    public ResponseEntity<BonLivraisonClientDTO> expedierBL(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long livreurId,
+            @RequestBody(required = false) java.util.Map<String, Object> body) {
+        Long effectiveLivreurId = livreurId;
+        String observations = null;
+        if (body != null) {
+            if (effectiveLivreurId == null && body.get("livreurId") != null) {
+                try {
+                    effectiveLivreurId = Long.valueOf(body.get("livreurId").toString());
+                } catch (Exception ignored) {}
+            }
+            if (body.get("observations") != null) {
+                observations = body.get("observations").toString();
+            }
+        }
+        return ResponseEntity.ok(bonLivraisonClientService.expedierBL(id, effectiveLivreurId, observations));
+    }
+
+    @PostMapping("/{id}/valider-livraison")
+    public ResponseEntity<BonLivraisonClientDTO> validerLivraisonParLivreur(
+            @PathVariable Long id,
+            @RequestParam(required = false) Long livreurId,
+            @RequestBody(required = false) java.util.Map<String, Object> body) {
+        Long effectiveLivreurId = livreurId;
+        String commentaireLivreur = null;
+        if (body != null) {
+            if (effectiveLivreurId == null && body.get("livreurId") != null) {
+                try {
+                    effectiveLivreurId = Long.valueOf(body.get("livreurId").toString());
+                } catch (Exception ignored) {}
+            }
+            if (body.get("commentaireLivreur") != null) {
+                commentaireLivreur = body.get("commentaireLivreur").toString();
+            } else if (body.get("commentaire") != null) {
+                commentaireLivreur = body.get("commentaire").toString();
+            }
+        }
+        return ResponseEntity.ok(bonLivraisonClientService.validerLivraisonParLivreur(id, effectiveLivreurId, commentaireLivreur));
+    }
+
     @PostMapping("/{id}/valider")
     public ResponseEntity<BonLivraisonClientDTO> validerEtExpedierBL(@PathVariable Long id) {
         return ResponseEntity.ok(bonLivraisonClientService.validerEtExpedierBL(id));
@@ -97,8 +139,18 @@ public class BonLivraisonClientController {
         }
         if (effectiveStatut != null && "BROUILLON".equalsIgnoreCase(effectiveStatut.trim())) {
             return ResponseEntity.ok(bonLivraisonClientService.remettreEnBrouillon(id));
+        } else if (effectiveStatut != null && ("EXPEDIE".equalsIgnoreCase(effectiveStatut.trim()) || "EXPEDIEE".equalsIgnoreCase(effectiveStatut.trim()))) {
+            Long livreurId = null;
+            if (body != null && body.get("livreurId") != null) {
+                try { livreurId = Long.valueOf(body.get("livreurId")); } catch (Exception ignored) {}
+            }
+            return ResponseEntity.ok(bonLivraisonClientService.expedierBL(id, livreurId, body != null ? body.get("observations") : null));
         } else if (effectiveStatut != null && ("LIVREE".equalsIgnoreCase(effectiveStatut.trim()) || "VALIDEE".equalsIgnoreCase(effectiveStatut.trim()))) {
-            return ResponseEntity.ok(bonLivraisonClientService.validerEtExpedierBL(id));
+            Long livreurId = null;
+            if (body != null && body.get("livreurId") != null) {
+                try { livreurId = Long.valueOf(body.get("livreurId")); } catch (Exception ignored) {}
+            }
+            return ResponseEntity.ok(bonLivraisonClientService.validerLivraisonParLivreur(id, livreurId, body != null ? body.get("commentaireLivreur") : null));
         } else if (effectiveStatut != null && "ANNULEE".equalsIgnoreCase(effectiveStatut.trim())) {
             return ResponseEntity.ok(bonLivraisonClientService.annulerBonLivraisonClient(id));
         }

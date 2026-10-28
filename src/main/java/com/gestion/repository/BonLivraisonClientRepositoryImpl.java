@@ -34,10 +34,11 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
         CriteriaQuery<BonLivraisonClient> query = cb.createQuery(BonLivraisonClient.class);
         Root<BonLivraisonClient> root = query.from(BonLivraisonClient.class);
 
-        // Fetch joins ToOne pour éviter le N+1 sur client, commandeClient, facture
+        // Fetch joins ToOne pour éviter le N+1 sur client, commandeClient, facture, livreur
         root.fetch("client", JoinType.LEFT);
         root.fetch("commandeClient", JoinType.LEFT);
         root.fetch("facture", JoinType.LEFT);
+        root.fetch("livreur", JoinType.LEFT);
 
         List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
@@ -125,8 +126,8 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
                     cb.or(
                             cb.like(cb.lower(cmdJoin.get("numeroCommande")), cmdPattern),
                             cb.and(
-                                    cb.isNotNull(cmdJoin.get("numeroCommandeExterne")),
-                                    cb.like(cb.lower(cmdJoin.get("numeroCommandeExterne")), cmdPattern)
+                                     cb.isNotNull(cmdJoin.get("numeroCommandeExterne")),
+                                     cb.like(cb.lower(cmdJoin.get("numeroCommandeExterne")), cmdPattern)
                             )
                     )
             );
@@ -174,6 +175,10 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
 
         if (criteria.getClientId() != null) {
             predicates.add(cb.equal(root.get("client").get("id"), criteria.getClientId()));
+        }
+
+        if (criteria.getLivreurId() != null) {
+            predicates.add(cb.equal(root.get("livreur").get("id"), criteria.getLivreurId()));
         }
 
         if (criteria.getClientNom() != null && !criteria.getClientNom().trim().isEmpty()) {

@@ -1,6 +1,7 @@
 package com.acommon.service;
 
 import com.acommon.persistant.dto.*;
+import com.acommon.persistant.enums.TypeUtilisateur;
 import com.acommon.persistant.model.PointDeVente;
 import com.acommon.persistant.model.Role;
 import com.acommon.persistant.model.TenantContext;
@@ -154,7 +155,7 @@ public class UserService {
                     throw new AccessDeniedException("Accès refusé : vous ne pouvez créer des utilisateurs que pour votre propre agence / point de vente (ID " + adminPdv.getId() + ")");
                 }
                 targetPointDeVente = adminPdv;
-                targetTenantId = (adminPdv.getTenantId() != null && adminPdv.getTenantId() > 0)
+                targetTenantId = (adminPdv.getTenantId() != null && targetPdvTenantIdSafe(adminPdv) > 0)
                         ? adminPdv.getTenantId()
                         : adminPdv.getId();
             } else if (currentTenant != null) {
@@ -184,7 +185,9 @@ public class UserService {
 
         // Vérifier le rôle
         String roleNom = request.getRole();
-        if (!roleNom.startsWith("ROLE_")) {
+        if (roleNom == null || roleNom.isBlank()) {
+            roleNom = (request.getUserType() == TypeUtilisateur.CLIENT || request.getClientId() != null) ? "ROLE_CLIENT" : "ROLE_EMPLOYE";
+        } else if (!roleNom.startsWith("ROLE_")) {
             roleNom = "ROLE_" + roleNom;
         }
 
@@ -195,7 +198,14 @@ public class UserService {
 
         final String finalRoleNom = roleNom;
         Role role = roleRepository.findByNom(finalRoleNom)
-                .orElseThrow(() -> new IllegalArgumentException("Rôle '" + finalRoleNom + "' introuvable"));
+                .orElseGet(() -> {
+                    if ("ROLE_CLIENT".equals(finalRoleNom) || "ROLE_LIVREUR".equals(finalRoleNom)) {
+                        Role newRole = new Role();
+                        newRole.setNom(finalRoleNom);
+                        return roleRepository.save(newRole);
+                    }
+                    throw new IllegalArgumentException("Rôle '" + finalRoleNom + "' introuvable");
+                });
 
         User user = new User();
         user.setEmail(request.getEmail());
@@ -211,6 +221,16 @@ public class UserService {
                 : null;
         user.setMereId(explicitMereId);
         user.setPointDeVente(targetPointDeVente);
+        user.setClientId(request.getClientId());
+        if (request.getUserType() != null) {
+            user.setUserType(request.getUserType());
+        } else if (request.getClientId() != null || "ROLE_CLIENT".equalsIgnoreCase(finalRoleNom)) {
+            user.setUserType(TypeUtilisateur.CLIENT);
+        } else if ("ROLE_ADMIN".equalsIgnoreCase(finalRoleNom) || "ROLE_SUPERADMIN".equalsIgnoreCase(finalRoleNom)) {
+            user.setUserType(TypeUtilisateur.TENANT);
+        } else {
+            user.setUserType(TypeUtilisateur.MEMBRE_TENANT);
+        }
         user.setEnabled(true);
         user.setAccountNonExpired(true);
         user.setAccountNonLocked(true);
@@ -218,6 +238,10 @@ public class UserService {
         user.setMustChangePassword(true);
 
         return mapToResponse(userRepository.save(user));
+    }
+
+    private long targetPdvTenantIdSafe(PointDeVente pdv) {
+        return pdv.getTenantId() != null ? pdv.getTenantId() : 0L;
     }
 
     @Transactional(readOnly = true)
@@ -317,6 +341,12 @@ public class UserService {
         if (request.getEnabled() != null) {
             user.setEnabled(request.getEnabled());
         }
+        if (request.getUserType() != null) {
+            user.setUserType(request.getUserType());
+        }
+        if (request.getClientId() != null) {
+            user.setClientId(request.getClientId());
+        }
 
         if (request.getPointDeVenteId() != null) {
             PointDeVente pdv = pointDeVenteRepository.findById(request.getPointDeVenteId())
@@ -352,7 +382,14 @@ public class UserService {
                 throw new AccessDeniedException("Seul un SuperAdmin peut assigner le rôle ROLE_SUPERADMIN");
             }
             Role role = roleRepository.findByNom(targetRoleNom)
-                    .orElseThrow(() -> new IllegalArgumentException("Rôle '" + targetRoleNom + "' introuvable"));
+                    .orElseGet(() -> {
+                        if ("ROLE_CLIENT".equals(targetRoleNom) || "ROLE_LIVREUR".equals(targetRoleNom)) {
+                            Role r = new Role();
+                            r.setNom(targetRoleNom);
+                            return roleRepository.save(r);
+                        }
+                        throw new IllegalArgumentException("Rôle '" + targetRoleNom + "' introuvable");
+                    });
             user.setRole(role);
         }
 
@@ -430,7 +467,7 @@ public class UserService {
         return user;
     }
 
-    private UserResponse mapToResponse(User user) {
+    public UserResponse mapToResponse(User user) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
         response.setEmail(user.getEmail());
@@ -446,6 +483,8 @@ public class UserService {
         }
         response.setEnabled(user.isEnabled());
         response.setMustChangePassword(user.getMustChangePassword());
+        response.setUserType(user.getUserType());
+        response.setClientId(user.getClientId());
         return response;
     }
 }

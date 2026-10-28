@@ -18,6 +18,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
+    Optional<User> findFirstByClientId(Long clientId);
+
+    Optional<User> findFirstByClientIdAndTenantId(Long clientId, Long tenantId);
+
+    List<User> findByClientId(Long clientId);
+
     List<User> findByPointDeVente_Id(Long pointDeVenteId);
 
     int countByPointDeVente_Id(Long pointDeVenteId);

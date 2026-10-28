@@ -13,6 +13,7 @@ public class BonLivraisonClientSearchCriteria {
     private String clientNom;
     private Long clientId;
     private Long commandeClientId;
+    private Long livreurId;
     private StatutLivraison statut;
     private Boolean facturee;
     private LocalDateTime dateDebut;
@@ -102,6 +103,9 @@ public class BonLivraisonClientSearchCriteria {
 
     public Long getCommandeClientId() { return commandeClientId; }
     public void setCommandeClientId(Long commandeClientId) { this.commandeClientId = commandeClientId; }
+
+    public Long getLivreurId() { return livreurId; }
+    public void setLivreurId(Long livreurId) { this.livreurId = livreurId; }
 
     public StatutLivraison getStatut() { return statut; }
     public void setStatut(StatutLivraison statut) { this.statut = statut; }

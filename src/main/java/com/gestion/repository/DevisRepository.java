@@ -18,6 +18,10 @@ public interface DevisRepository extends JpaRepository<Devis, Long>, DevisReposi
 
     List<Devis> findByClientIdOrderByDateDevisDesc(Long clientId);
 
+    List<Devis> findByClientIdAndPointDeVenteIdOrderByDateDevisDesc(Long clientId, Long pointDeVenteId);
+
+    Optional<Devis> findByIdAndClientId(Long id, Long clientId);
+
     List<Devis> findByStatutOrderByDateDevisDesc(StatutDevis statut);
 
     List<Devis> findByPointDeVenteIdOrderByDateDevisDesc(Long pointDeVenteId);

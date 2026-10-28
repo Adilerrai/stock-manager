@@ -69,6 +69,15 @@ public class Devis {
     @Column(name = "point_de_vente_id")
     private Long pointDeVenteId;
 
+    @Column(name = "reservation_client_id")
+    private Long reservationClientId;
+
+    @Column(name = "date_reponse_client")
+    private LocalDateTime dateReponseClient;
+
+    @Column(name = "motif_refus_client", length = 500)
+    private String motifRefusClient;
+
     @Column(name = "commande_generee_id")
     private Long commandeGenereeId;
 
@@ -240,6 +249,30 @@ public class Devis {
 
     public void setPointDeVenteId(Long pointDeVenteId) {
         this.pointDeVenteId = pointDeVenteId;
+    }
+
+    public Long getReservationClientId() {
+        return reservationClientId;
+    }
+
+    public void setReservationClientId(Long reservationClientId) {
+        this.reservationClientId = reservationClientId;
+    }
+
+    public LocalDateTime getDateReponseClient() {
+        return dateReponseClient;
+    }
+
+    public void setDateReponseClient(LocalDateTime dateReponseClient) {
+        this.dateReponseClient = dateReponseClient;
+    }
+
+    public String getMotifRefusClient() {
+        return motifRefusClient;
+    }
+
+    public void setMotifRefusClient(String motifRefusClient) {
+        this.motifRefusClient = motifRefusClient;
     }
 
     public Long getCommandeGenereeId() {

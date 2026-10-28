@@ -20,6 +20,11 @@ public class BonLivraisonClientDTO {
     private List<Long> commandeClientIds = new ArrayList<>();
     private List<String> commandeClientNumeros = new ArrayList<>();
     private StatutLivraison statut;
+    private Long livreurId;
+    private String livreurNom;
+    private LocalDateTime dateExpedition;
+    private LocalDateTime dateLivraisonEffective;
+    private String commentaireLivreur;
     private BigDecimal remiseGlobalePourcentage;
     private BigDecimal remiseGlobaleMontant;
     private BigDecimal montantTotal;
@@ -96,6 +101,21 @@ public class BonLivraisonClientDTO {
 
     public StatutLivraison getStatut() { return statut; }
     public void setStatut(StatutLivraison statut) { this.statut = statut; }
+
+    public Long getLivreurId() { return livreurId; }
+    public void setLivreurId(Long livreurId) { this.livreurId = livreurId; }
+
+    public String getLivreurNom() { return livreurNom; }
+    public void setLivreurNom(String livreurNom) { this.livreurNom = livreurNom; }
+
+    public LocalDateTime getDateExpedition() { return dateExpedition; }
+    public void setDateExpedition(LocalDateTime dateExpedition) { this.dateExpedition = dateExpedition; }
+
+    public LocalDateTime getDateLivraisonEffective() { return dateLivraisonEffective; }
+    public void setDateLivraisonEffective(LocalDateTime dateLivraisonEffective) { this.dateLivraisonEffective = dateLivraisonEffective; }
+
+    public String getCommentaireLivreur() { return commentaireLivreur; }
+    public void setCommentaireLivreur(String commentaireLivreur) { this.commentaireLivreur = commentaireLivreur; }
 
     public BigDecimal getRemiseGlobalePourcentage() { return remiseGlobalePourcentage != null ? remiseGlobalePourcentage : BigDecimal.ZERO; }
     public void setRemiseGlobalePourcentage(BigDecimal remiseGlobalePourcentage) { this.remiseGlobalePourcentage = remiseGlobalePourcentage; }

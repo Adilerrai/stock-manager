@@ -165,6 +165,8 @@ public class AuthService {
                 .nomPointDeVente(nomPdv)
                 .couleursTenant(couleursTenant)
                 .mustChangePassword(Boolean.TRUE.equals(authenticatedUser.getMustChangePassword()))
+                .userType(authenticatedUser.getUserType())
+                .clientId(authenticatedUser.getClientId())
                 .tokenType("Bearer")
                 .build();
     }

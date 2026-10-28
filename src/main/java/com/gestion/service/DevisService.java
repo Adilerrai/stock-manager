@@ -10,6 +10,7 @@ import com.gestion.persistent.dto.LigneDevisDTO;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.StatutDevis;
 import com.gestion.persistent.enums.StatutFacture;
+import com.gestion.persistent.enums.StatutReservationClient;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
 import org.springframework.context.annotation.Lazy;
@@ -22,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +39,9 @@ public class DevisService {
     private final FactureRepository factureRepository;
     private final CodificationService codificationService;
     private final StockRepository stockRepository;
+    private final ReservationClientRepository reservationClientRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public DevisService(DevisRepository devisRepository,
                         LigneDevisRepository ligneDevisRepository,
                         ClientRepository clientRepository,
@@ -48,7 +50,8 @@ public class DevisService {
                         @Lazy CommandeClientRepository commandeClientRepository,
                         @Lazy FactureRepository factureRepository,
                         CodificationService codificationService,
-                        @Lazy StockRepository stockRepository) {
+                        @Lazy StockRepository stockRepository,
+                        @Lazy ReservationClientRepository reservationClientRepository) {
         this.devisRepository = devisRepository;
         this.ligneDevisRepository = ligneDevisRepository;
         this.clientRepository = clientRepository;
@@ -58,6 +61,7 @@ public class DevisService {
         this.factureRepository = factureRepository;
         this.codificationService = codificationService;
         this.stockRepository = stockRepository;
+        this.reservationClientRepository = reservationClientRepository;
     }
 
     public DevisDTO enrichirDevisDto(DevisDTO dto) {
@@ -127,6 +131,8 @@ public class DevisService {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId != null) {
             devis.setPointDeVenteId(tenantId);
+        } else if (client.getPointDeVenteId() != null) {
+            devis.setPointDeVenteId(client.getPointDeVenteId());
         }
 
         if (dto.getNumeroDevis() != null && !dto.getNumeroDevis().trim().isEmpty()) {
@@ -142,6 +148,7 @@ public class DevisService {
         devis.setNotes(dto.getNotes() != null ? dto.getNotes() : dto.getObservations());
         devis.setNumeroAchatClient(dto.getNumeroAchatClient());
         devis.setConditionsPaiement(dto.getConditionsPaiement());
+        devis.setReservationClientId(dto.getReservationClientId());
         devis.setDateCreation(LocalDateTime.now());
 
         if (dto.getLignes() != null) {
@@ -186,7 +193,9 @@ public class DevisService {
         }
 
         devis.calculerTotaux();
-        return devisRepository.save(devis);
+        Devis saved = devisRepository.save(devis);
+        synchroniserReservationLiee(saved);
+        return saved;
     }
 
     public Devis modifierDevis(Long id, DevisDTO maj) {
@@ -200,6 +209,7 @@ public class DevisService {
         if (maj.getNumeroAchatClient() != null) existant.setNumeroAchatClient(maj.getNumeroAchatClient());
         if (maj.getConditionsPaiement() != null) existant.setConditionsPaiement(maj.getConditionsPaiement());
         if (maj.getStatut() != null) existant.setStatut(maj.getStatut());
+        if (maj.getReservationClientId() != null) existant.setReservationClientId(maj.getReservationClientId());
         if (maj.getCreeParId() != null) {
             userRepository.findById(maj.getCreeParId()).ifPresent(existant::setCreePar);
         } else if (maj.getUserId() != null) {
@@ -254,7 +264,9 @@ public class DevisService {
         }
 
         existant.calculerTotaux();
-        return devisRepository.save(existant);
+        Devis saved = devisRepository.save(existant);
+        synchroniserReservationLiee(saved);
+        return saved;
     }
 
     public Devis creerDevis(Devis devis, Long userId) {
@@ -304,7 +316,9 @@ public class DevisService {
         }
 
         devis.calculerTotaux();
-        return devisRepository.save(devis);
+        Devis saved = devisRepository.save(devis);
+        synchroniserReservationLiee(saved);
+        return saved;
     }
 
     public Devis modifierDevis(Long id, Devis maj) {
@@ -339,7 +353,9 @@ public class DevisService {
         }
 
         existant.calculerTotaux();
-        return devisRepository.save(existant);
+        Devis saved = devisRepository.save(existant);
+        synchroniserReservationLiee(saved);
+        return saved;
     }
 
     public Devis getDevisById(Long id) {
@@ -370,7 +386,12 @@ public class DevisService {
     public Devis changerStatut(Long id, StatutDevis statut) {
         Devis devis = getDevisById(id);
         devis.setStatut(statut);
-        return devisRepository.save(devis);
+        if (statut == StatutDevis.ACCEPTE || statut == StatutDevis.REFUSE) {
+            devis.setDateReponseClient(LocalDateTime.now());
+        }
+        Devis saved = devisRepository.save(devis);
+        synchroniserReservationLiee(saved);
+        return saved;
     }
 
     public void supprimerDevis(Long id) {
@@ -389,6 +410,9 @@ public class DevisService {
             commande.setClientTelephone(devis.getClient().getTelephone());
             commande.setClientEmail(devis.getClient().getEmail());
             commande.setAdresseLivraison(devis.getClient().getAdresse());
+        }
+        if (devis.getPointDeVenteId() != null) {
+            commande.setPointDeVenteId(devis.getPointDeVenteId());
         }
         commande.setDateCommande(LocalDateTime.now());
         commande.setStatut(StatutCommandeClient.CONFIRMEE);
@@ -428,9 +452,37 @@ public class DevisService {
 
         devis.setStatut(StatutDevis.TRANSFORME_EN_COMMANDE);
         devis.setCommandeGenereeId(commandeEnregistree.getId());
-        devisRepository.save(devis);
+        Devis savedDevis = devisRepository.save(devis);
+        synchroniserReservationLiee(savedDevis);
 
         return commandeEnregistree;
+    }
+
+    private void synchroniserReservationLiee(Devis devis) {
+        if (devis == null || reservationClientRepository == null) return;
+        java.util.Optional<ReservationClient> resOpt = java.util.Optional.empty();
+        if (devis.getReservationClientId() != null) {
+            resOpt = reservationClientRepository.findById(devis.getReservationClientId());
+        }
+        if (resOpt.isEmpty() && devis.getId() != null) {
+            resOpt = reservationClientRepository.findFirstByDevisGenereId(devis.getId());
+        }
+        resOpt.ifPresent(res -> {
+            res.setDevisGenereId(devis.getId());
+            if (devis.getCommandeGenereeId() != null) {
+                res.setCommandeGenereeId(devis.getCommandeGenereeId());
+            }
+            if (devis.getStatut() == StatutDevis.BROUILLON) {
+                res.setStatut(StatutReservationClient.EN_COURS_DEVIS);
+            } else if (devis.getStatut() == StatutDevis.ENVOYE) {
+                res.setStatut(StatutReservationClient.DEVIS_ENVOYE);
+            } else if (devis.getStatut() == StatutDevis.ACCEPTE || devis.getStatut() == StatutDevis.TRANSFORME_EN_COMMANDE) {
+                res.setStatut(StatutReservationClient.ACCEPTEE);
+            } else if (devis.getStatut() == StatutDevis.REFUSE) {
+                res.setStatut(StatutReservationClient.REFUSEE);
+            }
+            reservationClientRepository.save(res);
+        });
     }
 
     public Facture transformerEnFacture(Long devisId, Long userId) {

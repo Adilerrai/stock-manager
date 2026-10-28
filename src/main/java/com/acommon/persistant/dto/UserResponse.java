@@ -1,6 +1,7 @@
 package com.acommon.persistant.dto;
 
 import com.acommon.persistant.enums.Genre;
+import com.acommon.persistant.enums.TypeUtilisateur;
 
 public class UserResponse {
 
@@ -16,6 +17,8 @@ public class UserResponse {
     private String nomPointDeVente;
     private Boolean enabled;
     private Boolean mustChangePassword;
+    private TypeUtilisateur userType;
+    private Long clientId;
 
     public UserResponse() {}
 
@@ -114,5 +117,21 @@ public class UserResponse {
 
     public void setMustChangePassword(Boolean mustChangePassword) {
         this.mustChangePassword = mustChangePassword;
+    }
+
+    public TypeUtilisateur getUserType() {
+        return userType;
+    }
+
+    public void setUserType(TypeUtilisateur userType) {
+        this.userType = userType;
+    }
+
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
     }
 }

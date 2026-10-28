@@ -12,6 +12,7 @@ public interface ClientMapper {
     @Mapping(target = "creditDisponible", expression = "java(client.getCreditDisponible())")
     @Mapping(target = "commercialId", source = "commercial.id")
     @Mapping(target = "commercialNom", expression = "java(client.getCommercial() != null ? (client.getCommercial().getNomComplet() != null ? client.getCommercial().getNomComplet() : client.getCommercial().getUsername()) : null)")
+    @Mapping(target = "hasUserAccount", expression = "java(client.getUserId() != null)")
     ClientDTO toDto(Client client);
 
     @Mapping(target = "ventes", ignore = true)
@@ -30,5 +31,3 @@ public interface ClientMapper {
     @Mapping(target = "dateDerniereVisite", ignore = true)
     void updateEntityFromDto(ClientDTO dto, @MappingTarget Client client);
 }
-
-

@@ -13,6 +13,8 @@ public interface BonLivraisonClientMapper {
     @Mapping(target = "clientTelephone", source = "client.telephone")
     @Mapping(target = "commandeClientId", source = "commandeClient.id")
     @Mapping(target = "commandeClientNumero", source = "commandeClient.numeroCommande")
+    @Mapping(target = "livreurId", source = "livreur.id")
+    @Mapping(target = "livreurNom", expression = "java(entity.getLivreur() != null ? (entity.getLivreur().getNomComplet() != null ? entity.getLivreur().getNomComplet() : entity.getLivreur().getUsername()) : null)")
     @Mapping(target = "numeroCommandeExterne", expression = "java(entity.getCommandeClient() != null && entity.getCommandeClient().getNumeroCommandeExterne() != null ? entity.getCommandeClient().getNumeroCommandeExterne() : (entity.getCommandes() != null && !entity.getCommandes().isEmpty() ? entity.getCommandes().stream().map(com.gestion.persistent.model.CommandeClient::getNumeroCommandeExterne).filter(java.util.Objects::nonNull).findFirst().orElse(null) : null))")
     @Mapping(target = "bcClient", expression = "java(entity.getCommandeClient() != null && entity.getCommandeClient().getNumeroCommandeExterne() != null ? entity.getCommandeClient().getNumeroCommandeExterne() : (entity.getCommandes() != null && !entity.getCommandes().isEmpty() ? entity.getCommandes().stream().map(com.gestion.persistent.model.CommandeClient::getNumeroCommandeExterne).filter(java.util.Objects::nonNull).findFirst().orElse(null) : null))")
     @Mapping(target = "commandeClientIds", expression = "java(entity.getCommandes() != null ? entity.getCommandes().stream().map(com.gestion.persistent.model.CommandeClient::getId).collect(java.util.stream.Collectors.toList()) : java.util.Collections.emptyList())")
@@ -36,6 +38,7 @@ public interface BonLivraisonClientMapper {
     @Mapping(target = "commandes", ignore = true)
     @Mapping(target = "facture", ignore = true)
     @Mapping(target = "lignes", ignore = true)
+    @Mapping(target = "livreur", ignore = true)
     BonLivraisonClient toEntity(BonLivraisonClientDTO dto);
 
     default com.gestion.persistent.dto.FactureDTO mapFactureIfNotAnnulee(com.gestion.persistent.model.Facture facture) {

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 051 :
+      Espace Client, TypeUtilisateur (TENANT, MEMBRE_TENANT, CLIENT),
+      Statut EXPEDIE sur Bons de Livraison + validation Livreur,
+      Tables reservations_client et lignes_reservation_client,
+      et rattachement Devis <-> Réservation Client.
+    -->
+    <changeSet id="051-espace-client-reservations-et-statut-expedie" author="erp-commercial">
+        <sql splitStatements="true">
+            -- 1. Colonnes user_type et client_id dans la table users
+            ALTER TABLE IF EXISTS users
+                ADD COLUMN IF NOT EXISTS user_type VARCHAR(30) DEFAULT 'MEMBRE_TENANT';
+
+            ALTER TABLE IF EXISTS users
+                ADD COLUMN IF NOT EXISTS client_id BIGINT;
+
+            CREATE INDEX IF NOT EXISTS idx_users_client_id ON users(client_id);
+
+            -- 2. Colonne user_id dans la table clients
+            ALTER TABLE IF EXISTS clients
+                ADD COLUMN IF NOT EXISTS user_id BIGINT;
+
+            CREATE INDEX IF NOT EXISTS idx_clients_user_id ON clients(user_id);
+
+            -- 3. Rôles ROLE_CLIENT et ROLE_LIVREUR
+            INSERT INTO roles (name)
+            SELECT 'ROLE_CLIENT'
+            WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_CLIENT');
+
+            INSERT INTO roles (name)
+            SELECT 'ROLE_LIVREUR'
+            WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_LIVREUR');
+
+            -- 4. Colonnes expédition et validation livreur sur bons_livraison_client
+            ALTER TABLE IF EXISTS bons_livraison_client
+                ADD COLUMN IF NOT EXISTS livreur_user_id BIGINT,
+                ADD COLUMN IF NOT EXISTS date_expedition TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS date_livraison_effective TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS commentaire_livreur TEXT;
+
+            CREATE INDEX IF NOT EXISTS idx_bl_client_livreur ON bons_livraison_client(livreur_user_id);
+
+            -- 5. Mise à jour des contraintes CHECK sur statut livraison pour autoriser EXPEDIE et EN_COURS
+            ALTER TABLE IF EXISTS bons_livraison_client
+                DROP CONSTRAINT IF EXISTS bons_livraison_client_statut_check;
+
+            ALTER TABLE IF EXISTS bons_livraison_client
+                ADD CONSTRAINT bons_livraison_client_statut_check
+                CHECK (statut IN (
+                    'BROUILLON',
+                    'EN_ATTENTE',
+                    'EN_COURS',
+                    'EN_LIVRAISON',
+                    'EXPEDIE',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+
+            ALTER TABLE IF EXISTS livraisons
+                DROP CONSTRAINT IF EXISTS livraisons_statut_check;
+
+            ALTER TABLE IF EXISTS livraisons
+                ADD CONSTRAINT livraisons_statut_check
+                CHECK (statut IN (
+                    'BROUILLON',
+                    'EN_ATTENTE',
+                    'EN_COURS',
+                    'EN_LIVRAISON',
+                    'EXPEDIE',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+
+            ALTER TABLE IF EXISTS commandes
+                DROP CONSTRAINT IF EXISTS commandes_statut_livraison_check;
+
+            ALTER TABLE IF EXISTS commandes
+                ADD CONSTRAINT commandes_statut_livraison_check
+                CHECK (statut_livraison IN (
+                    'BROUILLON',
+                    'EN_ATTENTE',
+                    'EN_COURS',
+                    'EN_LIVRAISON',
+                    'EXPEDIE',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+
+            -- 6. Colonnes reservation_client_id, date_reponse_client, motif_refus_client sur devis
+            ALTER TABLE IF EXISTS devis
+                ADD COLUMN IF NOT EXISTS reservation_client_id BIGINT,
+                ADD COLUMN IF NOT EXISTS date_reponse_client TIMESTAMP,
+                ADD COLUMN IF NOT EXISTS motif_refus_client VARCHAR(500);
+
+            CREATE INDEX IF NOT EXISTS idx_devis_reservation_client ON devis(reservation_client_id);
+
+            -- 7. Table reservations_client
+            CREATE TABLE IF NOT EXISTS reservations_client (
+                id BIGSERIAL PRIMARY KEY,
+                numero_reservation VARCHAR(50) NOT NULL UNIQUE,
+                date_reservation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                date_livraison_souhaitee DATE,
+                client_id BIGINT NOT NULL REFERENCES clients(id),
+                cree_par_user_id BIGINT REFERENCES users(id),
+                statut VARCHAR(40) NOT NULL DEFAULT 'SOUMISE',
+                observations_client TEXT,
+                notes_tenant TEXT,
+                devis_genere_id BIGINT,
+                commande_generee_id BIGINT,
+                point_de_vente_id BIGINT,
+                date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                date_modification TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_reservations_client_tenant ON reservations_client(point_de_vente_id, date_reservation DESC);
+            CREATE INDEX IF NOT EXISTS idx_reservations_client_client ON reservations_client(client_id, date_reservation DESC);
+            CREATE INDEX IF NOT EXISTS idx_reservations_client_statut ON reservations_client(point_de_vente_id, statut);
+
+            -- 8. Table lignes_reservation_client
+            CREATE TABLE IF NOT EXISTS lignes_reservation_client (
+                id BIGSERIAL PRIMARY KEY,
+                reservation_client_id BIGINT NOT NULL REFERENCES reservations_client(id) ON DELETE CASCADE,
+                produit_id BIGINT NOT NULL REFERENCES produits(id),
+                quantite_demandee NUMERIC(19, 4) NOT NULL DEFAULT 1,
+                remarque VARCHAR(500)
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_lignes_reservation_client_res ON lignes_reservation_client(reservation_client_id);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

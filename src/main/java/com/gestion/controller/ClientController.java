@@ -1,20 +1,20 @@
 package com.gestion.controller;
 
-import com.gestion.persistent.enums.CategorieClient;
+import com.acommon.persistant.dto.UserResponse;
 import com.gestion.persistent.dto.ClientDTO;
+import com.gestion.persistent.dto.ClientSearchCriteria;
+import com.gestion.persistent.dto.CreerCompteClientRequest;
 import com.gestion.persistent.model.Client;
 import com.gestion.service.ClientService;
 import com.gestion.mapper.ClientMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import com.gestion.persistent.dto.ClientSearchCriteria;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -80,5 +80,17 @@ public class ClientController {
         List<ClientDTO> dtos = clients.stream().map(clientMapper::toDto).collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
-}
 
+    @PostMapping("/{id}/creer-compte-utilisateur")
+    public ResponseEntity<UserResponse> creerCompteUtilisateurClient(
+            @PathVariable Long id,
+            @RequestBody(required = false) CreerCompteClientRequest request) {
+        UserResponse user = clientService.creerCompteUtilisateurClient(id, request);
+        return new ResponseEntity<>(user, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/{id}/compte-utilisateur")
+    public ResponseEntity<UserResponse> getCompteUtilisateurClient(@PathVariable Long id) {
+        return ResponseEntity.ok(clientService.getCompteUtilisateurClient(id));
+    }
+}

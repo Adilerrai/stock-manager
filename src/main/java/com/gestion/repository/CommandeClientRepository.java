@@ -13,9 +13,14 @@ import java.util.Optional;
 
 @Repository
 public interface CommandeClientRepository extends JpaRepository<CommandeClient, Long>, CommandeClientRepositoryCustom {
-    
 
     List<CommandeClient> findByPointDeVenteId(Long pointDeVenteId);
+
+    List<CommandeClient> findByClientIdAndPointDeVenteIdOrderByDateCommandeDesc(Long clientId, Long pointDeVenteId);
+
+    List<CommandeClient> findByClientIdOrderByDateCommandeDesc(Long clientId);
+
+    Optional<CommandeClient> findByIdAndClientId(Long id, Long clientId);
 
     Optional<CommandeClient> findByIdAndPointDeVenteId(Long id, Long pointDeVenteId);
 
@@ -24,7 +29,6 @@ public interface CommandeClientRepository extends JpaRepository<CommandeClient, 
     List<CommandeClient> findByStatut(StatutCommandeClient statut);
 
     List<CommandeClient> findByStatutAndPointDeVenteId(StatutCommandeClient statut, Long pointDeVenteId);
-
 
     @Query("SELECT c FROM CommandeClient c WHERE  c.dateCommande BETWEEN :dateDebut AND :dateFin")
     List<CommandeClient> findDateCommandeBetween(

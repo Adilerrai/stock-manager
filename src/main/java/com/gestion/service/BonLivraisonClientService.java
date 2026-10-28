@@ -2,15 +2,15 @@ package com.gestion.service;
 
 import com.acommon.exception.CommonException;
 import com.acommon.persistant.model.TenantContext;
+import com.acommon.persistant.model.User;
+import com.acommon.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import com.gestion.mapper.BonLivraisonClientMapper;
 import com.gestion.persistent.dto.BonLivraisonClientDTO;
 import com.gestion.persistent.dto.BonLivraisonClientSearchCriteria;
 import com.gestion.persistent.enums.StatutLivraison;
-import com.gestion.persistent.enums.ActionAudit;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.enums.TypeMouvement;
-import com.gestion.persistent.enums.QualiteProduit;
 import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.persistent.model.LigneBonLivraisonClient;
 import com.gestion.persistent.model.LigneCommandeClient;
@@ -32,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,7 +51,9 @@ public class BonLivraisonClientService {
     private final AuditService auditService;
     private final GedService gedService;
     private final EntrepriseProfileService entrepriseProfileService;
+    private final UserRepository userRepository;
 
+    @org.springframework.beans.factory.annotation.Autowired
     public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
                                      ClientRepository clientRepository,
                                      CommandeClientRepository commandeClientRepository,
@@ -64,7 +65,8 @@ public class BonLivraisonClientService {
                                      com.gestion.repository.StockRepository stockRepository,
                                      AuditService auditService,
                                      GedService gedService,
-                                     @org.springframework.context.annotation.Lazy EntrepriseProfileService entrepriseProfileService) {
+                                     @org.springframework.context.annotation.Lazy EntrepriseProfileService entrepriseProfileService,
+                                     UserRepository userRepository) {
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.clientRepository = clientRepository;
         this.commandeClientRepository = commandeClientRepository;
@@ -77,6 +79,7 @@ public class BonLivraisonClientService {
         this.auditService = auditService;
         this.gedService = gedService;
         this.entrepriseProfileService = entrepriseProfileService;
+        this.userRepository = userRepository;
     }
 
     public Page<BonLivraisonClient> searchBonsLivraison(BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
@@ -106,6 +109,10 @@ public class BonLivraisonClientService {
             bl.setNumeroBl(genererNumeroBL(dto.getDepotId()));
         }
         bl.setStatut(StatutLivraison.EN_ATTENTE);
+
+        if (dto.getLivreurId() != null && userRepository != null) {
+            userRepository.findById(dto.getLivreurId()).ifPresent(bl::setLivreur);
+        }
 
         // If order(s) linked, load them
         List<Long> targetCmdIds = new java.util.ArrayList<>();
@@ -239,7 +246,11 @@ public class BonLivraisonClientService {
         return bonLivraisonClientMapper.toDto(saved);
     }
 
-    public BonLivraisonClientDTO validerEtExpedierBL(Long blId) {
+    /**
+     * Expédie le Bon de Livraison : passe le statut à EXPEDIE, déduit le stock si non encore déduit,
+     * et affecte optionnellement un livreur chargé de valider la remise au client.
+     */
+    public BonLivraisonClientDTO expedierBL(Long blId, Long livreurId, String observations) {
         Long tenantId = TenantContext.getCurrentTenant();
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
 
@@ -248,22 +259,102 @@ public class BonLivraisonClientService {
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
 
         if (bl.getStatut() == StatutLivraison.LIVREE) {
-            throw new CommonException("Ce bon de livraison est déjà validé et expédié", HttpStatus.BAD_REQUEST);
+            throw new CommonException("Ce bon de livraison est déjà livré.", HttpStatus.BAD_REQUEST);
+        }
+        if (bl.getStatut() == StatutLivraison.EXPEDIE) {
+            if (livreurId != null && userRepository != null) {
+                userRepository.findById(livreurId).ifPresent(bl::setLivreur);
+            }
+            if (observations != null && !observations.isBlank()) {
+                bl.setObservations(observations);
+            }
+            return bonLivraisonClientMapper.toDto(bonLivraisonClientRepository.save(bl));
         }
 
         if (bl.getLignes() == null || bl.getLignes().isEmpty()) {
             throw new CommonException("Le bon de livraison ne contient aucune ligne à expédier", HttpStatus.BAD_REQUEST);
         }
 
+        destockerLignesBL(bl);
+
+        if (livreurId != null && userRepository != null) {
+            userRepository.findById(livreurId).ifPresent(bl::setLivreur);
+        }
+        if (observations != null && !observations.isBlank()) {
+            bl.setObservations(observations);
+        }
+        bl.setDateExpedition(LocalDateTime.now());
+        bl.setStatut(StatutLivraison.EXPEDIE);
+
+        BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+        return bonLivraisonClientMapper.toDto(saved);
+    }
+
+    /**
+     * Validation de la livraison effective par le livreur (ou par le tenant) :
+     * Passe le BL de EXPEDIE (ou EN_ATTENTE) à LIVREE, enregistre la date de livraison effective et met à jour les commandes liées.
+     */
+    public BonLivraisonClientDTO validerLivraisonParLivreur(Long blId, Long livreurId, String commentaireLivreur) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+
+        BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
+                .or(() -> bonLivraisonClientRepository.findById(blId))
+                .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
+
+        if (bl.getStatut() == StatutLivraison.LIVREE) {
+            throw new CommonException("Ce bon de livraison est déjà validé et livré", HttpStatus.BAD_REQUEST);
+        }
+        if (bl.getStatut() == StatutLivraison.ANNULEE) {
+            throw new CommonException("Impossible de valider un bon de livraison annulé", HttpStatus.BAD_REQUEST);
+        }
+        if (bl.getLignes() == null || bl.getLignes().isEmpty()) {
+            throw new CommonException("Le bon de livraison ne contient aucune ligne", HttpStatus.BAD_REQUEST);
+        }
+
+        // Si le BL n'était pas encore au statut EXPEDIE, on déstocke maintenant
+        if (bl.getStatut() != StatutLivraison.EXPEDIE) {
+            destockerLignesBL(bl);
+            if (bl.getDateExpedition() == null) {
+                bl.setDateExpedition(LocalDateTime.now());
+            }
+        }
+
+        if (livreurId != null && userRepository != null) {
+            userRepository.findById(livreurId).ifPresent(bl::setLivreur);
+        } else if (bl.getLivreur() == null && userRepository != null) {
+            try {
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getPrincipal() instanceof User u) {
+                    bl.setLivreur(u);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (commentaireLivreur != null && !commentaireLivreur.isBlank()) {
+            bl.setCommentaireLivreur(commentaireLivreur.trim());
+        }
+        bl.setDateLivraisonEffective(LocalDateTime.now());
+
+        mettreAJourCommandesLieesLorsLivraison(bl);
+        bl.setStatut(StatutLivraison.LIVREE);
+
+        BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+        return bonLivraisonClientMapper.toDto(saved);
+    }
+
+    public BonLivraisonClientDTO validerEtExpedierBL(Long blId) {
+        return validerLivraisonParLivreur(blId, null, null);
+    }
+
+    private void destockerLignesBL(BonLivraisonClient bl) {
         boolean isFromOrder = bl.getCommandeClient() != null;
 
-        // Subtract stock for each line item
         for (LigneBonLivraisonClient ligne : bl.getLignes()) {
             if (ligne.getProduit() == null) {
                 throw new CommonException("Une ligne de livraison ne comporte aucun produit associé", HttpStatus.BAD_REQUEST);
             }
 
-            // RÈGLE : Bloquer validation si le prix de vente est inférieur au prix minimum autorisé
             Produit produit = ligne.getProduit();
             if (produit.getPrixVenteMin() != null && produit.getPrixVenteMin().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal pu = ligne.getPrixVente() != null ? ligne.getPrixVente() : BigDecimal.ZERO;
@@ -291,10 +382,9 @@ public class BonLivraisonClientService {
                         (ex.getMessage() != null ? ex.getMessage() : "erreur lors du déstockage"), HttpStatus.BAD_REQUEST);
             }
         }
+    }
 
-        bl.setStatut(StatutLivraison.LIVREE);
-
-        // Update linked orders status and reliquats if any
+    private void mettreAJourCommandesLieesLorsLivraison(BonLivraisonClient bl) {
         java.util.Set<CommandeClient> allCommandes = new java.util.LinkedHashSet<>();
         if (bl.getCommandeClient() != null) {
             allCommandes.add(bl.getCommandeClient());
@@ -303,10 +393,6 @@ public class BonLivraisonClientService {
             allCommandes.addAll(bl.getCommandes());
         }
 
-        boolean toutLivreGlobal = true;
-        boolean auMoinsUneLivraisonGlobal = false;
-
-        // Calculate total available quantities in this BL per product
         java.util.Map<Long, BigDecimal> remainingBlQtyPerProduct = new java.util.HashMap<>();
         for (LigneBonLivraisonClient ligneBl : bl.getLignes()) {
             if (ligneBl.getProduit() == null || ligneBl.getProduit().getId() == null) continue;
@@ -338,7 +424,6 @@ public class BonLivraisonClientService {
                     }
                 }
 
-                // Déterminer si tout est livré ou livraison partielle pour cette commande
                 boolean toutLivre = true;
                 boolean auMoinsUneLivraison = false;
                 for (LigneCommandeClient lc : commande.getLignesCommande()) {
@@ -356,23 +441,12 @@ public class BonLivraisonClientService {
                     commande.setStatut(StatutCommandeClient.LIVREE);
                 } else if (auMoinsUneLivraison) {
                     commande.setStatut(StatutCommandeClient.LIVREE_PARTIELLE);
-                    toutLivreGlobal = false;
-                } else {
-                    toutLivreGlobal = false;
-                }
-                if (auMoinsUneLivraison) {
-                    auMoinsUneLivraisonGlobal = true;
                 }
             } else {
                 commande.setStatut(StatutCommandeClient.LIVREE);
             }
             commandeClientRepository.save(commande);
         }
-
-        bl.setStatut(StatutLivraison.LIVREE);
-
-        BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
-        return bonLivraisonClientMapper.toDto(saved);
     }
 
     public BonLivraisonClientDTO annulerBonLivraisonClient(Long blId) {
@@ -395,7 +469,7 @@ public class BonLivraisonClientService {
         }
 
         // Si le bon était déjà expédié / validé, on réintègre la marchandise dans le stock
-        if (bl.getStatut() == StatutLivraison.LIVREE) {
+        if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.EXPEDIE || bl.getStatut() == StatutLivraison.PARTIELLE) {
             for (LigneBonLivraisonClient ligne : bl.getLignes()) {
                 if (ligne.getProduit() != null) {
                     try {
@@ -459,8 +533,8 @@ public class BonLivraisonClientService {
             throw new CommonException("Impossible de remettre en brouillon un bon de livraison déjà facturé" + numFacture + ". Vous devez d'abord annuler la facture correspondante.", HttpStatus.BAD_REQUEST);
         }
 
-        // Si le bon était validé/expédié (LIVREE ou PARTIELLE), réintégrer le stock
-        if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE) {
+        // Si le bon était validé/expédié (LIVREE, PARTIELLE ou EXPEDIE), réintégrer le stock
+        if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE || bl.getStatut() == StatutLivraison.EXPEDIE) {
             for (LigneBonLivraisonClient ligne : bl.getLignes()) {
                 if (ligne.getProduit() != null) {
                     try {
@@ -481,42 +555,44 @@ public class BonLivraisonClientService {
                 }
             }
 
-            // Réajuster les quantités livrées sur les commandes client liées
-            java.util.Set<CommandeClient> allCommandes = new java.util.LinkedHashSet<>();
-            if (bl.getCommandeClient() != null) allCommandes.add(bl.getCommandeClient());
-            if (bl.getCommandes() != null) allCommandes.addAll(bl.getCommandes());
+            if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE) {
+                // Réajuster les quantités livrées sur les commandes client liées
+                java.util.Set<CommandeClient> allCommandes = new java.util.LinkedHashSet<>();
+                if (bl.getCommandeClient() != null) allCommandes.add(bl.getCommandeClient());
+                if (bl.getCommandes() != null) allCommandes.addAll(bl.getCommandes());
 
-            for (CommandeClient commande : allCommandes) {
-                if (commande.getLignesCommande() != null) {
-                    for (LigneBonLivraisonClient ligneBl : bl.getLignes()) {
-                        if (ligneBl.getProduit() == null) continue;
-                        for (LigneCommandeClient ligneCmd : commande.getLignesCommande()) {
-                            if (ligneCmd.getProduit() != null && ligneCmd.getProduit().getId().equals(ligneBl.getProduit().getId())) {
-                                BigDecimal dejaLivre = ligneCmd.getQuantiteLivree() != null ? ligneCmd.getQuantiteLivree() : BigDecimal.ZERO;
-                                BigDecimal qteBl = ligneBl.getQuantiteLivree() != null ? ligneBl.getQuantiteLivree() : BigDecimal.ZERO;
-                                BigDecimal newQte = dejaLivre.subtract(qteBl);
-                                if (newQte.compareTo(BigDecimal.ZERO) < 0) newQte = BigDecimal.ZERO;
-                                ligneCmd.setQuantiteLivree(newQte);
-                                ligneCmd.setQuantiteReliquat(ligneCmd.calculerReliquat());
-                                break;
+                for (CommandeClient commande : allCommandes) {
+                    if (commande.getLignesCommande() != null) {
+                        for (LigneBonLivraisonClient ligneBl : bl.getLignes()) {
+                            if (ligneBl.getProduit() == null) continue;
+                            for (LigneCommandeClient ligneCmd : commande.getLignesCommande()) {
+                                if (ligneCmd.getProduit() != null && ligneCmd.getProduit().getId().equals(ligneBl.getProduit().getId())) {
+                                    BigDecimal dejaLivre = ligneCmd.getQuantiteLivree() != null ? ligneCmd.getQuantiteLivree() : BigDecimal.ZERO;
+                                    BigDecimal qteBl = ligneBl.getQuantiteLivree() != null ? ligneBl.getQuantiteLivree() : BigDecimal.ZERO;
+                                    BigDecimal newQte = dejaLivre.subtract(qteBl);
+                                    if (newQte.compareTo(BigDecimal.ZERO) < 0) newQte = BigDecimal.ZERO;
+                                    ligneCmd.setQuantiteLivree(newQte);
+                                    ligneCmd.setQuantiteReliquat(ligneCmd.calculerReliquat());
+                                    break;
+                                }
                             }
                         }
-                    }
 
-                    boolean auMoinsUneLivraison = false;
-                    for (LigneCommandeClient lc : commande.getLignesCommande()) {
-                        if (Boolean.TRUE.equals(lc.getAnnulee())) continue;
-                        if (lc.getQuantiteLivree() != null && lc.getQuantiteLivree().compareTo(BigDecimal.ZERO) > 0) {
-                            auMoinsUneLivraison = true;
+                        boolean auMoinsUneLivraison = false;
+                        for (LigneCommandeClient lc : commande.getLignesCommande()) {
+                            if (Boolean.TRUE.equals(lc.getAnnulee())) continue;
+                            if (lc.getQuantiteLivree() != null && lc.getQuantiteLivree().compareTo(BigDecimal.ZERO) > 0) {
+                                auMoinsUneLivraison = true;
+                            }
                         }
-                    }
 
-                    if (auMoinsUneLivraison) {
-                        commande.setStatut(StatutCommandeClient.LIVREE_PARTIELLE);
-                    } else {
-                        commande.setStatut(StatutCommandeClient.CONFIRMEE);
+                        if (auMoinsUneLivraison) {
+                            commande.setStatut(StatutCommandeClient.LIVREE_PARTIELLE);
+                        } else {
+                            commande.setStatut(StatutCommandeClient.CONFIRMEE);
+                        }
+                        commandeClientRepository.save(commande);
                     }
-                    commandeClientRepository.save(commande);
                 }
             }
         }
@@ -538,8 +614,8 @@ public class BonLivraisonClientService {
             throw new CommonException("Impossible de modifier un bon de livraison déjà facturé.", HttpStatus.BAD_REQUEST);
         }
 
-        if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE) {
-            throw new CommonException("Ce bon de livraison est déjà expédié. Veuillez d'abord le remettre en brouillon pour le modifier.", HttpStatus.BAD_REQUEST);
+        if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE || bl.getStatut() == StatutLivraison.EXPEDIE) {
+            throw new CommonException("Ce bon de livraison est déjà expédié ou livré. Veuillez d'abord le remettre en brouillon pour le modifier.", HttpStatus.BAD_REQUEST);
         }
 
         // Modification manuelle du numéro de bon de livraison
@@ -561,6 +637,10 @@ public class BonLivraisonClientService {
             Client client = clientRepository.findById(dto.getClientId())
                     .orElseThrow(() -> new CommonException("Client non trouvé avec l'id: " + dto.getClientId(), HttpStatus.NOT_FOUND));
             bl.setClient(client);
+        }
+
+        if (dto.getLivreurId() != null && userRepository != null) {
+            userRepository.findById(dto.getLivreurId()).ifPresent(bl::setLivreur);
         }
 
         if (dto.getObservations() != null) {

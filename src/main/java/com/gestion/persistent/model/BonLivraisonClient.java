@@ -1,5 +1,6 @@
 package com.gestion.persistent.model;
 
+import com.acommon.persistant.model.User;
 import com.gestion.persistent.enums.StatutLivraison;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -34,6 +35,19 @@ public class BonLivraisonClient {
     @Enumerated(EnumType.STRING)
     @Column(name = "statut")
     private StatutLivraison statut = StatutLivraison.EN_ATTENTE;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "livreur_user_id")
+    private User livreur;
+
+    @Column(name = "date_expedition")
+    private LocalDateTime dateExpedition;
+
+    @Column(name = "date_livraison_effective")
+    private LocalDateTime dateLivraisonEffective;
+
+    @Column(name = "commentaire_livreur")
+    private String commentaireLivreur;
 
     @Column(name = "remise_globale_pourcentage", precision = 5, scale = 2)
     private BigDecimal remiseGlobalePourcentage = BigDecimal.ZERO;
@@ -132,6 +146,18 @@ public class BonLivraisonClient {
     public StatutLivraison getStatut() { return statut; }
     public void setStatut(StatutLivraison statut) { this.statut = statut; }
 
+    public User getLivreur() { return livreur; }
+    public void setLivreur(User livreur) { this.livreur = livreur; }
+
+    public LocalDateTime getDateExpedition() { return dateExpedition; }
+    public void setDateExpedition(LocalDateTime dateExpedition) { this.dateExpedition = dateExpedition; }
+
+    public LocalDateTime getDateLivraisonEffective() { return dateLivraisonEffective; }
+    public void setDateLivraisonEffective(LocalDateTime dateLivraisonEffective) { this.dateLivraisonEffective = dateLivraisonEffective; }
+
+    public String getCommentaireLivreur() { return commentaireLivreur; }
+    public void setCommentaireLivreur(String commentaireLivreur) { this.commentaireLivreur = commentaireLivreur; }
+
     public BigDecimal getMontantTotal() { return montantTotal; }
     public void setMontantTotal(BigDecimal montantTotal) { this.montantTotal = montantTotal; }
 
@@ -195,4 +221,3 @@ public class BonLivraisonClient {
     public List<CommandeClient> getCommandes() { return commandes; }
     public void setCommandes(List<CommandeClient> commandes) { this.commandes = commandes; }
 }
-

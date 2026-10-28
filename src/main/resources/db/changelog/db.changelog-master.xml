@@ -160,6 +160,7 @@
     <!-- Changeset 050 : Paramètre de modification manuelle des numéros BL, Commande et Facture -->
     <include file="changes/050-add-modification-numero-document-param.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 051 : Espace Client, Réservations d'articles et Statut EXPEDIE + Validation Livreur -->
+    <include file="changes/051-espace-client-reservations-et-statut-expedie.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
-
-

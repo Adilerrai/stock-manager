@@ -94,6 +94,9 @@ public class Client {
     @Transient
     private Long commercialId;
 
+    @Column(name = "user_id")
+    private Long userId;
+
     @Column(name = "credit_autorise")
     private BigDecimal creditAutorise = BigDecimal.ZERO;
 
@@ -381,6 +384,14 @@ public class Client {
         this.commercialId = commercialId;
     }
 
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
     public Long getPointDeVenteId() {
         return pointDeVenteId;
     }
@@ -401,4 +412,3 @@ public class Client {
         return getCreditDisponible().compareTo(montant) >= 0;
     }
 }
-

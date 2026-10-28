@@ -1,6 +1,7 @@
 package com.acommon.persistant.dto;
 
 import com.acommon.persistant.enums.Genre;
+import com.acommon.persistant.enums.TypeUtilisateur;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -30,6 +31,10 @@ public class UserCreationRequest {
 
     // Optionnel : spécifié par un SuperAdmin pour rattacher l'utilisateur à une entreprise spécifique
     private Long pointDeVenteId;
+
+    private TypeUtilisateur userType;
+
+    private Long clientId;
 
     public UserCreationRequest() {}
 
@@ -96,5 +101,21 @@ public class UserCreationRequest {
 
     public void setPointDeVenteId(Long pointDeVenteId) {
         this.pointDeVenteId = pointDeVenteId;
+    }
+
+    public TypeUtilisateur getUserType() {
+        return userType;
+    }
+
+    public void setUserType(TypeUtilisateur userType) {
+        this.userType = userType;
+    }
+
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
     }
 }
