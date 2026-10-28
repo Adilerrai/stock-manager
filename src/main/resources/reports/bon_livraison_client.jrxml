@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.16.0.final using JasperReports Library version 6.16.0-48579d909b7943b64690c65c71e07e0b80981928  -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="bon_livraison_client" pageWidth="595" pageHeight="842" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="20" uuid="fb996ef9-27d9-4413-9472-db85cd6aa80f">
-	<style name="zebra" mode="Opaque" backcolor="#FFFFFF">
-		<conditionalStyle>
-			<conditionExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></conditionExpression>
-			<style mode="Opaque" backcolor="#F9FAFB"/>
-		</conditionalStyle>
-	</style>
 	<parameter name="logoImage" class="java.awt.Image"/>
 	<parameter name="nomEntreprise" class="java.lang.String"/>
 	<parameter name="activiteEntreprise" class="java.lang.String"/>
@@ -71,6 +65,98 @@
 	<field name="montantTotal" class="java.math.BigDecimal"/>
 	<field name="montantHT" class="java.math.BigDecimal"/>
 	<field name="montantTTC" class="java.math.BigDecimal"/>
+
+	<!-- ============================================================ -->
+	<!-- BACKGROUND : Cadre de table continu jusqu'en bas (rectangle) -->
+	<!-- ============================================================ -->
+	<background>
+		<band height="822" splitType="Stretch">
+			<!-- PAGE 1 : Grand cadre rectangulaire continu du tableau -->
+			<rectangle radius="4">
+				<reportElement x="28" y="203" width="539" height="481" backcolor="#FFFFFF" uuid="b1e2f3a4-b001-4000-8000-000000000001">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
+			<!-- Séparateurs verticaux de colonnes (Page 1 - Avec prix) -->
+			<line>
+				<reportElement x="123" y="203" width="1" height="481" forecolor="#E2E8F0" uuid="b1e2f3a4-b002-4000-8000-000000000002">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1 && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="328" y="203" width="1" height="481" forecolor="#E2E8F0" uuid="b1e2f3a4-b003-4000-8000-000000000003">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1 && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="383" y="203" width="1" height="481" forecolor="#E2E8F0" uuid="b1e2f3a4-b004-4000-8000-000000000004">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1 && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="468" y="203" width="1" height="481" forecolor="#E2E8F0" uuid="b1e2f3a4-b005-4000-8000-000000000005">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<!-- Séparateurs verticaux de colonnes (Page 1 - Sans prix) -->
+			<line>
+				<reportElement x="153" y="203" width="1" height="481" forecolor="#E2E8F0" uuid="b1e2f3a4-b006-4000-8000-000000000006">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1 && $P{afficherPrix} != null && !$P{afficherPrix}.booleanValue()]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+
+			<!-- PAGE 2+ : Grand cadre rectangulaire continu du tableau -->
+			<rectangle radius="4">
+				<reportElement x="28" y="49" width="539" height="635" backcolor="#FFFFFF" uuid="b1e2f3a4-b007-4000-8000-000000000007">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
+			<!-- Séparateurs verticaux de colonnes (Page 2+ - Avec prix) -->
+			<line>
+				<reportElement x="123" y="49" width="1" height="635" forecolor="#E2E8F0" uuid="b1e2f3a4-b008-4000-8000-000000000008">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1 && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="328" y="49" width="1" height="635" forecolor="#E2E8F0" uuid="b1e2f3a4-b009-4000-8000-000000000009">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1 && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="383" y="49" width="1" height="635" forecolor="#E2E8F0" uuid="b1e2f3a4-b010-4000-8000-000000000010">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1 && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="468" y="49" width="1" height="635" forecolor="#E2E8F0" uuid="b1e2f3a4-b011-4000-8000-000000000011">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<!-- Séparateurs verticaux de colonnes (Page 2+ - Sans prix) -->
+			<line>
+				<reportElement x="153" y="49" width="1" height="635" forecolor="#E2E8F0" uuid="b1e2f3a4-b012-4000-8000-000000000012">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1 && $P{afficherPrix} != null && !$P{afficherPrix}.booleanValue()]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+		</band>
+	</background>
+
 	<title>
 		<band height="200">
 			<image scaleImage="FillFrame" onErrorType="Blank">
@@ -177,7 +263,7 @@
 		</band>
 	</title>
 
-	<!-- En-tête allégé pour les pages suivantes (Page 2+) identique à facture_client -->
+	<!-- En-tête allégé pour les pages suivantes (Page 2+) -->
 	<pageHeader>
 		<band height="46">
 			<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
@@ -209,6 +295,7 @@
 			</textField>
 		</band>
 	</pageHeader>
+
 	<columnHeader>
 		<band height="30">
 			<rectangle radius="4">
@@ -293,14 +380,15 @@
 			</staticText>
 		</band>
 	</columnHeader>
+
 	<detail>
 		<band height="28">
-			<rectangle>
-				<reportElement style="zebra" stretchType="RelativeToBandHeight" x="28" y="0" width="539" height="28" uuid="b1e2f3a4-0020-4000-8000-000000000020"/>
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="28" y="27" width="539" height="1" forecolor="#E2E8F0" uuid="b1e2f3a4-0026-4000-8000-000000000026"/>
 				<graphicElement>
-					<pen lineWidth="0.0"/>
+					<pen lineWidth="0.5"/>
 				</graphicElement>
-			</rectangle>
+			</line>
 			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
 				<reportElement stretchType="RelativeToBandHeight" x="36" y="0" width="85" height="28" forecolor="#1F2937" uuid="b1e2f3a4-0021-4000-8000-000000000021">
 					<printWhenExpression><![CDATA[$P{afficherPrix} == null || $P{afficherPrix}.booleanValue()]]></printWhenExpression>
@@ -373,16 +461,11 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{quantiteLivree} != null ? $F{quantiteLivree} : ($F{quantite} != null ? $F{quantite} : ($F{quantiteCommandee} != null ? $F{quantiteCommandee} : java.math.BigDecimal.ZERO))]]></textFieldExpression>
 			</textField>
-			<line>
-				<reportElement positionType="FixRelativeToBottom" x="28" y="27" width="539" height="1" forecolor="#E5E7EB" uuid="b1e2f3a4-0026-4000-8000-000000000026"/>
-				<graphicElement>
-					<pen lineWidth="0.5"/>
-				</graphicElement>
-			</line>
 		</band>
 	</detail>
+
 	<pageFooter>
-		<band height="130">
+		<band height="138">
 			<rectangle radius="4">
 				<reportElement x="28" y="4" width="260" height="58" backcolor="#FFFFFF" uuid="b1e2f3a4-0031-4000-8000-000000000031"/>
 				<graphicElement>
@@ -515,28 +598,40 @@
 				</textElement>
 				<textFieldExpression><![CDATA[($P{totalQuantite} != null ? $P{totalQuantite} : java.math.BigDecimal.ZERO) + " unité(s)"]]></textFieldExpression>
 			</textField>
+
+			<!-- Mention Montant en lettres -->
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="28" y="66" width="539" height="15" forecolor="#0F172A" uuid="b1e2f3a4-0044-4000-8000-000000000044">
+					<printWhenExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="DejaVu Sans" size="7.5" isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["<b>Arrêté le présent bon de livraison à la somme de : </b>" + $P{montantEnLettres}]]></textFieldExpression>
+			</textField>
+
 			<line>
-				<reportElement x="28" y="82" width="539" height="1" forecolor="#1F2937" uuid="b1e2f3a4-0045-4000-8000-000000000045"/>
+				<reportElement x="28" y="86" width="539" height="1" forecolor="#1F2937" uuid="b1e2f3a4-0045-4000-8000-000000000045"/>
 				<graphicElement>
 					<pen lineWidth="0.8"/>
 				</graphicElement>
 			</line>
 			<textField isBlankWhenNull="true">
-				<reportElement x="28" y="85" width="539" height="22" forecolor="#1F2937" uuid="b1e2f3a4-0046-4000-8000-000000000046"/>
+				<reportElement x="28" y="90" width="539" height="22" forecolor="#1F2937" uuid="b1e2f3a4-0046-4000-8000-000000000046"/>
 				<textElement textAlignment="Center" verticalAlignment="Top" markup="html">
 					<font fontName="DejaVu Sans" size="7"/>
 				</textElement>
 				<textFieldExpression><![CDATA["<b>IF</b>: " + ($P{nifEntreprise} != null ? $P{nifEntreprise} : "-") + " - <b>Patente</b>: " + ($P{patenteEntreprise} != null ? $P{patenteEntreprise} : "-") + " - <b>CNSS</b>: " + ($P{cnssEntreprise} != null ? $P{cnssEntreprise} : "-") + " - <b>RC</b>: " + ($P{rcEntreprise} != null ? $P{rcEntreprise} : "-") + " - <b>ICE</b>: " + ($P{iceEntreprise} != null ? $P{iceEntreprise} : "-") + " <b>Email</b>: " + ($P{emailEntreprise} != null ? $P{emailEntreprise} : "-") + " <b>Tél</b>: " + ($P{telephoneEntreprise} != null ? $P{telephoneEntreprise} : "-")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="447" y="110" width="60" height="11" forecolor="#6B7280" uuid="b1e2f3a4-0047-4000-8000-000000000047"/>
+				<reportElement x="447" y="116" width="60" height="11" forecolor="#6B7280" uuid="b1e2f3a4-0047-4000-8000-000000000047"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " /"]]></textFieldExpression>
 			</textField>
 			<textField evaluationTime="Report">
-				<reportElement x="509" y="110" width="58" height="11" forecolor="#6B7280" uuid="b1e2f3a4-0048-4000-8000-000000000048"/>
+				<reportElement x="509" y="116" width="58" height="11" forecolor="#6B7280" uuid="b1e2f3a4-0048-4000-8000-000000000048"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
@@ -544,24 +639,4 @@
 			</textField>
 		</band>
 	</pageFooter>
-
-	<!-- Dernière page : Arrêté de BL en toutes lettres si présent (identique à facture_client) -->
-	<summary>
-		<band height="28">
-			<printWhenExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() && ($P{afficherPrix} == null || $P{afficherPrix}.booleanValue())]]></printWhenExpression>
-			<rectangle radius="4">
-				<reportElement x="28" y="2" width="539" height="22" backcolor="#F1F5F9" uuid="b1e2f3a4-0047-4000-8000-000000000047"/>
-				<graphicElement>
-					<pen lineWidth="0.8" lineColor="#94A3B8"/>
-				</graphicElement>
-			</rectangle>
-			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="34" y="4" width="527" height="18" forecolor="#0F172A" uuid="b1e2f3a4-0044-4000-8000-000000000044"/>
-				<textElement verticalAlignment="Middle" markup="html">
-					<font fontName="DejaVu Sans" size="7.5" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA["<b>Arrêté le présent bon de livraison à la somme de : </b>" + $P{montantEnLettres}]]></textFieldExpression>
-			</textField>
-		</band>
-	</summary>
 </jasperReport>

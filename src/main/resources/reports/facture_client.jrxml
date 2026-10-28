@@ -60,10 +60,80 @@
 	<field name="montantTotal" class="java.math.BigDecimal"/>
 
 	<!-- ============================================================ -->
-	<!-- BACKGROUND : Lignes décoratives légères                     -->
+	<!-- BACKGROUND : Cadre de table continu jusqu'en bas (rectangle) -->
 	<!-- ============================================================ -->
 	<background>
-		<band splitType="Stretch"/>
+		<band height="822" splitType="Stretch">
+			<!-- PAGE 1 : Grand cadre rectangulaire continu du tableau -->
+			<rectangle radius="4">
+				<reportElement x="28" y="249" width="539" height="425" backcolor="#FFFFFF" uuid="f98e1234-b001-4000-8000-000000000001">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
+			<!-- Séparateurs verticaux de colonnes (Page 1) -->
+			<line>
+				<reportElement x="293" y="249" width="1" height="425" forecolor="#E2E8F0" uuid="f98e1234-b002-4000-8000-000000000002">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="356" y="249" width="1" height="425" forecolor="#E2E8F0" uuid="f98e1234-b003-4000-8000-000000000003">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="413" y="249" width="1" height="425" forecolor="#E2E8F0" uuid="f98e1234-b004-4000-8000-000000000004">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="463" y="249" width="1" height="425" forecolor="#E2E8F0" uuid="f98e1234-b005-4000-8000-000000000005">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} == 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+
+			<!-- PAGE 2+ : Grand cadre rectangulaire continu du tableau -->
+			<rectangle radius="4">
+				<reportElement x="28" y="50" width="539" height="624" backcolor="#FFFFFF" uuid="f98e1234-b006-4000-8000-000000000006">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.6" lineColor="#CBD5E1"/>
+				</graphicElement>
+			</rectangle>
+			<!-- Séparateurs verticaux de colonnes (Page 2+) -->
+			<line>
+				<reportElement x="293" y="50" width="1" height="624" forecolor="#E2E8F0" uuid="f98e1234-b007-4000-8000-000000000007">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="356" y="50" width="1" height="624" forecolor="#E2E8F0" uuid="f98e1234-b008-4000-8000-000000000008">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="413" y="50" width="1" height="624" forecolor="#E2E8F0" uuid="f98e1234-b009-4000-8000-000000000009">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+			<line>
+				<reportElement x="463" y="50" width="1" height="624" forecolor="#E2E8F0" uuid="f98e1234-b010-4000-8000-000000000010">
+					<printWhenExpression><![CDATA[$V{PAGE_NUMBER} > 1]]></printWhenExpression>
+				</reportElement>
+				<graphicElement><pen lineWidth="0.5"/></graphicElement>
+			</line>
+		</band>
 	</background>
 
 	<title>
@@ -223,7 +293,7 @@
 	<!-- En-tête des colonnes du tableau (couleur dynamique) -->
 	<columnHeader>
 		<band height="36">
-			<rectangle radius="6">
+			<rectangle radius="4">
 				<reportElement x="28" y="4" width="539" height="32" backcolor="#0B3A6E" uuid="f98e1234-0014-4000-8000-000000000014">
 					<propertyExpression name="net.sf.jasperreports.style.backcolor"><![CDATA[$P{couleurPrimaire} != null && !$P{couleurPrimaire}.isEmpty() ? $P{couleurPrimaire} : "#0B3A6E"]]></propertyExpression>
 				</reportElement>
@@ -260,7 +330,7 @@
 				<text><![CDATA[TVA]]></text>
 			</staticText>
 			<staticText>
-				<reportElement x="466" y="4" width="97" height="32" forecolor="#FFFFFF" uuid="f98e1234-0019-4000-8000-000000000019"/>
+				<reportElement x="466" y="4" width="95" height="32" forecolor="#FFFFFF" uuid="f98e1234-0019-4000-8000-000000000019"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
@@ -307,7 +377,7 @@
 				<textFieldExpression><![CDATA[$F{tauxTVA} != null ? $F{tauxTVA} : java.math.BigDecimal.ZERO]]></textFieldExpression>
 			</textField>
 			<textField pattern="#,##0.00" isBlankWhenNull="true">
-				<reportElement x="466" y="5" width="97" height="20" forecolor="#1F2937" uuid="f98e1234-0025-4000-8000-000000000025"/>
+				<reportElement x="466" y="5" width="95" height="20" forecolor="#1F2937" uuid="f98e1234-0025-4000-8000-000000000025"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
 				</textElement>
@@ -316,7 +386,7 @@
 		</band>
 	</detail>
 
-	<!-- Pied de page avec bloc des totaux complets répété sur toutes les pages -->
+	<!-- Pied de page avec bloc des totaux complets et arrêté en lettres -->
 	<pageFooter>
 		<band height="148">
 			<!-- Cadre Modalités & Règlement (à gauche des totaux) -->
@@ -408,29 +478,38 @@
 				<textFieldExpression><![CDATA[(new java.text.DecimalFormat("#,##0.00", new java.text.DecimalFormatSymbols(java.util.Locale.US))).format($P{montantFinal} != null ? $P{montantFinal} : ($P{montantTTC} != null ? $P{montantTTC} : java.math.BigDecimal.ZERO)).replace(',', ' ') + " " + ($P{devise} != null ? $P{devise} : "MAD")]]></textFieldExpression>
 			</textField>
 
+			<!-- Mention Montant en lettres -->
+			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
+				<reportElement x="28" y="76" width="539" height="16" forecolor="#0F172A" uuid="f98e1234-0039-4000-8000-000000000039"/>
+				<textElement verticalAlignment="Middle" markup="html">
+					<font fontName="DejaVu Sans" size="7.5" isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty() ? "<b>Arrêtée la présente facture à la somme de : </b>" + $P{montantEnLettres} : ""]]></textFieldExpression>
+			</textField>
+
 			<!-- Ligne de séparation et pied légal -->
 			<line>
-				<reportElement x="28" y="82" width="539" height="1" forecolor="#1F2937" uuid="f98e1234-0040-4000-8000-000000000040"/>
+				<reportElement x="28" y="96" width="539" height="1" forecolor="#1F2937" uuid="f98e1234-0040-4000-8000-000000000040"/>
 				<graphicElement>
 					<pen lineWidth="0.8"/>
 				</graphicElement>
 			</line>
 			<textField isBlankWhenNull="true">
-				<reportElement x="28" y="86" width="539" height="24" forecolor="#1F2937" uuid="f98e1234-0041-4000-8000-000000000041"/>
+				<reportElement x="28" y="100" width="539" height="24" forecolor="#1F2937" uuid="f98e1234-0041-4000-8000-000000000041"/>
 				<textElement textAlignment="Center" verticalAlignment="Top" markup="html">
 					<font fontName="DejaVu Sans" size="7.5"/>
 				</textElement>
 				<textFieldExpression><![CDATA["<b>IF</b>: " + ($P{nifEntreprise} != null ? $P{nifEntreprise} : "-") + " - <b>Patente</b>: " + ($P{patenteEntreprise} != null ? $P{patenteEntreprise} : "-") + " - <b>CNSS</b>: " + ($P{cnssEntreprise} != null ? $P{cnssEntreprise} : "-") + " - <b>RC</b>: " + ($P{rcEntreprise} != null ? $P{rcEntreprise} : "-") + " - <b>ICE</b>: " + ($P{iceEntreprise} != null ? $P{iceEntreprise} : "-") + " <b>Email</b>: " + ($P{emailEntreprise} != null ? $P{emailEntreprise} : "-") + " <b>Tél</b>: " + ($P{telephoneEntreprise} != null ? $P{telephoneEntreprise} : "-")]]></textFieldExpression>
 			</textField>
 			<textField>
-				<reportElement x="447" y="114" width="60" height="11" forecolor="#6B7280" uuid="f98e1234-0042-4000-8000-000000000042"/>
+				<reportElement x="447" y="128" width="60" height="11" forecolor="#6B7280" uuid="f98e1234-0042-4000-8000-000000000042"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
 				<textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER} + " /"]]></textFieldExpression>
 			</textField>
 			<textField evaluationTime="Report">
-				<reportElement x="509" y="114" width="58" height="11" forecolor="#6B7280" uuid="f98e1234-0043-4000-8000-000000000043"/>
+				<reportElement x="509" y="128" width="58" height="11" forecolor="#6B7280" uuid="f98e1234-0043-4000-8000-000000000043"/>
 				<textElement textAlignment="Left" verticalAlignment="Middle">
 					<font fontName="DejaVu Sans" size="8"/>
 				</textElement>
@@ -438,25 +517,4 @@
 			</textField>
 		</band>
 	</pageFooter>
-
-	<!-- Dernière page : Ajout de l'arrêté en toutes lettres si présent avant le pied de page -->
-	<summary>
-		<band height="32">
-			<printWhenExpression><![CDATA[$P{montantEnLettres} != null && !$P{montantEnLettres}.trim().isEmpty()]]></printWhenExpression>
-			<!-- Bloc Arrêté de Facture en toutes lettres -->
-			<rectangle radius="4">
-				<reportElement x="28" y="4" width="539" height="24" backcolor="#F1F5F9" uuid="f98e1234-0047-4000-8000-000000000047"/>
-				<graphicElement>
-					<pen lineWidth="0.8" lineColor="#94A3B8"/>
-				</graphicElement>
-			</rectangle>
-			<textField textAdjust="StretchHeight" isBlankWhenNull="true">
-				<reportElement x="34" y="6" width="527" height="20" forecolor="#0F172A" uuid="f98e1234-0039-4000-8000-000000000039"/>
-				<textElement verticalAlignment="Middle" markup="html">
-					<font fontName="DejaVu Sans" size="8.5" isBold="true"/>
-				</textElement>
-				<textFieldExpression><![CDATA["<b>Arrêtée la présente facture à la somme de : </b>" + $P{montantEnLettres}]]></textFieldExpression>
-			</textField>
-		</band>
-	</summary>
 </jasperReport>
