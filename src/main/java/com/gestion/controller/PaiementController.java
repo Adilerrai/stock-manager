@@ -66,10 +66,27 @@ public class PaiementController {
     }
 
     @PostMapping("/{paiementId}/annuler")
-    public ResponseEntity<Paiement> annulerPaiement(@PathVariable Long paiementId,
-                                                     @RequestParam String motif,
-                                                     @RequestParam Long userId) {
-        Paiement paiement = paiementService.annulerPaiement(paiementId, motif, userId);
+    public ResponseEntity<Paiement> annulerPaiement(
+            @PathVariable Long paiementId,
+            @RequestParam(required = false) String motif,
+            @RequestParam(required = false) Long userId,
+            @RequestBody(required = false) Map<String, Object> body) {
+        String effectiveMotif = motif;
+        Long effectiveUserId = userId;
+        if (body != null) {
+            if (effectiveMotif == null && body.containsKey("motif")) {
+                effectiveMotif = String.valueOf(body.get("motif"));
+            }
+            if (effectiveUserId == null && body.containsKey("userId")) {
+                try {
+                    effectiveUserId = Long.valueOf(String.valueOf(body.get("userId")));
+                } catch (Exception ignored) {}
+            }
+        }
+        if (effectiveUserId == null) effectiveUserId = 1L;
+        if (effectiveMotif == null || effectiveMotif.isBlank()) effectiveMotif = "Annulation du règlement";
+
+        Paiement paiement = paiementService.annulerPaiement(paiementId, effectiveMotif, effectiveUserId);
         return ResponseEntity.ok(paiement);
     }
 

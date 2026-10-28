@@ -141,33 +141,128 @@ public class PaiementService {
         Paiement paiement = paiementRepository.findById(paiementId)
                 .orElseThrow(() -> new RuntimeException("Paiement non trouvé"));
 
-        if (paiement.getAnnule()) {
+        if (Boolean.TRUE.equals(paiement.getAnnule())) {
             throw new RuntimeException("Ce paiement est déjà annulé");
         }
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+        User user = null;
+        if (userId != null) {
+            user = userRepository.findById(userId).orElse(null);
+        }
+        if (user == null) {
+            user = userRepository.findAll().stream().findFirst().orElse(null);
+        }
 
         paiement.setAnnule(true);
         paiement.setDateAnnulation(LocalDateTime.now());
-        paiement.setMotifAnnulation(motif);
+        paiement.setMotifAnnulation(motif != null ? motif : "Annulation du règlement");
         paiement.setAnnulePar(user);
 
-        // Ajuster les montants de la vente ou facture
+        // 1. Ajuster les montants de la vente (comptoir / POS)
         if (paiement.getVente() != null) {
             Vente vente = paiement.getVente();
-            vente.setMontantPaye(vente.getMontantPaye().subtract(paiement.getMontant()));
-            vente.setMontantRestant(vente.getMontantFinal().subtract(vente.getMontantPaye()));
+            BigDecimal payeActuel = vente.getMontantPaye() != null ? vente.getMontantPaye() : BigDecimal.ZERO;
+            BigDecimal montantAnnule = paiement.getMontant() != null ? paiement.getMontant() : BigDecimal.ZERO;
+            BigDecimal nouveauPaye = payeActuel.subtract(montantAnnule);
+            if (nouveauPaye.compareTo(BigDecimal.ZERO) < 0) {
+                nouveauPaye = BigDecimal.ZERO;
+            }
+            vente.setMontantPaye(nouveauPaye);
+            BigDecimal finalAmt = vente.getMontantFinal() != null ? vente.getMontantFinal() : BigDecimal.ZERO;
+            vente.setMontantRestant(finalAmt.subtract(nouveauPaye).max(BigDecimal.ZERO));
+
+            // Si la vente était enregistrée à crédit, réajuster le crédit utilisé
+            if (paiement.getModePaiement() == ModePaiement.CREDIT && vente.getClient() != null) {
+                clientService.diminuerCreditUtilise(vente.getClient().getId(), montantAnnule);
+            }
         }
 
+        // 2. Ajuster la facture directe si elle est rattachée au paiement
         if (paiement.getFacture() != null) {
             Facture facture = paiement.getFacture();
-            facture.setMontantPaye(facture.getMontantPaye().subtract(paiement.getMontant()));
-            facture.setMontantRestant(facture.getMontantFinal().subtract(facture.getMontantPaye()));
+            BigDecimal payeActuel = facture.getMontantPaye() != null ? facture.getMontantPaye() : BigDecimal.ZERO;
+            BigDecimal montantAnnule = paiement.getMontant() != null ? paiement.getMontant() : BigDecimal.ZERO;
+            BigDecimal nouveauPaye = payeActuel.subtract(montantAnnule);
+            if (nouveauPaye.compareTo(BigDecimal.ZERO) < 0) {
+                nouveauPaye = BigDecimal.ZERO;
+            }
+            facture.setMontantPaye(nouveauPaye);
+            BigDecimal finalAmt = facture.getMontantFinal() != null ? facture.getMontantFinal() : BigDecimal.ZERO;
+            facture.setMontantRestant(finalAmt.subtract(nouveauPaye).max(BigDecimal.ZERO));
 
-            // Réaugmenter le crédit utilisé du client
-            if (facture.getClient() != null) {
-                clientService.augmenterCreditUtilise(facture.getClient().getId(), paiement.getMontant());
+            // Actualisation du statut de la facture (retour vers VALIDEE si montant restant total)
+            if (nouveauPaye.compareTo(BigDecimal.ZERO) <= 0) {
+                facture.setStatut(StatutFacture.VALIDEE);
+            } else if (nouveauPaye.compareTo(finalAmt) >= 0) {
+                facture.setStatut(StatutFacture.PAYEE_TOTALEMENT);
+            } else {
+                facture.setStatut(StatutFacture.PAYEE_PARTIELLEMENT);
+            }
+            factureRepository.save(facture);
+
+            // Réaugmenter le crédit utilisé / solde dû du client
+            Client client = facture.getClient() != null ? facture.getClient() : paiement.getClient();
+            if (client != null) {
+                clientService.augmenterCreditUtilise(client.getId(), montantAnnule);
+            }
+        }
+
+        // 3. Ajuster les factures ventilées (règlements clients multi-factures via PaiementAffectation)
+        List<PaiementAffectation> affectations = affectationRepository.findByPaiementId(paiement.getId());
+        if (affectations != null && !affectations.isEmpty()) {
+            BigDecimal totalAffecte = BigDecimal.ZERO;
+            for (PaiementAffectation aff : affectations) {
+                Facture f = aff.getFacture();
+                if (f != null) {
+                    BigDecimal montantAReouvrir = aff.getMontantAffecte() != null ? aff.getMontantAffecte() : BigDecimal.ZERO;
+                    BigDecimal payeActuel = f.getMontantPaye() != null ? f.getMontantPaye() : BigDecimal.ZERO;
+                    BigDecimal nouveauPaye = payeActuel.subtract(montantAReouvrir);
+                    if (nouveauPaye.compareTo(BigDecimal.ZERO) < 0) {
+                        nouveauPaye = BigDecimal.ZERO;
+                    }
+                    f.setMontantPaye(nouveauPaye);
+                    BigDecimal finalAmt = f.getMontantFinal() != null ? f.getMontantFinal() : BigDecimal.ZERO;
+                    f.setMontantRestant(finalAmt.subtract(nouveauPaye).max(BigDecimal.ZERO));
+
+                    // Actualisation du statut de la facture
+                    if (nouveauPaye.compareTo(BigDecimal.ZERO) <= 0) {
+                        f.setStatut(StatutFacture.VALIDEE);
+                    } else if (nouveauPaye.compareTo(finalAmt) >= 0) {
+                        f.setStatut(StatutFacture.PAYEE_TOTALEMENT);
+                    } else {
+                        f.setStatut(StatutFacture.PAYEE_PARTIELLEMENT);
+                    }
+                    factureRepository.save(f);
+                    totalAffecte = totalAffecte.add(montantAReouvrir);
+                }
+            }
+
+            // Réaugmenter le crédit utilisé / solde dû du client
+            Client client = paiement.getClient();
+            if (client != null) {
+                BigDecimal montantAReaugmenter = totalAffecte.compareTo(BigDecimal.ZERO) > 0 ? totalAffecte : (paiement.getMontant() != null ? paiement.getMontant() : BigDecimal.ZERO);
+                clientService.augmenterCreditUtilise(client.getId(), montantAReaugmenter);
+            }
+        } else if (paiement.getFacture() == null && paiement.getVente() == null && paiement.getClient() != null) {
+            // Règlement global ou acompte libre sans affectation
+            if (paiement.getMontant() != null && paiement.getMontant().compareTo(BigDecimal.ZERO) > 0) {
+                clientService.augmenterCreditUtilise(paiement.getClient().getId(), paiement.getMontant());
+            }
+        }
+
+        // 4. Si un chèque ou effet a été généré pour ce paiement, l'annuler également
+        if (paiement.getNumeroPaiement() != null) {
+            List<ChequeEffet> cheques = chequeEffetRepository.findByReferencePaiement(paiement.getNumeroPaiement());
+            if (cheques != null) {
+                for (ChequeEffet c : cheques) {
+                    if (c.getStatut() != StatutEffet.ANNULE && c.getStatut() != StatutEffet.IMPAYE_REJETE) {
+                        c.setStatut(StatutEffet.ANNULE);
+                        String currentNotes = c.getNotes() != null ? c.getNotes() : "";
+                        c.setNotes(currentNotes.isEmpty() ? "Annulé suite à l'annulation du règlement " + paiement.getNumeroPaiement()
+                                : currentNotes + " | Annulé suite à l'annulation du règlement " + paiement.getNumeroPaiement());
+                        chequeEffetRepository.save(c);
+                    }
+                }
             }
         }
 
