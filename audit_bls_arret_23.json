@@ -1,0 +1,2138 @@
+{
+  "total_odoo_au_23": 581,
+  "conformes": 467,
+  "anomalies_count": 114,
+  "absents_count": 0,
+  "anomalies": [
+    {
+      "numero_bl": "BER/OUT/00003",
+      "client": "LA MAISON DU CERAME",
+      "date": "2026-05-14 08:50:17",
+      "commande": "S00011",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000010",
+          "nom_odoo": "SUPPORT TELESCOPIQUE",
+          "ref_tadbeer": "0930000010-4",
+          "nom_tadbeer": "BLOCK FOR SLOTS 15MM H.10,5 (PACK 100)",
+          "quantite": 20.0,
+          "pu": 70.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00004",
+      "client": "GRAND CERAME",
+      "date": "2026-05-15 14:07:07",
+      "commande": "S00025",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 200.0,
+          "pu": 28.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00027",
+      "client": "LA MAISON DU CERAME",
+      "date": "2026-06-24 14:29:24",
+      "commande": "S00152",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000010",
+          "nom_odoo": "SUPPORT TELESCOPIQUE",
+          "ref_tadbeer": "0930000010-4",
+          "nom_tadbeer": "BLOCK FOR SLOTS 15MM H.10,5 (PACK 100)",
+          "quantite": 30.0,
+          "pu": 70.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00043",
+      "client": "CRISTAL CERAME",
+      "date": "2026-07-03 14:07:48",
+      "commande": "S00088",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0812000012",
+          "nom_odoo": "REDUCTEUR A VIS SANS FIN NMRV50 ENTRE 14 SORTIE 25mm 71B5 1/10 AMT",
+          "ref_tadbeer": "0812000012-1",
+          "nom_tadbeer": "REDUCTEUR A VIS SANS FIN NMRV50 ENTRE 14 SORTIE 25mm B14 1/10 AMT",
+          "quantite": 3.0,
+          "pu": 800.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00046",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-07-07 11:52:44",
+      "commande": "S00264",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 800.0,
+          "pu": 19.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00051",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-07-08 13:25:40",
+      "commande": "S00264",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 200.0,
+          "pu": 19.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00055",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-09-10 12:00:03",
+      "commande": "S00264",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 100.0,
+          "pu": 19.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00056",
+      "client": "SUPER CERAME KENITRA",
+      "date": "2026-07-08 13:54:23",
+      "commande": "S00271",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0940000025",
+          "nom_odoo": "PIGNON HELICOIDAL Z22",
+          "ref_tadbeer": "0940000025-1",
+          "nom_tadbeer": "PIGNON HELICOIDAL DIAM 30 Z22",
+          "quantite": 72.0,
+          "pu": 57.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00062",
+      "client": "KA PREFA",
+      "date": "2026-07-13 10:15:06",
+      "commande": "S00288",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "192008033",
+          "nom_odoo": "ROULEMENT A BILLE ISB 2RS C3 6206",
+          "ref_tadbeer": "192008033-1",
+          "nom_tadbeer": "ROULEMENT A BILLE ISB ZZ C3 6206",
+          "quantite": 4.0,
+          "pu": 51.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00063",
+      "client": "BRILLO CERAME",
+      "date": "2026-07-13 12:57:03",
+      "commande": "S00291",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0722000006",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B5 1,5KW 1500/MIN GMT",
+          "ref_tadbeer": "0722000006-1",
+          "nom_tadbeer": "MOTEUR ELECTRIQUE 380V  B14 1,5KW 1500/MIN GMT",
+          "quantite": 2.0,
+          "pu": 1750.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00068",
+      "client": "BRILLO CERAME",
+      "date": "2026-07-16 12:11:33",
+      "commande": "S00311",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCFL208",
+          "quantite": 10.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00071",
+      "client": "BRILLO CERAME",
+      "date": "2026-07-17 10:30:21",
+      "commande": "S00317",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "200100016",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCF206",
+          "ref_tadbeer": "200100016-1",
+          "nom_tadbeer": "PALIER COMPLET ACIER ISB UCF205",
+          "quantite": 6.0,
+          "pu": 1.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00072",
+      "client": "BRILLO CERAME",
+      "date": "2026-07-17 10:55:43",
+      "commande": "S00318",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "200100016",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCF206",
+          "ref_tadbeer": "200100016-1",
+          "nom_tadbeer": "PALIER COMPLET ACIER ISB UCF205",
+          "quantite": 6.0,
+          "pu": 200.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00073",
+      "client": "GRAND CERAME",
+      "date": "2026-07-17 10:56:15",
+      "commande": "S00313",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "192008033",
+          "nom_odoo": "ROULEMENT A BILLE ISB 2RS C3 6206",
+          "ref_tadbeer": "192008033-1",
+          "nom_tadbeer": "ROULEMENT A BILLE ISB ZZ C3 6206",
+          "quantite": 12.0,
+          "pu": 50.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00078",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-07-17 16:48:01",
+      "commande": "S00326",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0811000012",
+          "nom_odoo": "REDCUTEUR A VIS SANS FIN NMRV40 ENTRE 14mm SORTIE 19mm  1/15 71B5 A-MT-GMT",
+          "ref_tadbeer": "0811000012-01",
+          "nom_tadbeer": "REDCUTEUR A VIS SANS FIN NMRV40 ENTRE 14mm SORTIE 18mm  1/15   71B14 GMT ET AMT",
+          "quantite": 3.0,
+          "pu": 975.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00094",
+      "client": "BRILLO CERAME",
+      "date": "2026-07-27 11:29:13",
+      "commande": "S00383",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0734000601-1",
+          "nom_odoo": "MOTEUR ELECTRIQUE 0,75 KW 1500 TR/MIN B5  OCCASION",
+          "ref_tadbeer": "0734000601-12",
+          "nom_tadbeer": "MOTOREDUCTEUR 1.1KW 1500 MIN B14 EUROWATT NMRV 63 1/30 E 19 MM S 28MM GMT-AMT",
+          "quantite": 1.0,
+          "pu": 1050.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00102",
+      "client": "SUPER CERAME TETOUAN",
+      "date": "2026-07-28 13:27:19",
+      "commande": "S00404",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0314000040",
+          "nom_odoo": "COURROIE DENTEE 270L075",
+          "ref_tadbeer": "0314000040-1",
+          "nom_tadbeer": "COURROIE DENTEE 240L075",
+          "quantite": 12.0,
+          "pu": 29.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00108",
+      "client": "CERAMICA DERSA",
+      "date": "2026-08-05 08:55:28",
+      "commande": "S00455",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0722000005",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B5 1,1KW 1500/MIN  IE3 AXE 24 MM GMT",
+          "ref_tadbeer": "0722000005-2",
+          "nom_tadbeer": "MOTEUR ELECTRIQUE 380V  B3 1,1KW 1500/MIN  IE3 GMT",
+          "quantite": 2.0,
+          "pu": 1500.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00113",
+      "client": "TECHNO EMBALLE",
+      "date": "2026-08-07 10:50:02",
+      "commande": "Retour de BER/IN/00084",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1310000001",
+          "nom_odoo": "DONNETTE 110*25*25",
+          "ref_tadbeer": "1310000001-06",
+          "nom_tadbeer": "DONNETTE  80*25*15",
+          "quantite": 1500.0,
+          "pu": 8.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00114",
+      "client": "TECHNO EMBALLE",
+      "date": "2026-08-07 11:29:36",
+      "commande": "S00484",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1310000001",
+          "nom_odoo": "DONNETTE 110*25*25",
+          "ref_tadbeer": "1310000001-06",
+          "nom_tadbeer": "DONNETTE  80*25*15",
+          "quantite": 1500.0,
+          "pu": 8.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00115",
+      "client": "QUALIAGRO (Station Marrakech)",
+      "date": "2026-08-07 16:15:35",
+      "commande": "S00239",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1310000001",
+          "nom_odoo": "DONNETTE 110*25*25",
+          "ref_tadbeer": "1310000001-03",
+          "nom_tadbeer": "DONNETTE 110*25*30",
+          "quantite": 1400.0,
+          "pu": 7.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00117",
+      "client": "OMEGA BRAND",
+      "date": "2026-09-02 08:30:56",
+      "commande": "S00242",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1310000001",
+          "nom_odoo": "DONNETTE 110*25*25",
+          "ref_tadbeer": "1310000001-06",
+          "nom_tadbeer": "DONNETTE  80*25*15",
+          "quantite": 1000.0,
+          "pu": 0.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00119",
+      "client": "GRAND CERAME",
+      "date": "2026-08-07 16:15:03",
+      "commande": "S00492",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 200.0,
+          "pu": 28.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00124",
+      "client": "LYMOUNAMED S.A.R.L",
+      "date": "2026-08-10 12:24:21",
+      "commande": "S00502",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1310000001",
+          "nom_odoo": "DONNETTE 110*25*25",
+          "ref_tadbeer": "1310000001-06",
+          "nom_tadbeer": "DONNETTE  80*25*15",
+          "quantite": 2000.0,
+          "pu": 8.2
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00130",
+      "client": "DOMAINE ELBOURA",
+      "date": "2026-08-28 15:38:39",
+      "commande": "S00560",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "132000028",
+          "nom_odoo": "BROSSE CRIN CHEVALE 100% 250*115*30",
+          "ref_tadbeer": "132000028-1",
+          "nom_tadbeer": "BROSSE CRIN CHEVALE ONDULEE  50% DIA 250*120*30",
+          "quantite": 120.0,
+          "pu": 144.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00131",
+      "client": "SUNPACK",
+      "date": "2026-08-31 16:19:40",
+      "commande": "S00564",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1200000018",
+          "nom_odoo": "BANDE PVC 2PLIS BLEU 300MM",
+          "ref_tadbeer": "1200000018-1",
+          "nom_tadbeer": "BANDE PVC 2PLIS 300mm",
+          "quantite": 50.0,
+          "pu": 57.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00136",
+      "client": "N/A",
+      "date": "2026-09-02 08:33:46",
+      "commande": "Retour de BER/IN/00042",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0812000012",
+          "nom_odoo": "REDUCTEUR A VIS SANS FIN NMRV50 ENTRE 14 SORTIE 25mm 71B5 1/10 AMT",
+          "ref_tadbeer": "0812000012-1",
+          "nom_tadbeer": "REDUCTEUR A VIS SANS FIN NMRV50 ENTRE 14 SORTIE 25mm B14 1/10 AMT",
+          "quantite": 0.0,
+          "pu": 1.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00145",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-09-10 09:42:39",
+      "commande": "S00264",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 400.0,
+          "pu": 19.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00147",
+      "client": "SUPER CERAME KENITRA",
+      "date": "2026-09-11 17:09:53",
+      "commande": "S00647",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 20.0,
+          "pu": 29.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00161",
+      "client": "SUPER CERAME KENITRA",
+      "date": "2026-09-24 11:20:29",
+      "commande": "S00692",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0311000014",
+          "nom_odoo": "COURROIE DENTE SECTION 660H100",
+          "ref_tadbeer": "0311000014-1",
+          "nom_tadbeer": "COURROIE DENTE SECTION 660H 40mm",
+          "quantite": 20.0,
+          "pu": 82.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00174",
+      "client": "DISTRA",
+      "date": "2026-09-29 10:08:09",
+      "commande": "S00723",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0712000002",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B5 0,25KW 1500/MIN GMT",
+          "ref_tadbeer": "0712000002-1",
+          "nom_tadbeer": "MOTEUR ELECTRIQUE 380V  B14 0,25KW 1500/MIN GMT",
+          "quantite": 1.0,
+          "pu": 660.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00197",
+      "client": "SUPER CERAME BERRECHID",
+      "date": "2026-10-09 17:16:33",
+      "commande": "S00786",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0722000004",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B5 0,75KW 1500/MIN IE3 AXE 19MM GMT",
+          "ref_tadbeer": "0722000004-2",
+          "nom_tadbeer": "MOTEUR ELECTRIQUE 380V  B3 0,75KW 1500/MIN IE3 GMT",
+          "quantite": 2.0,
+          "pu": 1050.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "BER/OUT/00212",
+      "client": "LA MAISON DU CERAME",
+      "date": "2026-10-20 15:58:36",
+      "commande": "S00797",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000010",
+          "nom_odoo": "SUPPORT TELESCOPIQUE",
+          "ref_tadbeer": "0930000010-4",
+          "nom_tadbeer": "BLOCK FOR SLOTS 15MM H.10,5 (PACK 100)",
+          "quantite": 50.0,
+          "pu": 70.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00006",
+      "client": "CERAMICA DERSA",
+      "date": "2026-05-13 13:18:32",
+      "commande": "S00019",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0721000003",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B14 0,37KW 1500/MIN TERCESA",
+          "ref_tadbeer": "0721000003-1",
+          "nom_tadbeer": "MOTEUR A FREIN 0,37KW 1500 220/380V B14 TERCESA",
+          "quantite": 1.0,
+          "pu": 800.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00029",
+      "client": "N/A",
+      "date": "2026-06-04 11:24:16",
+      "commande": "Retour de TAC/IN/00049",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1410000198",
+          "nom_odoo": "ARRET D'HUILE 40*62*10",
+          "ref_tadbeer": "1410000198-1",
+          "nom_tadbeer": "ARRET D'HUILE 40*62*10 EN VITON",
+          "quantite": 40.0,
+          "pu": 1.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00031",
+      "client": "FACEMAG",
+      "date": "2026-06-04 11:27:02",
+      "commande": "S00084",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1410000198",
+          "nom_odoo": "ARRET D'HUILE 40*62*10",
+          "ref_tadbeer": "1410000198-1",
+          "nom_tadbeer": "ARRET D'HUILE 40*62*10 EN VITON",
+          "quantite": 10.0,
+          "pu": 9.12
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00033",
+      "client": "CERAMICA DERSA",
+      "date": "2026-06-05 11:44:01",
+      "commande": "S00086",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0722000005",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B5 1,1KW 1500/MIN  IE3 AXE 24 MM GMT",
+          "ref_tadbeer": "0722000005-2",
+          "nom_tadbeer": "MOTEUR ELECTRIQUE 380V  B3 1,1KW 1500/MIN  IE3 GMT",
+          "quantite": 2.0,
+          "pu": 1500.0
+        },
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0722000004",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B5 0,75KW 1500/MIN IE3 AXE 19MM GMT",
+          "ref_tadbeer": "0722000004-2",
+          "nom_tadbeer": "MOTEUR ELECTRIQUE 380V  B3 0,75KW 1500/MIN IE3 GMT",
+          "quantite": 1.0,
+          "pu": 1150.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00041",
+      "client": "SUPER CERAME KENITRA",
+      "date": "2026-06-10 14:03:59",
+      "commande": "S00104",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0314000041",
+          "nom_odoo": "COURROIE DENTEE XPB3000 SWR",
+          "ref_tadbeer": "0314000041-2",
+          "nom_tadbeer": "COURROIE DENTEE 510L075",
+          "quantite": 16.0,
+          "pu": 117.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00042",
+      "client": "FACEMAG",
+      "date": "2026-06-10 14:04:38",
+      "commande": "S00102",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRÊT D'HUILE 48*68*10",
+          "quantite": 6.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00044",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-06-12 09:31:07",
+      "commande": "S00113",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0314000041",
+          "nom_odoo": "COURROIE DENTEE XPB3000 SWR",
+          "ref_tadbeer": "0314000041-2",
+          "nom_tadbeer": "COURROIE DENTEE 510L075",
+          "quantite": 16.0,
+          "pu": 117.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00045",
+      "client": "CRISTAL CERAME",
+      "date": "2026-06-12 11:24:24",
+      "commande": "S00114",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0311000014",
+          "nom_odoo": "COURROIE DENTE SECTION 660H100",
+          "ref_tadbeer": "0311000014-1",
+          "nom_tadbeer": "COURROIE DENTE SECTION 660H 40mm",
+          "quantite": 2.0,
+          "pu": 187.2
+        },
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0311000022",
+          "nom_odoo": "COURROIE DENTE SECTION 1000H100",
+          "ref_tadbeer": "0311000022-1",
+          "nom_tadbeer": "COURROIE DENTEE DOUBLE SECTION 1000H100",
+          "quantite": 2.0,
+          "pu": 190.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00046",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-06-12 15:37:27",
+      "commande": "S00105",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0811000012",
+          "nom_odoo": "REDCUTEUR A VIS SANS FIN NMRV40 ENTRE 14mm SORTIE 19mm  1/15 71B5 A-MT-GMT",
+          "ref_tadbeer": "0811000012-01",
+          "nom_tadbeer": "REDCUTEUR A VIS SANS FIN NMRV40 ENTRE 14mm SORTIE 18mm  1/15   71B14 GMT ET AMT",
+          "quantite": 6.0,
+          "pu": 975.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00047",
+      "client": "BRILLO CERAME",
+      "date": "2026-06-15 12:50:08",
+      "commande": "S00115",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 150.0,
+          "pu": 18.5
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00050",
+      "client": "FACEMAG",
+      "date": "2026-06-16 10:47:31",
+      "commande": "S00111",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "012206002",
+          "nom_odoo": "ROULEMENT A BILLE FAG 2Z C3 6002",
+          "ref_tadbeer": "012206002-1",
+          "nom_tadbeer": "ROULEMENT A BILLE FAG 2Z  6002",
+          "quantite": 83.0,
+          "pu": 24.15
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00056",
+      "client": "GRAND CERAME",
+      "date": "2026-06-22 13:43:05",
+      "commande": "S00133",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRÊT D'HUILE 100*150*13",
+          "quantite": 6.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00061",
+      "client": "GRAND CERAME",
+      "date": "2026-06-23 10:05:31",
+      "commande": "S00137",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRÊT D'HUILE 100*150*13",
+          "quantite": 6.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00087",
+      "client": "CRISTAL CERAME",
+      "date": "2026-06-30 11:37:41",
+      "commande": "S00203",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "",
+          "quantite": 2.6
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00089",
+      "client": "BRILLO CERAME",
+      "date": "2026-07-01 12:03:11",
+      "commande": "S00163",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0650000011",
+          "nom_odoo": "PIGNON DOUBLE 10B2 Z21",
+          "ref_tadbeer": "0650000011-2",
+          "nom_tadbeer": "PIGNON DOUBLE 10B2 Z30",
+          "quantite": 2.0,
+          "pu": 76.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00090",
+      "client": "BRILLO CERAME",
+      "date": "2026-07-01 10:05:55",
+      "commande": "S00212",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 100.0,
+          "pu": 18.5
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00091",
+      "client": "BRILLO CERAME",
+      "date": "2026-07-01 12:07:42",
+      "commande": "S00215",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 100.0,
+          "pu": 18.5
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00092",
+      "client": "GHORGHIZ CERAME",
+      "date": "2026-07-02 11:14:01",
+      "commande": "S00205",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1300000011",
+          "nom_odoo": "BANDE CAOUTCHOC NOIR 3 PLIS 600MM",
+          "ref_tadbeer": "1300000011-1",
+          "nom_tadbeer": "BANDE NOIR CAOUTCHOC 640MM 3PLIS",
+          "quantite": 50.0,
+          "pu": 250.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00095",
+      "client": "GHORGHIZ CERAME",
+      "date": "2026-07-02 11:14:42",
+      "commande": "S00222",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1810000027",
+          "nom_odoo": "BANDE PVC 3 PLIS 610MM LONG 7950MM FERMEE A VEC JONCTION A CHAUD",
+          "ref_tadbeer": "1810000027-1",
+          "nom_tadbeer": "BANDE PVC 3PLIS BLEU 1250MM",
+          "quantite": 1.0,
+          "pu": 3070.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00100",
+      "client": "MAREMBAL (les emballages marocains)",
+      "date": "2026-07-03 11:35:38",
+      "commande": "S00232",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "012206202",
+          "nom_odoo": "ROULEMENT A BILLE FAG 2Z C3 6202",
+          "ref_tadbeer": "012206202-1",
+          "nom_tadbeer": "ROULEMENT A BILLE FAG 2Z 6202",
+          "quantite": 10.0,
+          "pu": 25.06
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00104",
+      "client": "GRAND CERAME",
+      "date": "2026-07-03 14:44:46",
+      "commande": "S00246",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0311000022",
+          "nom_odoo": "COURROIE DENTE SECTION 1000H100",
+          "ref_tadbeer": "0311000022-1",
+          "nom_tadbeer": "COURROIE DENTEE DOUBLE SECTION 1000H100",
+          "quantite": 20.0,
+          "pu": 188.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00130",
+      "client": "FACEMAG",
+      "date": "2026-07-22 12:29:46",
+      "commande": "S00332",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1410000217",
+          "nom_odoo": "ARRET D'HUILE 45*60*7",
+          "ref_tadbeer": "1410000217-1",
+          "nom_tadbeer": "ARRET D'HUILE 45*60*8",
+          "quantite": 10.0,
+          "pu": 9.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00139",
+      "client": "CRISTAL CERAME",
+      "date": "2026-07-27 10:08:54",
+      "commande": "S00381",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0311000014",
+          "nom_odoo": "COURROIE DENTE SECTION 660H100",
+          "ref_tadbeer": "0311000014-1",
+          "nom_tadbeer": "COURROIE DENTE SECTION 660H 40mm",
+          "quantite": 4.0,
+          "pu": 187.2
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00144",
+      "client": "GHORGHIZ CERAME",
+      "date": "2026-07-27 15:52:02",
+      "commande": "S00392",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0315000011",
+          "nom_odoo": "COURROIE DENTE 32AT10",
+          "ref_tadbeer": "0315000011-1",
+          "nom_tadbeer": "COURROIE DENTEE 32AT10-560 FERMEE MEGADYNE",
+          "quantite": 30.0,
+          "pu": 180.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00153",
+      "client": "GHARB PAPIER CARTON \"GPC\"",
+      "date": "2026-07-29 15:45:48",
+      "commande": "S00420",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1220000023",
+          "nom_odoo": "COLLIER D'ASSEMBLAGE SV230 (08-7300-03)",
+          "ref_tadbeer": "1220000023-2",
+          "nom_tadbeer": "KIT REPARATION VERSAMATIC E2  476.V019.000",
+          "quantite": 6.0,
+          "pu": 429.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00160",
+      "client": "FACEMAG",
+      "date": "2026-08-03 10:42:59",
+      "commande": "S00433",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET D'HUILE 45*75*8",
+          "quantite": 10.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "",
+          "quantite": 10.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00170",
+      "client": "CRISTAL CERAME",
+      "date": "2026-08-04 14:59:00",
+      "commande": "S00457",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0950000003",
+          "nom_odoo": "JOINT POUR CLAPET POMPE A PISTON= DISQUE POMPE  A PISTON D ext 113 mm ep 13 ''PPB31301002",
+          "ref_tadbeer": "0950000003-1",
+          "nom_tadbeer": "KIT COMPLET POUR POMPE A PISTON REF PPB3I3O19OO ( kit =6 anneaux et 6 garniture orange )",
+          "quantite": 10.0,
+          "pu": 160.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00171",
+      "client": "N/A",
+      "date": "2026-08-04 14:57:56",
+      "commande": "Retour de TAC/IN/00158",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0950000003",
+          "nom_odoo": "JOINT POUR CLAPET POMPE A PISTON= DISQUE POMPE  A PISTON D ext 113 mm ep 13 ''PPB31301002",
+          "ref_tadbeer": "0950000003-1",
+          "nom_tadbeer": "KIT COMPLET POUR POMPE A PISTON REF PPB3I3O19OO ( kit =6 anneaux et 6 garniture orange )",
+          "quantite": 10.0,
+          "pu": 1.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00174",
+      "client": "GRAND CERAME",
+      "date": "2026-08-05 08:54:33",
+      "commande": "S00462",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRÊT D'HUILE 45*60*10",
+          "quantite": 10.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00175",
+      "client": "NEXT SNACKING INDUSTRY",
+      "date": "2026-08-06 08:26:46",
+      "commande": "Retour de TAC/IN/00164",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1400000010",
+          "nom_odoo": "JOINT TORIQUE HAUTE TEMERATURE 63-3",
+          "ref_tadbeer": "1400000010-1",
+          "nom_tadbeer": "JOINT TORIQUE HAUTE TEMERATURE 40-4",
+          "quantite": 3.0,
+          "pu": 1.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00176",
+      "client": "NEXT SNACKING INDUSTRY",
+      "date": "2026-08-06 08:30:34",
+      "commande": "S00472",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1400000010",
+          "nom_odoo": "JOINT TORIQUE HAUTE TEMERATURE 63-3",
+          "ref_tadbeer": "1400000010-1",
+          "nom_tadbeer": "JOINT TORIQUE HAUTE TEMERATURE 40-4",
+          "quantite": 3.0,
+          "pu": 52.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00177",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-08-06 10:16:15",
+      "commande": "S00476",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0314000041",
+          "nom_odoo": "COURROIE DENTEE XPB3000 SWR",
+          "ref_tadbeer": "0314000041-2",
+          "nom_tadbeer": "COURROIE DENTEE 510L075",
+          "quantite": 16.0,
+          "pu": 117.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00183",
+      "client": "SUPER CERAME KENITRA",
+      "date": "2026-08-07 16:36:47",
+      "commande": "S00487",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCF210",
+          "quantite": 4.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCF209",
+          "quantite": 10.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCFL208",
+          "quantite": 5.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCFL204",
+          "quantite": 12.0
+        },
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1410000126",
+          "nom_odoo": "ARRET D'HUILE 30*47*7",
+          "ref_tadbeer": "1410000126-1",
+          "nom_tadbeer": "ARRÊT D'HUILE 30*47*8",
+          "quantite": 8.0,
+          "pu": 6.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET D'HUILE 25*42*8",
+          "quantite": 12.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET DHUILE 100*120*13",
+          "quantite": 20.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00187",
+      "client": "ESPANO CERAME",
+      "date": "2026-08-10 11:58:22",
+      "commande": "S00500",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "COURROIE DE ROBOT VA ET VIEN 19T10 10980",
+          "quantite": 2.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00188",
+      "client": "ESPANO CERAME",
+      "date": "2026-08-10 12:02:50",
+      "commande": "S00501",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "COURROIE DE ROBOT VA ET VIEN 19T10 10980",
+          "quantite": 4.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00192",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-08-11 11:33:26",
+      "commande": "S00113",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0314000041",
+          "nom_odoo": "COURROIE DENTEE XPB3000 SWR",
+          "ref_tadbeer": "0314000041-2",
+          "nom_tadbeer": "COURROIE DENTEE 510L075",
+          "quantite": 16.0,
+          "pu": 117.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00197",
+      "client": "BRILLO CERAME",
+      "date": "2026-08-11 13:28:43",
+      "commande": "S00505",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 100.0,
+          "pu": 18.5
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00213",
+      "client": "EURO CERAMICA",
+      "date": "2026-08-28 15:18:43",
+      "commande": "S00551",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ROULEMENT A BILLE ISB 2RS C3 6309",
+          "quantite": 4.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00214",
+      "client": "CERAMICA DERSA",
+      "date": "2026-08-28 15:44:28",
+      "commande": "S00546",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0311000022",
+          "nom_odoo": "COURROIE DENTE SECTION 1000H100",
+          "ref_tadbeer": "0311000022-1",
+          "nom_tadbeer": "COURROIE DENTEE DOUBLE SECTION 1000H100",
+          "quantite": 3.0,
+          "pu": 210.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00219",
+      "client": "SUPER CERAME TETOUAN",
+      "date": "2026-09-01 14:02:42",
+      "commande": "S00568",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0314000040",
+          "nom_odoo": "COURROIE DENTEE 270L075",
+          "ref_tadbeer": "0314000040-1",
+          "nom_tadbeer": "COURROIE DENTEE 240L075",
+          "quantite": 10.0,
+          "pu": 29.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00232",
+      "client": "CRISTAL CERAME",
+      "date": "2026-09-04 14:01:11",
+      "commande": "S00595",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0311000014",
+          "nom_odoo": "COURROIE DENTE SECTION 660H100",
+          "ref_tadbeer": "0311000014-1",
+          "nom_tadbeer": "COURROIE DENTE SECTION 660H 40mm",
+          "quantite": 3.0,
+          "pu": 187.2
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00245",
+      "client": "BRILLO CERAME",
+      "date": "2026-09-09 10:17:47",
+      "commande": "S00618",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0980000003",
+          "nom_odoo": "PINCE A SOUDER COURROIE THERMOSOUDABLE",
+          "ref_tadbeer": "0980000003-1",
+          "nom_tadbeer": "PINCE A SOUDER POUR COURROIE THERMOSOUDABLE -FM-",
+          "quantite": 2.0,
+          "pu": 800.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00249",
+      "client": "SUPER CERAME BERRECHID",
+      "date": "2026-09-09 13:48:21",
+      "commande": "S00624",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1980000112-1",
+          "nom_odoo": "DISTRIBUTEUR PNEUMATIQUE 1/4 5/2 SIMPLE EFFET BOBINE 110 V",
+          "ref_tadbeer": "1980000112-14",
+          "nom_tadbeer": "VERIN MAGNÉTIQUE 40*70",
+          "quantite": 10.0,
+          "pu": 340.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00259",
+      "client": "STATION KANTARI",
+      "date": "2026-09-15 15:37:11",
+      "commande": "S00661",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1200000014",
+          "nom_odoo": "BANDE PVC 2PLIS BLEU 220mm",
+          "ref_tadbeer": "1200000014-1",
+          "nom_tadbeer": "BANDE PVC 2PLIS 220mm",
+          "quantite": 50.0,
+          "pu": 44.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00268",
+      "client": "EURO CERAMICA",
+      "date": "2026-09-16 14:44:29",
+      "commande": "S00655",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "011206328",
+          "nom_odoo": "ROULEMENT A BILLE FAG 608 2RS C3",
+          "ref_tadbeer": "011206328-1",
+          "nom_tadbeer": "ROULEMENT A BILLE FAG 608 2RS",
+          "quantite": 20.0,
+          "pu": 21.96
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00273",
+      "client": "FCE (Fresh Citrus Export)",
+      "date": "2026-09-16 16:04:25",
+      "commande": "S00355",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1310000001",
+          "nom_odoo": "DONNETTE 110*25*25",
+          "ref_tadbeer": "1310000001-06",
+          "nom_tadbeer": "DONNETTE  80*25*15",
+          "quantite": 800.0,
+          "pu": 8.2
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00275",
+      "client": "HMI (Hygienic Modern Industries)",
+      "date": "2026-09-21 14:53:15",
+      "commande": "S00474",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0712000001",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B5 0,18KW 1500/MIN GMT",
+          "ref_tadbeer": "0712000001-01",
+          "nom_tadbeer": "MOTEUR ELECTRIQUE 380V  B3 0,18KW 1500/MIN IE3 GMT",
+          "quantite": 1.0,
+          "pu": 690.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00278",
+      "client": "QUALIAGRO (Station Marrakech)",
+      "date": "2026-09-18 10:44:16",
+      "commande": "S00663",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1200000168",
+          "nom_odoo": "BANDE PVC 3PLIS BLEU 400MM",
+          "ref_tadbeer": "1200000168-1",
+          "nom_tadbeer": "BANDE PVC 3PLIS 400mm",
+          "quantite": 191.4,
+          "pu": 108.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00283",
+      "client": "GHORGHIZ CERAME",
+      "date": "2026-09-22 10:27:43",
+      "commande": "S00689",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1810000027",
+          "nom_odoo": "BANDE PVC 3 PLIS 610MM LONG 7950MM FERMEE A VEC JONCTION A CHAUD",
+          "ref_tadbeer": "1810000027-1",
+          "nom_tadbeer": "BANDE PVC 3PLIS BLEU 1250MM",
+          "quantite": 1.0,
+          "pu": 3070.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00297",
+      "client": "PENGDE",
+      "date": "2026-09-25 13:53:34",
+      "commande": "Retour de TAC/IN/00255",
+      "erreurs": [
+        {
+          "type": "ECART_QUANTITE",
+          "ref": "0800000003",
+          "qty_odoo": 300.0,
+          "qty_tadbeer": 0.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "REVETEMENT RED 50*2.5",
+          "quantite": 0.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00303",
+      "client": "TUNAMAX",
+      "date": "2026-09-25 15:51:27",
+      "commande": "S00717",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "COURROIE DENTEE 50T10-1630MM FERMEE",
+          "quantite": 2.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00308",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-09-30 16:47:09",
+      "commande": "S00331",
+      "erreurs": [
+        {
+          "type": "ECART_QUANTITE",
+          "ref": "0930000018-1",
+          "qty_odoo": 130.0,
+          "qty_tadbeer": 0.0
+        },
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 0.0,
+          "pu": 1.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00310",
+      "client": "SUPER CERAME KENITRA",
+      "date": "2026-09-30 10:52:24",
+      "commande": "S00733",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 360.0,
+          "pu": 29.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00311",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-09-30 10:54:06",
+      "commande": "S00734",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 130.0,
+          "pu": 29.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00312",
+      "client": "GHORGHIZ CERAME",
+      "date": "2026-10-01 09:19:25",
+      "commande": "S00735",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 100.0,
+          "pu": 48.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00313",
+      "client": "BRILLO CERAME",
+      "date": "2026-10-01 09:20:14",
+      "commande": "S00736",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 100.0,
+          "pu": 48.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00315",
+      "client": "SUPER CERAME KENITRA",
+      "date": "2026-09-30 12:14:07",
+      "commande": "S00741",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 360.0,
+          "pu": 29.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00317",
+      "client": "SUPER CERAME TETOUAN",
+      "date": "2026-10-02 15:10:10",
+      "commande": "S00745",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 100.0,
+          "pu": 29.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00318",
+      "client": "SUPER CERAME CASA",
+      "date": "2026-10-02 15:11:27",
+      "commande": "S00747",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0311000022",
+          "nom_odoo": "COURROIE DENTE SECTION 1000H100",
+          "ref_tadbeer": "0311000022-1",
+          "nom_tadbeer": "COURROIE DENTEE DOUBLE SECTION 1000H100",
+          "quantite": 20.0,
+          "pu": 120.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00319",
+      "client": "SUPER CERAME TETOUAN",
+      "date": "2026-10-02 10:38:50",
+      "commande": "S00745",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000018",
+          "nom_odoo": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY",
+          "ref_tadbeer": "0930000018-1",
+          "nom_tadbeer": "ENCRE NOIR HIGH QUALITY  WORLD JET ORIGINE : ITALY M1",
+          "quantite": 100.0,
+          "pu": 29.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00322",
+      "client": "JACOB DELAFON MAROC",
+      "date": "2026-10-05 14:29:18",
+      "commande": "S00478",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1820000010",
+          "nom_odoo": "CONFECTION TAMBOUR SUIVANT MODELE POUR CONCASSEUR",
+          "ref_tadbeer": "1820000010-1",
+          "nom_tadbeer": "CONFECTION TAMBOUR SUIVANT MODELE POUR  ENTREE CONCASSEUR",
+          "quantite": 1.0,
+          "pu": 4120.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00325",
+      "client": "FACEMAG",
+      "date": "2026-10-06 13:09:47",
+      "commande": "S00755",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1410000217",
+          "nom_odoo": "ARRET D'HUILE 45*60*7",
+          "ref_tadbeer": "1410000217-1",
+          "nom_tadbeer": "ARRET D'HUILE 45*60*8",
+          "quantite": 20.0,
+          "pu": 9.3
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00329",
+      "client": "AMA DÉTERGENT",
+      "date": "2026-10-07 12:54:38",
+      "commande": "S00611",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1410000198",
+          "nom_odoo": "ARRET D'HUILE 40*62*10",
+          "ref_tadbeer": "1410000198-1",
+          "nom_tadbeer": "ARRET D'HUILE 40*62*10 EN VITON",
+          "quantite": 10.0,
+          "pu": 8.91
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00336",
+      "client": "GHORGHIZ CERAME",
+      "date": "2026-10-07 16:29:26",
+      "commande": "S00608",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0910000011",
+          "nom_odoo": "SPIRALE 4 VOIE 15mm",
+          "ref_tadbeer": "0910000011-2",
+          "nom_tadbeer": "PASTILLE CARBURE 2,2mm",
+          "quantite": 20.0,
+          "pu": 1.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00345",
+      "client": "JACOB DELAFON MAROC",
+      "date": "2026-10-12 13:55:48",
+      "commande": "S00790",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1820000010",
+          "nom_odoo": "CONFECTION TAMBOUR SUIVANT MODELE POUR CONCASSEUR",
+          "ref_tadbeer": "1820000010-1",
+          "nom_tadbeer": "CONFECTION TAMBOUR SUIVANT MODELE POUR  ENTREE CONCASSEUR",
+          "quantite": 1.0,
+          "pu": 4120.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00349",
+      "client": "GRAND CERAME",
+      "date": "2026-10-14 10:25:25",
+      "commande": "S00789",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "015200030",
+          "nom_odoo": "ROULEMENT A ROULEAU CYLINDRIQUE FAG NJ2211 -TVP2",
+          "ref_tadbeer": "015200030-1",
+          "nom_tadbeer": "ROULEMENT A ROULEAU CYLINDRIQUE FAG NJ2314 -TVP2",
+          "quantite": 4.0,
+          "pu": 656.25
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00351",
+      "client": "FACEMAG",
+      "date": "2026-10-15 09:46:54",
+      "commande": "S00792",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1410000126",
+          "nom_odoo": "ARRET D'HUILE 30*47*7",
+          "ref_tadbeer": "1410000126-1",
+          "nom_tadbeer": "ARRÊT D'HUILE 30*47*8",
+          "quantite": 20.0,
+          "pu": 8.6
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00355",
+      "client": "OLEA CAPITAL SLE BERTIN SA",
+      "date": "2026-10-19 13:58:08",
+      "commande": "S00816",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ROULEMENT A BILLE ISB ZZ C3 6205",
+          "quantite": 2.0
+        },
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "200100016",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCF206",
+          "ref_tadbeer": "200100016-1",
+          "nom_tadbeer": "PALIER COMPLET ACIER ISB UCF205",
+          "quantite": 2.0,
+          "pu": 84.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00363",
+      "client": "JACOB DELAFON MAROC",
+      "date": "2026-10-22 17:27:14",
+      "commande": "S00860",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1210000005",
+          "nom_odoo": "SIEGE CLAPET A BILLE EN NEOPRENE SANDPIPER 722.040.365",
+          "ref_tadbeer": "1210000005-1",
+          "nom_tadbeer": "SIEGE CLAPET A BILLE EN NEOPRENE SANDPIPER 722.040.360",
+          "quantite": 4.0,
+          "pu": 145.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00364",
+      "client": "DAMSA CONSERVERIE",
+      "date": "2026-10-22 16:52:06",
+      "commande": "S00866",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106006",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6005",
+          "quantite": 44.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106005",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6004",
+          "quantite": 6.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106007",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6006",
+          "quantite": 7.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106008",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6008",
+          "quantite": 6.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET DHUILE 70*80*10",
+          "quantite": 1.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ROULEMENT A ROULEAU CONIQUE FAG /SKF A 30218",
+          "quantite": 2.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106006",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6005",
+          "quantite": 10.0
+        },
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "012203205",
+          "nom_odoo": "ROULEMENT 3205 BD-XL-TVP-C3 FAG/SKF",
+          "ref_tadbeer": "012203205-2",
+          "nom_tadbeer": "ROULEMENT  FAG 2RS  3205",
+          "quantite": 10.0,
+          "pu": 270.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET D'HUILE 80*100*12",
+          "quantite": 6.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00366",
+      "client": "DAMSA CONSERVERIE",
+      "date": "2026-10-22 17:19:59",
+      "commande": "S00867",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106006",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6005",
+          "quantite": 44.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106005",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6004",
+          "quantite": 6.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106007",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6006",
+          "quantite": 7.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106008",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6008",
+          "quantite": 6.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET DHUILE 70*80*10",
+          "quantite": 1.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ROULEMENT A ROULEAU CONIQUE FAG /SKF A 30218",
+          "quantite": 2.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106006",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6005",
+          "quantite": 10.0
+        },
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "012203205",
+          "nom_odoo": "ROULEMENT 3205 BD-XL-TVP-C3 FAG/SKF",
+          "ref_tadbeer": "012203205-2",
+          "nom_tadbeer": "ROULEMENT  FAG 2RS  3205",
+          "quantite": 10.0,
+          "pu": 270.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET D'HUILE 80*100*12",
+          "quantite": 6.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00367",
+      "client": "DAMSA CONSERVERIE",
+      "date": "2026-10-22 17:27:03",
+      "commande": "S00868",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106006",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6005",
+          "quantite": 44.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106005",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6004",
+          "quantite": 6.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106007",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6006",
+          "quantite": 7.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106008",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6008",
+          "quantite": 6.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET DHUILE 70*80*10",
+          "quantite": 1.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ROULEMENT A ROULEAU CONIQUE FAG /SKF A 30218",
+          "quantite": 2.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "011106006",
+          "nom_odoo": "ROULEMENT A BILLE SKF 2RS C3 6005",
+          "quantite": 10.0
+        },
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "012203205",
+          "nom_odoo": "ROULEMENT 3205 BD-XL-TVP-C3 FAG/SKF",
+          "ref_tadbeer": "012203205-2",
+          "nom_tadbeer": "ROULEMENT  FAG 2RS  3205",
+          "quantite": 10.0,
+          "pu": 270.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "ARRET D'HUILE 80*100*12",
+          "quantite": 6.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00371",
+      "client": "SUPER CERAME TETOUAN",
+      "date": "2026-10-23 12:43:19",
+      "commande": "S00876",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "PALIER COMPLET ACIER ISB UCFC207",
+          "quantite": 10.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00372",
+      "client": "SOHOSNACKS",
+      "date": "2026-10-23 13:42:37",
+      "commande": "S00878",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "1980000112-20",
+          "nom_odoo": "RACCORD DROIT 16-1/2",
+          "quantite": 4.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "1980000112-21",
+          "nom_odoo": "BOUCHON 1/2",
+          "quantite": 5.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "1980000112-22",
+          "nom_odoo": "REDUCTION 1-1/2",
+          "quantite": 4.0
+        },
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "1980000112-23",
+          "nom_odoo": "Réduction hexagonale mâle 3/4 femelle 1/2 inox",
+          "quantite": 4.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00373",
+      "client": "SUPER CERAME BERRECHID",
+      "date": "2026-10-23 13:11:13",
+      "commande": "S00879",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0940000024",
+          "nom_odoo": "PIGNON HELICOIDAL Z15",
+          "ref_tadbeer": "0940000024-1",
+          "nom_tadbeer": "\" PIGNON HELICOIDAL DIAM 13 Z15",
+          "quantite": 99.0,
+          "pu": 19.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00374",
+      "client": "SUPER CERAME TETOUAN",
+      "date": "2026-10-23 15:35:15",
+      "commande": "S00880",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "1410000288-1",
+          "nom_odoo": "ARRET D'HUILE 54*85*10",
+          "ref_tadbeer": "1410000288-19",
+          "nom_tadbeer": "ARRET D'HUILE 55*80*8",
+          "quantite": 10.0,
+          "pu": 8.9
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00379",
+      "client": "SUPER CERAME BERRECHID",
+      "date": "2026-10-23 12:00:58",
+      "commande": "S00879",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0940000024",
+          "nom_odoo": "PIGNON HELICOIDAL Z15",
+          "ref_tadbeer": "0940000024-1",
+          "nom_tadbeer": "\" PIGNON HELICOIDAL DIAM 13 Z15",
+          "quantite": 301.0,
+          "pu": 19.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "TAC/OUT/00383",
+      "client": "STATION KANTARI",
+      "date": "2026-10-23 17:06:33",
+      "commande": "S00889",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "0220000210",
+          "nom_odoo": "COURROIE TRAPEZOIDALE SWR TYPE B210",
+          "quantite": 2.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "WH/OUT/00001",
+      "client": "test",
+      "date": "2026-04-03 14:26:33",
+      "commande": "S00004",
+      "erreurs": [
+        {
+          "type": "ARTICLE_MANQUANT",
+          "ref_odoo": "",
+          "nom_odoo": "",
+          "quantite": 1.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "WH/OUT/00006",
+      "client": "CERAMICA DERSA",
+      "date": "2026-05-13 13:07:43",
+      "commande": "S00017",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0721000003",
+          "nom_odoo": "MOTEUR ELECTRIQUE 380V  B14 0,37KW 1500/MIN TERCESA",
+          "ref_tadbeer": "0721000003-1",
+          "nom_tadbeer": "MOTEUR A FREIN 0,37KW 1500 220/380V B14 TERCESA",
+          "quantite": 1.0,
+          "pu": 800.0
+        }
+      ]
+    },
+    {
+      "numero_bl": "WH/OUT/00007",
+      "client": "GRAND CERAME",
+      "date": "2026-05-15 14:03:31",
+      "commande": "S00024",
+      "erreurs": [
+        {
+          "type": "INVERSION_PRODUIT",
+          "ref_odoo": "0930000004",
+          "nom_odoo": "PROFIL POLYZEN TP40-285  H=35",
+          "ref_tadbeer": "0930000004-1",
+          "nom_tadbeer": "PROFIL POLYZEN VERT TP 20 H=10",
+          "quantite": 200.0,
+          "pu": 28.0
+        }
+      ]
+    }
+  ]
+}
