@@ -82,6 +82,23 @@ public class BonLivraisonClientService {
         this.userRepository = userRepository;
     }
 
+    public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
+                                     ClientRepository clientRepository,
+                                     CommandeClientRepository commandeClientRepository,
+                                     ProduitRepository produitRepository,
+                                     DepotRepository depotRepository,
+                                     MouvementStockService mouvementStockService,
+                                     BonLivraisonClientMapper bonLivraisonClientMapper,
+                                     CodificationService codificationService,
+                                     com.gestion.repository.StockRepository stockRepository,
+                                     AuditService auditService,
+                                     GedService gedService,
+                                     EntrepriseProfileService entrepriseProfileService) {
+        this(bonLivraisonClientRepository, clientRepository, commandeClientRepository, produitRepository,
+                depotRepository, mouvementStockService, bonLivraisonClientMapper, codificationService,
+                stockRepository, auditService, gedService, entrepriseProfileService, null);
+    }
+
     public Page<BonLivraisonClient> searchBonsLivraison(BonLivraisonClientSearchCriteria criteria, Pageable pageable) {
         return bonLivraisonClientRepository.findByCriteria(criteria, pageable);
     }

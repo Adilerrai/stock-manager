@@ -31,13 +31,13 @@
             CREATE INDEX IF NOT EXISTS idx_clients_user_id ON clients(user_id);
 
             -- 3. Rôles ROLE_CLIENT et ROLE_LIVREUR
-            INSERT INTO roles (name)
+            INSERT INTO roles (nom)
             SELECT 'ROLE_CLIENT'
-            WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_CLIENT');
+            WHERE NOT EXISTS (SELECT 1 FROM roles WHERE nom = 'ROLE_CLIENT');
 
-            INSERT INTO roles (name)
+            INSERT INTO roles (nom)
             SELECT 'ROLE_LIVREUR'
-            WHERE NOT EXISTS (SELECT 1 FROM roles WHERE name = 'ROLE_LIVREUR');
+            WHERE NOT EXISTS (SELECT 1 FROM roles WHERE nom = 'ROLE_LIVREUR');
 
             -- 4. Colonnes expédition et validation livreur sur bons_livraison_client
             ALTER TABLE IF EXISTS bons_livraison_client
@@ -141,4 +141,3 @@
     </changeSet>
 
 </databaseChangeLog>
-
