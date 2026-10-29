@@ -4,5 +4,6 @@ public enum StatutTransfert {
     BROUILLON,
     EN_TRANSIT,
     RECU_VALIDE,
+    VALIDE,
     ANNULE
 }
