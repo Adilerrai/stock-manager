@@ -148,7 +148,7 @@ public class LivraisonService {
     public Livraison validerLivraison(Long livraisonId) {
         Livraison livraison = this.getLivraisonById(livraisonId);
         
-        if (livraison.getStatut() != StatutLivraison.EN_ATTENTE) {
+        if (livraison.getStatut() != StatutLivraison.EN_ATTENTE && livraison.getStatut() != StatutLivraison.BROUILLON) {
             throw new IllegalStateException("Seules les livraisons en attente peuvent être validées");
         }
 
