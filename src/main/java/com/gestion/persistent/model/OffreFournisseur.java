@@ -44,6 +44,31 @@ public class OffreFournisseur {
     @Column(name = "conditions_paiement", length = 100)
     private String conditionsPaiement;
 
+    @Column(length = 10)
+    private String devise = "MAD";
+
+    @Column(name = "taux_change_estime", precision = 12, scale = 6)
+    private BigDecimal tauxChangeEstime = BigDecimal.ONE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "incoterm", length = 10)
+    private com.gestion.persistent.enums.Incoterm incoterm;
+
+    @Column(name = "lieu_incoterm", length = 100)
+    private String lieuIncoterm;
+
+    @Column(name = "port_embarquement", length = 100)
+    private String portEmbarquement;
+
+    @Column(name = "validite_offre")
+    private java.time.LocalDate validiteOffre;
+
+    @Column(name = "code_douanier_sh", length = 30)
+    private String codeDouanierSh;
+
+    @Column(name = "acompte_exige_pct", precision = 5, scale = 2)
+    private BigDecimal acompteExigePct = BigDecimal.ZERO;
+
     @Column(columnDefinition = "TEXT")
     private String observations;
 
@@ -99,6 +124,30 @@ public class OffreFournisseur {
 
     public StatutOffreFournisseur getStatut() { return statut; }
     public void setStatut(StatutOffreFournisseur statut) { this.statut = statut; }
+
+    public String getDevise() { return devise; }
+    public void setDevise(String devise) { this.devise = devise; }
+
+    public BigDecimal getTauxChangeEstime() { return tauxChangeEstime; }
+    public void setTauxChangeEstime(BigDecimal tauxChangeEstime) { this.tauxChangeEstime = tauxChangeEstime; }
+
+    public com.gestion.persistent.enums.Incoterm getIncoterm() { return incoterm; }
+    public void setIncoterm(com.gestion.persistent.enums.Incoterm incoterm) { this.incoterm = incoterm; }
+
+    public String getLieuIncoterm() { return lieuIncoterm; }
+    public void setLieuIncoterm(String lieuIncoterm) { this.lieuIncoterm = lieuIncoterm; }
+
+    public String getPortEmbarquement() { return portEmbarquement; }
+    public void setPortEmbarquement(String portEmbarquement) { this.portEmbarquement = portEmbarquement; }
+
+    public java.time.LocalDate getValiditeOffre() { return validiteOffre; }
+    public void setValiditeOffre(java.time.LocalDate validiteOffre) { this.validiteOffre = validiteOffre; }
+
+    public String getCodeDouanierSh() { return codeDouanierSh; }
+    public void setCodeDouanierSh(String codeDouanierSh) { this.codeDouanierSh = codeDouanierSh; }
+
+    public BigDecimal getAcompteExigePct() { return acompteExigePct; }
+    public void setAcompteExigePct(BigDecimal acompteExigePct) { this.acompteExigePct = acompteExigePct; }
 
     public String getConditionsPaiement() { return conditionsPaiement; }
     public void setConditionsPaiement(String conditionsPaiement) { this.conditionsPaiement = conditionsPaiement; }

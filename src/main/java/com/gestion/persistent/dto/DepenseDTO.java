@@ -40,6 +40,10 @@ public class DepenseDTO {
     private String creeParNom;
     private Long pointDeVenteId;
     private LocalDateTime dateCreation;
+    private Long commandeId;
+    private String numeroCommande;
+    private Boolean estFraisImport = false;
+    private String typeFraisImport;
 
     public DepenseDTO() {}
 
@@ -153,4 +157,16 @@ public class DepenseDTO {
 
     public Integer getNombrePiecesJointes() { return nombrePiecesJointes != null ? nombrePiecesJointes : (documents != null ? documents.size() : 0); }
     public void setNombrePiecesJointes(Integer nombrePiecesJointes) { this.nombrePiecesJointes = nombrePiecesJointes; }
+
+    public Long getCommandeId() { return commandeId; }
+    public void setCommandeId(Long commandeId) { this.commandeId = commandeId; }
+
+    public String getNumeroCommande() { return numeroCommande; }
+    public void setNumeroCommande(String numeroCommande) { this.numeroCommande = numeroCommande; }
+
+    public Boolean getEstFraisImport() { return estFraisImport; }
+    public void setEstFraisImport(Boolean estFraisImport) { this.estFraisImport = estFraisImport; }
+
+    public String getTypeFraisImport() { return typeFraisImport; }
+    public void setTypeFraisImport(String typeFraisImport) { this.typeFraisImport = typeFraisImport; }
 }

@@ -32,19 +32,22 @@ public class FactureAchatService {
     private final FactureAchatMapper factureAchatMapper;
     private final CodificationService codificationService;
     private final com.gestion.repository.ReglementFournisseurRepository reglementFournisseurRepository;
+    private final com.gestion.repository.CommandeRepository commandeRepository;
 
     public FactureAchatService(FactureAchatRepository factureAchatRepository,
                                FournisseurRepository fournisseurRepository,
                                ProduitRepository produitRepository,
                                FactureAchatMapper factureAchatMapper,
                                CodificationService codificationService,
-                               com.gestion.repository.ReglementFournisseurRepository reglementFournisseurRepository) {
+                               com.gestion.repository.ReglementFournisseurRepository reglementFournisseurRepository,
+                               com.gestion.repository.CommandeRepository commandeRepository) {
         this.factureAchatRepository = factureAchatRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.produitRepository = produitRepository;
         this.factureAchatMapper = factureAchatMapper;
         this.codificationService = codificationService;
         this.reglementFournisseurRepository = reglementFournisseurRepository;
+        this.commandeRepository = commandeRepository;
     }
 
     public FactureAchatDTO creerFactureAchat(FactureAchatDTO dto) {
@@ -73,6 +76,11 @@ public class FactureAchatService {
         Fournisseur fournisseur = fournisseurRepository.findById(targetFournisseurId)
                 .orElseThrow(() -> new RuntimeException("Fournisseur non trouvé avec l'id: " + targetFournisseurId));
         facture.setFournisseur(fournisseur);
+
+        if (dto.getCommandeId() != null) {
+            com.gestion.persistent.model.Commande commande = commandeRepository.findById(dto.getCommandeId()).orElse(null);
+            facture.setCommande(commande);
+        }
 
         BigDecimal totalHt = BigDecimal.ZERO;
         BigDecimal totalTva = BigDecimal.ZERO;
@@ -114,7 +122,29 @@ public class FactureAchatService {
         facture.setMontantTtc(totalTtc);
 
         FactureAchat saved = factureAchatRepository.save(facture);
-        return factureAchatMapper.toDto(saved);
+
+        // Imputation automatique des acomptes réservés sur cette commande
+        BigDecimal totalAcomptes = BigDecimal.ZERO;
+        if (saved.getCommande() != null) {
+            List<com.gestion.persistent.model.ReglementFournisseur> acomptes = reglementFournisseurRepository
+                    .findByCommandeIdAndFactureAchatIsNull(saved.getCommande().getId());
+            for (var acompte : acomptes) {
+                acompte.setFactureAchat(saved);
+                acompte.setTypeReglement("ACOMPTE_IMPUTE");
+                reglementFournisseurRepository.save(acompte);
+                if (acompte.getMontant() != null) {
+                    totalAcomptes = totalAcomptes.add(acompte.getMontant());
+                }
+            }
+            if (totalAcomptes.compareTo(BigDecimal.ZERO) > 0) {
+                updateStatutFacture(saved, totalAcomptes);
+            }
+        }
+
+        FactureAchatDTO resDto = factureAchatMapper.toDto(saved);
+        resDto.setMontantPaye(totalAcomptes);
+        resDto.setMontantRestant(saved.getMontantTtc() != null ? saved.getMontantTtc().subtract(totalAcomptes).max(BigDecimal.ZERO) : BigDecimal.ZERO);
+        return resDto;
     }
 
     public List<FactureAchatDTO> getFacturesAchat() {

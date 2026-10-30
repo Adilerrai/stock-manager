@@ -9,6 +9,8 @@ public class LigneOffreFournisseurDTO {
     private Long produitId;
     private String designation;
     private BigDecimal prixUnitaireHT;
+    private BigDecimal prixUnitaireDevise;
+    private String codeSh;
     private BigDecimal remisePourcentage;
     private BigDecimal tauxTVA;
     private BigDecimal quantiteProposee;
@@ -50,6 +52,12 @@ public class LigneOffreFournisseurDTO {
 
     public Boolean getEstRetenue() { return estRetenue; }
     public void setEstRetenue(Boolean estRetenue) { this.estRetenue = estRetenue; }
+
+    public BigDecimal getPrixUnitaireDevise() { return prixUnitaireDevise; }
+    public void setPrixUnitaireDevise(BigDecimal prixUnitaireDevise) { this.prixUnitaireDevise = prixUnitaireDevise; }
+
+    public String getCodeSh() { return codeSh; }
+    public void setCodeSh(String codeSh) { this.codeSh = codeSh; }
 
     public BigDecimal getMontantTotalHT() { return montantTotalHT; }
     public void setMontantTotalHT(BigDecimal montantTotalHT) { this.montantTotalHT = montantTotalHT; }

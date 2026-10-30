@@ -53,6 +53,9 @@ public class LigneCommande {
 
     // ===== Logistique / coût de revient =====
 
+    @Column(name = "prix_unitaire_devise", precision = 14, scale = 4)
+    private BigDecimal prixUnitaireDevise;
+
     @Column(name = "prix_unitaire_mad", precision = 14, scale = 4)
     private BigDecimal prixUnitaireMad;
 
@@ -116,6 +119,9 @@ public class LigneCommande {
 
     public QualiteProduit getQualiteProduit() { return qualiteProduit; }
     public void setQualiteProduit(QualiteProduit qualiteProduit) { this.qualiteProduit = qualiteProduit; }
+
+    public BigDecimal getPrixUnitaireDevise() { return prixUnitaireDevise; }
+    public void setPrixUnitaireDevise(BigDecimal prixUnitaireDevise) { this.prixUnitaireDevise = prixUnitaireDevise; }
 
     public BigDecimal getPrixUnitaireMad() { return prixUnitaireMad; }
     public void setPrixUnitaireMad(BigDecimal prixUnitaireMad) { this.prixUnitaireMad = prixUnitaireMad; }

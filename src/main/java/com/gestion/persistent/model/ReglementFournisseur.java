@@ -27,13 +27,34 @@ public class ReglementFournisseur {
     private LocalDateTime dateReglement = LocalDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "facture_achat_id", nullable = false)
+    @JoinColumn(name = "facture_achat_id", nullable = true)
     @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "lignes", "reglements"})
     private FactureAchat factureAchat;
 
     @Transient
     @com.fasterxml.jackson.annotation.JsonProperty("factureAchatId")
     private Long factureAchatId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "commande_id")
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "lignesCommande", "livraisons"})
+    private Commande commande;
+
+    @Transient
+    @com.fasterxml.jackson.annotation.JsonProperty("commandeId")
+    private Long commandeId;
+
+    @Column(name = "type_reglement", length = 30)
+    private String typeReglement = "FACTURE";
+
+    @Column(name = "montant_devise", precision = 15, scale = 2)
+    private BigDecimal montantDevise;
+
+    @Column(length = 10)
+    private String devise = "MAD";
+
+    @Column(name = "taux_change", precision = 12, scale = 6)
+    private BigDecimal tauxChange = BigDecimal.ONE;
 
     @Column(name = "montant", nullable = false, precision = 15, scale = 2)
     private BigDecimal montant;
@@ -132,6 +153,33 @@ public class ReglementFournisseur {
 
     public LocalDateTime getDateEcheance() { return dateEcheance; }
     public void setDateEcheance(LocalDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
+
+    public Commande getCommande() { return commande; }
+    public void setCommande(Commande commande) {
+        this.commande = commande;
+        if (commande != null && commande.getId() != null) {
+            this.commandeId = commande.getId();
+        }
+    }
+
+    public Long getCommandeId() {
+        if (commandeId != null) return commandeId;
+        if (commande != null) return commande.getId();
+        return null;
+    }
+    public void setCommandeId(Long commandeId) { this.commandeId = commandeId; }
+
+    public String getTypeReglement() { return typeReglement; }
+    public void setTypeReglement(String typeReglement) { this.typeReglement = typeReglement; }
+
+    public BigDecimal getMontantDevise() { return montantDevise; }
+    public void setMontantDevise(BigDecimal montantDevise) { this.montantDevise = montantDevise; }
+
+    public String getDevise() { return devise; }
+    public void setDevise(String devise) { this.devise = devise; }
+
+    public BigDecimal getTauxChange() { return tauxChange; }
+    public void setTauxChange(BigDecimal tauxChange) { this.tauxChange = tauxChange; }
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }

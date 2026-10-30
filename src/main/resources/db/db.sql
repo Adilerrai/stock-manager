@@ -17,7 +17,6 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 /*
 DROP TABLE IF EXISTS audit_log CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
-DROP TABLE IF EXISTS liasse_fiscale_donnees CASCADE;
 DROP TABLE IF EXISTS documents_comptables CASCADE;
 DROP TABLE IF EXISTS echeances_fiscales CASCADE;
 DROP TABLE IF EXISTS declarations_tva CASCADE;
@@ -134,7 +133,6 @@ CREATE TABLE IF NOT EXISTS point_de_vente (
     module_commercial_actif        BOOLEAN DEFAULT TRUE,
     module_comptabilite_actif      BOOLEAN DEFAULT TRUE,
     module_fiscalite_actif         BOOLEAN DEFAULT TRUE,
-    CONSTRAINT uk_point_de_vente_tenant UNIQUE (tenant_id),
     CONSTRAINT fk_point_de_vente_mere FOREIGN KEY (mere_id) REFERENCES meres(id) ON DELETE SET NULL
 );
 
@@ -221,7 +219,6 @@ CREATE TABLE IF NOT EXISTS collaborateurs_societes (
     societe_id                     BIGINT NOT NULL,
     role_dossier                   VARCHAR(50),
     date_affectation               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_collaborateurs_societes_user_societe UNIQUE (user_id, societe_id),
     CONSTRAINT fk_collaborateurs_societes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     CONSTRAINT fk_collaborateurs_societes_societe FOREIGN KEY (societe_id) REFERENCES societes(id) ON DELETE CASCADE
 );
@@ -251,7 +248,6 @@ CREATE TABLE IF NOT EXISTS entreprise_profiles (
     pied_page                      VARCHAR(1000),
     devise                         VARCHAR(255),
     vente_stock_negatif            BOOLEAN DEFAULT FALSE,
-    couleurs_tenant                VARCHAR(255),
     date_mise_a_jour               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_entreprise_profiles_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE CASCADE
 );
@@ -332,7 +328,7 @@ CREATE TABLE IF NOT EXISTS produits (
 -- Table : produit_images (Images & Photos des Produits)
 CREATE TABLE IF NOT EXISTS produit_images (
     id                             BIGSERIAL PRIMARY KEY,
-    produit_id                     BIGINT NOT NULL UNIQUE,
+    produit_id                     BIGINT NOT NULL,
     file_name                      VARCHAR(255),
     image_data                     BYTEA,
     content_type                   VARCHAR(255),
@@ -382,7 +378,6 @@ CREATE TABLE IF NOT EXISTS stocks (
     quantite_reservee              NUMERIC(12, 2) DEFAULT 0.00,
     seuil_alerte                   NUMERIC(12, 2),
     derniere_maj                   TIMESTAMP,
-    CONSTRAINT uk_stocks_produit UNIQUE (produit_id),
     CONSTRAINT fk_stocks_produit FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE CASCADE
 );
 
@@ -396,7 +391,6 @@ CREATE TABLE IF NOT EXISTS stock_qualites (
     derniere_maj                   TIMESTAMP,
     stock_id                       BIGINT NOT NULL,
     produit_id                     BIGINT NOT NULL,
-    CONSTRAINT uk_stock_qualites_stock_qualite UNIQUE (stock_id, qualite_produit),
     CONSTRAINT fk_stock_qualites_stock FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,
     CONSTRAINT fk_stock_qualites_produit FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE CASCADE
 );
@@ -625,6 +619,7 @@ CREATE TABLE IF NOT EXISTS factures_achat (
     date_facture                   TIMESTAMP NOT NULL,
     date_echeance                  TIMESTAMP,
     fournisseur_id                 BIGINT NOT NULL,
+    commande_id                    BIGINT,
     montant_ht                     NUMERIC(15, 2) DEFAULT 0.00,
     montant_tva                    NUMERIC(15, 2) DEFAULT 0.00,
     montant_ttc                    NUMERIC(15, 2) DEFAULT 0.00,
@@ -632,6 +627,7 @@ CREATE TABLE IF NOT EXISTS factures_achat (
     observations                   TEXT,
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     CONSTRAINT fk_factures_achat_fournisseur FOREIGN KEY (fournisseur_id) REFERENCES fournisseurs(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_factures_achat_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL,
     CONSTRAINT fk_factures_achat_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
 
@@ -655,8 +651,13 @@ CREATE TABLE IF NOT EXISTS reglements_fournisseur (
     id                             BIGSERIAL PRIMARY KEY,
     numero_reglement               VARCHAR(255) NOT NULL UNIQUE,
     date_reglement                 TIMESTAMP NOT NULL,
-    facture_achat_id               BIGINT NOT NULL,
+    facture_achat_id               BIGINT,
+    commande_id                    BIGINT,
+    type_reglement                 VARCHAR(30) DEFAULT 'FACTURE',
     montant                        NUMERIC(15, 2) DEFAULT 0.00 NOT NULL,
+    montant_devise                 NUMERIC(15, 2),
+    devise                         VARCHAR(10) DEFAULT 'MAD',
+    taux_change                    NUMERIC(12, 6) DEFAULT 1.000000,
     mode_paiement                  VARCHAR(50) NOT NULL,
     reference_paiement             VARCHAR(255),
     notes                          TEXT,
@@ -665,6 +666,7 @@ CREATE TABLE IF NOT EXISTS reglements_fournisseur (
     date_echeance                  TIMESTAMP,
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     CONSTRAINT fk_reglements_fournisseur_facture_achat FOREIGN KEY (facture_achat_id) REFERENCES factures_achat(id) ON DELETE SET NULL,
+    CONSTRAINT fk_reglements_fournisseur_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL,
     CONSTRAINT fk_reglements_fournisseur_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
 
@@ -714,7 +716,6 @@ CREATE TABLE IF NOT EXISTS objectifs_commerciaux (
     notes                          TEXT,
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_objectifs_commerciaux_comm_annee_mois UNIQUE (commercial_user_id, annee, mois),
     CONSTRAINT fk_objectifs_commerciaux_commercial_user FOREIGN KEY (commercial_user_id) REFERENCES users(id) ON DELETE SET NULL,
     CONSTRAINT fk_objectifs_commerciaux_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
@@ -937,7 +938,7 @@ CREATE TABLE IF NOT EXISTS factures (
     date_facture                   DATE NOT NULL,
     date_echeance                  DATE,
     client_id                      BIGINT NOT NULL,
-    vente_id                       BIGINT UNIQUE,
+    vente_id                       BIGINT,
     emise_par_user_id              BIGINT NOT NULL,
     montant_ht                     NUMERIC(15, 2) DEFAULT 0.00,
     montant_tva                    NUMERIC(15, 2) DEFAULT 0.00,
@@ -1257,12 +1258,64 @@ CREATE TABLE IF NOT EXISTS depenses (
     beneficiaire                   VARCHAR(255),
     numero_facture_justificatif    VARCHAR(255),
     notes                          TEXT,
+    commande_id                    BIGINT,
+    est_frais_import               BOOLEAN DEFAULT FALSE,
+    type_frais_import              VARCHAR(50),
     cree_par_user_id               BIGINT,
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_depenses_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL,
     CONSTRAINT fk_depenses_cree_par_user FOREIGN KEY (cree_par_user_id) REFERENCES users(id) ON DELETE RESTRICT,
     CONSTRAINT fk_depenses_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
+
+-- Table : charges_achat (Charges d'Approche / Frais d'Importation)
+CREATE TABLE IF NOT EXISTS charges_achat (
+    id                             BIGSERIAL PRIMARY KEY,
+    commande_id                    BIGINT NOT NULL,
+    ligne_commande_id              BIGINT,
+    type_charge                    VARCHAR(30) NOT NULL,
+    libelle                        VARCHAR(255),
+    prestataire_id                 BIGINT,
+    facture_achat_id               BIGINT,
+    depense_id                     BIGINT,
+    numero_facture_externe         VARCHAR(50),
+    devise                         VARCHAR(10) DEFAULT 'MAD',
+    taux_change                    NUMERIC(12, 6) DEFAULT 1.000000,
+    montant_estime_devise          NUMERIC(15, 2) DEFAULT 0.00,
+    montant_reel_devise            NUMERIC(15, 2),
+    montant_retenu_mad             NUMERIC(15, 2) DEFAULT 0.00,
+    montant_tva_mad                NUMERIC(15, 2) DEFAULT 0.00,
+    cle_repartition                VARCHAR(20) DEFAULT 'VALEUR',
+    incorporable                   BOOLEAN DEFAULT TRUE,
+    statut                         VARCHAR(20) DEFAULT 'ESTIMEE',
+    date_charge                    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    appliquee_au_stock             BOOLEAN DEFAULT FALSE,
+    observations                   TEXT,
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT fk_charges_achat_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_charges_achat_ligne_commande FOREIGN KEY (ligne_commande_id) REFERENCES lignes_commande(id) ON DELETE SET NULL,
+    CONSTRAINT fk_charges_achat_prestataire FOREIGN KEY (prestataire_id) REFERENCES fournisseurs(id) ON DELETE SET NULL,
+    CONSTRAINT fk_charges_achat_facture_achat FOREIGN KEY (facture_achat_id) REFERENCES factures_achat(id) ON DELETE SET NULL,
+    CONSTRAINT fk_charges_achat_depense FOREIGN KEY (depense_id) REFERENCES depenses(id) ON DELETE SET NULL
+);
+
+-- Table : allocations_charge (Ventilation des Charges d'Approche sur les Lignes de Commande)
+CREATE TABLE IF NOT EXISTS allocations_charge (
+    id                             BIGSERIAL PRIMARY KEY,
+    charge_id                      BIGINT NOT NULL,
+    ligne_commande_id              BIGINT NOT NULL,
+    base_repartition               NUMERIC(18, 4) DEFAULT 0.0000,
+    pourcentage                    NUMERIC(9, 6) DEFAULT 0.000000,
+    montant_mad                    NUMERIC(15, 2) DEFAULT 0.00,
+    CONSTRAINT fk_allocations_charge_charge FOREIGN KEY (charge_id) REFERENCES charges_achat(id) ON DELETE CASCADE,
+    CONSTRAINT fk_allocations_charge_ligne FOREIGN KEY (ligne_commande_id) REFERENCES lignes_commande(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_charges_achat_commande ON charges_achat(commande_id);
+CREATE INDEX IF NOT EXISTS idx_charges_achat_depense ON charges_achat(depense_id);
+CREATE INDEX IF NOT EXISTS idx_depenses_commande ON depenses(commande_id);
+CREATE INDEX IF NOT EXISTS idx_reglements_frn_commande ON reglements_fournisseur(commande_id);
 
 -- =============================================================================
 -- 8. COMPTABILITE GENERALE & ANALYTIQUE, FISCALITE
@@ -1410,7 +1463,6 @@ CREATE TABLE IF NOT EXISTS immobilisations (
     valeur_nette_comptable         NUMERIC(15, 2),
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_immobilisations_code_pdv UNIQUE (code, point_de_vente_id),
     CONSTRAINT fk_immobilisations_compte_immobilisation FOREIGN KEY (compte_immobilisation_id) REFERENCES comptes_comptables(id) ON DELETE RESTRICT,
     CONSTRAINT fk_immobilisations_compte_amortissement FOREIGN KEY (compte_amortissement_id) REFERENCES comptes_comptables(id) ON DELETE RESTRICT,
     CONSTRAINT fk_immobilisations_compte_dotation FOREIGN KEY (compte_dotation_id) REFERENCES comptes_comptables(id) ON DELETE RESTRICT,
@@ -1452,7 +1504,6 @@ CREATE TABLE IF NOT EXISTS regles_fiscales_is (
     plancher_cotisation_minimale   NUMERIC(15, 2) NOT NULL,
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     date_mise_a_jour               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uk_regles_fiscales_is_annee_pdv UNIQUE (annee_fiscale, point_de_vente_id),
     CONSTRAINT fk_regles_fiscales_is_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
 
@@ -1526,22 +1577,6 @@ CREATE TABLE IF NOT EXISTS documents_comptables (
     CONSTRAINT fk_documents_comptables_facture_achat FOREIGN KEY (facture_achat_id) REFERENCES factures_achat(id) ON DELETE SET NULL,
     CONSTRAINT fk_documents_comptables_facture_vente FOREIGN KEY (facture_vente_id) REFERENCES factures(id) ON DELETE SET NULL,
     CONSTRAINT fk_documents_comptables_paiement FOREIGN KEY (paiement_id) REFERENCES paiements(id) ON DELETE SET NULL
-);
-
--- Table : liasse_fiscale_donnees (Donnees et Declarations de la Liasse Fiscale)
-CREATE TABLE IF NOT EXISTS liasse_fiscale_donnees (
-    id                             BIGSERIAL PRIMARY KEY,
-    annee                          INTEGER NOT NULL,
-    statut                         VARCHAR(30) DEFAULT 'BROUILLON',
-    date_modification              TIMESTAMP,
-    modifie_par                    VARCHAR(255),
-    donnees_json                   TEXT,
-    reintegrations_fiscales        NUMERIC(15, 2) DEFAULT 0.00,
-    deductions_fiscales            NUMERIC(15, 2) DEFAULT 0.00,
-    commentaires_metic             TEXT,
-    point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
-    CONSTRAINT uk_liasse_fiscale_annee_pdv UNIQUE (annee, point_de_vente_id),
-    CONSTRAINT fk_liasse_fiscale_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
 
 -- =============================================================================
@@ -1681,8 +1716,6 @@ CREATE INDEX IF NOT EXISTS idx_cheques_effets_statut ON cheques_effets(statut);
 CREATE INDEX IF NOT EXISTS idx_cheques_effets_echeance ON cheques_effets(date_echeance);
 CREATE INDEX IF NOT EXISTS idx_audit_log_date ON audit_log(date_action);
 CREATE INDEX IF NOT EXISTS idx_audit_log_entite ON audit_log(entite, entite_id);
-CREATE INDEX IF NOT EXISTS idx_audit_log_utilisateur ON audit_log(utilisateur);
-CREATE INDEX IF NOT EXISTS idx_liasse_fiscale_donnees_pdv ON liasse_fiscale_donnees(point_de_vente_id);
 
 -- =============================================================================
 -- 12. DONNEES INITIALES ESSENTIELLES (SEED DATA)
@@ -1830,6 +1863,92 @@ SELECT setval('habilitations_id_seq', (SELECT COALESCE(MAX(id), 1) FROM habilita
 SELECT setval('users_id_seq', (SELECT COALESCE(MAX(id), 1) FROM users));
 SELECT setval('banques_id_seq', (SELECT COALESCE(MAX(id), 1) FROM banques));
 
+-- 12.9 Barème officiel IS et Cotisation Minimale (Loi de Finances Marocaine)
+INSERT INTO regles_fiscales_is (annee_fiscale, point_de_vente_id, seuil_tranche1, seuil_tranche2, taux_tranche1, taux_tranche2, taux_tranche3, taux_cotisation_minimale, plancher_cotisation_minimale, date_mise_a_jour)
+VALUES 
+  (2023, 1, 300000.00, 1000000.00, 0.1000, 0.2000, 0.3100, 0.0050, 3000.00, NOW()),
+  (2024, 1, 300000.00, 1000000.00, 0.1000, 0.2000, 0.3100, 0.0050, 3000.00, NOW()),
+  (2025, 1, 300000.00, 1000000.00, 0.1000, 0.2000, 0.3100, 0.0050, 3000.00, NOW()),
+  (2026, 1, 300000.00, 1000000.00, 0.1000, 0.2000, 0.3100, 0.0050, 3000.00, NOW()),
+  (2027, 1, 300000.00, 1000000.00, 0.1000, 0.2000, 0.3100, 0.0050, 3000.00, NOW())
+ON CONFLICT DO NOTHING;
+SELECT setval('regles_fiscales_is_id_seq', (SELECT COALESCE(MAX(id), 1) FROM regles_fiscales_is));
+
+-- =============================================================================
+-- 13. DEMANDES DE PRIX (DDP / RFQ) ET COMPARATEUR D'OFFRES FOURNISSEURS
+-- =============================================================================
+
+CREATE TABLE IF NOT EXISTS demandes_prix (
+    id                             BIGSERIAL PRIMARY KEY,
+    numero_ddp                     VARCHAR(50) NOT NULL,
+    objet                          VARCHAR(255) NOT NULL,
+    statut                         VARCHAR(30) DEFAULT 'BROUILLON' NOT NULL,
+    date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    date_limite_reponse            TIMESTAMP,
+    demande_achat_id               VARCHAR(50),
+    observations                   TEXT,
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT uk_ddp_tenant_numero UNIQUE (point_de_vente_id, numero_ddp)
+);
+
+CREATE TABLE IF NOT EXISTS lignes_demande_prix (
+    id                             BIGSERIAL PRIMARY KEY,
+    demande_prix_id                BIGINT NOT NULL,
+    produit_id                     BIGINT,
+    reference                      VARCHAR(100),
+    designation                    VARCHAR(255) NOT NULL,
+    quantite_demandee              NUMERIC(12, 2) DEFAULT 1.00 NOT NULL,
+    unite                          VARCHAR(20) DEFAULT 'U',
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT fk_ldp_ddp FOREIGN KEY (demande_prix_id) REFERENCES demandes_prix(id) ON DELETE CASCADE,
+    CONSTRAINT fk_ldp_produit FOREIGN KEY (produit_id) REFERENCES produits(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS offres_fournisseurs (
+    id                             BIGSERIAL PRIMARY KEY,
+    demande_prix_id                BIGINT NOT NULL,
+    fournisseur_id                 BIGINT NOT NULL,
+    numero_devis                   VARCHAR(100),
+    date_reception                 TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    delai_livraison_jours          INTEGER DEFAULT 0,
+    frais_port                     NUMERIC(12, 2) DEFAULT 0.00,
+    statut                         VARCHAR(30) DEFAULT 'EN_ATTENTE',
+    conditions_paiement            VARCHAR(100),
+    devise                         VARCHAR(10) DEFAULT 'MAD',
+    taux_change_estime             NUMERIC(12, 6) DEFAULT 1.000000,
+    incoterm                       VARCHAR(10),
+    lieu_incoterm                  VARCHAR(100),
+    port_embarquement              VARCHAR(100),
+    validite_offre                 DATE,
+    code_douanier_sh               VARCHAR(30),
+    acompte_exige_pct              NUMERIC(5, 2) DEFAULT 0.00,
+    observations                   TEXT,
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT fk_offre_ddp FOREIGN KEY (demande_prix_id) REFERENCES demandes_prix(id) ON DELETE CASCADE,
+    CONSTRAINT fk_offre_fournisseur FOREIGN KEY (fournisseur_id) REFERENCES fournisseurs(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS lignes_offre_fournisseur (
+    id                             BIGSERIAL PRIMARY KEY,
+    offre_fournisseur_id           BIGINT NOT NULL,
+    ligne_demande_prix_id          BIGINT NOT NULL,
+    prix_unitaire_ht               NUMERIC(12, 2) DEFAULT 0.00 NOT NULL,
+    prix_unitaire_devise           NUMERIC(14, 4),
+    code_sh                        VARCHAR(30),
+    remise_pourcentage             NUMERIC(5, 2) DEFAULT 0.00,
+    taux_tva                       NUMERIC(5, 2) DEFAULT 20.00,
+    quantite_proposee              NUMERIC(12, 2) DEFAULT 1.00 NOT NULL,
+    disponible_stock               BOOLEAN DEFAULT TRUE,
+    est_retenue                    BOOLEAN DEFAULT FALSE,
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT fk_lof_offre FOREIGN KEY (offre_fournisseur_id) REFERENCES offres_fournisseurs(id) ON DELETE CASCADE,
+    CONSTRAINT fk_lof_ldp FOREIGN KEY (ligne_demande_prix_id) REFERENCES lignes_demande_prix(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_ddp_point_de_vente ON demandes_prix(point_de_vente_id);
+CREATE INDEX IF NOT EXISTS idx_offre_ddp ON offres_fournisseurs(demande_prix_id);
+
 -- =============================================================================
 -- FIN DU SCRIPT db.sql
 -- =============================================================================
+

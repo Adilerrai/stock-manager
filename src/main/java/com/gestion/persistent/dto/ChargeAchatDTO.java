@@ -21,6 +21,8 @@ public class ChargeAchatDTO {
     private String prestataireNom;
     private Long factureAchatId;
     private String numeroFactureAchat;
+    private Long depenseId;
+    private String referenceDepense;
     private String numeroFactureExterne;
     private String devise = "MAD";
     private BigDecimal tauxChange = BigDecimal.ONE;
@@ -128,6 +130,22 @@ public class ChargeAchatDTO {
 
     public void setNumeroFactureAchat(String numeroFactureAchat) {
         this.numeroFactureAchat = numeroFactureAchat;
+    }
+
+    public Long getDepenseId() {
+        return depenseId;
+    }
+
+    public void setDepenseId(Long depenseId) {
+        this.depenseId = depenseId;
+    }
+
+    public String getReferenceDepense() {
+        return referenceDepense;
+    }
+
+    public void setReferenceDepense(String referenceDepense) {
+        this.referenceDepense = referenceDepense;
     }
 
     public String getNumeroFactureExterne() {

@@ -32,6 +32,10 @@ public class FactureAchat {
     @JoinColumn(name = "fournisseur_id", nullable = false)
     private Fournisseur fournisseur;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "commande_id")
+    private Commande commande;
+
     @Column(name = "montant_ht", precision = 15, scale = 2)
     private BigDecimal montantHt = BigDecimal.ZERO;
 
@@ -81,6 +85,9 @@ public class FactureAchat {
 
     public Fournisseur getFournisseur() { return fournisseur; }
     public void setFournisseur(Fournisseur fournisseur) { this.fournisseur = fournisseur; }
+
+    public Commande getCommande() { return commande; }
+    public void setCommande(Commande commande) { this.commande = commande; }
 
     public BigDecimal getMontantHt() { return montantHt; }
     public void setMontantHt(BigDecimal montantHt) { this.montantHt = montantHt; }

@@ -163,4 +163,7 @@
     <!-- Changeset 051 : Espace Client, Réservations d'articles et Statut EXPEDIE + Validation Livreur -->
     <include file="changes/051-espace-client-reservations-et-statut-expedie.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 052 : Importations, Acomptes Fournisseurs (30/70), Passerelle Dépenses et Vigilance Devis -->
+    <include file="changes/052-import-achats-acomptes-et-depenses.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

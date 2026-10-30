@@ -51,6 +51,16 @@ public class Depense {
     private Fournisseur fournisseur;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "commande_id")
+    private Commande commande;
+
+    @Column(name = "est_frais_import")
+    private Boolean estFraisImport = false;
+
+    @Column(name = "type_frais_import", length = 50)
+    private String typeFraisImport;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prestataire_id")
     private Prestataire prestataire;
 
@@ -140,4 +150,13 @@ public class Depense {
 
     public java.util.List<LigneDepenseConsommable> getLignesConsommables() { return lignesConsommables; }
     public void setLignesConsommables(java.util.List<LigneDepenseConsommable> lignesConsommables) { this.lignesConsommables = lignesConsommables; }
+
+    public Commande getCommande() { return commande; }
+    public void setCommande(Commande commande) { this.commande = commande; }
+
+    public Boolean getEstFraisImport() { return estFraisImport; }
+    public void setEstFraisImport(Boolean estFraisImport) { this.estFraisImport = estFraisImport; }
+
+    public String getTypeFraisImport() { return typeFraisImport; }
+    public void setTypeFraisImport(String typeFraisImport) { this.typeFraisImport = typeFraisImport; }
 }

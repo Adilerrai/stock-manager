@@ -47,6 +47,10 @@ public class ChargeAchat {
     @JoinColumn(name = "facture_achat_id")
     private FactureAchat factureAchat;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "depense_id")
+    private Depense depense;
+
     @Column(name = "numero_facture_externe", length = 50)
     private String numeroFactureExterne;
 
@@ -126,6 +130,9 @@ public class ChargeAchat {
 
     public FactureAchat getFactureAchat() { return factureAchat; }
     public void setFactureAchat(FactureAchat factureAchat) { this.factureAchat = factureAchat; }
+
+    public Depense getDepense() { return depense; }
+    public void setDepense(Depense depense) { this.depense = depense; }
 
     public String getNumeroFactureExterne() { return numeroFactureExterne; }
     public void setNumeroFactureExterne(String numeroFactureExterne) { this.numeroFactureExterne = numeroFactureExterne; }

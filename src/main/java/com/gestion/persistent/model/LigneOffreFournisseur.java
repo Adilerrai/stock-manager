@@ -23,6 +23,12 @@ public class LigneOffreFournisseur {
     @Column(name = "prix_unitaire_ht", nullable = false, precision = 12, scale = 2)
     private BigDecimal prixUnitaireHT = BigDecimal.ZERO;
 
+    @Column(name = "prix_unitaire_devise", precision = 14, scale = 4)
+    private BigDecimal prixUnitaireDevise;
+
+    @Column(name = "code_sh", length = 30)
+    private String codeSh;
+
     @Column(name = "remise_pourcentage", precision = 5, scale = 2)
     private BigDecimal remisePourcentage = BigDecimal.ZERO;
 
@@ -77,6 +83,12 @@ public class LigneOffreFournisseur {
 
     public Boolean getEstRetenue() { return estRetenue; }
     public void setEstRetenue(Boolean estRetenue) { this.estRetenue = estRetenue; }
+
+    public BigDecimal getPrixUnitaireDevise() { return prixUnitaireDevise; }
+    public void setPrixUnitaireDevise(BigDecimal prixUnitaireDevise) { this.prixUnitaireDevise = prixUnitaireDevise; }
+
+    public String getCodeSh() { return codeSh; }
+    public void setCodeSh(String codeSh) { this.codeSh = codeSh; }
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }

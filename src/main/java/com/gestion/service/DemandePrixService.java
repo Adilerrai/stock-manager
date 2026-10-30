@@ -332,6 +332,15 @@ public class DemandePrixService {
         offre.setObservations(offreDTO.getObservations());
         offre.setStatut(StatutOffreFournisseur.RECUE);
 
+        if (offreDTO.getDevise() != null) offre.setDevise(offreDTO.getDevise());
+        if (offreDTO.getTauxChangeEstime() != null) offre.setTauxChangeEstime(offreDTO.getTauxChangeEstime());
+        if (offreDTO.getIncoterm() != null) offre.setIncoterm(offreDTO.getIncoterm());
+        offre.setLieuIncoterm(offreDTO.getLieuIncoterm());
+        offre.setPortEmbarquement(offreDTO.getPortEmbarquement());
+        offre.setValiditeOffre(offreDTO.getValiditeOffre());
+        offre.setCodeDouanierSh(offreDTO.getCodeDouanierSh());
+        if (offreDTO.getAcompteExigePct() != null) offre.setAcompteExigePct(offreDTO.getAcompteExigePct());
+
         // Synchronisation des lignes de prix proposées
         offre.getLignes().clear();
         if (offreDTO.getLignes() != null) {
@@ -349,6 +358,8 @@ public class DemandePrixService {
                     lOffre.setRemisePourcentage(lDto.getRemisePourcentage() != null ? lDto.getRemisePourcentage() : BigDecimal.ZERO);
                     lOffre.setTauxTVA(lDto.getTauxTVA() != null ? lDto.getTauxTVA() : new BigDecimal("20.00"));
                     lOffre.setQuantiteProposee(lDto.getQuantiteProposee() != null ? lDto.getQuantiteProposee() : ligneDdp.getQuantiteDemandee());
+                    lOffre.setPrixUnitaireDevise(lDto.getPrixUnitaireDevise());
+                    lOffre.setCodeSh(lDto.getCodeSh());
                     lOffre.setDisponibleStock(lDto.getDisponibleStock() != null ? lDto.getDisponibleStock() : true);
                     lOffre.setPointDeVenteId(tenantId);
                     offre.getLignes().add(lOffre);
@@ -538,11 +549,17 @@ public class DemandePrixService {
         cmdDTO.setObservations("Émis suite à la " + refObs);
         cmdDTO.setLignesCommande(lignesCommande);
 
-        if (ddp.getTypeDemandePrix() == com.gestion.persistent.enums.TypeAchat.INTERNATIONAL) {
+        if (ddp.getTypeDemandePrix() == com.gestion.persistent.enums.TypeAchat.INTERNATIONAL ||
+            offreRetenue.getIncoterm() != null || 
+            (offreRetenue.getDevise() != null && !offreRetenue.getDevise().equals("MAD"))) {
             cmdDTO.setTypeAchat(com.gestion.persistent.enums.TypeAchat.INTERNATIONAL);
-            cmdDTO.setDevise(ddp.getDeviseSouhaitee());
-            cmdDTO.setIncoterm(ddp.getIncotermSouhaite());
-            cmdDTO.setLieuIncoterm(ddp.getLieuLivraison());
+            cmdDTO.setDevise(offreRetenue.getDevise() != null ? offreRetenue.getDevise() : ddp.getDeviseSouhaitee());
+            cmdDTO.setIncoterm(offreRetenue.getIncoterm() != null ? offreRetenue.getIncoterm() : ddp.getIncotermSouhaite());
+            cmdDTO.setLieuIncoterm(offreRetenue.getLieuIncoterm() != null ? offreRetenue.getLieuIncoterm() : ddp.getLieuLivraison());
+            cmdDTO.setPortEmbarquement(offreRetenue.getPortEmbarquement());
+            if (offreRetenue.getTauxChangeEstime() != null) {
+                cmdDTO.setTauxChangeCommande(offreRetenue.getTauxChangeEstime());
+            }
         }
 
         return commandeService.createCommande(cmdDTO);
@@ -669,6 +686,7 @@ public class DemandePrixService {
                 lcmd.setPrixUnitaire(lof.getPrixUnitaireHT());
                 lcmd.setPrixUnitaireHT(lof.getPrixUnitaireHT());
                 lcmd.setTauxTVA(lof.getTauxTVA());
+                lcmd.setPrixUnitaireDevise(lof.getPrixUnitaireDevise());
                 lignesCommande.add(lcmd);
             }
         }
@@ -736,6 +754,15 @@ public class DemandePrixService {
         dto.setObservations(o.getObservations());
         dto.setTotalHT(o.calculateTotalHT());
 
+        dto.setDevise(o.getDevise());
+        dto.setTauxChangeEstime(o.getTauxChangeEstime());
+        dto.setIncoterm(o.getIncoterm());
+        dto.setLieuIncoterm(o.getLieuIncoterm());
+        dto.setPortEmbarquement(o.getPortEmbarquement());
+        dto.setValiditeOffre(o.getValiditeOffre());
+        dto.setCodeDouanierSh(o.getCodeDouanierSh());
+        dto.setAcompteExigePct(o.getAcompteExigePct());
+
         if (o.getLignes() != null) {
             dto.setLignes(o.getLignes().stream().map(l -> {
                 LigneOffreFournisseurDTO lDto = new LigneOffreFournisseurDTO();
@@ -752,6 +779,8 @@ public class DemandePrixService {
                 lDto.setRemisePourcentage(l.getRemisePourcentage());
                 lDto.setTauxTVA(l.getTauxTVA());
                 lDto.setQuantiteProposee(l.getQuantiteProposee());
+                lDto.setPrixUnitaireDevise(l.getPrixUnitaireDevise());
+                lDto.setCodeSh(l.getCodeSh());
                 lDto.setDisponibleStock(l.getDisponibleStock());
                 lDto.setEstRetenue(l.getEstRetenue());
                 lDto.setMontantTotalHT(l.getMontantTotalHT());

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 052 :
+      - Règlements fournisseurs : déblocage des acomptes sur commande (30/70) sans facture préalable
+      - Factures d'achat : liaison à la commande fournisseur pour imputation automatique des acomptes
+      - Charges d'achat : liaison aux dépenses de trésorerie (depense_id)
+      - Dépenses : traçabilité des frais d'approche import (commande_id, est_frais_import, type_frais_import)
+      - Offres fournisseurs & DDP : vigilance internationale (devises, taux estimé, incoterm, code SH, validité devis, acompte exigé)
+      - Lignes de commande : prix unitaire en devises
+    -->
+    <changeSet id="052-import-achats-acomptes-et-depenses" author="erp-import">
+        <sql splitStatements="true">
+            -- 1. Règlements Fournisseurs : acomptes sur commande et devises
+            ALTER TABLE reglements_fournisseur ALTER COLUMN facture_achat_id DROP NOT NULL;
+            
+            ALTER TABLE reglements_fournisseur
+                ADD COLUMN IF NOT EXISTS commande_id        BIGINT,
+                ADD COLUMN IF NOT EXISTS type_reglement     VARCHAR(30) DEFAULT 'FACTURE',
+                ADD COLUMN IF NOT EXISTS montant_devise     NUMERIC(15, 2),
+                ADD COLUMN IF NOT EXISTS devise             VARCHAR(10) DEFAULT 'MAD',
+                ADD COLUMN IF NOT EXISTS taux_change        NUMERIC(12, 6) DEFAULT 1.000000;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_reglements_fournisseur_commande') THEN
+                    ALTER TABLE reglements_fournisseur
+                        ADD CONSTRAINT fk_reglements_fournisseur_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
+                END IF;
+            END $$;
+
+            CREATE INDEX IF NOT EXISTS idx_regl_frn_commande ON reglements_fournisseur(commande_id);
+
+            -- 2. Factures d'achat : rattachement à la commande pour imputation
+            ALTER TABLE factures_achat
+                ADD COLUMN IF NOT EXISTS commande_id BIGINT;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_factures_achat_commande') THEN
+                    ALTER TABLE factures_achat
+                        ADD CONSTRAINT fk_factures_achat_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
+                END IF;
+            END $$;
+
+            CREATE INDEX IF NOT EXISTS idx_factures_achat_commande ON factures_achat(commande_id);
+
+            -- 3. Dépenses : rattachement aux commandes et traçabilité import
+            ALTER TABLE depenses
+                ADD COLUMN IF NOT EXISTS commande_id        BIGINT,
+                ADD COLUMN IF NOT EXISTS est_frais_import   BOOLEAN DEFAULT FALSE,
+                ADD COLUMN IF NOT EXISTS type_frais_import  VARCHAR(50);
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_depenses_commande') THEN
+                    ALTER TABLE depenses
+                        ADD CONSTRAINT fk_depenses_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
+                END IF;
+            END $$;
+
+            CREATE INDEX IF NOT EXISTS idx_depenses_commande ON depenses(commande_id);
+
+            -- 4. Charges d'achat : liaison à la dépense générée
+            ALTER TABLE charges_achat
+                ADD COLUMN IF NOT EXISTS depense_id BIGINT;
+
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_charges_achat_depense') THEN
+                    ALTER TABLE charges_achat
+                        ADD CONSTRAINT fk_charges_achat_depense FOREIGN KEY (depense_id) REFERENCES depenses(id) ON DELETE SET NULL;
+                END IF;
+            END $$;
+
+            CREATE INDEX IF NOT EXISTS idx_charges_achat_depense ON charges_achat(depense_id);
+
+            -- 5. Offres Fournisseurs : vigilance devis international
+            ALTER TABLE offres_fournisseurs
+                ADD COLUMN IF NOT EXISTS devise             VARCHAR(10) DEFAULT 'MAD',
+                ADD COLUMN IF NOT EXISTS taux_change_estime NUMERIC(12, 6) DEFAULT 1.000000,
+                ADD COLUMN IF NOT EXISTS incoterm           VARCHAR(10),
+                ADD COLUMN IF NOT EXISTS lieu_incoterm      VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS port_embarquement  VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS validite_offre     DATE,
+                ADD COLUMN IF NOT EXISTS code_douanier_sh   VARCHAR(30),
+                ADD COLUMN IF NOT EXISTS acompte_exige_pct  NUMERIC(5, 2) DEFAULT 0.00;
+
+            -- 6. Lignes Offres Fournisseurs : prix devise et code SH
+            ALTER TABLE lignes_offre_fournisseur
+                ADD COLUMN IF NOT EXISTS prix_unitaire_devise NUMERIC(14, 4),
+                ADD COLUMN IF NOT EXISTS code_sh              VARCHAR(30);
+
+            -- 7. Lignes de Commande : prix unitaire devise
+            ALTER TABLE lignes_commande
+                ADD COLUMN IF NOT EXISTS prix_unitaire_devise NUMERIC(14, 4);
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
+

@@ -619,6 +619,7 @@ CREATE TABLE IF NOT EXISTS factures_achat (
     date_facture                   TIMESTAMP NOT NULL,
     date_echeance                  TIMESTAMP,
     fournisseur_id                 BIGINT NOT NULL,
+    commande_id                    BIGINT,
     montant_ht                     NUMERIC(15, 2) DEFAULT 0.00,
     montant_tva                    NUMERIC(15, 2) DEFAULT 0.00,
     montant_ttc                    NUMERIC(15, 2) DEFAULT 0.00,
@@ -626,6 +627,7 @@ CREATE TABLE IF NOT EXISTS factures_achat (
     observations                   TEXT,
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     CONSTRAINT fk_factures_achat_fournisseur FOREIGN KEY (fournisseur_id) REFERENCES fournisseurs(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_factures_achat_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL,
     CONSTRAINT fk_factures_achat_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
 
@@ -649,8 +651,13 @@ CREATE TABLE IF NOT EXISTS reglements_fournisseur (
     id                             BIGSERIAL PRIMARY KEY,
     numero_reglement               VARCHAR(255) NOT NULL UNIQUE,
     date_reglement                 TIMESTAMP NOT NULL,
-    facture_achat_id               BIGINT NOT NULL,
+    facture_achat_id               BIGINT,
+    commande_id                    BIGINT,
+    type_reglement                 VARCHAR(30) DEFAULT 'FACTURE',
     montant                        NUMERIC(15, 2) DEFAULT 0.00 NOT NULL,
+    montant_devise                 NUMERIC(15, 2),
+    devise                         VARCHAR(10) DEFAULT 'MAD',
+    taux_change                    NUMERIC(12, 6) DEFAULT 1.000000,
     mode_paiement                  VARCHAR(50) NOT NULL,
     reference_paiement             VARCHAR(255),
     notes                          TEXT,
@@ -659,6 +666,7 @@ CREATE TABLE IF NOT EXISTS reglements_fournisseur (
     date_echeance                  TIMESTAMP,
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     CONSTRAINT fk_reglements_fournisseur_facture_achat FOREIGN KEY (facture_achat_id) REFERENCES factures_achat(id) ON DELETE SET NULL,
+    CONSTRAINT fk_reglements_fournisseur_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL,
     CONSTRAINT fk_reglements_fournisseur_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
 
@@ -1250,12 +1258,64 @@ CREATE TABLE IF NOT EXISTS depenses (
     beneficiaire                   VARCHAR(255),
     numero_facture_justificatif    VARCHAR(255),
     notes                          TEXT,
+    commande_id                    BIGINT,
+    est_frais_import               BOOLEAN DEFAULT FALSE,
+    type_frais_import              VARCHAR(50),
     cree_par_user_id               BIGINT,
     point_de_vente_id              BIGINT DEFAULT 1 NOT NULL,
     date_creation                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_depenses_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL,
     CONSTRAINT fk_depenses_cree_par_user FOREIGN KEY (cree_par_user_id) REFERENCES users(id) ON DELETE RESTRICT,
     CONSTRAINT fk_depenses_point_de_vente FOREIGN KEY (point_de_vente_id) REFERENCES point_de_vente(id) ON DELETE RESTRICT
 );
+
+-- Table : charges_achat (Charges d'Approche / Frais d'Importation)
+CREATE TABLE IF NOT EXISTS charges_achat (
+    id                             BIGSERIAL PRIMARY KEY,
+    commande_id                    BIGINT NOT NULL,
+    ligne_commande_id              BIGINT,
+    type_charge                    VARCHAR(30) NOT NULL,
+    libelle                        VARCHAR(255),
+    prestataire_id                 BIGINT,
+    facture_achat_id               BIGINT,
+    depense_id                     BIGINT,
+    numero_facture_externe         VARCHAR(50),
+    devise                         VARCHAR(10) DEFAULT 'MAD',
+    taux_change                    NUMERIC(12, 6) DEFAULT 1.000000,
+    montant_estime_devise          NUMERIC(15, 2) DEFAULT 0.00,
+    montant_reel_devise            NUMERIC(15, 2),
+    montant_retenu_mad             NUMERIC(15, 2) DEFAULT 0.00,
+    montant_tva_mad                NUMERIC(15, 2) DEFAULT 0.00,
+    cle_repartition                VARCHAR(20) DEFAULT 'VALEUR',
+    incorporable                   BOOLEAN DEFAULT TRUE,
+    statut                         VARCHAR(20) DEFAULT 'ESTIMEE',
+    date_charge                    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    appliquee_au_stock             BOOLEAN DEFAULT FALSE,
+    observations                   TEXT,
+    point_de_vente_id              BIGINT NOT NULL,
+    CONSTRAINT fk_charges_achat_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_charges_achat_ligne_commande FOREIGN KEY (ligne_commande_id) REFERENCES lignes_commande(id) ON DELETE SET NULL,
+    CONSTRAINT fk_charges_achat_prestataire FOREIGN KEY (prestataire_id) REFERENCES fournisseurs(id) ON DELETE SET NULL,
+    CONSTRAINT fk_charges_achat_facture_achat FOREIGN KEY (facture_achat_id) REFERENCES factures_achat(id) ON DELETE SET NULL,
+    CONSTRAINT fk_charges_achat_depense FOREIGN KEY (depense_id) REFERENCES depenses(id) ON DELETE SET NULL
+);
+
+-- Table : allocations_charge (Ventilation des Charges d'Approche sur les Lignes de Commande)
+CREATE TABLE IF NOT EXISTS allocations_charge (
+    id                             BIGSERIAL PRIMARY KEY,
+    charge_id                      BIGINT NOT NULL,
+    ligne_commande_id              BIGINT NOT NULL,
+    base_repartition               NUMERIC(18, 4) DEFAULT 0.0000,
+    pourcentage                    NUMERIC(9, 6) DEFAULT 0.000000,
+    montant_mad                    NUMERIC(15, 2) DEFAULT 0.00,
+    CONSTRAINT fk_allocations_charge_charge FOREIGN KEY (charge_id) REFERENCES charges_achat(id) ON DELETE CASCADE,
+    CONSTRAINT fk_allocations_charge_ligne FOREIGN KEY (ligne_commande_id) REFERENCES lignes_commande(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_charges_achat_commande ON charges_achat(commande_id);
+CREATE INDEX IF NOT EXISTS idx_charges_achat_depense ON charges_achat(depense_id);
+CREATE INDEX IF NOT EXISTS idx_depenses_commande ON depenses(commande_id);
+CREATE INDEX IF NOT EXISTS idx_reglements_frn_commande ON reglements_fournisseur(commande_id);
 
 -- =============================================================================
 -- 8. COMPTABILITE GENERALE & ANALYTIQUE, FISCALITE
@@ -1854,6 +1914,14 @@ CREATE TABLE IF NOT EXISTS offres_fournisseurs (
     frais_port                     NUMERIC(12, 2) DEFAULT 0.00,
     statut                         VARCHAR(30) DEFAULT 'EN_ATTENTE',
     conditions_paiement            VARCHAR(100),
+    devise                         VARCHAR(10) DEFAULT 'MAD',
+    taux_change_estime             NUMERIC(12, 6) DEFAULT 1.000000,
+    incoterm                       VARCHAR(10),
+    lieu_incoterm                  VARCHAR(100),
+    port_embarquement              VARCHAR(100),
+    validite_offre                 DATE,
+    code_douanier_sh               VARCHAR(30),
+    acompte_exige_pct              NUMERIC(5, 2) DEFAULT 0.00,
     observations                   TEXT,
     point_de_vente_id              BIGINT NOT NULL,
     CONSTRAINT fk_offre_ddp FOREIGN KEY (demande_prix_id) REFERENCES demandes_prix(id) ON DELETE CASCADE,
@@ -1865,6 +1933,8 @@ CREATE TABLE IF NOT EXISTS lignes_offre_fournisseur (
     offre_fournisseur_id           BIGINT NOT NULL,
     ligne_demande_prix_id          BIGINT NOT NULL,
     prix_unitaire_ht               NUMERIC(12, 2) DEFAULT 0.00 NOT NULL,
+    prix_unitaire_devise           NUMERIC(14, 4),
+    code_sh                        VARCHAR(30),
     remise_pourcentage             NUMERIC(5, 2) DEFAULT 0.00,
     taux_tva                       NUMERIC(5, 2) DEFAULT 20.00,
     quantite_proposee              NUMERIC(12, 2) DEFAULT 1.00 NOT NULL,

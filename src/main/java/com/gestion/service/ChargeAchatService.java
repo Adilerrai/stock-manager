@@ -32,19 +32,22 @@ public class ChargeAchatService {
     private final FournisseurRepository fournisseurRepository;
     private final FactureAchatRepository factureAchatRepository;
     private final CoutRevientService coutRevientService;
+    private final com.gestion.repository.DepenseRepository depenseRepository;
 
     public ChargeAchatService(ChargeAchatRepository chargeAchatRepository,
                               CommandeRepository commandeRepository,
                               LigneCommandeRepository ligneCommandeRepository,
                               FournisseurRepository fournisseurRepository,
                               FactureAchatRepository factureAchatRepository,
-                              CoutRevientService coutRevientService) {
+                              CoutRevientService coutRevientService,
+                              com.gestion.repository.DepenseRepository depenseRepository) {
         this.chargeAchatRepository = chargeAchatRepository;
         this.commandeRepository = commandeRepository;
         this.ligneCommandeRepository = ligneCommandeRepository;
         this.fournisseurRepository = fournisseurRepository;
         this.factureAchatRepository = factureAchatRepository;
         this.coutRevientService = coutRevientService;
+        this.depenseRepository = depenseRepository;
     }
 
     private Long getTenantId() {
@@ -78,6 +81,8 @@ public class ChargeAchatService {
         appliquerDtoAEntite(dto, charge, commande);
 
         charge = chargeAchatRepository.save(charge);
+        synchroniserDepense(charge, commande);
+        charge = chargeAchatRepository.save(charge);
 
         // Recalcul automatique du coût de revient
         coutRevientService.recalculerEtPersister(commandeId);
@@ -93,6 +98,8 @@ public class ChargeAchatService {
         appliquerDtoAEntite(dto, charge, charge.getCommande());
 
         charge = chargeAchatRepository.save(charge);
+        synchroniserDepense(charge, charge.getCommande());
+        charge = chargeAchatRepository.save(charge);
 
         // Recalcul automatique du coût de revient
         coutRevientService.recalculerEtPersister(charge.getCommande().getId());
@@ -107,6 +114,10 @@ public class ChargeAchatService {
 
         if (Boolean.TRUE.equals(charge.getAppliqueeAuStock())) {
             throw new CommonException("Impossible de supprimer une charge déjà intégrée au stock valorisé.", HttpStatus.BAD_REQUEST);
+        }
+
+        if (charge.getDepense() != null) {
+            depenseRepository.delete(charge.getDepense());
         }
 
         Long commandeId = charge.getCommande().getId();
@@ -201,6 +212,10 @@ public class ChargeAchatService {
             dto.setFactureAchatId(c.getFactureAchat().getId());
             dto.setNumeroFactureAchat(c.getFactureAchat().getNumeroFacture());
         }
+        if (c.getDepense() != null) {
+            dto.setDepenseId(c.getDepense().getId());
+            dto.setReferenceDepense(c.getDepense().getReference());
+        }
         dto.setNumeroFactureExterne(c.getNumeroFactureExterne());
         dto.setDevise(c.getDevise());
         dto.setTauxChange(c.getTauxChange());
@@ -215,5 +230,74 @@ public class ChargeAchatService {
         dto.setAppliqueeAuStock(c.getAppliqueeAuStock());
         dto.setObservations(c.getObservations());
         return dto;
+    }
+
+    private void synchroniserDepense(ChargeAchat charge, Commande commande) {
+        if (charge == null || commande == null) return;
+        java.math.BigDecimal montant = charge.getMontantRetenuMad();
+        if (montant == null || montant.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            if (charge.getMontantReelDevise() != null && charge.getTauxChange() != null) {
+                montant = charge.getMontantReelDevise().multiply(charge.getTauxChange());
+            }
+        }
+        if (montant == null || montant.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return;
+        }
+
+        com.gestion.persistent.model.Depense depense = charge.getDepense();
+        if (depense == null) {
+            depense = new com.gestion.persistent.model.Depense();
+            depense.setReference("DEP-IMP-" + System.currentTimeMillis());
+        }
+
+        String label = (charge.getLibelle() != null && !charge.getLibelle().isBlank())
+                ? charge.getLibelle()
+                : (charge.getTypeCharge() != null ? charge.getTypeCharge().getLibelle() : "Frais d'approche");
+        depense.setDesignation("[Import] " + label + " - CMD " + commande.getNumeroCommande());
+        depense.setMontant(montant);
+        depense.setDateDepense(charge.getDateCharge() != null ? charge.getDateCharge().toLocalDate() : java.time.LocalDate.now());
+        depense.setCategorie(mapperTypeChargeVersCategorieDepense(charge.getTypeCharge()));
+        depense.setModePaiement(com.gestion.persistent.enums.ModePaiement.VIREMENT);
+
+        if (charge.getPrestataire() != null) {
+            depense.setFournisseur(charge.getPrestataire());
+            depense.setBeneficiaire(charge.getPrestataire().getRaisonSociale());
+        } else if (charge.getTypeCharge() != null) {
+            depense.setBeneficiaire(charge.getTypeCharge().getLibelle());
+        }
+
+        depense.setNumeroFactureJustificatif(charge.getNumeroFactureExterne());
+        depense.setCommande(commande);
+        depense.setEstFraisImport(true);
+        depense.setTypeFraisImport(charge.getTypeCharge() != null ? charge.getTypeCharge().name() : null);
+        depense.setPointDeVenteId(charge.getPointDeVenteId() != null ? charge.getPointDeVenteId() : getTenantId());
+
+        depense = depenseRepository.save(depense);
+        charge.setDepense(depense);
+    }
+
+    private com.gestion.persistent.enums.CategorieDepense mapperTypeChargeVersCategorieDepense(com.gestion.persistent.enums.TypeCharge type) {
+        if (type == null) return com.gestion.persistent.enums.CategorieDepense.AUTRES_CHARGES;
+        switch (type) {
+            case DROITS_DOUANE:
+            case TVA_IMPORT:
+                return com.gestion.persistent.enums.CategorieDepense.DROITS_DOUANE_IMPORT;
+            case TRANSITAIRE:
+                return com.gestion.persistent.enums.CategorieDepense.HONORAIRES_TRANSIT_IMPORT;
+            case FRET_INTERNATIONAL:
+            case TRANSPORT_ORIGINE:
+                return com.gestion.persistent.enums.CategorieDepense.FRET_TRANSPORT_INTERNATIONAL;
+            case MAGASINAGE:
+            case PENALITE:
+                return com.gestion.persistent.enums.CategorieDepense.MAGASINAGE_PORT_IMPORT;
+            case ASSURANCE:
+                return com.gestion.persistent.enums.CategorieDepense.ASSURANCE_TRANSPORT_IMPORT;
+            case FRAIS_BANCAIRES:
+                return com.gestion.persistent.enums.CategorieDepense.FRAIS_BANCAIRES;
+            case TRANSPORT_LOCAL:
+                return com.gestion.persistent.enums.CategorieDepense.TRANSPORT_CARBURANT;
+            default:
+                return com.gestion.persistent.enums.CategorieDepense.AUTRES_CHARGES;
+        }
     }
 }

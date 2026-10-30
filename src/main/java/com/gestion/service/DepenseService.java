@@ -489,6 +489,12 @@ public class DepenseService {
         }
         dto.setPointDeVenteId(d.getPointDeVenteId());
         dto.setDateCreation(d.getDateCreation());
+        if (d.getCommande() != null) {
+            dto.setCommandeId(d.getCommande().getId());
+            dto.setNumeroCommande(d.getCommande().getNumeroCommande());
+        }
+        dto.setEstFraisImport(Boolean.TRUE.equals(d.getEstFraisImport()));
+        dto.setTypeFraisImport(d.getTypeFraisImport());
         return dto;
     }
 

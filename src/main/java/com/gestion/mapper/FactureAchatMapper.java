@@ -11,12 +11,15 @@ public interface FactureAchatMapper {
     @Mapping(target = "fournisseurId", source = "fournisseur.id")
     @Mapping(target = "fournisseurNom", source = "fournisseur.raisonSociale")
     @Mapping(target = "fournisseurTelephone", source = "fournisseur.telephone")
+    @Mapping(target = "commandeId", source = "commande.id")
+    @Mapping(target = "numeroCommande", source = "commande.numeroCommande")
     @Mapping(target = "lignes", source = "lignes")
     @Mapping(target = "montantPaye", ignore = true)
     @Mapping(target = "montantRestant", ignore = true)
     FactureAchatDTO toDto(FactureAchat entity);
 
     @Mapping(target = "fournisseur", ignore = true)
+    @Mapping(target = "commande", ignore = true)
     @Mapping(target = "lignes", ignore = true)
     FactureAchat toEntity(FactureAchatDTO dto);
 }

@@ -31,6 +31,7 @@ public class LigneCommandeDTO {
     private BigDecimal tauxDroitDouane;
 
     // Coût de revient (calculé, lecture seule)
+    private BigDecimal prixUnitaireDevise;
     private BigDecimal prixUnitaireMad;
     private BigDecimal fraisAllouesMad;
     private BigDecimal coutRevientUnitaireMad;
@@ -103,6 +104,9 @@ public class LigneCommandeDTO {
 
     public BigDecimal getTauxDroitDouane() { return tauxDroitDouane; }
     public void setTauxDroitDouane(BigDecimal tauxDroitDouane) { this.tauxDroitDouane = tauxDroitDouane; }
+
+    public BigDecimal getPrixUnitaireDevise() { return prixUnitaireDevise; }
+    public void setPrixUnitaireDevise(BigDecimal prixUnitaireDevise) { this.prixUnitaireDevise = prixUnitaireDevise; }
 
     public BigDecimal getPrixUnitaireMad() { return prixUnitaireMad; }
     public void setPrixUnitaireMad(BigDecimal prixUnitaireMad) { this.prixUnitaireMad = prixUnitaireMad; }

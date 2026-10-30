@@ -24,15 +24,18 @@ public class ReglementFournisseurService {
     private final FactureAchatService factureAchatService;
     private final com.gestion.repository.ChequeEffetRepository chequeEffetRepository;
     private final ComptabiliteService comptabiliteService;
+    private final com.gestion.repository.CommandeRepository commandeRepository;
 
     public ReglementFournisseurService(ReglementFournisseurRepository reglementFournisseurRepository,
                                      FactureAchatService factureAchatService,
                                      com.gestion.repository.ChequeEffetRepository chequeEffetRepository,
-                                     @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService) {
+                                     @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService,
+                                     com.gestion.repository.CommandeRepository commandeRepository) {
         this.reglementFournisseurRepository = reglementFournisseurRepository;
         this.factureAchatService = factureAchatService;
         this.chequeEffetRepository = chequeEffetRepository;
         this.comptabiliteService = comptabiliteService;
+        this.commandeRepository = commandeRepository;
     }
 
     public ReglementFournisseur enregistrerReglement(ReglementFournisseur reglement) {
@@ -53,19 +56,48 @@ public class ReglementFournisseurService {
             factureId = reglement.getFactureAchatId();
         }
 
-        if (factureId == null) {
-            throw new IllegalArgumentException("L'identifiant de la facture d'achat est obligatoire pour enregistrer un règlement");
+        Long commandeId = null;
+        if (reglement.getCommande() != null && reglement.getCommande().getId() != null) {
+            commandeId = reglement.getCommande().getId();
+        } else if (reglement.getCommandeId() != null) {
+            commandeId = reglement.getCommandeId();
         }
 
-        FactureAchat facture = factureAchatService.getFactureAchatEntityById(factureId);
-        reglement.setFactureAchat(facture);
-        reglement.setFactureAchatId(facture.getId());
+        if (factureId == null && commandeId == null) {
+            throw new IllegalArgumentException("L'identifiant de la facture d'achat ou de la commande est obligatoire pour enregistrer un règlement");
+        }
+
+        FactureAchat facture = null;
+        if (factureId != null) {
+            facture = factureAchatService.getFactureAchatEntityById(factureId);
+            reglement.setFactureAchat(facture);
+            reglement.setFactureAchatId(facture.getId());
+            if (reglement.getTypeReglement() == null || reglement.getTypeReglement().isBlank()) {
+                reglement.setTypeReglement("FACTURE");
+            }
+        }
+
+        if (commandeId != null) {
+            final Long targetCommandeId = commandeId;
+            com.gestion.persistent.model.Commande commande = commandeRepository.findById(targetCommandeId)
+                    .orElseThrow(() -> new IllegalArgumentException("Commande non trouvée avec l'id: " + targetCommandeId));
+            reglement.setCommande(commande);
+            reglement.setCommandeId(commande.getId());
+            if (factureId == null) {
+                reglement.setTypeReglement("ACOMPTE_COMMANDE");
+            }
+        }
 
         if (reglement.getModePaiement() == null && reglement.getModeReglement() != null) {
             reglement.setModePaiement(reglement.getModeReglement());
         }
         if (reglement.getModePaiement() == null) {
             reglement.setModePaiement(ModePaiement.ESPECES);
+        }
+
+        // Si montant en devises fourni et montant non saisi, calculer la contre-valeur en MAD
+        if (reglement.getMontantDevise() != null && reglement.getTauxChange() != null && (reglement.getMontant() == null || reglement.getMontant().compareTo(BigDecimal.ZERO) <= 0)) {
+            reglement.setMontant(reglement.getMontantDevise().multiply(reglement.getTauxChange()));
         }
 
         if (reglement.getMontant() == null || reglement.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
@@ -75,20 +107,26 @@ public class ReglementFournisseurService {
         // Save payment
         ReglementFournisseur savedReglement = reglementFournisseurRepository.save(reglement);
 
-        // Recalculate total payments for this invoice
-        List<ReglementFournisseur> reglements = reglementFournisseurRepository
-                .findByFactureAchatIdAndPointDeVenteId(facture.getId(), tenantId != null ? tenantId : 1L);
+        // Recalculate total payments for this invoice (uniquement si rattaché à une facture)
+        if (facture != null) {
+            List<ReglementFournisseur> reglements = reglementFournisseurRepository
+                    .findByFactureAchatIdAndPointDeVenteId(facture.getId(), tenantId != null ? tenantId : 1L);
 
-        BigDecimal totalPaye = reglements.stream()
-                .map(ReglementFournisseur::getMontant)
-                .filter(java.util.Objects::nonNull)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalPaye = reglements.stream()
+                    .map(ReglementFournisseur::getMontant)
+                    .filter(java.util.Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        // Update invoice status
-        factureAchatService.updateStatutFacture(facture, totalPaye);
+            // Update invoice status
+            factureAchatService.updateStatutFacture(facture, totalPaye);
+        }
 
         // Si paiement par chèque ou traite, insérer automatiquement dans le portefeuille Trésorerie (Décaissement)
         if (savedReglement.getModePaiement() == ModePaiement.CHEQUE || savedReglement.getModePaiement() == ModePaiement.TRAITE) {
+            com.gestion.persistent.model.Fournisseur fournisseurBeneficiaire = (facture != null) 
+                    ? facture.getFournisseur() 
+                    : (reglement.getCommande() != null ? reglement.getCommande().getFournisseur() : null);
+
             com.gestion.persistent.model.ChequeEffet cheque = new com.gestion.persistent.model.ChequeEffet();
             cheque.setNumeroPiece(savedReglement.getNumeroCheque() != null && !savedReglement.getNumeroCheque().trim().isEmpty()
                     ? savedReglement.getNumeroCheque().trim() : savedReglement.getNumeroReglement());
@@ -100,8 +138,8 @@ public class ReglementFournisseurService {
             cheque.setMontant(savedReglement.getMontant());
             cheque.setDateEmission(savedReglement.getDateReglement() != null ? savedReglement.getDateReglement().toLocalDate() : java.time.LocalDate.now());
             cheque.setDateEcheance(savedReglement.getDateEcheance() != null ? savedReglement.getDateEcheance().toLocalDate() : cheque.getDateEmission());
-            cheque.setFournisseur(facture.getFournisseur());
-            cheque.setBeneficiaire(facture.getFournisseur() != null ? facture.getFournisseur().getNom() : "Fournisseur");
+            cheque.setFournisseur(fournisseurBeneficiaire);
+            cheque.setBeneficiaire(fournisseurBeneficiaire != null ? fournisseurBeneficiaire.getNom() : "Fournisseur");
             cheque.setBanqueEmettrice(savedReglement.getNomBanque());
             cheque.setReferencePaiement(savedReglement.getNumeroReglement());
             cheque.setNotes(savedReglement.getNotes());

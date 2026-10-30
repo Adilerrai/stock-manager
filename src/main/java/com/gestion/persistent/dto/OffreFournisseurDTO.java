@@ -17,6 +17,14 @@ public class OffreFournisseurDTO {
     private BigDecimal fraisPort;
     private StatutOffreFournisseur statut;
     private String conditionsPaiement;
+    private String devise = "MAD";
+    private BigDecimal tauxChangeEstime = BigDecimal.ONE;
+    private com.gestion.persistent.enums.Incoterm incoterm;
+    private String lieuIncoterm;
+    private String portEmbarquement;
+    private java.time.LocalDate validiteOffre;
+    private String codeDouanierSh;
+    private BigDecimal acompteExigePct = BigDecimal.ZERO;
     private String observations;
     private BigDecimal totalHT;
     private String ddpNumero;
@@ -54,6 +62,30 @@ public class OffreFournisseurDTO {
 
     public String getConditionsPaiement() { return conditionsPaiement; }
     public void setConditionsPaiement(String conditionsPaiement) { this.conditionsPaiement = conditionsPaiement; }
+
+    public String getDevise() { return devise; }
+    public void setDevise(String devise) { this.devise = devise; }
+
+    public BigDecimal getTauxChangeEstime() { return tauxChangeEstime; }
+    public void setTauxChangeEstime(BigDecimal tauxChangeEstime) { this.tauxChangeEstime = tauxChangeEstime; }
+
+    public com.gestion.persistent.enums.Incoterm getIncoterm() { return incoterm; }
+    public void setIncoterm(com.gestion.persistent.enums.Incoterm incoterm) { this.incoterm = incoterm; }
+
+    public String getLieuIncoterm() { return lieuIncoterm; }
+    public void setLieuIncoterm(String lieuIncoterm) { this.lieuIncoterm = lieuIncoterm; }
+
+    public String getPortEmbarquement() { return portEmbarquement; }
+    public void setPortEmbarquement(String portEmbarquement) { this.portEmbarquement = portEmbarquement; }
+
+    public java.time.LocalDate getValiditeOffre() { return validiteOffre; }
+    public void setValiditeOffre(java.time.LocalDate validiteOffre) { this.validiteOffre = validiteOffre; }
+
+    public String getCodeDouanierSh() { return codeDouanierSh; }
+    public void setCodeDouanierSh(String codeDouanierSh) { this.codeDouanierSh = codeDouanierSh; }
+
+    public BigDecimal getAcompteExigePct() { return acompteExigePct; }
+    public void setAcompteExigePct(BigDecimal acompteExigePct) { this.acompteExigePct = acompteExigePct; }
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }

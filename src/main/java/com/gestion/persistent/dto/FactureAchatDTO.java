@@ -22,6 +22,8 @@ public class FactureAchatDTO {
     private StatutFacture statut;
     private String observations;
     private Long pointDeVenteId;
+    private Long commandeId;
+    private String numeroCommande;
     private List<LigneFactureAchatDTO> lignes = new ArrayList<>();
 
     public FactureAchatDTO() {}
@@ -67,6 +69,12 @@ public class FactureAchatDTO {
 
     public String getObservations() { return observations; }
     public void setObservations(String observations) { this.observations = observations; }
+
+    public Long getCommandeId() { return commandeId; }
+    public void setCommandeId(Long commandeId) { this.commandeId = commandeId; }
+
+    public String getNumeroCommande() { return numeroCommande; }
+    public void setNumeroCommande(String numeroCommande) { this.numeroCommande = numeroCommande; }
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }

@@ -11,6 +11,11 @@ public enum CategorieDepense {
     FRAIS_BANCAIRES("Frais & Commissions bancaires"),
     IMPOTS_TAXES("Impôts, Taxes & Cotisations"),
     MARKETING_PUBLICITE("Publicité, Marketing & Événements"),
+    DROITS_DOUANE_IMPORT("Droits & Taxes de Douane (ADII)"),
+    HONORAIRES_TRANSIT_IMPORT("Honoraires & Débours Transitaire"),
+    FRET_TRANSPORT_INTERNATIONAL("Fret Maritime / Aérien & Logistique"),
+    MAGASINAGE_PORT_IMPORT("Magasinage & Acconage Portuaire"),
+    ASSURANCE_TRANSPORT_IMPORT("Assurance Transport International"),
     AUTRES_CHARGES("Autres charges d'exploitation");
 
     private final String libelle;
