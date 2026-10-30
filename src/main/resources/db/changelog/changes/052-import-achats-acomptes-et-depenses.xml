@@ -27,13 +27,9 @@
                 ADD COLUMN IF NOT EXISTS devise             VARCHAR(10) DEFAULT 'MAD',
                 ADD COLUMN IF NOT EXISTS taux_change        NUMERIC(12, 6) DEFAULT 1.000000;
 
-            DO $$
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_reglements_fournisseur_commande') THEN
-                    ALTER TABLE reglements_fournisseur
-                        ADD CONSTRAINT fk_reglements_fournisseur_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
-                END IF;
-            END $$;
+            ALTER TABLE reglements_fournisseur DROP CONSTRAINT IF EXISTS fk_reglements_fournisseur_commande;
+            ALTER TABLE reglements_fournisseur
+                ADD CONSTRAINT fk_reglements_fournisseur_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
 
             CREATE INDEX IF NOT EXISTS idx_regl_frn_commande ON reglements_fournisseur(commande_id);
 
@@ -41,13 +37,9 @@
             ALTER TABLE factures_achat
                 ADD COLUMN IF NOT EXISTS commande_id BIGINT;
 
-            DO $$
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_factures_achat_commande') THEN
-                    ALTER TABLE factures_achat
-                        ADD CONSTRAINT fk_factures_achat_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
-                END IF;
-            END $$;
+            ALTER TABLE factures_achat DROP CONSTRAINT IF EXISTS fk_factures_achat_commande;
+            ALTER TABLE factures_achat
+                ADD CONSTRAINT fk_factures_achat_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
 
             CREATE INDEX IF NOT EXISTS idx_factures_achat_commande ON factures_achat(commande_id);
 
@@ -57,13 +49,9 @@
                 ADD COLUMN IF NOT EXISTS est_frais_import   BOOLEAN DEFAULT FALSE,
                 ADD COLUMN IF NOT EXISTS type_frais_import  VARCHAR(50);
 
-            DO $$
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_depenses_commande') THEN
-                    ALTER TABLE depenses
-                        ADD CONSTRAINT fk_depenses_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
-                END IF;
-            END $$;
+            ALTER TABLE depenses DROP CONSTRAINT IF EXISTS fk_depenses_commande;
+            ALTER TABLE depenses
+                ADD CONSTRAINT fk_depenses_commande FOREIGN KEY (commande_id) REFERENCES commandes(id) ON DELETE SET NULL;
 
             CREATE INDEX IF NOT EXISTS idx_depenses_commande ON depenses(commande_id);
 
@@ -71,13 +59,9 @@
             ALTER TABLE charges_achat
                 ADD COLUMN IF NOT EXISTS depense_id BIGINT;
 
-            DO $$
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_charges_achat_depense') THEN
-                    ALTER TABLE charges_achat
-                        ADD CONSTRAINT fk_charges_achat_depense FOREIGN KEY (depense_id) REFERENCES depenses(id) ON DELETE SET NULL;
-                END IF;
-            END $$;
+            ALTER TABLE charges_achat DROP CONSTRAINT IF EXISTS fk_charges_achat_depense;
+            ALTER TABLE charges_achat
+                ADD CONSTRAINT fk_charges_achat_depense FOREIGN KEY (depense_id) REFERENCES depenses(id) ON DELETE SET NULL;
 
             CREATE INDEX IF NOT EXISTS idx_charges_achat_depense ON charges_achat(depense_id);
 
