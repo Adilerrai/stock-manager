@@ -169,4 +169,7 @@
     <!-- Changeset 053 : PI (Proforma Invoice), Engagement PortNet, Domiciliation Bancaire, Avis de Débit -->
     <include file="changes/053-add-pi-portnet-avis-debit.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 054 : Mise à jour de la contrainte CHECK mode_paiement pour AVIS_DEBIT -->
+    <include file="changes/054-update-mode-paiement-check-avis-debit.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

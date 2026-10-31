@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 054 :
+      Mise à jour des contraintes CHECK sur mode_paiement (reglements_fournisseur, paiements)
+      pour inclure AVIS_DEBIT.
+    -->
+    <changeSet id="054-update-mode-paiement-check-avis-debit" author="erp-import">
+        <sql splitStatements="true">
+            ALTER TABLE IF EXISTS reglements_fournisseur 
+                DROP CONSTRAINT IF EXISTS reglements_fournisseur_mode_paiement_check;
+
+            ALTER TABLE IF EXISTS reglements_fournisseur 
+                ADD CONSTRAINT reglements_fournisseur_mode_paiement_check 
+                CHECK (mode_paiement IN (
+                    'ESPECES',
+                    'CARTE_BANCAIRE',
+                    'CHEQUE',
+                    'VIREMENT',
+                    'CREDIT',
+                    'TRAITE',
+                    'EFFET',
+                    'LCN',
+                    'AVIS_DEBIT'
+                ));
+
+            ALTER TABLE IF EXISTS paiements 
+                DROP CONSTRAINT IF EXISTS paiements_mode_paiement_check;
+
+            ALTER TABLE IF EXISTS paiements 
+                ADD CONSTRAINT paiements_mode_paiement_check 
+                CHECK (mode_paiement IN (
+                    'ESPECES',
+                    'CARTE_BANCAIRE',
+                    'CHEQUE',
+                    'VIREMENT',
+                    'CREDIT',
+                    'TRAITE',
+                    'EFFET',
+                    'LCN',
+                    'AVIS_DEBIT'
+                ));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
