@@ -3,6 +3,8 @@ package com.gestion.repository;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.CommandeSearchCriteria;
 import com.gestion.persistent.enums.StatutCommande;
+import com.gestion.persistent.enums.TypeAchat;
+import com.gestion.persistent.enums.TypeFournisseur;
 import com.gestion.persistent.model.Commande;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -24,7 +26,7 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
 
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
             "id", "numeroCommande", "dateCommande", "dateLivraisonPrevue",
-            "dateLivraisonReelle", "montantTotal", "statut", "statutLivraison"
+            "dateLivraisonReelle", "montantTotal", "statut", "statutLivraison", "typeAchat"
     );
 
     @Override
@@ -126,6 +128,21 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
 
         if (criteria.getDateFinLivraison() != null) {
             predicates.add(cb.lessThanOrEqualTo(root.get("dateLivraisonPrevue"), criteria.getDateFinLivraison()));
+        }
+
+        TypeAchat typeAchat = criteria.getTypeAchat();
+        if (typeAchat != null) {
+            if (typeAchat == TypeAchat.INTERNATIONAL) {
+                predicates.add(cb.or(
+                        cb.equal(root.get("typeAchat"), TypeAchat.INTERNATIONAL),
+                        cb.equal(root.get("fournisseur").get("typeFournisseur"), TypeFournisseur.INTERNATIONAL)
+                ));
+            } else if (typeAchat == TypeAchat.NATIONAL) {
+                predicates.add(cb.and(
+                        cb.or(cb.isNull(root.get("typeAchat")), cb.equal(root.get("typeAchat"), TypeAchat.NATIONAL)),
+                        cb.or(cb.isNull(root.get("fournisseur").get("typeFournisseur")), cb.equal(root.get("fournisseur").get("typeFournisseur"), TypeFournisseur.NATIONAL))
+                ));
+            }
         }
 
         return predicates;
