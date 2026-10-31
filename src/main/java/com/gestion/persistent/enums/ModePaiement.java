@@ -8,7 +8,8 @@ public enum ModePaiement {
     CREDIT("Crédit"),
     TRAITE("Traite"),
     EFFET("Effet"),
-    LCN("LCN");
+    LCN("LCN"),
+    AVIS_DEBIT("Avis de débit");
 
     private final String libelle;
 

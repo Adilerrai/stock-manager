@@ -153,7 +153,7 @@ public class ReglementFournisseurRepositoryImpl implements ReglementFournisseurR
         }
 
         if (criteria.getCommandeId() != null) {
-            predicates.add(cb.equal(root.get("commandeId"), criteria.getCommandeId()));
+            predicates.add(cb.equal(root.get("commande").get("id"), criteria.getCommandeId()));
         }
 
         if (criteria.getNumeroAvisDebit() != null && !criteria.getNumeroAvisDebit().trim().isEmpty()) {

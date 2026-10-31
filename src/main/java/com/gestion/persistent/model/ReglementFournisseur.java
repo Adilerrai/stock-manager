@@ -124,6 +124,32 @@ public class ReglementFournisseur {
     public LocalDateTime getDateReglement() { return dateReglement; }
     public void setDateReglement(LocalDateTime dateReglement) { this.dateReglement = dateReglement; }
 
+    @com.fasterxml.jackson.annotation.JsonSetter("dateReglement")
+    public void setDateReglementFromJson(Object val) {
+        if (val == null) {
+            this.dateReglement = LocalDateTime.now();
+        } else if (val instanceof LocalDateTime ldt) {
+            this.dateReglement = ldt;
+        } else {
+            String s = val.toString().trim();
+            if (s.isEmpty()) {
+                this.dateReglement = LocalDateTime.now();
+            } else if (s.length() == 10) {
+                this.dateReglement = java.time.LocalDate.parse(s).atStartOfDay();
+            } else {
+                try {
+                    this.dateReglement = LocalDateTime.parse(s, java.time.format.DateTimeFormatter.ISO_DATE_TIME);
+                } catch (Exception e) {
+                    try {
+                        this.dateReglement = java.time.LocalDate.parse(s.substring(0, 10)).atStartOfDay();
+                    } catch (Exception ex) {
+                        this.dateReglement = LocalDateTime.now();
+                    }
+                }
+            }
+        }
+    }
+
     public FactureAchat getFactureAchat() { return factureAchat; }
     public void setFactureAchat(FactureAchat factureAchat) { 
         this.factureAchat = factureAchat;
@@ -173,6 +199,32 @@ public class ReglementFournisseur {
 
     public LocalDateTime getDateEcheance() { return dateEcheance; }
     public void setDateEcheance(LocalDateTime dateEcheance) { this.dateEcheance = dateEcheance; }
+
+    @com.fasterxml.jackson.annotation.JsonSetter("dateEcheance")
+    public void setDateEcheanceFromJson(Object val) {
+        if (val == null) {
+            this.dateEcheance = null;
+        } else if (val instanceof LocalDateTime ldt) {
+            this.dateEcheance = ldt;
+        } else {
+            String s = val.toString().trim();
+            if (s.isEmpty()) {
+                this.dateEcheance = null;
+            } else if (s.length() == 10) {
+                this.dateEcheance = java.time.LocalDate.parse(s).atStartOfDay();
+            } else {
+                try {
+                    this.dateEcheance = LocalDateTime.parse(s, java.time.format.DateTimeFormatter.ISO_DATE_TIME);
+                } catch (Exception e) {
+                    try {
+                        this.dateEcheance = java.time.LocalDate.parse(s.substring(0, 10)).atStartOfDay();
+                    } catch (Exception ex) {
+                        this.dateEcheance = null;
+                    }
+                }
+            }
+        }
+    }
 
     public Commande getCommande() { return commande; }
     public void setCommande(Commande commande) {
