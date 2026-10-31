@@ -16,6 +16,7 @@ public enum CategorieDepense {
     FRET_TRANSPORT_INTERNATIONAL("Fret Maritime / Aérien & Logistique"),
     MAGASINAGE_PORT_IMPORT("Magasinage & Acconage Portuaire"),
     ASSURANCE_TRANSPORT_IMPORT("Assurance Transport International"),
+    FRAIS_PORTNET_IMPORT("Frais PortNet & Domiciliation Bancaire"),
     AUTRES_CHARGES("Autres charges d'exploitation");
 
     private final String libelle;

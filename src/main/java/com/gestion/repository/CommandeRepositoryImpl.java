@@ -145,6 +145,18 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
             }
         }
 
+        if (criteria.getStatutWorkflowImport() != null && !criteria.getStatutWorkflowImport().trim().isEmpty()) {
+            predicates.add(cb.equal(root.get("statutWorkflowImport"), criteria.getStatutWorkflowImport().trim()));
+        }
+
+        if (criteria.getNumeroPi() != null && !criteria.getNumeroPi().trim().isEmpty()) {
+            predicates.add(cb.like(cb.lower(root.get("numeroPi")), "%" + criteria.getNumeroPi().trim().toLowerCase() + "%"));
+        }
+
+        if (criteria.getNumeroEngagementPortnet() != null && !criteria.getNumeroEngagementPortnet().trim().isEmpty()) {
+            predicates.add(cb.like(cb.lower(root.get("numeroEngagementPortnet")), "%" + criteria.getNumeroEngagementPortnet().trim().toLowerCase() + "%"));
+        }
+
         return predicates;
     }
 }

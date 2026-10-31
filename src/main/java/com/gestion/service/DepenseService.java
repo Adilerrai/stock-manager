@@ -43,6 +43,7 @@ public class DepenseService {
     private final ConsommableRepository consommableRepository;
     private final LigneDepenseConsommableRepository ligneDepenseConsommableRepository;
     private final GedService gedService;
+    private final com.gestion.repository.CommandeRepository commandeRepository;
 
     public DepenseService(DepenseRepository depenseRepository,
                           UserRepository userRepository,
@@ -51,7 +52,8 @@ public class DepenseService {
                           PrestataireRepository prestataireRepository,
                           ConsommableRepository consommableRepository,
                           LigneDepenseConsommableRepository ligneDepenseConsommableRepository,
-                          @Lazy GedService gedService) {
+                          @Lazy GedService gedService,
+                          @Lazy com.gestion.repository.CommandeRepository commandeRepository) {
         this.depenseRepository = depenseRepository;
         this.userRepository = userRepository;
         this.margeService = margeService;
@@ -60,6 +62,7 @@ public class DepenseService {
         this.consommableRepository = consommableRepository;
         this.ligneDepenseConsommableRepository = ligneDepenseConsommableRepository;
         this.gedService = gedService;
+        this.commandeRepository = commandeRepository;
     }
 
     public DepenseDTO creerDepense(DepenseDTO dto, Long userId) {
@@ -110,6 +113,12 @@ public class DepenseService {
         depense.setArticlesDetail(dto.getArticlesDetail());
         depense.setNumeroFactureJustificatif(dto.getNumeroFactureJustificatif());
         depense.setNotes(dto.getNotes());
+        depense.setNumeroEngagementPortnet(dto.getNumeroEngagementPortnet());
+        depense.setTypeDocumentPortnet(dto.getTypeDocumentPortnet());
+        depense.setReferencePortnet(dto.getReferencePortnet());
+        depense.setMontantDevise(dto.getMontantDevise());
+        if (dto.getDeviseDepense() != null) depense.setDeviseDepense(dto.getDeviseDepense());
+        depense.setTauxChangeDepense(dto.getTauxChangeDepense());
         depense.setCreePar(user);
 
         Long tenantId = TenantContext.getCurrentTenant();
@@ -144,9 +153,25 @@ public class DepenseService {
             }
         }
 
-        // Montant de la dépense : soit celui du DTO, soit somme des consommables
+        // Liaison Commande (si frais rattachés à un import ou une commande fournisseur)
+        if (dto.getCommandeId() != null && commandeRepository != null) {
+            commandeRepository.findById(dto.getCommandeId()).ifPresent(depense::setCommande);
+        } else if (dto.getNumeroEngagementPortnet() != null && !dto.getNumeroEngagementPortnet().trim().isEmpty() && commandeRepository != null) {
+            if (tenantId != null) {
+                commandeRepository.findByPointDeVenteIdAndNumeroEngagementPortnet(tenantId, dto.getNumeroEngagementPortnet().trim())
+                        .ifPresent(depense::setCommande);
+            }
+            if (depense.getCommande() == null) {
+                commandeRepository.findFirstByNumeroEngagementPortnet(dto.getNumeroEngagementPortnet().trim())
+                        .ifPresent(depense::setCommande);
+            }
+        }
+
+        // Montant de la dépense : soit celui du DTO, soit devises, soit somme des consommables
         if (dto.getMontant() != null && dto.getMontant().compareTo(BigDecimal.ZERO) > 0) {
             depense.setMontant(dto.getMontant());
+        } else if (dto.getMontantDevise() != null && dto.getTauxChangeDepense() != null) {
+            depense.setMontant(dto.getMontantDevise().multiply(dto.getTauxChangeDepense()));
         } else if (totalLignesConsommables.compareTo(BigDecimal.ZERO) > 0) {
             depense.setMontant(totalLignesConsommables);
         } else {
@@ -242,6 +267,15 @@ public class DepenseService {
         if (dto.getNumeroFactureJustificatif() != null) d.setNumeroFactureJustificatif(dto.getNumeroFactureJustificatif());
         if (dto.getNotes() != null) d.setNotes(dto.getNotes());
         if (dto.getArticlesDetail() != null) d.setArticlesDetail(dto.getArticlesDetail());
+        if (dto.getNumeroEngagementPortnet() != null) d.setNumeroEngagementPortnet(dto.getNumeroEngagementPortnet());
+        if (dto.getTypeDocumentPortnet() != null) d.setTypeDocumentPortnet(dto.getTypeDocumentPortnet());
+        if (dto.getReferencePortnet() != null) d.setReferencePortnet(dto.getReferencePortnet());
+        if (dto.getMontantDevise() != null) d.setMontantDevise(dto.getMontantDevise());
+        if (dto.getDeviseDepense() != null) d.setDeviseDepense(dto.getDeviseDepense());
+        if (dto.getTauxChangeDepense() != null) d.setTauxChangeDepense(dto.getTauxChangeDepense());
+        if (dto.getCommandeId() != null && commandeRepository != null) {
+            commandeRepository.findById(dto.getCommandeId()).ifPresent(d::setCommande);
+        }
 
         if (dto.getPrestataireId() != null) {
             Prestataire p = prestataireRepository.findById(dto.getPrestataireId()).orElse(null);
@@ -395,6 +429,15 @@ public class DepenseService {
                         boolean dev = Boolean.TRUE.equals(d.getDeverseeCompta());
                         if (dev != criteria.getDeverseeCompta()) return false;
                     }
+                    if (criteria.getCommandeId() != null) {
+                        if (d.getCommande() == null || !d.getCommande().getId().equals(criteria.getCommandeId())) return false;
+                    }
+                    if (criteria.getNumeroEngagementPortnet() != null && !criteria.getNumeroEngagementPortnet().trim().isEmpty()) {
+                        if (d.getNumeroEngagementPortnet() == null || !d.getNumeroEngagementPortnet().toLowerCase().contains(criteria.getNumeroEngagementPortnet().trim().toLowerCase())) return false;
+                    }
+                    if (criteria.getTypeDocumentPortnet() != null && !criteria.getTypeDocumentPortnet().trim().isEmpty()) {
+                        if (d.getTypeDocumentPortnet() == null || !d.getTypeDocumentPortnet().equalsIgnoreCase(criteria.getTypeDocumentPortnet().trim())) return false;
+                    }
                     return true;
                 })
                 .sorted(Comparator.comparing(Depense::getDateDepense, Comparator.nullsLast(Comparator.reverseOrder()))
@@ -495,6 +538,12 @@ public class DepenseService {
         }
         dto.setEstFraisImport(Boolean.TRUE.equals(d.getEstFraisImport()));
         dto.setTypeFraisImport(d.getTypeFraisImport());
+        dto.setNumeroEngagementPortnet(d.getNumeroEngagementPortnet());
+        dto.setTypeDocumentPortnet(d.getTypeDocumentPortnet());
+        dto.setReferencePortnet(d.getReferencePortnet());
+        dto.setMontantDevise(d.getMontantDevise());
+        dto.setDeviseDepense(d.getDeviseDepense());
+        dto.setTauxChangeDepense(d.getTauxChangeDepense());
         return dto;
     }
 

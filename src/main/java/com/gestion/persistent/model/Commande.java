@@ -127,6 +127,41 @@ public class Commande {
     @Column(name = "date_dum")
     private LocalDateTime dateDum;
 
+    // ===== Proforma Invoice (PI) =====
+
+    @Column(name = "numero_pi", length = 100)
+    private String numeroPi;
+
+    @Column(name = "date_pi")
+    private java.time.LocalDate datePi;
+
+    @Column(name = "reference_pi", length = 200)
+    private String referencePi;
+
+    // ===== Engagement PortNet / Domiciliation Bancaire =====
+
+    @Column(name = "numero_engagement_portnet", length = 100)
+    private String numeroEngagementPortnet;
+
+    @Column(name = "date_engagement_portnet")
+    private java.time.LocalDate dateEngagementPortnet;
+
+    @Column(name = "banque_domiciliation", length = 100)
+    private String banqueDomiciliation;
+
+    @Column(name = "agence_domiciliation", length = 100)
+    private String agenceDomiciliation;
+
+    /** Workflow : BROUILLON -> PI_RECUE -> ENGAGEMENT_VALIDE -> DOSSIER_BANQUE_ENVOYE -> FONDS_TRANSFERES */
+    @Column(name = "statut_workflow_import", length = 30)
+    private String statutWorkflowImport = "BROUILLON";
+
+    @Column(name = "date_envoi_banque")
+    private java.time.LocalDate dateEnvoiBanque;
+
+    @Column(name = "numero_ordre_transfert", length = 100)
+    private String numeroOrdreTransfert;
+
     // ===== Totaux coût de revient (calculés par CoutRevientService) =====
 
     @Column(name = "montant_marchandise_devise", precision = 15, scale = 2)
@@ -278,6 +313,38 @@ public class Commande {
 
     public LocalDateTime getDateDum() { return dateDum; }
     public void setDateDum(LocalDateTime dateDum) { this.dateDum = dateDum; }
+
+    // PI
+    public String getNumeroPi() { return numeroPi; }
+    public void setNumeroPi(String numeroPi) { this.numeroPi = numeroPi; }
+
+    public java.time.LocalDate getDatePi() { return datePi; }
+    public void setDatePi(java.time.LocalDate datePi) { this.datePi = datePi; }
+
+    public String getReferencePi() { return referencePi; }
+    public void setReferencePi(String referencePi) { this.referencePi = referencePi; }
+
+    // PortNet & Domiciliation
+    public String getNumeroEngagementPortnet() { return numeroEngagementPortnet; }
+    public void setNumeroEngagementPortnet(String n) { this.numeroEngagementPortnet = n; }
+
+    public java.time.LocalDate getDateEngagementPortnet() { return dateEngagementPortnet; }
+    public void setDateEngagementPortnet(java.time.LocalDate d) { this.dateEngagementPortnet = d; }
+
+    public String getBanqueDomiciliation() { return banqueDomiciliation; }
+    public void setBanqueDomiciliation(String banqueDomiciliation) { this.banqueDomiciliation = banqueDomiciliation; }
+
+    public String getAgenceDomiciliation() { return agenceDomiciliation; }
+    public void setAgenceDomiciliation(String agenceDomiciliation) { this.agenceDomiciliation = agenceDomiciliation; }
+
+    public String getStatutWorkflowImport() { return statutWorkflowImport; }
+    public void setStatutWorkflowImport(String statutWorkflowImport) { this.statutWorkflowImport = statutWorkflowImport; }
+
+    public java.time.LocalDate getDateEnvoiBanque() { return dateEnvoiBanque; }
+    public void setDateEnvoiBanque(java.time.LocalDate dateEnvoiBanque) { this.dateEnvoiBanque = dateEnvoiBanque; }
+
+    public String getNumeroOrdreTransfert() { return numeroOrdreTransfert; }
+    public void setNumeroOrdreTransfert(String numeroOrdreTransfert) { this.numeroOrdreTransfert = numeroOrdreTransfert; }
 
     public BigDecimal getMontantMarchandiseDevise() { return montantMarchandiseDevise; }
     public void setMontantMarchandiseDevise(BigDecimal montantMarchandiseDevise) { this.montantMarchandiseDevise = montantMarchandiseDevise; }

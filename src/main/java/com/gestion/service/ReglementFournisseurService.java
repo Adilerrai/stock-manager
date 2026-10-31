@@ -25,17 +25,20 @@ public class ReglementFournisseurService {
     private final com.gestion.repository.ChequeEffetRepository chequeEffetRepository;
     private final ComptabiliteService comptabiliteService;
     private final com.gestion.repository.CommandeRepository commandeRepository;
+    private final com.gestion.repository.DepenseRepository depenseRepository;
 
     public ReglementFournisseurService(ReglementFournisseurRepository reglementFournisseurRepository,
                                      FactureAchatService factureAchatService,
                                      com.gestion.repository.ChequeEffetRepository chequeEffetRepository,
                                      @org.springframework.context.annotation.Lazy ComptabiliteService comptabiliteService,
-                                     com.gestion.repository.CommandeRepository commandeRepository) {
+                                     com.gestion.repository.CommandeRepository commandeRepository,
+                                     @org.springframework.context.annotation.Lazy com.gestion.repository.DepenseRepository depenseRepository) {
         this.reglementFournisseurRepository = reglementFournisseurRepository;
         this.factureAchatService = factureAchatService;
         this.chequeEffetRepository = chequeEffetRepository;
         this.comptabiliteService = comptabiliteService;
         this.commandeRepository = commandeRepository;
+        this.depenseRepository = depenseRepository;
     }
 
     public ReglementFournisseur enregistrerReglement(ReglementFournisseur reglement) {
@@ -95,9 +98,19 @@ public class ReglementFournisseurService {
             reglement.setModePaiement(ModePaiement.ESPECES);
         }
 
-        // Si montant en devises fourni et montant non saisi, calculer la contre-valeur en MAD
-        if (reglement.getMontantDevise() != null && reglement.getTauxChange() != null && (reglement.getMontant() == null || reglement.getMontant().compareTo(BigDecimal.ZERO) <= 0)) {
-            reglement.setMontant(reglement.getMontantDevise().multiply(reglement.getTauxChange()));
+        // Gestion Multidevise & Avis de Débit (Sortie de fonds réelle)
+        BigDecimal tauxEffectif = reglement.getTauxChangeReel() != null ? reglement.getTauxChangeReel() : reglement.getTauxChange();
+        if (reglement.getMontantDevise() != null && tauxEffectif != null && (reglement.getMontant() == null || reglement.getMontant().compareTo(BigDecimal.ZERO) <= 0)) {
+            reglement.setMontant(reglement.getMontantDevise().multiply(tauxEffectif));
+        }
+
+        BigDecimal fraisBancaires = reglement.getFraisBancaires() != null ? reglement.getFraisBancaires() : BigDecimal.ZERO;
+        if (reglement.getMontantTotalDebitMad() == null || reglement.getMontantTotalDebitMad().compareTo(BigDecimal.ZERO) <= 0) {
+            if (reglement.getMontantDevise() != null && tauxEffectif != null) {
+                reglement.setMontantTotalDebitMad(reglement.getMontantDevise().multiply(tauxEffectif).add(fraisBancaires));
+            } else if (reglement.getMontant() != null) {
+                reglement.setMontantTotalDebitMad(reglement.getMontant().add(fraisBancaires));
+            }
         }
 
         if (reglement.getMontant() == null || reglement.getMontant().compareTo(BigDecimal.ZERO) <= 0) {
@@ -106,6 +119,38 @@ public class ReglementFournisseurService {
 
         // Save payment
         ReglementFournisseur savedReglement = reglementFournisseurRepository.save(reglement);
+
+        // Si associé à une commande internationale, mettre à jour le workflow vers FONDS_TRANSFERES
+        if (reglement.getCommande() != null) {
+            com.gestion.persistent.model.Commande cmd = reglement.getCommande();
+            if (cmd.getTypeAchat() == com.gestion.persistent.enums.TypeAchat.INTERNATIONAL) {
+                cmd.setStatutWorkflowImport("FONDS_TRANSFERES");
+                commandeRepository.save(cmd);
+            }
+        }
+
+        // Si frais bancaires SWIFT renseignés, enregistrer automatiquement une dépense liée
+        if (fraisBancaires.compareTo(BigDecimal.ZERO) > 0 && depenseRepository != null) {
+            try {
+                com.gestion.persistent.model.Depense depenseFrais = new com.gestion.persistent.model.Depense();
+                String refDep = "DEP-SWIFT-" + (savedReglement.getNumeroAvisDebit() != null ? savedReglement.getNumeroAvisDebit() : savedReglement.getNumeroReglement());
+                // Éviter les doublons
+                if (depenseRepository.findByReference(refDep).isEmpty()) {
+                    depenseFrais.setReference(refDep);
+                    depenseFrais.setDesignation("Frais bancaires SWIFT / Avis de débit N° " + (savedReglement.getNumeroAvisDebit() != null ? savedReglement.getNumeroAvisDebit() : savedReglement.getNumeroReglement()));
+                    depenseFrais.setMontant(fraisBancaires);
+                    depenseFrais.setCategorie(com.gestion.persistent.enums.CategorieDepense.FRAIS_BANCAIRES);
+                    depenseFrais.setModePaiement(ModePaiement.VIREMENT);
+                    depenseFrais.setDateDepense(savedReglement.getDateAvisDebit() != null ? savedReglement.getDateAvisDebit() : (savedReglement.getDateReglement() != null ? savedReglement.getDateReglement().toLocalDate() : java.time.LocalDate.now()));
+                    depenseFrais.setBeneficiaire(savedReglement.getNomBanque() != null ? savedReglement.getNomBanque() : "Banque");
+                    depenseFrais.setNotes("Généré automatiquement depuis le règlement " + savedReglement.getNumeroReglement());
+                    depenseFrais.setCommande(savedReglement.getCommande());
+                    depenseFrais.setPointDeVenteId(tenantId != null ? tenantId : 1L);
+                    depenseFrais.setDateCreation(LocalDateTime.now());
+                    depenseRepository.save(depenseFrais);
+                }
+            } catch (Exception ignored) {}
+        }
 
         // Recalculate total payments for this invoice (uniquement si rattaché à une facture)
         if (facture != null) {

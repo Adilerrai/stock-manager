@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!--
+      Changeset 053 :
+      - Commandes fournisseur : suivi workflow import (PI, Engagement PortNet, Domiciliation banque)
+      - Règlements fournisseurs : traçabilité Avis de Débit (frais bancaires SWIFT, taux réel)
+    -->
+    <changeSet id="053-add-pi-portnet-avis-debit" author="erp-import">
+        <sql splitStatements="true">
+            ALTER TABLE commandes
+                ADD COLUMN IF NOT EXISTS numero_pi                   VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS date_pi                     DATE,
+                ADD COLUMN IF NOT EXISTS reference_pi                VARCHAR(200),
+                ADD COLUMN IF NOT EXISTS numero_engagement_portnet   VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS date_engagement_portnet     DATE,
+                ADD COLUMN IF NOT EXISTS banque_domiciliation        VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS agence_domiciliation        VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS statut_workflow_import      VARCHAR(30) DEFAULT 'BROUILLON',
+                ADD COLUMN IF NOT EXISTS date_envoi_banque           DATE,
+                ADD COLUMN IF NOT EXISTS numero_ordre_transfert      VARCHAR(100);
+
+            CREATE INDEX IF NOT EXISTS idx_commandes_portnet ON commandes(point_de_vente_id, numero_engagement_portnet) WHERE numero_engagement_portnet IS NOT NULL;
+            CREATE INDEX IF NOT EXISTS idx_commandes_statut_workflow ON commandes(point_de_vente_id, statut_workflow_import);
+
+            ALTER TABLE reglements_fournisseur
+                ADD COLUMN IF NOT EXISTS numero_avis_debit           VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS date_avis_debit             DATE,
+                ADD COLUMN IF NOT EXISTS frais_bancaires             NUMERIC(12, 2) DEFAULT 0.00,
+                ADD COLUMN IF NOT EXISTS montant_total_debit_mad     NUMERIC(15, 2),
+                ADD COLUMN IF NOT EXISTS taux_change_reel            NUMERIC(12, 6);
+
+            -- 5. Dépenses : traçabilité PortNet + devises (pour frais import en USD/EUR)
+            ALTER TABLE depenses
+                ADD COLUMN IF NOT EXISTS numero_engagement_portnet   VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS type_document_portnet       VARCHAR(50),
+                ADD COLUMN IF NOT EXISTS reference_portnet           VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS montant_devise              NUMERIC(15, 2),
+                ADD COLUMN IF NOT EXISTS devise_depense              VARCHAR(10) DEFAULT 'MAD',
+                ADD COLUMN IF NOT EXISTS taux_change_depense         NUMERIC(12, 6);
+
+            CREATE INDEX IF NOT EXISTS idx_depenses_portnet ON depenses(point_de_vente_id, numero_engagement_portnet) WHERE numero_engagement_portnet IS NOT NULL;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

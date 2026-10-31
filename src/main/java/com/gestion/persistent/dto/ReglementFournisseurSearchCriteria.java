@@ -33,6 +33,10 @@ public class ReglementFournisseurSearchCriteria {
     private BigDecimal montantMax;
     private Long societeId;
     private String query;
+    private Long commandeId;
+    private String numeroAvisDebit;
+    private java.time.LocalDate dateAvisDebitDebut;
+    private java.time.LocalDate dateAvisDebitFin;
 
     public ReglementFournisseurSearchCriteria() {}
 
@@ -180,5 +184,37 @@ public class ReglementFournisseurSearchCriteria {
 
     public void setQuery(String query) {
         this.query = query;
+    }
+
+    public Long getCommandeId() {
+        return commandeId;
+    }
+
+    public void setCommandeId(Long commandeId) {
+        this.commandeId = commandeId;
+    }
+
+    public String getNumeroAvisDebit() {
+        return numeroAvisDebit;
+    }
+
+    public void setNumeroAvisDebit(String numeroAvisDebit) {
+        this.numeroAvisDebit = numeroAvisDebit;
+    }
+
+    public java.time.LocalDate getDateAvisDebitDebut() {
+        return dateAvisDebitDebut;
+    }
+
+    public void setDateAvisDebitDebut(java.time.LocalDate dateAvisDebitDebut) {
+        this.dateAvisDebitDebut = dateAvisDebitDebut;
+    }
+
+    public java.time.LocalDate getDateAvisDebitFin() {
+        return dateAvisDebitFin;
+    }
+
+    public void setDateAvisDebitFin(java.time.LocalDate dateAvisDebitFin) {
+        this.dateAvisDebitFin = dateAvisDebitFin;
     }
 }

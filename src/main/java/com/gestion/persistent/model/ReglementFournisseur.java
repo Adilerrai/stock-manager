@@ -79,6 +79,26 @@ public class ReglementFournisseur {
     @Column(name = "date_echeance")
     private LocalDateTime dateEcheance;
 
+    // ===== Avis de Débit (sortie de fonds réelle) =====
+
+    @Column(name = "numero_avis_debit", length = 100)
+    private String numeroAvisDebit;
+
+    @Column(name = "date_avis_debit")
+    private java.time.LocalDate dateAvisDebit;
+
+    /** Frais bancaires SWIFT / commissions (en MAD) */
+    @Column(name = "frais_bancaires", precision = 12, scale = 2)
+    private BigDecimal fraisBancaires = BigDecimal.ZERO;
+
+    /** Taux de change réel appliqué par la banque (vs taux estimé commandeDTO.tauxChange) */
+    @Column(name = "taux_change_reel", precision = 12, scale = 6)
+    private BigDecimal tauxChangeReel;
+
+    /** Montant total débit en MAD = (montantDevise * tauxChangeReel) + fraisBancaires */
+    @Column(name = "montant_total_debit_mad", precision = 15, scale = 2)
+    private BigDecimal montantTotalDebitMad;
+
     @Column(name = "point_de_vente_id", nullable = false)
     private Long pointDeVenteId;
 
@@ -180,6 +200,21 @@ public class ReglementFournisseur {
 
     public BigDecimal getTauxChange() { return tauxChange; }
     public void setTauxChange(BigDecimal tauxChange) { this.tauxChange = tauxChange; }
+
+    public String getNumeroAvisDebit() { return numeroAvisDebit; }
+    public void setNumeroAvisDebit(String numeroAvisDebit) { this.numeroAvisDebit = numeroAvisDebit; }
+
+    public java.time.LocalDate getDateAvisDebit() { return dateAvisDebit; }
+    public void setDateAvisDebit(java.time.LocalDate dateAvisDebit) { this.dateAvisDebit = dateAvisDebit; }
+
+    public BigDecimal getFraisBancaires() { return fraisBancaires; }
+    public void setFraisBancaires(BigDecimal fraisBancaires) { this.fraisBancaires = fraisBancaires; }
+
+    public BigDecimal getTauxChangeReel() { return tauxChangeReel; }
+    public void setTauxChangeReel(BigDecimal tauxChangeReel) { this.tauxChangeReel = tauxChangeReel; }
+
+    public BigDecimal getMontantTotalDebitMad() { return montantTotalDebitMad; }
+    public void setMontantTotalDebitMad(BigDecimal montantTotalDebitMad) { this.montantTotalDebitMad = montantTotalDebitMad; }
 
     public Long getPointDeVenteId() { return pointDeVenteId; }
     public void setPointDeVenteId(Long pointDeVenteId) { this.pointDeVenteId = pointDeVenteId; }

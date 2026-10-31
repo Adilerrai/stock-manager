@@ -23,7 +23,8 @@ public class ReglementFournisseurRepositoryImpl implements ReglementFournisseurR
 
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
             "id", "numeroReglement", "dateReglement", "montant", "modePaiement",
-            "dateEcheance", "nomBanque", "numeroCheque", "referencePaiement"
+            "dateEcheance", "nomBanque", "numeroCheque", "referencePaiement",
+            "numeroAvisDebit", "dateAvisDebit"
     );
 
     @Override
@@ -151,6 +152,22 @@ public class ReglementFournisseurRepositoryImpl implements ReglementFournisseurR
             predicates.add(cb.lessThanOrEqualTo(root.get("montant"), criteria.getMontantMax()));
         }
 
+        if (criteria.getCommandeId() != null) {
+            predicates.add(cb.equal(root.get("commandeId"), criteria.getCommandeId()));
+        }
+
+        if (criteria.getNumeroAvisDebit() != null && !criteria.getNumeroAvisDebit().trim().isEmpty()) {
+            predicates.add(cb.like(cb.lower(root.get("numeroAvisDebit")), "%" + criteria.getNumeroAvisDebit().trim().toLowerCase() + "%"));
+        }
+
+        if (criteria.getDateAvisDebitDebut() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("dateAvisDebit"), criteria.getDateAvisDebitDebut()));
+        }
+
+        if (criteria.getDateAvisDebitFin() != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("dateAvisDebit"), criteria.getDateAvisDebitFin()));
+        }
+
         if (criteria.getQuery() != null && !criteria.getQuery().trim().isEmpty()) {
             String pattern = "%" + criteria.getQuery().trim().toLowerCase() + "%";
             List<Predicate> orPreds = new ArrayList<>();
@@ -158,6 +175,7 @@ public class ReglementFournisseurRepositoryImpl implements ReglementFournisseurR
             orPreds.add(cb.like(cb.lower(root.get("referencePaiement")), pattern));
             orPreds.add(cb.like(cb.lower(root.get("numeroCheque")), pattern));
             orPreds.add(cb.like(cb.lower(root.get("nomBanque")), pattern));
+            orPreds.add(cb.like(cb.lower(root.get("numeroAvisDebit")), pattern));
             orPreds.add(cb.like(cb.lower(root.get("notes")), pattern));
             orPreds.add(cb.like(cb.lower(root.get("factureAchat").get("numeroFacture")), pattern));
             orPreds.add(cb.like(cb.lower(root.get("factureAchat").get("fournisseur").get("raisonSociale")), pattern));

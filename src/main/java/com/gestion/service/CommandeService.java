@@ -155,6 +155,16 @@ public class CommandeService {
             commande.setDateEta(commandeDTO.getDateEta());
             commande.setNumeroDum(commandeDTO.getNumeroDum());
             commande.setDateDum(commandeDTO.getDateDum());
+            commande.setNumeroPi(commandeDTO.getNumeroPi());
+            commande.setDatePi(commandeDTO.getDatePi());
+            commande.setReferencePi(commandeDTO.getReferencePi());
+            commande.setNumeroEngagementPortnet(commandeDTO.getNumeroEngagementPortnet());
+            commande.setDateEngagementPortnet(commandeDTO.getDateEngagementPortnet());
+            commande.setBanqueDomiciliation(commandeDTO.getBanqueDomiciliation());
+            commande.setAgenceDomiciliation(commandeDTO.getAgenceDomiciliation());
+            commande.setStatutWorkflowImport(commandeDTO.getStatutWorkflowImport() != null ? commandeDTO.getStatutWorkflowImport() : "BROUILLON");
+            commande.setDateEnvoiBanque(commandeDTO.getDateEnvoiBanque());
+            commande.setNumeroOrdreTransfert(commandeDTO.getNumeroOrdreTransfert());
         }
 
         String devise = (commandeDTO.getDevise() != null && !commandeDTO.getDevise().isBlank())
@@ -284,6 +294,16 @@ public class CommandeService {
             if (commandeDTO.getDateEta() != null) commande.setDateEta(commandeDTO.getDateEta());
             if (commandeDTO.getNumeroDum() != null) commande.setNumeroDum(commandeDTO.getNumeroDum());
             if (commandeDTO.getDateDum() != null) commande.setDateDum(commandeDTO.getDateDum());
+            if (commandeDTO.getNumeroPi() != null) commande.setNumeroPi(commandeDTO.getNumeroPi());
+            if (commandeDTO.getDatePi() != null) commande.setDatePi(commandeDTO.getDatePi());
+            if (commandeDTO.getReferencePi() != null) commande.setReferencePi(commandeDTO.getReferencePi());
+            if (commandeDTO.getNumeroEngagementPortnet() != null) commande.setNumeroEngagementPortnet(commandeDTO.getNumeroEngagementPortnet());
+            if (commandeDTO.getDateEngagementPortnet() != null) commande.setDateEngagementPortnet(commandeDTO.getDateEngagementPortnet());
+            if (commandeDTO.getBanqueDomiciliation() != null) commande.setBanqueDomiciliation(commandeDTO.getBanqueDomiciliation());
+            if (commandeDTO.getAgenceDomiciliation() != null) commande.setAgenceDomiciliation(commandeDTO.getAgenceDomiciliation());
+            if (commandeDTO.getStatutWorkflowImport() != null) commande.setStatutWorkflowImport(commandeDTO.getStatutWorkflowImport());
+            if (commandeDTO.getDateEnvoiBanque() != null) commande.setDateEnvoiBanque(commandeDTO.getDateEnvoiBanque());
+            if (commandeDTO.getNumeroOrdreTransfert() != null) commande.setNumeroOrdreTransfert(commandeDTO.getNumeroOrdreTransfert());
         }
 
         if (commandeDTO.getDevise() != null && !commandeDTO.getDevise().isBlank()) {

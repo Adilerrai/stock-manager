@@ -44,6 +44,12 @@ public class DepenseDTO {
     private String numeroCommande;
     private Boolean estFraisImport = false;
     private String typeFraisImport;
+    private String numeroEngagementPortnet;
+    private String typeDocumentPortnet;
+    private String referencePortnet;
+    private BigDecimal montantDevise;
+    private String deviseDepense = "MAD";
+    private BigDecimal tauxChangeDepense;
 
     public DepenseDTO() {}
 
@@ -169,4 +175,22 @@ public class DepenseDTO {
 
     public String getTypeFraisImport() { return typeFraisImport; }
     public void setTypeFraisImport(String typeFraisImport) { this.typeFraisImport = typeFraisImport; }
+
+    public String getNumeroEngagementPortnet() { return numeroEngagementPortnet; }
+    public void setNumeroEngagementPortnet(String numeroEngagementPortnet) { this.numeroEngagementPortnet = numeroEngagementPortnet; }
+
+    public String getTypeDocumentPortnet() { return typeDocumentPortnet; }
+    public void setTypeDocumentPortnet(String typeDocumentPortnet) { this.typeDocumentPortnet = typeDocumentPortnet; }
+
+    public String getReferencePortnet() { return referencePortnet; }
+    public void setReferencePortnet(String referencePortnet) { this.referencePortnet = referencePortnet; }
+
+    public BigDecimal getMontantDevise() { return montantDevise; }
+    public void setMontantDevise(BigDecimal montantDevise) { this.montantDevise = montantDevise; }
+
+    public String getDeviseDepense() { return deviseDepense; }
+    public void setDeviseDepense(String deviseDepense) { this.deviseDepense = deviseDepense; }
+
+    public BigDecimal getTauxChangeDepense() { return tauxChangeDepense; }
+    public void setTauxChangeDepense(BigDecimal tauxChangeDepense) { this.tauxChangeDepense = tauxChangeDepense; }
 }

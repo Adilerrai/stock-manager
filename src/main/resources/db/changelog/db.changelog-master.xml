@@ -166,4 +166,7 @@
     <!-- Changeset 052 : Importations, Acomptes Fournisseurs (30/70), Passerelle Dépenses et Vigilance Devis -->
     <include file="changes/052-import-achats-acomptes-et-depenses.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 053 : PI (Proforma Invoice), Engagement PortNet, Domiciliation Bancaire, Avis de Débit -->
+    <include file="changes/053-add-pi-portnet-avis-debit.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

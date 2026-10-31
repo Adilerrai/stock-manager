@@ -18,6 +18,9 @@ public class CommandeSearchCriteria {
     private TypeAchat typeAchat;
     private TypeFournisseur typeFournisseur;
     private Boolean isInternational;
+    private String statutWorkflowImport;
+    private String numeroPi;
+    private String numeroEngagementPortnet;
 
     public Boolean getInclureAnnulees() { return inclureAnnulees; }
     public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
@@ -137,5 +140,29 @@ public class CommandeSearchCriteria {
                 this.isInternational = false;
             }
         }
+    }
+
+    public String getStatutWorkflowImport() {
+        return statutWorkflowImport;
+    }
+
+    public void setStatutWorkflowImport(String statutWorkflowImport) {
+        this.statutWorkflowImport = statutWorkflowImport;
+    }
+
+    public String getNumeroPi() {
+        return numeroPi;
+    }
+
+    public void setNumeroPi(String numeroPi) {
+        this.numeroPi = numeroPi;
+    }
+
+    public String getNumeroEngagementPortnet() {
+        return numeroEngagementPortnet;
+    }
+
+    public void setNumeroEngagementPortnet(String numeroEngagementPortnet) {
+        this.numeroEngagementPortnet = numeroEngagementPortnet;
     }
 }

@@ -58,6 +58,18 @@ public class CommandeDTO {
     @JsonFormat(pattern = "yyyy-MM-dd['T'HH:mm[:ss][.SSS]]", timezone = "UTC")
     private LocalDateTime dateDum;
 
+    // ===== Proforma Invoice (PI) & PortNet & Domiciliation =====
+    private String numeroPi;
+    private java.time.LocalDate datePi;
+    private String referencePi;
+    private String numeroEngagementPortnet;
+    private java.time.LocalDate dateEngagementPortnet;
+    private String banqueDomiciliation;
+    private String agenceDomiciliation;
+    private String statutWorkflowImport;
+    private java.time.LocalDate dateEnvoiBanque;
+    private String numeroOrdreTransfert;
+
     // ===== Totaux coût de revient (lecture seule) =====
     private BigDecimal montantMarchandiseDevise;
     private BigDecimal montantMarchandiseMad;
@@ -210,4 +222,35 @@ public class CommandeDTO {
 
     public com.gestion.persistent.enums.StatutCouts getStatutCouts() { return statutCouts; }
     public void setStatutCouts(com.gestion.persistent.enums.StatutCouts statutCouts) { this.statutCouts = statutCouts; }
+
+    // PI & PortNet & Domiciliation
+    public String getNumeroPi() { return numeroPi; }
+    public void setNumeroPi(String numeroPi) { this.numeroPi = numeroPi; }
+
+    public java.time.LocalDate getDatePi() { return datePi; }
+    public void setDatePi(java.time.LocalDate datePi) { this.datePi = datePi; }
+
+    public String getReferencePi() { return referencePi; }
+    public void setReferencePi(String referencePi) { this.referencePi = referencePi; }
+
+    public String getNumeroEngagementPortnet() { return numeroEngagementPortnet; }
+    public void setNumeroEngagementPortnet(String numeroEngagementPortnet) { this.numeroEngagementPortnet = numeroEngagementPortnet; }
+
+    public java.time.LocalDate getDateEngagementPortnet() { return dateEngagementPortnet; }
+    public void setDateEngagementPortnet(java.time.LocalDate dateEngagementPortnet) { this.dateEngagementPortnet = dateEngagementPortnet; }
+
+    public String getBanqueDomiciliation() { return banqueDomiciliation; }
+    public void setBanqueDomiciliation(String banqueDomiciliation) { this.banqueDomiciliation = banqueDomiciliation; }
+
+    public String getAgenceDomiciliation() { return agenceDomiciliation; }
+    public void setAgenceDomiciliation(String agenceDomiciliation) { this.agenceDomiciliation = agenceDomiciliation; }
+
+    public String getStatutWorkflowImport() { return statutWorkflowImport; }
+    public void setStatutWorkflowImport(String statutWorkflowImport) { this.statutWorkflowImport = statutWorkflowImport; }
+
+    public java.time.LocalDate getDateEnvoiBanque() { return dateEnvoiBanque; }
+    public void setDateEnvoiBanque(java.time.LocalDate dateEnvoiBanque) { this.dateEnvoiBanque = dateEnvoiBanque; }
+
+    public String getNumeroOrdreTransfert() { return numeroOrdreTransfert; }
+    public void setNumeroOrdreTransfert(String numeroOrdreTransfert) { this.numeroOrdreTransfert = numeroOrdreTransfert; }
 }

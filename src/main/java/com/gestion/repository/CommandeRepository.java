@@ -37,4 +37,6 @@ public interface CommandeRepository extends JpaRepository<Commande, Long>, Comma
     
     boolean existsByNumeroCommande(String numeroCommande);
     Optional<Commande> findByPointDeVenteIdAndNumeroCommande(Long pointDeVenteId, String numeroCommande);
+    Optional<Commande> findFirstByNumeroEngagementPortnet(String numeroEngagementPortnet);
+    Optional<Commande> findByPointDeVenteIdAndNumeroEngagementPortnet(Long pointDeVenteId, String numeroEngagementPortnet);
 }

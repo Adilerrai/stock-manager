@@ -22,6 +22,9 @@ public class DepenseSearchCriteria {
     private Long consommableId;
     private Boolean deverseeCompta;
     private Long societeId;
+    private Long commandeId;
+    private String numeroEngagementPortnet;
+    private String typeDocumentPortnet;
 
     public DepenseSearchCriteria() {}
 
@@ -69,4 +72,13 @@ public class DepenseSearchCriteria {
 
     public Long getSocieteId() { return societeId; }
     public void setSocieteId(Long societeId) { this.societeId = societeId; }
+
+    public Long getCommandeId() { return commandeId; }
+    public void setCommandeId(Long commandeId) { this.commandeId = commandeId; }
+
+    public String getNumeroEngagementPortnet() { return numeroEngagementPortnet; }
+    public void setNumeroEngagementPortnet(String numeroEngagementPortnet) { this.numeroEngagementPortnet = numeroEngagementPortnet; }
+
+    public String getTypeDocumentPortnet() { return typeDocumentPortnet; }
+    public void setTypeDocumentPortnet(String typeDocumentPortnet) { this.typeDocumentPortnet = typeDocumentPortnet; }
 }

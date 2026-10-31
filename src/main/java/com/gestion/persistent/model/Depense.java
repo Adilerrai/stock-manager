@@ -60,6 +60,31 @@ public class Depense {
     @Column(name = "type_frais_import", length = 50)
     private String typeFraisImport;
 
+    // ===== PortNet / Douane =====
+
+    /** N° Engagement PortNet associé à cette dépense (ex: frais transitaire, magasinage) */
+    @Column(name = "numero_engagement_portnet", length = 100)
+    private String numeroEngagementPortnet;
+
+    /** Type de document PortNet : ENGAGEMENT, BON_A_DEDOMICILIER, BON_LIVRAISON_DOUANE, etc. */
+    @Column(name = "type_document_portnet", length = 50)
+    private String typeDocumentPortnet;
+
+    /** Référence du dossier PortNet / ADII (ex: numéro DUM, code titre) */
+    @Column(name = "reference_portnet", length = 100)
+    private String referencePortnet;
+
+    // ===== Devise (pour dépenses en devises : fret, assurance...) =====
+
+    @Column(name = "montant_devise", precision = 15, scale = 2)
+    private BigDecimal montantDevise;
+
+    @Column(name = "devise_depense", length = 10)
+    private String deviseDepense = "MAD";
+
+    @Column(name = "taux_change_depense", precision = 12, scale = 6)
+    private BigDecimal tauxChangeDepense;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "prestataire_id")
     private Prestataire prestataire;
@@ -159,4 +184,24 @@ public class Depense {
 
     public String getTypeFraisImport() { return typeFraisImport; }
     public void setTypeFraisImport(String typeFraisImport) { this.typeFraisImport = typeFraisImport; }
+
+    // PortNet
+    public String getNumeroEngagementPortnet() { return numeroEngagementPortnet; }
+    public void setNumeroEngagementPortnet(String numeroEngagementPortnet) { this.numeroEngagementPortnet = numeroEngagementPortnet; }
+
+    public String getTypeDocumentPortnet() { return typeDocumentPortnet; }
+    public void setTypeDocumentPortnet(String typeDocumentPortnet) { this.typeDocumentPortnet = typeDocumentPortnet; }
+
+    public String getReferencePortnet() { return referencePortnet; }
+    public void setReferencePortnet(String referencePortnet) { this.referencePortnet = referencePortnet; }
+
+    // Devise
+    public BigDecimal getMontantDevise() { return montantDevise; }
+    public void setMontantDevise(BigDecimal montantDevise) { this.montantDevise = montantDevise; }
+
+    public String getDeviseDepense() { return deviseDepense; }
+    public void setDeviseDepense(String deviseDepense) { this.deviseDepense = deviseDepense; }
+
+    public BigDecimal getTauxChangeDepense() { return tauxChangeDepense; }
+    public void setTauxChangeDepense(BigDecimal tauxChangeDepense) { this.tauxChangeDepense = tauxChangeDepense; }
 }
