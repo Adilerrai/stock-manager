@@ -1,0 +1,1758 @@
+<?xml version="1.0" ?>
+<DeclarationTVA xmlns="http://simpl.portail.dgi.gov.ma/tva">
+  <Entete>
+    <IdentifiantFiscal>71763235</IdentifiantFiscal>
+    <ICE>001573422000017</ICE>
+    <RaisonSociale>HYDROLINE SYSTEME</RaisonSociale>
+    <Annee>2026</Annee>
+    <Periode>3</Periode>
+    <Regime>ENCAISSEMENT</Regime>
+    <Statut>BROUILLON</Statut>
+    <DateGeneration>2026-11-01</DateGeneration>
+  </Entete>
+  <OperationsImposables>
+    <ChiffreAffairesTotalHT>926061.57</ChiffreAffairesTotalHT>
+    <ChiffreAffairesTaxable20HT>926061.57</ChiffreAffairesTaxable20HT>
+    <ChiffreAffairesExonereHT>0.00</ChiffreAffairesExonereHT>
+    <TvaFacturee>185212.31</TvaFacturee>
+  </OperationsImposables>
+  <Deductions>
+    <AchatsHT>849293.69</AchatsHT>
+    <TvaDeductibleCharges>169470.86</TvaDeductibleCharges>
+    <TvaDeductibleImmobilisations>0.00</TvaDeductibleImmobilisations>
+    <ProrataDeductionPourcentage>100.00</ProrataDeductionPourcentage>
+    <TotalTvaDeductible>169470.86</TotalTvaDeductible>
+    <CreditTvaPrecedentMois>0.00</CreditTvaPrecedentMois>
+  </Deductions>
+  <ResultatLiquidation>
+    <TvaDueAPayer>15741.45</TvaDueAPayer>
+    <CreditTvaReportable>0.00</CreditTvaReportable>
+  </ResultatLiquidation>
+  <ReleveDeductions>
+    <Operation>
+      <NumeroOrdre>1</NumeroOrdre>
+      <NumeroFacture>FA26-136</NumeroFacture>
+      <DateFacture>2026-03-25</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>joint de demontage</Designation>
+      <MontantHT>17800.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3560.00</MontantTVA>
+      <MontantTTC>21360.00</MontantTTC>
+      <ModePaiement>CHQ N° 0093903</ModePaiement>
+      <DatePaiement>2026-07-01</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>2</NumeroOrdre>
+      <NumeroFacture>FA26-139</NumeroFacture>
+      <DateFacture>2026-03-27</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>stabilisateur</Designation>
+      <MontantHT>2462.80</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>492.56</MontantTVA>
+      <MontantTTC>2955.36</MontantTTC>
+      <ModePaiement>CHQ N° 0093903</ModePaiement>
+      <DatePaiement>2026-07-01</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>3</NumeroOrdre>
+      <NumeroFacture>FA26-143</NumeroFacture>
+      <DateFacture>2026-03-30</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>robinet vanne</Designation>
+      <MontantHT>2887.50</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>577.50</MontantTVA>
+      <MontantTTC>3465.00</MontantTTC>
+      <ModePaiement>CHQ N° 0093903</ModePaiement>
+      <DatePaiement>2026-07-01</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>4</NumeroOrdre>
+      <NumeroFacture>F 26FA161</NumeroFacture>
+      <DateFacture>2026-06-04</DateFacture>
+      <Fournisseur>CAPITALIT</Fournisseur>
+      <IdentifiantFiscal>14412870</IdentifiantFiscal>
+      <ICE>000208140000012</ICE>
+      <Designation>HP PRODESK</Designation>
+      <MontantHT>3900.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>780.00</MontantTVA>
+      <MontantTTC>4680.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194857</ModePaiement>
+      <DatePaiement>2026-07-03</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>5</NumeroOrdre>
+      <NumeroFacture>FA26-128</NumeroFacture>
+      <DateFacture>2026-03-06</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>ventouse</Designation>
+      <MontantHT>29203.20</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>5840.64</MontantTVA>
+      <MontantTTC>35043.84</MontantTTC>
+      <ModePaiement>CHQ N° 0093892</ModePaiement>
+      <DatePaiement>2026-07-06</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>6</NumeroOrdre>
+      <NumeroFacture>F AB1314/26</NumeroFacture>
+      <DateFacture>2026-05-11</DateFacture>
+      <Fournisseur>ABIDI BAT</Fournisseur>
+      <IdentifiantFiscal>68772977</IdentifiantFiscal>
+      <ICE>003837461000073</ICE>
+      <Designation>MANCHETTE</Designation>
+      <MontantHT>41666.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>8333.33</MontantTVA>
+      <MontantTTC>50000.00</MontantTTC>
+      <ModePaiement>VERS</ModePaiement>
+      <DatePaiement>2026-07-07</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>7</NumeroOrdre>
+      <NumeroFacture>F C2603606</NumeroFacture>
+      <DateFacture>2026-07-08</DateFacture>
+      <Fournisseur>KADIR DISTRIBUTION</Fournisseur>
+      <IdentifiantFiscal>01640005</IdentifiantFiscal>
+      <ICE>001524672000074</ICE>
+      <Designation>te fem</Designation>
+      <MontantHT>10202.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2040.40</MontantTVA>
+      <MontantTTC>12242.40</MontantTTC>
+      <ModePaiement>VERS</ModePaiement>
+      <DatePaiement>2026-07-08</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>8</NumeroOrdre>
+      <NumeroFacture>FA260275</NumeroFacture>
+      <DateFacture>2026-04-07</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>bride major</Designation>
+      <MontantHT>6625.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1325.00</MontantTVA>
+      <MontantTTC>7950.00</MontantTTC>
+      <ModePaiement>CHQ N° 0093910</ModePaiement>
+      <DatePaiement>2026-07-08</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>9</NumeroOrdre>
+      <NumeroFacture>F 2026002355</NumeroFacture>
+      <DateFacture>2026-07-07</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>te bride</Designation>
+      <MontantHT>1120.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>224.00</MontantTVA>
+      <MontantTTC>1344.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194885</ModePaiement>
+      <DatePaiement>2026-07-09</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>10</NumeroOrdre>
+      <NumeroFacture>F 2026001720</NumeroFacture>
+      <DateFacture>2026-05-16</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>coude bride</Designation>
+      <MontantHT>3370.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>674.00</MontantTVA>
+      <MontantTTC>2040.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194852</ModePaiement>
+      <DatePaiement>2026-07-09</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>11</NumeroOrdre>
+      <NumeroFacture>FA 260493</NumeroFacture>
+      <DateFacture>2026-07-06</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>bride major</Designation>
+      <MontantHT>2975.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>595.00</MontantTVA>
+      <MontantTTC>3570.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194882</ModePaiement>
+      <DatePaiement>2026-07-09</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>12</NumeroOrdre>
+      <NumeroFacture>F C2603664</NumeroFacture>
+      <DateFacture>2026-07-10</DateFacture>
+      <Fournisseur>KADIR DISTRIBUTION</Fournisseur>
+      <IdentifiantFiscal>01640005</IdentifiantFiscal>
+      <ICE>001524672000074</ICE>
+      <Designation>coude</Designation>
+      <MontantHT>10513.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2102.60</MontantTVA>
+      <MontantTTC>12615.60</MontantTTC>
+      <ModePaiement>VERS</ModePaiement>
+      <DatePaiement>2026-07-10</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>13</NumeroOrdre>
+      <NumeroFacture>F C2603669</NumeroFacture>
+      <DateFacture>2026-07-10</DateFacture>
+      <Fournisseur>KADIR DISTRIBUTION</Fournisseur>
+      <IdentifiantFiscal>01640005</IdentifiantFiscal>
+      <ICE>001524672000074</ICE>
+      <Designation>racc egal</Designation>
+      <MontantHT>3003.25</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>600.65</MontantTVA>
+      <MontantTTC>3603.90</MontantTTC>
+      <ModePaiement>VERS</ModePaiement>
+      <DatePaiement>2026-07-10</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>14</NumeroOrdre>
+      <NumeroFacture>F 144/2026</NumeroFacture>
+      <DateFacture>2026-04-24</DateFacture>
+      <Fournisseur>OREON</Fournisseur>
+      <IdentifiantFiscal>1921514</IdentifiantFiscal>
+      <ICE>000079813000001</ICE>
+      <Designation>robinet pec</Designation>
+      <MontantHT>12950.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2590.00</MontantTVA>
+      <MontantTTC>15540.00</MontantTTC>
+      <ModePaiement>CHQ N° 0093908</ModePaiement>
+      <DatePaiement>2026-07-10</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>15</NumeroOrdre>
+      <NumeroFacture>F 20260525</NumeroFacture>
+      <DateFacture>2026-07-08</DateFacture>
+      <Fournisseur>JILAR</Fournisseur>
+      <IdentifiantFiscal>01620231</IdentifiantFiscal>
+      <ICE>001592380000020</ICE>
+      <Designation>te a bride</Designation>
+      <MontantHT>900.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>180.00</MontantTVA>
+      <MontantTTC>1080.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194884</ModePaiement>
+      <DatePaiement>2026-07-13</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>16</NumeroOrdre>
+      <NumeroFacture>F 26FA2157</NumeroFacture>
+      <DateFacture>2026-06-29</DateFacture>
+      <Fournisseur>INDUSFER</Fournisseur>
+      <IdentifiantFiscal>51833174</IdentifiantFiscal>
+      <ICE>003040881000020</ICE>
+      <Designation>tube ss</Designation>
+      <MontantHT>915.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>183.00</MontantTVA>
+      <MontantTTC>1098.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194891</ModePaiement>
+      <DatePaiement>2026-07-15</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>17</NumeroOrdre>
+      <NumeroFacture>F 144/2026</NumeroFacture>
+      <DateFacture>2026-04-24</DateFacture>
+      <Fournisseur>OREON</Fournisseur>
+      <IdentifiantFiscal>1921514</IdentifiantFiscal>
+      <ICE>000079813000001</ICE>
+      <Designation>robinet pec</Designation>
+      <MontantHT>3500.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>700.00</MontantTVA>
+      <MontantTTC>4200.00</MontantTTC>
+      <ModePaiement>CHQ N° 0093909</ModePaiement>
+      <DatePaiement>2026-07-15</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>18</NumeroOrdre>
+      <NumeroFacture>F 260460</NumeroFacture>
+      <DateFacture>2026-07-20</DateFacture>
+      <Fournisseur>SETTIRA</Fournisseur>
+      <IdentifiantFiscal>01600502</IdentifiantFiscal>
+      <ICE>001514740000033</ICE>
+      <Designation>robinet comp</Designation>
+      <MontantHT>10600.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2120.00</MontantTVA>
+      <MontantTTC>12720.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-07-20</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>19</NumeroOrdre>
+      <NumeroFacture>FA 260341</NumeroFacture>
+      <DateFacture>2026-04-22</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>ventouse</Designation>
+      <MontantHT>15000.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3000.00</MontantTVA>
+      <MontantTTC>18000.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194837</ModePaiement>
+      <DatePaiement>2026-07-23</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>20</NumeroOrdre>
+      <NumeroFacture>FA260727</NumeroFacture>
+      <DateFacture>2026-06-23</DateFacture>
+      <Fournisseur>MECAFRIC</Fournisseur>
+      <IdentifiantFiscal>53596608</IdentifiantFiscal>
+      <ICE>003217465000093</ICE>
+      <Designation>joints spirales</Designation>
+      <MontantHT>1700.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>340.00</MontantTVA>
+      <MontantTTC>2040.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194871</ModePaiement>
+      <DatePaiement>2026-07-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>21</NumeroOrdre>
+      <NumeroFacture>F 144/2026</NumeroFacture>
+      <DateFacture>2026-04-24</DateFacture>
+      <Fournisseur>OREON</Fournisseur>
+      <IdentifiantFiscal>1921514</IdentifiantFiscal>
+      <ICE>000079813000001</ICE>
+      <Designation>robinet pec</Designation>
+      <MontantHT>7050.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1410.00</MontantTVA>
+      <MontantTTC>8460.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194841</ModePaiement>
+      <DatePaiement>2026-07-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>22</NumeroOrdre>
+      <NumeroFacture>F 260484</NumeroFacture>
+      <DateFacture>2026-07-29</DateFacture>
+      <Fournisseur>SETTIRA</Fournisseur>
+      <IdentifiantFiscal>01600502</IdentifiantFiscal>
+      <ICE>001514740000033</ICE>
+      <Designation>robinet comp</Designation>
+      <MontantHT>15900.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3180.00</MontantTVA>
+      <MontantTTC>19080.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-07-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>23</NumeroOrdre>
+      <NumeroFacture>F 2026002169</NumeroFacture>
+      <DateFacture>2026-06-25</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>tes a 3 brides</Designation>
+      <MontantHT>2480.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>496.00</MontantTVA>
+      <MontantTTC>2976.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194863</ModePaiement>
+      <DatePaiement>2026-07-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>24</NumeroOrdre>
+      <NumeroFacture>F 00123/23</NumeroFacture>
+      <DateFacture>2026-03-27</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>RBM</Designation>
+      <MontantHT>330.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>66.00</MontantTVA>
+      <MontantTTC>396.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-08-03</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>25</NumeroOrdre>
+      <NumeroFacture>00143/23</NumeroFacture>
+      <DateFacture>2026-04-07</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>vane oca</Designation>
+      <MontantHT>8100.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1620.00</MontantTVA>
+      <MontantTTC>9720.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-08-03</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>26</NumeroOrdre>
+      <NumeroFacture>00146/23</NumeroFacture>
+      <DateFacture>2026-04-08</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>bride major</Designation>
+      <MontantHT>12500.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2500.00</MontantTVA>
+      <MontantTTC>15000.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-08-03</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>27</NumeroOrdre>
+      <NumeroFacture>F 260488</NumeroFacture>
+      <DateFacture>2026-08-01</DateFacture>
+      <Fournisseur>SETTIRA</Fournisseur>
+      <IdentifiantFiscal>01600502</IdentifiantFiscal>
+      <ICE>001514740000033</ICE>
+      <Designation>robinet comp</Designation>
+      <MontantHT>15900.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3180.00</MontantTVA>
+      <MontantTTC>19080.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-08-03</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>28</NumeroOrdre>
+      <NumeroFacture>F C2604147</NumeroFacture>
+      <DateFacture>2026-08-03</DateFacture>
+      <Fournisseur>KADIR DISTRIBUTION</Fournisseur>
+      <IdentifiantFiscal>01640005</IdentifiantFiscal>
+      <ICE>001524672000074</ICE>
+      <Designation>racc egal</Designation>
+      <MontantHT>6650.60</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1330.12</MontantTVA>
+      <MontantTTC>7980.72</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-08-04</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>29</NumeroOrdre>
+      <NumeroFacture>F NS941</NumeroFacture>
+      <DateFacture>2026-06-10</DateFacture>
+      <Fournisseur>NOURAN SOLUTION</Fournisseur>
+      <IdentifiantFiscal>68345975</IdentifiantFiscal>
+      <ICE>003778860000036</ICE>
+      <Designation>CAPOT</Designation>
+      <MontantHT>29583.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>5916.67</MontantTVA>
+      <MontantTTC>35500.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-08-10</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>30</NumeroOrdre>
+      <NumeroFacture>F NS943</NumeroFacture>
+      <DateFacture>2026-06-12</DateFacture>
+      <Fournisseur>NOURAN SOLUTION</Fournisseur>
+      <IdentifiantFiscal>68345975</IdentifiantFiscal>
+      <ICE>003778860000036</ICE>
+      <Designation>ECHELL</Designation>
+      <MontantHT>8333.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1666.67</MontantTVA>
+      <MontantTTC>10000.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-08-10</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>31</NumeroOrdre>
+      <NumeroFacture>F C2604317</NumeroFacture>
+      <DateFacture>2026-08-07</DateFacture>
+      <Fournisseur>KADIR DISTRIBUTION</Fournisseur>
+      <IdentifiantFiscal>01640005</IdentifiantFiscal>
+      <ICE>001524672000074</ICE>
+      <Designation>racc reduit</Designation>
+      <MontantHT>2180.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>436.00</MontantTVA>
+      <MontantTTC>2616.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-08-10</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>32</NumeroOrdre>
+      <NumeroFacture>F 2026001938</NumeroFacture>
+      <DateFacture>2026-06-10</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>collier pec</Designation>
+      <MontantHT>3625.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>725.00</MontantTVA>
+      <MontantTTC>4350.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194862</ModePaiement>
+      <DatePaiement>2026-08-11</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>33</NumeroOrdre>
+      <NumeroFacture>FA 26-165</NumeroFacture>
+      <DateFacture>2026-05-09</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>robinet vanne</Designation>
+      <MontantHT>6859.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1371.80</MontantTVA>
+      <MontantTTC>8230.80</MontantTTC>
+      <ModePaiement>CHQ N° 0194863</ModePaiement>
+      <DatePaiement>2026-08-11</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>34</NumeroOrdre>
+      <NumeroFacture>FA 260542</NumeroFacture>
+      <DateFacture>2026-06-18</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>vanne oca</Designation>
+      <MontantHT>5700.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1140.00</MontantTVA>
+      <MontantTTC>6840.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194864</ModePaiement>
+      <DatePaiement>2026-08-12</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>35</NumeroOrdre>
+      <NumeroFacture>FA 260493</NumeroFacture>
+      <DateFacture>2026-06-05</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>joint de demontage</Designation>
+      <MontantHT>13200.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2640.00</MontantTVA>
+      <MontantTTC>15840.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194865</ModePaiement>
+      <DatePaiement>2026-08-12</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>36</NumeroOrdre>
+      <NumeroFacture>FA 260550</NumeroFacture>
+      <DateFacture>2026-06-19</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>bride major</Designation>
+      <MontantHT>2080.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>416.00</MontantTVA>
+      <MontantTTC>2496.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194866</ModePaiement>
+      <DatePaiement>2026-08-12</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>37</NumeroOrdre>
+      <NumeroFacture>FA 260525</NumeroFacture>
+      <DateFacture>2026-06-12</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>bride major</Designation>
+      <MontantHT>3180.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>636.00</MontantTVA>
+      <MontantTTC>3816.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194867</ModePaiement>
+      <DatePaiement>2026-08-12</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>38</NumeroOrdre>
+      <NumeroFacture>FA 260453</NumeroFacture>
+      <DateFacture>2026-05-18</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>joint gibault</Designation>
+      <MontantHT>3750.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>750.00</MontantTVA>
+      <MontantTTC>4500.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194868</ModePaiement>
+      <DatePaiement>2026-08-12</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>39</NumeroOrdre>
+      <NumeroFacture>FA 260479</NumeroFacture>
+      <DateFacture>2026-06-02</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>filtre a tami</Designation>
+      <MontantHT>6220.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1244.00</MontantTVA>
+      <MontantTTC>7464.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194868</ModePaiement>
+      <DatePaiement>2026-08-12</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>40</NumeroOrdre>
+      <NumeroFacture>F 196/2026</NumeroFacture>
+      <DateFacture>2026-05-09</DateFacture>
+      <Fournisseur>OREON</Fournisseur>
+      <IdentifiantFiscal>1921514</IdentifiantFiscal>
+      <ICE>000079813000001</ICE>
+      <Designation>ROBINET PEC</Designation>
+      <MontantHT>17500.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3500.00</MontantTVA>
+      <MontantTTC>21000.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194847</ModePaiement>
+      <DatePaiement>2026-08-18</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>41</NumeroOrdre>
+      <NumeroFacture>F 2026002119</NumeroFacture>
+      <DateFacture>2026-06-22</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>coude brides</Designation>
+      <MontantHT>8400.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1680.00</MontantTVA>
+      <MontantTTC>10080.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194869</ModePaiement>
+      <DatePaiement>2026-08-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>42</NumeroOrdre>
+      <NumeroFacture>F 144/2026</NumeroFacture>
+      <DateFacture>2026-04-24</DateFacture>
+      <Fournisseur>OREON</Fournisseur>
+      <IdentifiantFiscal>1921514</IdentifiantFiscal>
+      <ICE>000079813000001</ICE>
+      <Designation>robinet pec</Designation>
+      <MontantHT>62100.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>12420.00</MontantTVA>
+      <MontantTTC>74520.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194839</ModePaiement>
+      <DatePaiement>2026-08-27</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>43</NumeroOrdre>
+      <NumeroFacture>FA 26-148</NumeroFacture>
+      <DateFacture>2026-04-08</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>ventouse triple</Designation>
+      <MontantHT>16920.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3384.00</MontantTVA>
+      <MontantTTC>20304.00</MontantTTC>
+      <ModePaiement>CHQ N° 0093913</ModePaiement>
+      <DatePaiement>2026-08-18</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>44</NumeroOrdre>
+      <NumeroFacture>FA 26-147</NumeroFacture>
+      <DateFacture>2026-04-06</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>robinet vanne</Designation>
+      <MontantHT>2616.80</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>523.36</MontantTVA>
+      <MontantTTC>3140.16</MontantTTC>
+      <ModePaiement>CHQ N° 0093913</ModePaiement>
+      <DatePaiement>2026-08-18</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>45</NumeroOrdre>
+      <NumeroFacture>FA 26-150</NumeroFacture>
+      <DateFacture>2026-04-09</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>STABILISATEUR</Designation>
+      <MontantHT>9000.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1800.00</MontantTVA>
+      <MontantTTC>10800.00</MontantTTC>
+      <ModePaiement>CHQ N° 0093914</ModePaiement>
+      <DatePaiement>2026-08-27</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>46</NumeroOrdre>
+      <NumeroFacture>FA 26-155</NumeroFacture>
+      <DateFacture>2026-04-21</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>POTEAU D'INCENDIE</Designation>
+      <MontantHT>13500.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2700.00</MontantTVA>
+      <MontantTTC>16200.00</MontantTTC>
+      <ModePaiement>CHQ N° 0093914</ModePaiement>
+      <DatePaiement>2026-08-27</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>47</NumeroOrdre>
+      <NumeroFacture>FA 260460</NumeroFacture>
+      <DateFacture>2026-06-26</DateFacture>
+      <Fournisseur>MECAFRIC</Fournisseur>
+      <IdentifiantFiscal>53596608</IdentifiantFiscal>
+      <ICE>003217465000093</ICE>
+      <Designation>filtre a tami</Designation>
+      <MontantHT>8400.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1680.00</MontantTVA>
+      <MontantTTC>10080.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194877</ModePaiement>
+      <DatePaiement>2026-08-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>48</NumeroOrdre>
+      <NumeroFacture>F 2026002198</NumeroFacture>
+      <DateFacture>2026-06-26</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>collier pec</Designation>
+      <MontantHT>7200.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1440.00</MontantTVA>
+      <MontantTTC>8640.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194874</ModePaiement>
+      <DatePaiement>2026-08-31</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>49</NumeroOrdre>
+      <NumeroFacture>F 2026002303</NumeroFacture>
+      <DateFacture>2026-07-02</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>STABILISATEUR</Designation>
+      <MontantHT>3200.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>640.00</MontantTVA>
+      <MontantTTC>3840.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194880</ModePaiement>
+      <DatePaiement>2026-09-03</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>50</NumeroOrdre>
+      <NumeroFacture>F 26FA4376</NumeroFacture>
+      <DateFacture>2026-06-05</DateFacture>
+      <Fournisseur>TUBARIS</Fournisseur>
+      <IdentifiantFiscal>20710693</IdentifiantFiscal>
+      <ICE>001769811000019</ICE>
+      <Designation>BRIDE</Designation>
+      <MontantHT>20060.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>4012.00</MontantTVA>
+      <MontantTTC>24072.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194881</ModePaiement>
+      <DatePaiement>2026-09-04</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>51</NumeroOrdre>
+      <NumeroFacture>F 2026003043</NumeroFacture>
+      <DateFacture>2026-09-01</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>STABILISATEUR</Designation>
+      <MontantHT>1590.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>318.00</MontantTVA>
+      <MontantTTC>1908.00</MontantTTC>
+      <ModePaiement>CHQ N° 0563471</ModePaiement>
+      <DatePaiement>2026-09-04</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>52</NumeroOrdre>
+      <NumeroFacture>F C2604754</NumeroFacture>
+      <DateFacture>2026-09-02</DateFacture>
+      <Fournisseur>KADIR DISTRIBUTION</Fournisseur>
+      <IdentifiantFiscal>01640005</IdentifiantFiscal>
+      <ICE>001524672000074</ICE>
+      <Designation>REMER</Designation>
+      <MontantHT>2686.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>537.33</MontantTVA>
+      <MontantTTC>3224.00</MontantTTC>
+      <ModePaiement>CHQ N° 0563472</ModePaiement>
+      <DatePaiement>2026-09-04</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>53</NumeroOrdre>
+      <NumeroFacture>F 00002973</NumeroFacture>
+      <DateFacture>2026-06-30</DateFacture>
+      <Fournisseur>SANIROX</Fournisseur>
+      <IdentifiantFiscal>40464686</IdentifiantFiscal>
+      <ICE>000098837000065</ICE>
+      <Designation>vanne</Designation>
+      <MontantHT>3750.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>750.00</MontantTVA>
+      <MontantTTC>4500.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194854</ModePaiement>
+      <DatePaiement>2026-09-08</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>54</NumeroOrdre>
+      <NumeroFacture>F 06/60609124</NumeroFacture>
+      <DateFacture>2026-08-08</DateFacture>
+      <Fournisseur>UNIMAGRI</Fournisseur>
+      <IdentifiantFiscal>40175898</IdentifiantFiscal>
+      <ICE>000102172000036</ICE>
+      <Designation>ROBINET PEC</Designation>
+      <MontantHT>3850.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>770.00</MontantTVA>
+      <MontantTTC>4620.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194904</ModePaiement>
+      <DatePaiement>2026-09-09</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>55</NumeroOrdre>
+      <NumeroFacture>F 214/26</NumeroFacture>
+      <DateFacture>2026-06-26</DateFacture>
+      <Fournisseur>OREON</Fournisseur>
+      <IdentifiantFiscal>1921514</IdentifiantFiscal>
+      <ICE>000079813000001</ICE>
+      <Designation>collier pec</Designation>
+      <MontantHT>6300.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1260.00</MontantTVA>
+      <MontantTTC>7560.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194858</ModePaiement>
+      <DatePaiement>2026-09-10</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>56</NumeroOrdre>
+      <NumeroFacture>F 447/26</NumeroFacture>
+      <DateFacture>2026-07-10</DateFacture>
+      <Fournisseur>ISTRIA NEGOCE</Fournisseur>
+      <IdentifiantFiscal>53653584</IdentifiantFiscal>
+      <ICE>003253453000066</ICE>
+      <Designation>ROBINET COMPTEUR</Designation>
+      <MontantHT>13000.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2600.00</MontantTVA>
+      <MontantTTC>15600.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194896</ModePaiement>
+      <DatePaiement>2026-09-11</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>57</NumeroOrdre>
+      <NumeroFacture>F C2604950</NumeroFacture>
+      <DateFacture>2026-09-10</DateFacture>
+      <Fournisseur>KADIR DISTRIBUTION</Fournisseur>
+      <IdentifiantFiscal>01640005</IdentifiantFiscal>
+      <ICE>001524672000074</ICE>
+      <Designation>ASTORE PEHD</Designation>
+      <MontantHT>6240.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1248.00</MontantTVA>
+      <MontantTTC>7488.00</MontantTTC>
+      <ModePaiement>CHQ N° 0563479</ModePaiement>
+      <DatePaiement>2026-09-14</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>58</NumeroOrdre>
+      <NumeroFacture>F 20264998</NumeroFacture>
+      <DateFacture>2026-07-24</DateFacture>
+      <Fournisseur>IFC METAL</Fournisseur>
+      <IdentifiantFiscal>02501885</IdentifiantFiscal>
+      <ICE>001510004000059</ICE>
+      <Designation>VIS HR</Designation>
+      <MontantHT>2652.50</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>530.50</MontantTVA>
+      <MontantTTC>3183.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194860</ModePaiement>
+      <DatePaiement>2026-09-15</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>59</NumeroOrdre>
+      <NumeroFacture>F 00214/26</NumeroFacture>
+      <DateFacture>2026-05-09</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>vanne oca</Designation>
+      <MontantHT>12250.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2450.00</MontantTVA>
+      <MontantTTC>14700.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194913</ModePaiement>
+      <DatePaiement>2026-09-16</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>60</NumeroOrdre>
+      <NumeroFacture>F 2026003175</NumeroFacture>
+      <DateFacture>2026-09-11</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>JOINT UNIVERSEL</Designation>
+      <MontantHT>6320.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1264.00</MontantTVA>
+      <MontantTTC>7584.00</MontantTTC>
+      <ModePaiement>CHQ N° 0563481</ModePaiement>
+      <DatePaiement>2026-09-17</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>61</NumeroOrdre>
+      <NumeroFacture>FA 260890</NumeroFacture>
+      <DateFacture>2026-09-18</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>JOINT GIBAULT</Designation>
+      <MontantHT>1200.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>240.00</MontantTVA>
+      <MontantTTC>1440.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194928</ModePaiement>
+      <DatePaiement>2026-09-22</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>62</NumeroOrdre>
+      <NumeroFacture>F 00249/26</NumeroFacture>
+      <DateFacture>2026-05-23</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>vanne oca</Designation>
+      <MontantHT>4680.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>936.00</MontantTVA>
+      <MontantTTC>5616.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194913</ModePaiement>
+      <DatePaiement>2026-09-16</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>63</NumeroOrdre>
+      <NumeroFacture>F 00251/26</NumeroFacture>
+      <DateFacture>2026-06-03</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>vanne oca</Designation>
+      <MontantHT>4900.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>980.00</MontantTVA>
+      <MontantTTC>5880.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>64</NumeroOrdre>
+      <NumeroFacture>F 00275/26</NumeroFacture>
+      <DateFacture>2026-06-15</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>vanne oca</Designation>
+      <MontantHT>2120.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>424.00</MontantTVA>
+      <MontantTTC>2544.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>65</NumeroOrdre>
+      <NumeroFacture>F 00276/26</NumeroFacture>
+      <DateFacture>2026-06-16</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>vanne oca</Designation>
+      <MontantHT>690.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>138.00</MontantTVA>
+      <MontantTTC>828.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>66</NumeroOrdre>
+      <NumeroFacture>F 00308/26</NumeroFacture>
+      <DateFacture>2026-06-29</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>RBM</Designation>
+      <MontantHT>2090.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>418.00</MontantTVA>
+      <MontantTTC>2508.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>67</NumeroOrdre>
+      <NumeroFacture>F 00391/26</NumeroFacture>
+      <DateFacture>2026-08-08</DateFacture>
+      <Fournisseur>ECTM</Fournisseur>
+      <IdentifiantFiscal>51765469</IdentifiantFiscal>
+      <ICE>002914149000012</ICE>
+      <Designation>RBM</Designation>
+      <MontantHT>6866.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1373.33</MontantTVA>
+      <MontantTTC>8240.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>68</NumeroOrdre>
+      <NumeroFacture>FA 260714</NumeroFacture>
+      <DateFacture>2026-07-23</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>vanne oca</Designation>
+      <MontantHT>15640.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3128.00</MontantTVA>
+      <MontantTTC>18768.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194912</ModePaiement>
+      <DatePaiement>2026-09-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>69</NumeroOrdre>
+      <NumeroFacture>F 20260619</NumeroFacture>
+      <DateFacture>2026-08-03</DateFacture>
+      <Fournisseur>JILAR</Fournisseur>
+      <IdentifiantFiscal>01620231</IdentifiantFiscal>
+      <ICE>001592380000020</ICE>
+      <Designation>collier pec</Designation>
+      <MontantHT>12700.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2540.00</MontantTVA>
+      <MontantTTC>15240.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194901</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>70</NumeroOrdre>
+      <NumeroFacture>FA260603</NumeroFacture>
+      <DateFacture>2026-07-01</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>vanne oca</Designation>
+      <MontantHT>24130.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>4826.00</MontantTVA>
+      <MontantTTC>28956.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194879</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>71</NumeroOrdre>
+      <NumeroFacture>FA260579</NumeroFacture>
+      <DateFacture>2026-06-26</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>BRID</Designation>
+      <MontantHT>480.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>96.00</MontantTVA>
+      <MontantTTC>576.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194879</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>72</NumeroOrdre>
+      <NumeroFacture>FA 260110</NumeroFacture>
+      <DateFacture>2026-09-07</DateFacture>
+      <Fournisseur>RMC</Fournisseur>
+      <IdentifiantFiscal>26094753</IdentifiantFiscal>
+      <ICE>002126018000077</ICE>
+      <Designation>DEBITMETRE</Designation>
+      <MontantHT>34500.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>6900.00</MontantTVA>
+      <MontantTTC>41400.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194923</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>73</NumeroOrdre>
+      <NumeroFacture>FA 26-177</NumeroFacture>
+      <DateFacture>2026-06-22</DateFacture>
+      <Fournisseur>VOLTA</Fournisseur>
+      <IdentifiantFiscal>18778670</IdentifiantFiscal>
+      <ICE>001573422000017</ICE>
+      <Designation>bride major</Designation>
+      <MontantHT>4800.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>960.00</MontantTVA>
+      <MontantTTC>5760.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194868</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>74</NumeroOrdre>
+      <NumeroFacture>FA 260576</NumeroFacture>
+      <DateFacture>2026-06-25</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>JOINT GIBAULT</Designation>
+      <MontantHT>9800.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1960.00</MontantTVA>
+      <MontantTTC>11760.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194872</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>75</NumeroOrdre>
+      <NumeroFacture>FA 260579</NumeroFacture>
+      <DateFacture>2026-06-26</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>bride major</Designation>
+      <MontantHT>8640.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1728.00</MontantTVA>
+      <MontantTTC>10368.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194876</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>76</NumeroOrdre>
+      <NumeroFacture>FA 260643</NumeroFacture>
+      <DateFacture>2026-07-08</DateFacture>
+      <Fournisseur>PROVALVE</Fournisseur>
+      <IdentifiantFiscal>66205248</IdentifiantFiscal>
+      <ICE>003672600000087</ICE>
+      <Designation>bride major</Designation>
+      <MontantHT>30500.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>6100.00</MontantTVA>
+      <MontantTTC>36600.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194886</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>77</NumeroOrdre>
+      <NumeroFacture>F TVT01063/26</NumeroFacture>
+      <DateFacture>2026-09-08</DateFacture>
+      <Fournisseur>TRAVEX VILTREX</Fournisseur>
+      <IdentifiantFiscal>72040347</IdentifiantFiscal>
+      <ICE>003928214000059</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>16666.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3333.33</MontantTVA>
+      <MontantTTC>20000.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>78</NumeroOrdre>
+      <NumeroFacture>F TVT01008/26</NumeroFacture>
+      <DateFacture>2026-08-03</DateFacture>
+      <Fournisseur>TRAVEX VILTREX</Fournisseur>
+      <IdentifiantFiscal>72040347</IdentifiantFiscal>
+      <ICE>003928214000059</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>16666.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3333.33</MontantTVA>
+      <MontantTTC>20000.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>79</NumeroOrdre>
+      <NumeroFacture>F 214/26</NumeroFacture>
+      <DateFacture>2026-06-26</DateFacture>
+      <Fournisseur>OREON</Fournisseur>
+      <IdentifiantFiscal>1921514</IdentifiantFiscal>
+      <ICE>000079813000001</ICE>
+      <Designation>collier pec</Designation>
+      <MontantHT>12705.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2541.00</MontantTVA>
+      <MontantTTC>15246.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194856</ModePaiement>
+      <DatePaiement>2026-09-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>80</NumeroOrdre>
+      <NumeroFacture>F 2026002595</NumeroFacture>
+      <DateFacture>2026-07-22</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>CLAPET DOUBLE</Designation>
+      <MontantHT>6380.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1276.00</MontantTVA>
+      <MontantTTC>7656.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194894</ModePaiement>
+      <DatePaiement>2026-09-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>81</NumeroOrdre>
+      <NumeroFacture>F 2026002885</NumeroFacture>
+      <DateFacture>2026-08-12</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>JOINT GIBAULT</Designation>
+      <MontantHT>5280.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1056.00</MontantTVA>
+      <MontantTTC>6336.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194910</ModePaiement>
+      <DatePaiement>2026-09-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>82</NumeroOrdre>
+      <NumeroFacture>F 20264194</NumeroFacture>
+      <DateFacture>2026-06-30</DateFacture>
+      <Fournisseur>IFC METAL</Fournisseur>
+      <IdentifiantFiscal>02501885</IdentifiantFiscal>
+      <ICE>001510004000059</ICE>
+      <Designation>joint tapis</Designation>
+      <MontantHT>3392.50</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>678.50</MontantTVA>
+      <MontantTTC>4071.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194895</ModePaiement>
+      <DatePaiement>2026-09-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>83</NumeroOrdre>
+      <NumeroFacture>F NS995</NumeroFacture>
+      <DateFacture>2026-07-30</DateFacture>
+      <Fournisseur>NOURAN SOLUTION</Fournisseur>
+      <IdentifiantFiscal>68345975</IdentifiantFiscal>
+      <ICE>003778860000036</ICE>
+      <Designation>POTEAU D'INCENDIE</Designation>
+      <MontantHT>16666.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>3333.33</MontantTVA>
+      <MontantTTC>20000.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-30</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>84</NumeroOrdre>
+      <NumeroFacture>F 168/26</NumeroFacture>
+      <DateFacture>2026-10-28</DateFacture>
+      <Fournisseur>MOD PUB</Fournisseur>
+      <IdentifiantFiscal>51810360</IdentifiantFiscal>
+      <ICE>003009554000009</ICE>
+      <Designation>CARTES DE VISITE</Designation>
+      <MontantHT>416.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>83.33</MontantTVA>
+      <MontantTTC>500.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-30</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>85</NumeroOrdre>
+      <NumeroFacture>F 2026003316</NumeroFacture>
+      <DateFacture>2026-09-23</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>CLAPET DOUBLE</Designation>
+      <MontantHT>265.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>53.00</MontantTVA>
+      <MontantTTC>318.00</MontantTTC>
+      <ModePaiement>CHQ N° 0194929</ModePaiement>
+      <DatePaiement>2026-09-30</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>86</NumeroOrdre>
+      <NumeroFacture>F C2603998</NumeroFacture>
+      <DateFacture>2026-07-24</DateFacture>
+      <Fournisseur>KADIR DISTRIBUTION</Fournisseur>
+      <IdentifiantFiscal>01640005</IdentifiantFiscal>
+      <ICE>001524672000074</ICE>
+      <Designation>COUDE</Designation>
+      <MontantHT>270.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>54.13</MontantTVA>
+      <MontantTTC>324.80</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-07-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>87</NumeroOrdre>
+      <NumeroFacture>F 2026001041</NumeroFacture>
+      <DateFacture>2026-04-07</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>CLAPET</Designation>
+      <MontantHT>1160.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>232.00</MontantTVA>
+      <MontantTTC>1392.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-04-07</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>88</NumeroOrdre>
+      <NumeroFacture>F 2026001228</NumeroFacture>
+      <DateFacture>2026-04-27</DateFacture>
+      <Fournisseur>SOGETUB</Fournisseur>
+      <IdentifiantFiscal>02500274</IdentifiantFiscal>
+      <ICE>000084458000007</ICE>
+      <Designation>CLAPET</Designation>
+      <MontantHT>550.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>110.00</MontantTVA>
+      <MontantTTC>660.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-04-27</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>89</NumeroOrdre>
+      <NumeroFacture>F C2618929</NumeroFacture>
+      <DateFacture>2026-07-07</DateFacture>
+      <Fournisseur>SOFA</Fournisseur>
+      <IdentifiantFiscal>02500703</IdentifiantFiscal>
+      <ICE>001524663000026</ICE>
+      <Designation>GRIL</Designation>
+      <MontantHT>481.20</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>96.24</MontantTVA>
+      <MontantTTC>577.44</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-07-07</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>90</NumeroOrdre>
+      <NumeroFacture>F ZG0735/26</NumeroFacture>
+      <DateFacture>2026-08-05</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>VISIBLE</Designation>
+      <MontantHT>1333.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>266.67</MontantTVA>
+      <MontantTTC>1600.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-08-05</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>91</NumeroOrdre>
+      <NumeroFacture>F ZG0736/26</NumeroFacture>
+      <DateFacture>2026-08-06</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>3916.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>783.33</MontantTVA>
+      <MontantTTC>4700.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-08-06</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>92</NumeroOrdre>
+      <NumeroFacture>F ZG0824/26</NumeroFacture>
+      <DateFacture>2026-09-01</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>4083.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>816.67</MontantTVA>
+      <MontantTTC>4900.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-09-01</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>93</NumeroOrdre>
+      <NumeroFacture>F ZG0825/26</NumeroFacture>
+      <DateFacture>2026-09-02</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>DISJONCTEUR</Designation>
+      <MontantHT>3750.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>750.00</MontantTVA>
+      <MontantTTC>4500.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-09-02</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>94</NumeroOrdre>
+      <NumeroFacture>F ZG0826/26</NumeroFacture>
+      <DateFacture>2026-09-03</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>3791.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>758.33</MontantTVA>
+      <MontantTTC>4550.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-09-03</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>95</NumeroOrdre>
+      <NumeroFacture>F ZG0827/26</NumeroFacture>
+      <DateFacture>2026-09-04</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>PROJECTEUR</Designation>
+      <MontantHT>3750.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>750.00</MontantTVA>
+      <MontantTTC>4500.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-09-04</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>96</NumeroOrdre>
+      <NumeroFacture>F ZG0828/26</NumeroFacture>
+      <DateFacture>2026-09-07</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>DOMINO</Designation>
+      <MontantHT>208.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>41.67</MontantTVA>
+      <MontantTTC>250.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-09-07</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>97</NumeroOrdre>
+      <NumeroFacture>F ZG0611/26</NumeroFacture>
+      <DateFacture>2026-07-24</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>VISIBLE</Designation>
+      <MontantHT>1333.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>266.67</MontantTVA>
+      <MontantTTC>1600.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-07-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>98</NumeroOrdre>
+      <NumeroFacture>F ZG0612/26</NumeroFacture>
+      <DateFacture>2026-07-27</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>3916.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>783.33</MontantTVA>
+      <MontantTTC>4700.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-07-27</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>99</NumeroOrdre>
+      <NumeroFacture>F ZG0613/26</NumeroFacture>
+      <DateFacture>2026-07-28</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>4083.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>816.67</MontantTVA>
+      <MontantTTC>4900.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-07-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>100</NumeroOrdre>
+      <NumeroFacture>F ZG0614/26</NumeroFacture>
+      <DateFacture>2026-07-29</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>DISJONCTEUR</Designation>
+      <MontantHT>3750.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>750.00</MontantTVA>
+      <MontantTTC>4500.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-07-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>101</NumeroOrdre>
+      <NumeroFacture>F ZG0615/26</NumeroFacture>
+      <DateFacture>2026-07-31</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>3791.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>758.33</MontantTVA>
+      <MontantTTC>4550.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-07-31</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>102</NumeroOrdre>
+      <NumeroFacture>F ZG0733/26</NumeroFacture>
+      <DateFacture>2026-08-03</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>PROJECTEUR</Designation>
+      <MontantHT>3750.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>750.00</MontantTVA>
+      <MontantTTC>4500.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-08-03</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>103</NumeroOrdre>
+      <NumeroFacture>F ZG0734/26</NumeroFacture>
+      <DateFacture>2026-08-04</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>DOMINO</Designation>
+      <MontantHT>208.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>41.67</MontantTVA>
+      <MontantTTC>250.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-08-04</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>104</NumeroOrdre>
+      <NumeroFacture>FRAIS BQ</NumeroFacture>
+      <DateFacture>2026-07-09</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>24.80</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>2.48</MontantTVA>
+      <MontantTTC>27.28</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-07-09</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>105</NumeroOrdre>
+      <NumeroFacture>FRAIS BQ</NumeroFacture>
+      <DateFacture>2026-07-14</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>81.11</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>8.11</MontantTVA>
+      <MontantTTC>89.22</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-07-14</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>106</NumeroOrdre>
+      <NumeroFacture>PAC.07/26</NumeroFacture>
+      <DateFacture>2026-07-17</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>101.05</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>10.11</MontantTVA>
+      <MontantTTC>111.16</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-07-17</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>107</NumeroOrdre>
+      <NumeroFacture>FRAIS BQ</NumeroFacture>
+      <DateFacture>2026-08-06</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>24.80</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>2.48</MontantTVA>
+      <MontantTTC>27.28</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-08-06</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>108</NumeroOrdre>
+      <NumeroFacture>PAC,08/27</NumeroFacture>
+      <DateFacture>2026-08-13</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>101.05</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>10.11</MontantTVA>
+      <MontantTTC>111.16</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-08-13</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>109</NumeroOrdre>
+      <NumeroFacture>COM /VIRT</NumeroFacture>
+      <DateFacture>2026-08-17</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>16.00</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>1.60</MontantTVA>
+      <MontantTTC>17.60</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-08-17</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>110</NumeroOrdre>
+      <NumeroFacture>COM /VIRT</NumeroFacture>
+      <DateFacture>2026-08-24</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>16.00</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>1.60</MontantTVA>
+      <MontantTTC>17.60</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-08-24</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>111</NumeroOrdre>
+      <NumeroFacture>FRAIS BQ</NumeroFacture>
+      <DateFacture>2026-09-10</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>24.80</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>2.48</MontantTVA>
+      <MontantTTC>27.28</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-09-10</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>112</NumeroOrdre>
+      <NumeroFacture>PAC,09/27</NumeroFacture>
+      <DateFacture>2026-09-17</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>101.05</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>10.11</MontantTVA>
+      <MontantTTC>111.16</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-09-17</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>113</NumeroOrdre>
+      <NumeroFacture>COM /VIRT</NumeroFacture>
+      <DateFacture>2026-09-29</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>16.00</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>1.60</MontantTVA>
+      <MontantTTC>17.60</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-09-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>114</NumeroOrdre>
+      <NumeroFacture>COM /VIRT</NumeroFacture>
+      <DateFacture>2026-09-29</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>16.00</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>1.60</MontantTVA>
+      <MontantTTC>17.60</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-09-29</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>115</NumeroOrdre>
+      <NumeroFacture>COM /VIRT</NumeroFacture>
+      <DateFacture>2026-09-30</DateFacture>
+      <Fournisseur>AWB</Fournisseur>
+      <IdentifiantFiscal>01084015</IdentifiantFiscal>
+      <ICE>001514219000035</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>16.00</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>1.60</MontantTVA>
+      <MontantTTC>17.60</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-09-30</DatePaiement>
+    </Operation>
+  </ReleveDeductions>
+</DeclarationTVA>

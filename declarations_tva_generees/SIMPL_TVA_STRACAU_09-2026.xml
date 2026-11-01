@@ -1,0 +1,213 @@
+<?xml version="1.0" ?>
+<DeclarationTVA xmlns="http://simpl.portail.dgi.gov.ma/tva">
+  <Entete>
+    <IdentifiantFiscal>71763235</IdentifiantFiscal>
+    <ICE>000039147000040</ICE>
+    <RaisonSociale>STRACAU WATER</RaisonSociale>
+    <Annee>2026</Annee>
+    <Periode>09</Periode>
+    <Regime>ENCAISSEMENT</Regime>
+    <Statut>BROUILLON</Statut>
+    <DateGeneration>2026-11-01</DateGeneration>
+  </Entete>
+  <OperationsImposables>
+    <ChiffreAffairesTotalHT>79745.00</ChiffreAffairesTotalHT>
+    <ChiffreAffairesTaxable20HT>79745.00</ChiffreAffairesTaxable20HT>
+    <ChiffreAffairesExonereHT>0.00</ChiffreAffairesExonereHT>
+    <TvaFacturee>15949.00</TvaFacturee>
+  </OperationsImposables>
+  <Deductions>
+    <AchatsHT>40167.35</AchatsHT>
+    <TvaDeductibleCharges>8020.57</TvaDeductibleCharges>
+    <TvaDeductibleImmobilisations>0.00</TvaDeductibleImmobilisations>
+    <ProrataDeductionPourcentage>100.00</ProrataDeductionPourcentage>
+    <TotalTvaDeductible>8020.57</TotalTvaDeductible>
+    <CreditTvaPrecedentMois>0.00</CreditTvaPrecedentMois>
+  </Deductions>
+  <ResultatLiquidation>
+    <TvaDueAPayer>7928.43</TvaDueAPayer>
+    <CreditTvaReportable>0.00</CreditTvaReportable>
+  </ResultatLiquidation>
+  <ReleveDeductions>
+    <Operation>
+      <NumeroOrdre>1</NumeroOrdre>
+      <NumeroFacture>F 2026/4116</NumeroFacture>
+      <DateFacture>2026-05-22</DateFacture>
+      <Fournisseur>L'EQUIPIER</Fournisseur>
+      <IdentifiantFiscal>2521578</IdentifiantFiscal>
+      <ICE>000039147000040</ICE>
+      <Designation>BRIDE</Designation>
+      <MontantHT>8700.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>1740.00</MontantTVA>
+      <MontantTTC>10440.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-18</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>2</NumeroOrdre>
+      <NumeroFacture>F 26FA1745</NumeroFacture>
+      <DateFacture>2026-05-20</DateFacture>
+      <Fournisseur>INDUSFER</Fournisseur>
+      <IdentifiantFiscal>51833174</IdentifiantFiscal>
+      <ICE>003040881000020</ICE>
+      <Designation>BRIDE</Designation>
+      <MontantHT>4511.20</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>902.24</MontantTVA>
+      <MontantTTC>5413.44</MontantTTC>
+      <ModePaiement>CHQ N° 0176033</ModePaiement>
+      <DatePaiement>2026-09-21</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>3</NumeroOrdre>
+      <NumeroFacture>F 26FA1771</NumeroFacture>
+      <DateFacture>2026-05-22</DateFacture>
+      <Fournisseur>INDUSFER</Fournisseur>
+      <IdentifiantFiscal>51833174</IdentifiantFiscal>
+      <ICE>003040881000020</ICE>
+      <Designation>TUBE</Designation>
+      <MontantHT>310.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>62.00</MontantTVA>
+      <MontantTTC>372.00</MontantTTC>
+      <ModePaiement>CHQ N° 0176033</ModePaiement>
+      <DatePaiement>2026-09-21</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>4</NumeroOrdre>
+      <NumeroFacture>F 20260726</NumeroFacture>
+      <DateFacture>2026-09-17</DateFacture>
+      <Fournisseur>JILAR</Fournisseur>
+      <IdentifiantFiscal>01620231</IdentifiantFiscal>
+      <ICE>001592380000020</ICE>
+      <Designation>VENTOUSE</Designation>
+      <MontantHT>1680.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>336.00</MontantTVA>
+      <MontantTTC>2016.00</MontantTTC>
+      <ModePaiement>CHQ N° 0176035</ModePaiement>
+      <DatePaiement>28/926</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>5</NumeroOrdre>
+      <NumeroFacture>F 2260992</NumeroFacture>
+      <DateFacture>2026-09-17</DateFacture>
+      <Fournisseur>FIRM</Fournisseur>
+      <IdentifiantFiscal>01620113</IdentifiantFiscal>
+      <ICE>001536526000019</ICE>
+      <Designation>VANNE OCA</Designation>
+      <MontantHT>12252.15</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>2450.43</MontantTVA>
+      <MontantTTC>14702.58</MontantTTC>
+      <ModePaiement>CHQ N° 0176034</ModePaiement>
+      <DatePaiement>2026-09-28</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>6</NumeroOrdre>
+      <NumeroFacture>F 202609206</NumeroFacture>
+      <DateFacture>2026-09-30</DateFacture>
+      <Fournisseur>TECHNOFIM</Fournisseur>
+      <IdentifiantFiscal>45944118</IdentifiantFiscal>
+      <ICE>002565328000061</ICE>
+      <Designation>COLLIER</Designation>
+      <MontantHT>2083.33</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>416.67</MontantTVA>
+      <MontantTTC>2500.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-30</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>7</NumeroOrdre>
+      <NumeroFacture>F 2026/0163</NumeroFacture>
+      <DateFacture>2026-09-30</DateFacture>
+      <Fournisseur>TRIYOL</Fournisseur>
+      <IdentifiantFiscal>31839468</IdentifiantFiscal>
+      <ICE>002165544000069</ICE>
+      <Designation>BRIDE PLATE</Designation>
+      <MontantHT>2960.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>592.00</MontantTVA>
+      <MontantTTC>3552.00</MontantTTC>
+      <ModePaiement>VIRT</ModePaiement>
+      <DatePaiement>2026-09-30</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>8</NumeroOrdre>
+      <NumeroFacture>F ZG0827/26</NumeroFacture>
+      <DateFacture>2026-09-04</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>PROJECTEUR</Designation>
+      <MontantHT>3750.00</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>750.00</MontantTVA>
+      <MontantTTC>4500.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-09-04</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>9</NumeroOrdre>
+      <NumeroFacture>F ZG0615/26</NumeroFacture>
+      <DateFacture>2026-07-31</DateFacture>
+      <Fournisseur>ZENORA GLOBALIS</Fournisseur>
+      <IdentifiantFiscal>68344640</IdentifiantFiscal>
+      <ICE>003780103000037</ICE>
+      <Designation>CABLE</Designation>
+      <MontantHT>3791.67</MontantHT>
+      <TauxTVA>20.00</TauxTVA>
+      <MontantTVA>758.33</MontantTVA>
+      <MontantTTC>4550.00</MontantTTC>
+      <ModePaiement>ESPECES</ModePaiement>
+      <DatePaiement>2026-07-31</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>10</NumeroOrdre>
+      <NumeroFacture>COM /VIRT</NumeroFacture>
+      <DateFacture>2026-09-01</DateFacture>
+      <Fournisseur>BANK OF AFRICA</Fournisseur>
+      <IdentifiantFiscal>01085112</IdentifiantFiscal>
+      <ICE>001512572000078</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>99.00</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>9.90</MontantTVA>
+      <MontantTTC>108.90</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-09-01</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>11</NumeroOrdre>
+      <NumeroFacture>COM /VIRT</NumeroFacture>
+      <DateFacture>2026-09-04</DateFacture>
+      <Fournisseur>BANK OF AFRICA</Fournisseur>
+      <IdentifiantFiscal>01085112</IdentifiantFiscal>
+      <ICE>001512572000078</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>15.00</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>1.50</MontantTVA>
+      <MontantTTC>16.50</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-09-04</DatePaiement>
+    </Operation>
+    <Operation>
+      <NumeroOrdre>12</NumeroOrdre>
+      <NumeroFacture>COM /VIRT</NumeroFacture>
+      <DateFacture>2026-09-24</DateFacture>
+      <Fournisseur>BANK OF AFRICA</Fournisseur>
+      <IdentifiantFiscal>01085112</IdentifiantFiscal>
+      <ICE>001512572000078</ICE>
+      <Designation>FRAIS</Designation>
+      <MontantHT>15.00</MontantHT>
+      <TauxTVA>10.00</TauxTVA>
+      <MontantTVA>1.50</MontantTVA>
+      <MontantTTC>16.50</MontantTTC>
+      <ModePaiement>PRELEVEMENT</ModePaiement>
+      <DatePaiement>2026-09-24</DatePaiement>
+    </Operation>
+  </ReleveDeductions>
+</DeclarationTVA>
