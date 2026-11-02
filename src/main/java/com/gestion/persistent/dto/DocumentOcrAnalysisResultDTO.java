@@ -35,6 +35,17 @@ public class DocumentOcrAnalysisResultDTO {
     private String numeroCheque;
     private String numeroCommandeExterne;
 
+    // Métadonnées Devis International / Vigilance Importation
+    private String devise;
+    private BigDecimal tauxChangeEstime;
+    private String incoterm;
+    private String lieuIncoterm;
+    private String portEmbarquement;
+    private String validiteOffre;
+    private String codeDouanierSh;
+    private BigDecimal acompteExigePct;
+    private String conditionsPaiement;
+
     public DocumentOcrAnalysisResultDTO() {}
 
     public String getNumeroCommandeExterne() {
@@ -235,5 +246,77 @@ public class DocumentOcrAnalysisResultDTO {
 
     public void setNumeroCheque(String numeroCheque) {
         this.numeroCheque = numeroCheque;
+    }
+
+    public String getDevise() {
+        return devise;
+    }
+
+    public void setDevise(String devise) {
+        this.devise = devise;
+    }
+
+    public BigDecimal getTauxChangeEstime() {
+        return tauxChangeEstime;
+    }
+
+    public void setTauxChangeEstime(BigDecimal tauxChangeEstime) {
+        this.tauxChangeEstime = tauxChangeEstime;
+    }
+
+    public String getIncoterm() {
+        return incoterm;
+    }
+
+    public void setIncoterm(String incoterm) {
+        this.incoterm = incoterm;
+    }
+
+    public String getLieuIncoterm() {
+        return lieuIncoterm;
+    }
+
+    public void setLieuIncoterm(String lieuIncoterm) {
+        this.lieuIncoterm = lieuIncoterm;
+    }
+
+    public String getPortEmbarquement() {
+        return portEmbarquement;
+    }
+
+    public void setPortEmbarquement(String portEmbarquement) {
+        this.portEmbarquement = portEmbarquement;
+    }
+
+    public String getValiditeOffre() {
+        return validiteOffre;
+    }
+
+    public void setValiditeOffre(String validiteOffre) {
+        this.validiteOffre = validiteOffre;
+    }
+
+    public String getCodeDouanierSh() {
+        return codeDouanierSh;
+    }
+
+    public void setCodeDouanierSh(String codeDouanierSh) {
+        this.codeDouanierSh = codeDouanierSh;
+    }
+
+    public BigDecimal getAcompteExigePct() {
+        return acompteExigePct;
+    }
+
+    public void setAcompteExigePct(BigDecimal acompteExigePct) {
+        this.acompteExigePct = acompteExigePct;
+    }
+
+    public String getConditionsPaiement() {
+        return conditionsPaiement;
+    }
+
+    public void setConditionsPaiement(String conditionsPaiement) {
+        this.conditionsPaiement = conditionsPaiement;
     }
 }

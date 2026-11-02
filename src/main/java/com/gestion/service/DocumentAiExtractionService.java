@@ -218,23 +218,29 @@ public class DocumentAiExtractionService {
                 .collect(Collectors.joining(",\n  "));
 
         String systemPrompt = """
-            Tu es un moteur d'intelligence artificielle expert en comptabilité et gestion commerciale B2B au Maroc.
-            Ta mission est d'analyser le texte extrait par OCR d'un document scanné ou PDF (Facture Fournisseur, Bon de Livraison Fournisseur, Commande Client, Chèque, Traite ou Effet de commerce).
+            Tu es un moteur d'intelligence artificielle expert en comptabilité et gestion commerciale B2B au Maroc et à l'International.
+            Ta mission est d'analyser le texte extrait par OCR d'un document scanné ou PDF (Devis Fournisseur / Quotation, Facture Fournisseur, Bon de Livraison Fournisseur, Commande Client, Chèque, Traite ou Effet de commerce).
             Tu dois extraire fidèlement les informations et les faire correspondre (MATCHING) avec les fournisseurs, clients et produits de la base de données.
             
             Règles strictes :
-            1. Détecte le typeDocument : 'FACTURE_ACHAT', 'COMMANDE_CLIENT', 'BON_LIVRAISON_FOURNISSEUR', 'CHEQUE', 'TRAITE' ou 'EFFET'.
-            2. Si c'est un chèque, une traite ou un effet bancaire :
+            1. Détecte le typeDocument : 'DEVIS_FOURNISSEUR', 'FACTURE_ACHAT', 'COMMANDE_CLIENT', 'BON_LIVRAISON_FOURNISSEUR', 'CHEQUE', 'TRAITE' ou 'EFFET'.
+               - Tout document intitulé 'Quotation', 'Devis', 'Proforma Invoice', 'Offer', 'Offre de prix' est un 'DEVIS_FOURNISSEUR'.
+            2. Si c'est un DEVIS_FOURNISSEUR ou document international (Import) :
+               - Extrait la devise dans 'devise' ('USD', 'EUR', 'MAD', 'GBP', 'CNY', etc.). Détecte les symboles '$', '€', 'USD', 'EUR'.
+               - Extrait l'Incoterm dans 'incoterm' ('EXW', 'FOB', 'CFR', 'CIF', 'DAP', 'DDP', etc. Ex: 'TRADE TERM: EXW' -> 'EXW').
+               - Extrait le port d'embarquement / origine dans 'portEmbarquement' ou 'lieuIncoterm'.
+               - Extrait le pourcentage d'acompte dans 'acompteExigePct' (ex: '100%TT Advanced PAYMENT' -> 100.0, '30% TT' -> 30.0).
+               - Extrait les conditions de paiement dans 'conditionsPaiement' (ex: '100%TT Advanced PAYMENT, 3-5 days delivery').
+               - Pour chaque ligne : extrait le prix unitaire dans la devise d'origine dans 'prixUnitaireDevise' ET dans 'prixUnitaireHT'.
+            3. Si c'est un chèque, une traite ou un effet bancaire :
                - Extrait le numéro de chèque/effet dans 'numeroPiece' et 'numeroCheque'.
-               - Extrait la banque marocaine dans 'nomBanque' (ex: Attijariwafa Bank, Banque Populaire, Bank of Africa / BMCE, CIH Bank, Société Générale, Crédit du Maroc, Al Barid Bank, etc.).
+               - Extrait la banque marocaine dans 'nomBanque'.
                - Extrait le montant en dirhams (MAD) dans 'montantTTC' et 'montantHT'.
-               - Extrait la date d'émission dans 'datePiece' et la date d'échéance d'encaissement dans 'dateEcheance'.
-               - Identifie le tireur/émetteur ou bénéficiaire dans 'tierNom' (compare avec CLIENTS ou FOURNISSEURS).
-            3. Si c'est une facture, BL ou commande :
-               - Extrait le numeroPiece (numéro de facture, BL ou commande).
-               - Extrait les dates au format YYYY-MM-DD (datePiece et dateEcheance).
-               - Identifie le tiers (Fournisseur ou Client selon le document) et extrait montants et lignes.
-            4. Retourne UNIQUEMENT un objet JSON valide conforme au schéma demandé.
+               - Extrait la date d'émission dans 'datePiece' et la date d'échéance dans 'dateEcheance'.
+               - Identifie le tireur/émetteur ou bénéficiaire dans 'tierNom'.
+            4. Si c'est une facture, BL ou commande :
+               - Extrait le numeroPiece, les dates YYYY-MM-DD, le tiers et les lignes.
+            5. Retourne UNIQUEMENT un objet JSON valide conforme au schéma demandé.
             """;
 
         String promptOcrText = ocrText;
@@ -268,12 +274,18 @@ public class DocumentAiExtractionService {
             
             Format JSON attendu :
             {
-              "typeDocument": "FACTURE_ACHAT",
+              "typeDocument": "DEVIS_FOURNISSEUR",
               "numeroPiece": "FAC-2025-001",
               "numeroCheque": null,
               "nomBanque": null,
               "datePiece": "2025-01-15",
               "dateEcheance": "2025-02-15",
+              "devise": "USD",
+              "incoterm": "EXW",
+              "lieuIncoterm": "Shanghai",
+              "portEmbarquement": "Ningbo",
+              "acompteExigePct": 100.0,
+              "conditionsPaiement": "100%TT Advanced PAYMENT",
               "tierType": "FOURNISSEUR",
               "tierId": 1,
               "tierNom": "Nom Société",
@@ -281,18 +293,20 @@ public class DocumentAiExtractionService {
               "tierTelephone": "0600000000",
               "tierAdresse": "Casablanca",
               "montantHT": 1000.00,
-              "montantTVA": 200.00,
-              "montantTTC": 1200.00,
+              "montantTVA": 0.00,
+              "montantTTC": 1000.00,
               "lignes": [
                 {
                   "produitId": 10,
                   "reference": "REF01",
                   "designation": "Désignation article",
                   "quantite": 5.0,
+                  "prixUnitaireDevise": 200.00,
                   "prixUnitaireHT": 200.00,
-                  "tauxTVA": 20.0,
+                  "codeSh": "8471.30.00.00",
+                  "tauxTVA": 0.0,
                   "montantHT": 1000.00,
-                  "montantTTC": 1200.00
+                  "montantTTC": 1000.00
                 }
               ]
             }
@@ -366,6 +380,24 @@ public class DocumentAiExtractionService {
             if (n.hasNonNull("numeroCheque")) {
                 dto.setNumeroCheque(n.path("numeroCheque").asText(null));
             }
+            if (n.hasNonNull("devise")) {
+                dto.setDevise(n.path("devise").asText("MAD").trim().toUpperCase());
+            }
+            if (n.hasNonNull("incoterm")) {
+                dto.setIncoterm(n.path("incoterm").asText(null));
+            }
+            if (n.hasNonNull("lieuIncoterm")) {
+                dto.setLieuIncoterm(n.path("lieuIncoterm").asText(null));
+            }
+            if (n.hasNonNull("portEmbarquement")) {
+                dto.setPortEmbarquement(n.path("portEmbarquement").asText(null));
+            }
+            if (n.hasNonNull("acompteExigePct")) {
+                dto.setAcompteExigePct(BigDecimal.valueOf(n.path("acompteExigePct").asDouble(0.0)));
+            }
+            if (n.hasNonNull("conditionsPaiement")) {
+                dto.setConditionsPaiement(n.path("conditionsPaiement").asText(null));
+            }
 
             dto.setTierType(n.path("tierType").asText("FOURNISSEUR"));
             if (n.hasNonNull("tierId") && n.path("tierId").asLong(0) > 0) {
@@ -391,7 +423,16 @@ public class DocumentAiExtractionService {
                     ligne.setReference(l.path("reference").asText(""));
                     ligne.setDesignation(l.path("designation").asText("Article"));
                     ligne.setQuantite(BigDecimal.valueOf(l.path("quantite").asDouble(1.0)));
-                    ligne.setPrixUnitaireHT(BigDecimal.valueOf(l.path("prixUnitaireHT").asDouble(0.0)));
+                    double puHt = l.path("prixUnitaireHT").asDouble(0.0);
+                    double puDev = l.path("prixUnitaireDevise").asDouble(puHt);
+                    if (puHt == 0.0 && puDev > 0.0) {
+                        puHt = puDev;
+                    }
+                    ligne.setPrixUnitaireHT(BigDecimal.valueOf(puHt));
+                    ligne.setPrixUnitaireDevise(BigDecimal.valueOf(puDev));
+                    if (l.hasNonNull("codeSh")) {
+                        ligne.setCodeSh(l.path("codeSh").asText(null));
+                    }
                     ligne.setTauxTVA(BigDecimal.valueOf(l.path("tauxTVA").asDouble(20.0)));
                     ligne.setMontantHT(BigDecimal.valueOf(l.path("montantHT").asDouble(0.0)));
                     ligne.setMontantTTC(BigDecimal.valueOf(l.path("montantTTC").asDouble(0.0)));
@@ -448,6 +489,11 @@ public class DocumentAiExtractionService {
             dto.setNumeroCheque(extraireNumeroCheque(ocrText, dto.getNumeroPiece()));
         }
 
+        // 4b. Devis International / Import : Devise, Incoterm, Acompte
+        if ("DEVIS_FOURNISSEUR".equalsIgnoreCase(typeDoc) || ocrText.toUpperCase().contains("USD") || ocrText.contains("$") || ocrText.toUpperCase().contains("EUR") || ocrText.contains("€")) {
+            extraireMetadonneesImport(ocrText, dto);
+        }
+
         // 5. ICE et Identification Tiers (Fournisseur ou Client)
         String ice = extraireIce(ocrText);
         dto.setTierIce(ice);
@@ -471,6 +517,10 @@ public class DocumentAiExtractionService {
             return attendu;
         }
         String upper = text.toUpperCase();
+        if (upper.contains("QUOTATION") || upper.contains("PROFORMA") || upper.contains("DEVIS") 
+                || upper.contains("PRICE QUOTE") || upper.contains("OFFRE DE PRIX")) {
+            return "DEVIS_FOURNISSEUR";
+        }
         if (upper.contains("PAYEZ CONTRE CE CHÈQUE") || upper.contains("PAYEZ CONTRE CE CHEQUE") 
                 || upper.contains("CHÈQUE") || upper.contains("CHEQUE")) {
             return "CHEQUE";
@@ -575,6 +625,47 @@ public class DocumentAiExtractionService {
         if (upper.contains("CFG")) return "CFG Bank";
         if (upper.contains("UMNIA")) return "Umnia Bank";
         return null;
+    }
+
+    private void extraireMetadonneesImport(String text, DocumentOcrAnalysisResultDTO dto) {
+        String upper = text.toUpperCase();
+        // Devise
+        if (upper.contains("USD") || upper.contains("$") || upper.contains("DOLLAR")) {
+            dto.setDevise("USD");
+            dto.setTauxChangeEstime(BigDecimal.valueOf(10.125));
+        } else if (upper.contains("EUR") || upper.contains("€") || upper.contains("EURO")) {
+            dto.setDevise("EUR");
+            dto.setTauxChangeEstime(BigDecimal.valueOf(10.85));
+        } else if (upper.contains("GBP") || upper.contains("£")) {
+            dto.setDevise("GBP");
+            dto.setTauxChangeEstime(BigDecimal.valueOf(12.75));
+        } else if (upper.contains("CNY") || upper.contains("RMB") || upper.contains("¥")) {
+            dto.setDevise("CNY");
+            dto.setTauxChangeEstime(BigDecimal.valueOf(1.40));
+        } else {
+            dto.setDevise("MAD");
+            dto.setTauxChangeEstime(BigDecimal.ONE);
+        }
+
+        // Incoterm
+        Matcher mInco = Pattern.compile("(?i)(?:TRADE\\s*TERM|INCOTERM)?\\s*[:#\\-\\s]?\\s*\\b(EXW|FOB|CFR|CIF|CIP|CPT|DAP|DPU|DDP|FCA|FAS)\\b").matcher(text);
+        if (mInco.find()) {
+            dto.setIncoterm(mInco.group(1).toUpperCase());
+        }
+
+        // Acompte exigé
+        Matcher mAcompte = Pattern.compile("(?i)(\\d{1,3})\\s*%\\s*(?:TT|ACOMPTE|ADVANCE|DEPOSIT|PAYMENT|DOWN PAYMENT)").matcher(text);
+        if (mAcompte.find()) {
+            try {
+                dto.setAcompteExigePct(new BigDecimal(mAcompte.group(1)));
+            } catch (Exception ignored) {}
+        }
+
+        // Conditions paiement
+        Matcher mPay = Pattern.compile("(?i)(?:PAYMENT|CONDITIONS?\\s*(?:DE)?\\s*PAIEMENT)\\s*[:#\\-\\s]?\\s*([^\\r\\n]{5,100})").matcher(text);
+        if (mPay.find()) {
+            dto.setConditionsPaiement(mPay.group(1).trim());
+        }
     }
 
     private String extraireNumeroCheque(String text, String fallback) {
@@ -743,6 +834,7 @@ public class DocumentAiExtractionService {
 
                 dto.setQuantite(qte);
                 dto.setPrixUnitaireHT(pu);
+                dto.setPrixUnitaireDevise(pu);
                 BigDecimal montantHT = qte.multiply(pu).setScale(2, java.math.RoundingMode.HALF_UP);
                 dto.setMontantHT(montantHT);
                 BigDecimal montantTTC = montantHT.multiply(BigDecimal.valueOf(1.20)).setScale(2, java.math.RoundingMode.HALF_UP);

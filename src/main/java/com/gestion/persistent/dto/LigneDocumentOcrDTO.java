@@ -9,6 +9,8 @@ public class LigneDocumentOcrDTO {
     private String designation;
     private BigDecimal quantite = BigDecimal.ONE;
     private BigDecimal prixUnitaireHT = BigDecimal.ZERO;
+    private BigDecimal prixUnitaireDevise;
+    private String codeSh;
     private BigDecimal tauxTVA = BigDecimal.valueOf(20.0);
     private BigDecimal montantHT = BigDecimal.ZERO;
     private BigDecimal montantTTC = BigDecimal.ZERO;
@@ -54,6 +56,22 @@ public class LigneDocumentOcrDTO {
 
     public void setPrixUnitaireHT(BigDecimal prixUnitaireHT) {
         this.prixUnitaireHT = prixUnitaireHT;
+    }
+
+    public BigDecimal getPrixUnitaireDevise() {
+        return prixUnitaireDevise;
+    }
+
+    public void setPrixUnitaireDevise(BigDecimal prixUnitaireDevise) {
+        this.prixUnitaireDevise = prixUnitaireDevise;
+    }
+
+    public String getCodeSh() {
+        return codeSh;
+    }
+
+    public void setCodeSh(String codeSh) {
+        this.codeSh = codeSh;
     }
 
     public BigDecimal getTauxTVA() {
