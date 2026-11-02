@@ -6,6 +6,7 @@ import com.gestion.repository.*;
 import com.gestion.util.FrenchNumberToWords;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.util.JRLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -1253,16 +1254,25 @@ public class ImpressionService {
 
     private JasperReport getCompiledReport(String reportName) {
         return reportCache.computeIfAbsent(reportName, name -> {
-            String path = "reports/" + name + ".jrxml";
-            try (InputStream is = getClass().getClassLoader().getResourceAsStream(path)) {
-                if (is == null) {
-                    throw new RuntimeException("Template Jasper introuvable dans le classpath: " + path);
+            String jasperPath = "reports/" + name + ".jasper";
+            try (InputStream is = getClass().getClassLoader().getResourceAsStream(jasperPath)) {
+                if (is != null) {
+                    log.debug("Chargement direct du rapport precompile Jasper: {}", jasperPath);
+                    return (JasperReport) JRLoader.loadObject(is);
                 }
-                log.info("Compilation du template Jasper: {}", path);
+            } catch (Exception e) {
+                log.warn("Impossible de charger le .jasper ({}), repli sur compilation .jrxml: {}", jasperPath, e.getMessage());
+            }
+
+            String jrxmlPath = "reports/" + name + ".jrxml";
+            try (InputStream is = getClass().getClassLoader().getResourceAsStream(jrxmlPath)) {
+                if (is == null) {
+                    throw new RuntimeException("Template Jasper introuvable dans le classpath (ni .jasper ni .jrxml): " + jrxmlPath);
+                }
+                log.warn("Compilation a la volee du template Jasper (lent): {}", jrxmlPath);
                 return JasperCompileManager.compileReport(is);
             } catch (Exception e) {
-                throw new RuntimeException("Échec de la compilation du rapport Jasper " + path + ": " + e.getMessage(),
-                        e);
+                throw new RuntimeException("Echec de la compilation du rapport Jasper " + jrxmlPath + ": " + e.getMessage(), e);
             }
         });
     }

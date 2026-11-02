@@ -43,6 +43,12 @@ public class EntrepriseProfileDTO {
     private BigDecimal toleranceEcartPourcentage = new BigDecimal("5.00");
     private Boolean modificationNumeroDocumentActive = false;
 
+    private String emailjsServiceId;
+    private String emailjsTemplateId;
+    private String emailjsPublicKey;
+    private String emailjsPrivateKey;
+    private Boolean emailjsActif = false;
+
     private LocalDateTime dateMiseAJour;
 
     public EntrepriseProfileDTO() {}
@@ -167,4 +173,19 @@ public class EntrepriseProfileDTO {
 
     public Boolean getModificationNumeroDocumentActive() { return modificationNumeroDocumentActive != null && modificationNumeroDocumentActive; }
     public void setModificationNumeroDocumentActive(Boolean modificationNumeroDocumentActive) { this.modificationNumeroDocumentActive = modificationNumeroDocumentActive; }
+
+    public String getEmailjsServiceId() { return emailjsServiceId; }
+    public void setEmailjsServiceId(String emailjsServiceId) { this.emailjsServiceId = emailjsServiceId; }
+
+    public String getEmailjsTemplateId() { return emailjsTemplateId; }
+    public void setEmailjsTemplateId(String emailjsTemplateId) { this.emailjsTemplateId = emailjsTemplateId; }
+
+    public String getEmailjsPublicKey() { return emailjsPublicKey; }
+    public void setEmailjsPublicKey(String emailjsPublicKey) { this.emailjsPublicKey = emailjsPublicKey; }
+
+    public String getEmailjsPrivateKey() { return emailjsPrivateKey; }
+    public void setEmailjsPrivateKey(String emailjsPrivateKey) { this.emailjsPrivateKey = emailjsPrivateKey; }
+
+    public Boolean getEmailjsActif() { return emailjsActif != null && emailjsActif; }
+    public void setEmailjsActif(Boolean emailjsActif) { this.emailjsActif = emailjsActif; }
 }

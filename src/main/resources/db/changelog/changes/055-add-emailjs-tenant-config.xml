@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 055 : Paramètres multi-tenant pour l'envoi d'emails via EmailJS (service_id, template_id, public_key, private_key, actif)
+    -->
+    <changeSet id="055-add-emailjs-tenant-config" author="antigravity">
+        <sql splitStatements="false">
+            ALTER TABLE IF EXISTS entreprise_profiles 
+                ADD COLUMN IF NOT EXISTS emailjs_service_id VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS emailjs_template_id VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS emailjs_public_key VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS emailjs_private_key VARCHAR(100),
+                ADD COLUMN IF NOT EXISTS emailjs_actif BOOLEAN DEFAULT FALSE;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

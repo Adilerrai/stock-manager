@@ -7,6 +7,8 @@ import com.gestion.persistent.model.Fournisseur;
 import com.gestion.service.FournisseurService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.gestion.persistent.dto.FournisseurProduitResumeDTO;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -67,4 +69,12 @@ public class FournisseurController {
         return ResponseEntity.ok(fournisseurDTOsPage);
     }
 
+    @GetMapping("/{id}/produits-commandes")
+    public ResponseEntity<List<FournisseurProduitResumeDTO>> getEtatProduitsCommandes(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "produitId", required = false) Long produitId,
+            @RequestParam(value = "search", required = false) String search) {
+        List<FournisseurProduitResumeDTO> resume = fournisseurService.getEtatProduitsCommandes(id, produitId, search);
+        return ResponseEntity.ok(resume);
+    }
 }

@@ -6,6 +6,12 @@ import com.gestion.persistent.dto.FournisseurDTO;
 import com.gestion.persistent.dto.FournisseurSearchCriteria;
 import com.gestion.persistent.model.Fournisseur;
 import com.gestion.repository.FournisseurRepository;
+import com.gestion.repository.LigneCommandeRepository;
+import com.gestion.persistent.model.LigneCommande;
+import com.gestion.persistent.dto.FournisseurProduitResumeDTO;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,9 +23,12 @@ import java.util.List;
 public class FournisseurService {
 
     private final FournisseurRepository fournisseurRepository;
+    private final LigneCommandeRepository ligneCommandeRepository;
 
-    public FournisseurService(FournisseurRepository fournisseurRepository) {
+    public FournisseurService(FournisseurRepository fournisseurRepository,
+                              LigneCommandeRepository ligneCommandeRepository) {
         this.fournisseurRepository = fournisseurRepository;
+        this.ligneCommandeRepository = ligneCommandeRepository;
     }
 
     private Long getTenantId() {
@@ -156,8 +165,87 @@ public class FournisseurService {
     }
 
     public Page<Fournisseur> searchFournisseurs(FournisseurSearchCriteria criteria, Pageable pageable) {
-
         return fournisseurRepository.findByCriteria(criteria, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FournisseurProduitResumeDTO> getEtatProduitsCommandes(Long fournisseurId, Long produitId, String search) {
+        Long tenantId = getTenantId();
+        List<LigneCommande> lignes;
+        if (produitId != null) {
+            lignes = ligneCommandeRepository.findByFournisseurAndProduitAndTenant(fournisseurId, produitId, tenantId);
+        } else {
+            lignes = ligneCommandeRepository.findByFournisseurAndTenant(fournisseurId, tenantId);
+        }
+
+        Map<Long, FournisseurProduitResumeDTO> resumeMap = new LinkedHashMap<>();
+
+        for (LigneCommande lc : lignes) {
+            if (lc.getProduit() == null) continue;
+            Long pId = lc.getProduit().getId();
+
+            if (search != null && !search.isBlank()) {
+                String term = search.trim().toLowerCase();
+                boolean matchRef = lc.getProduit().getReference() != null && lc.getProduit().getReference().toLowerCase().contains(term);
+                boolean matchNom = lc.getProduit().getDesignation() != null && lc.getProduit().getDesignation().toLowerCase().contains(term);
+                if (!matchRef && !matchNom) {
+                    continue;
+                }
+            }
+
+            FournisseurProduitResumeDTO dto = resumeMap.computeIfAbsent(pId, id -> {
+                FournisseurProduitResumeDTO r = new FournisseurProduitResumeDTO();
+                r.setProduitId(id);
+                r.setReference(lc.getProduit().getReference());
+                r.setDesignation(lc.getProduit().getDesignation());
+                if (lc.getProduit().getCategorie() != null) {
+                    r.setCategorie(lc.getProduit().getCategorie().getNom());
+                }
+                return r;
+            });
+
+            int qteCmd = lc.getQuantiteCommandee() != null ? lc.getQuantiteCommandee() : 0;
+            int qteLiv = lc.getQuantiteLivree() != null ? lc.getQuantiteLivree() : 0;
+            BigDecimal prixHT = lc.getPrixUnitaireHT() != null ? lc.getPrixUnitaireHT() : (lc.getPrixUnitaire() != null ? lc.getPrixUnitaire() : BigDecimal.ZERO);
+            BigDecimal mntHT = lc.getMontantHT() != null ? lc.getMontantHT() : prixHT.multiply(BigDecimal.valueOf(qteCmd));
+            BigDecimal mntTTC = lc.getMontantTTC() != null ? lc.getMontantTTC() : mntHT.multiply(new BigDecimal("1.20"));
+
+            dto.setQuantiteTotaleCommandee(dto.getQuantiteTotaleCommandee() + qteCmd);
+            dto.setQuantiteTotaleLivree(dto.getQuantiteTotaleLivree() + qteLiv);
+            dto.setMontantTotalHT(dto.getMontantTotalHT().add(mntHT));
+            dto.setMontantTotalTTC(dto.getMontantTotalTTC().add(mntTTC));
+            dto.setNombreCommandes(dto.getNombreCommandes() + 1);
+
+            if (dto.getDernierPrixAchat().compareTo(BigDecimal.ZERO) == 0 && prixHT.compareTo(BigDecimal.ZERO) > 0) {
+                dto.setDernierPrixAchat(prixHT);
+            }
+            if (dto.getDateDerniereCommande() == null && lc.getCommande() != null) {
+                dto.setDateDerniereCommande(lc.getCommande().getDateCommande());
+            }
+
+            FournisseurProduitResumeDTO.CommandeReferenceResumeDTO cmdRef = new FournisseurProduitResumeDTO.CommandeReferenceResumeDTO();
+            if (lc.getCommande() != null) {
+                cmdRef.setCommandeId(lc.getCommande().getId());
+                cmdRef.setNumeroCommande(lc.getCommande().getNumeroCommande());
+                cmdRef.setDateCommande(lc.getCommande().getDateCommande());
+                cmdRef.setStatut(lc.getCommande().getStatut() != null ? lc.getCommande().getStatut().name() : null);
+            }
+            cmdRef.setQuantiteCommandee(qteCmd);
+            cmdRef.setQuantiteLivree(qteLiv);
+            cmdRef.setPrixUnitaireHT(prixHT);
+            cmdRef.setMontantHT(mntHT);
+            dto.getCommandes().add(cmdRef);
+        }
+
+        for (FournisseurProduitResumeDTO r : resumeMap.values()) {
+            if (r.getQuantiteTotaleCommandee() > 0 && r.getMontantTotalHT().compareTo(BigDecimal.ZERO) > 0) {
+                r.setPrixMoyen(r.getMontantTotalHT().divide(BigDecimal.valueOf(r.getQuantiteTotaleCommandee()), 2, RoundingMode.HALF_UP));
+            } else {
+                r.setPrixMoyen(r.getDernierPrixAchat());
+            }
+        }
+
+        return new ArrayList<>(resumeMap.values());
     }
 }
 

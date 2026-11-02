@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 056 : Table des preuves de passage et dépôt livreur (photo BL émargé / facture déchargée) sans impacter les statuts métier
+    -->
+    <changeSet id="056-add-preuve-depot-livreur" author="antigravity">
+        <createTable tableName="preuves_depot_livreur">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="point_de_vente_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="document_type" type="VARCHAR(30)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="document_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="numero_document" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="client_nom" type="VARCHAR(255)"/>
+            <column name="type_action" type="VARCHAR(40)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="photo_url" type="VARCHAR(500)"/>
+            <column name="nom_fichier_photo" type="VARCHAR(255)"/>
+            <column name="commentaire" type="VARCHAR(1000)"/>
+            <column name="nom_livreur" type="VARCHAR(150)"/>
+            <column name="livreur_user_id" type="BIGINT"/>
+            <column name="date_declaration" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="latitude" type="DOUBLE PRECISION"/>
+            <column name="longitude" type="DOUBLE PRECISION"/>
+        </createTable>
+
+        <createIndex tableName="preuves_depot_livreur" indexName="idx_preuve_livreur_tenant">
+            <column name="point_de_vente_id"/>
+        </createIndex>
+        <createIndex tableName="preuves_depot_livreur" indexName="idx_preuve_livreur_doc">
+            <column name="document_type"/>
+            <column name="document_id"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

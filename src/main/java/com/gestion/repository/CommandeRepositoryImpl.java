@@ -6,6 +6,9 @@ import com.gestion.persistent.enums.StatutCommande;
 import com.gestion.persistent.enums.TypeAchat;
 import com.gestion.persistent.enums.TypeFournisseur;
 import com.gestion.persistent.model.Commande;
+import com.gestion.persistent.model.LigneCommande;
+import jakarta.persistence.criteria.CommonAbstractCriteria;
+import jakarta.persistence.criteria.Subquery;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -35,7 +38,7 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
         CriteriaQuery<Commande> query = cb.createQuery(Commande.class);
         Root<Commande> root = query.from(Commande.class);
 
-        List<Predicate> predicates = buildPredicates(cb, root, criteria);
+        List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
         query.orderBy(cb.desc(root.get("dateCommande")));
 
@@ -48,7 +51,7 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
         CriteriaQuery<Commande> query = cb.createQuery(Commande.class);
         Root<Commande> root = query.from(Commande.class);
 
-        List<Predicate> predicates = buildPredicates(cb, root, criteria);
+        List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
 
         if (pageable.getSort().isSorted()) {
@@ -75,14 +78,14 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Commande> countRoot = countQuery.from(Commande.class);
-        List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria);
+        List<Predicate> countPredicates = buildPredicates(cb, countQuery, countRoot, criteria);
         countQuery.select(cb.count(countRoot)).where(countPredicates.toArray(new Predicate[0]));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(results, pageable, total);
     }
 
-    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Commande> root, CommandeSearchCriteria criteria) {
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, CommonAbstractCriteria query, Root<Commande> root, CommandeSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
         Long tenantId = (criteria != null && criteria.getSocieteId() != null)
@@ -155,6 +158,30 @@ public class CommandeRepositoryImpl implements CommandeRepositoryCustom {
 
         if (criteria.getNumeroEngagementPortnet() != null && !criteria.getNumeroEngagementPortnet().trim().isEmpty()) {
             predicates.add(cb.like(cb.lower(root.get("numeroEngagementPortnet")), "%" + criteria.getNumeroEngagementPortnet().trim().toLowerCase() + "%"));
+        }
+
+        if (criteria.getProduitId() != null || (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty())) {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<LigneCommande> ligneRoot = subquery.from(LigneCommande.class);
+            subquery.select(ligneRoot.get("commande").get("id"));
+
+            List<Predicate> subPreds = new ArrayList<>();
+            subPreds.add(cb.equal(ligneRoot.get("commande"), root));
+
+            if (criteria.getProduitId() != null) {
+                subPreds.add(cb.equal(ligneRoot.get("produit").get("id"), criteria.getProduitId()));
+            }
+
+            if (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty()) {
+                String pattern = "%" + criteria.getProduitQuery().trim().toLowerCase() + "%";
+                subPreds.add(cb.or(
+                    cb.like(cb.lower(ligneRoot.get("produit").get("reference")), pattern),
+                    cb.like(cb.lower(ligneRoot.get("produit").get("designation")), pattern)
+                ));
+            }
+
+            subquery.where(subPreds.toArray(new Predicate[0]));
+            predicates.add(cb.exists(subquery));
         }
 
         return predicates;

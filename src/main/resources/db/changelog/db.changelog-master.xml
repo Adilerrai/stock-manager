@@ -172,4 +172,10 @@
     <!-- Changeset 054 : Mise à jour de la contrainte CHECK mode_paiement pour AVIS_DEBIT -->
     <include file="changes/054-update-mode-paiement-check-avis-debit.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 055 : Parametres multi-tenant pour EmailJS -->
+    <include file="changes/055-add-emailjs-tenant-config.xml" relativeToChangelogFile="true"/>
+
+    <!-- Changeset 056 : Table des preuves de passage et dépôt livreur sans impacter les statuts métier -->
+    <include file="changes/056-add-preuve-depot-livreur.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

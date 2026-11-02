@@ -21,6 +21,8 @@ public class CommandeSearchCriteria {
     private String statutWorkflowImport;
     private String numeroPi;
     private String numeroEngagementPortnet;
+    private Long produitId;
+    private String produitQuery;
 
     public Boolean getInclureAnnulees() { return inclureAnnulees; }
     public void setInclureAnnulees(Boolean inclureAnnulees) { this.inclureAnnulees = inclureAnnulees; }
@@ -164,5 +166,21 @@ public class CommandeSearchCriteria {
 
     public void setNumeroEngagementPortnet(String numeroEngagementPortnet) {
         this.numeroEngagementPortnet = numeroEngagementPortnet;
+    }
+
+    public Long getProduitId() {
+        return produitId;
+    }
+
+    public void setProduitId(Long produitId) {
+        this.produitId = produitId;
+    }
+
+    public String getProduitQuery() {
+        return produitQuery;
+    }
+
+    public void setProduitQuery(String produitQuery) {
+        this.produitQuery = produitQuery;
     }
 }

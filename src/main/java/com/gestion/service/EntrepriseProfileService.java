@@ -124,6 +124,21 @@ public class EntrepriseProfileService {
         if (dto.getModificationNumeroDocumentActive() != null) {
             profile.setModificationNumeroDocumentActive(dto.getModificationNumeroDocumentActive());
         }
+        if (dto.getEmailjsServiceId() != null) {
+            profile.setEmailjsServiceId(dto.getEmailjsServiceId());
+        }
+        if (dto.getEmailjsTemplateId() != null) {
+            profile.setEmailjsTemplateId(dto.getEmailjsTemplateId());
+        }
+        if (dto.getEmailjsPublicKey() != null) {
+            profile.setEmailjsPublicKey(dto.getEmailjsPublicKey());
+        }
+        if (dto.getEmailjsPrivateKey() != null) {
+            profile.setEmailjsPrivateKey(dto.getEmailjsPrivateKey());
+        }
+        if (dto.getEmailjsActif() != null) {
+            profile.setEmailjsActif(dto.getEmailjsActif());
+        }
 
         profile.setDateMiseAJour(LocalDateTime.now());
 

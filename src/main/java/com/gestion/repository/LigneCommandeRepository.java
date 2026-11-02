@@ -23,5 +23,24 @@ public interface LigneCommandeRepository extends JpaRepository<LigneCommande, Lo
     List<LigneCommande> findByProduit( @Param("produitId") Long produitId);
     
     List<LigneCommande> findByCommande(Commande commande);
+
+    @Query("SELECT lc FROM LigneCommande lc " +
+           "JOIN FETCH lc.commande c " +
+           "JOIN FETCH lc.produit p " +
+           "WHERE c.fournisseur.id = :fournisseurId " +
+           "AND c.pointDeVenteId = :tenantId " +
+           "AND c.statut <> com.gestion.persistent.enums.StatutCommande.ANNULEE " +
+           "ORDER BY c.dateCommande DESC")
+    List<LigneCommande> findByFournisseurAndTenant(@Param("fournisseurId") Long fournisseurId, @Param("tenantId") Long tenantId);
+
+    @Query("SELECT lc FROM LigneCommande lc " +
+           "JOIN FETCH lc.commande c " +
+           "JOIN FETCH lc.produit p " +
+           "WHERE c.fournisseur.id = :fournisseurId " +
+           "AND lc.produit.id = :produitId " +
+           "AND c.pointDeVenteId = :tenantId " +
+           "AND c.statut <> com.gestion.persistent.enums.StatutCommande.ANNULEE " +
+           "ORDER BY c.dateCommande DESC")
+    List<LigneCommande> findByFournisseurAndProduitAndTenant(@Param("fournisseurId") Long fournisseurId, @Param("produitId") Long produitId, @Param("tenantId") Long tenantId);
 }
 

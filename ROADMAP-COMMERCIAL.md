@@ -8,12 +8,15 @@ Ce document consigne l'ensemble des fonctionnalités du module **Commercial** pl
 
 | Sprint | Domaine | Statut |
 | :---: | :--- | :---: |
-| **Sprint 1** | **Commandes, Tarifs, Reliquats & Réservations Stock** |  **TERMINÉ** |
+| **Sprint 1** | **Commandes, Tarifs, Reliquats & Réservations Stock** | ✅ **TERMINÉ** |
 | **Sprint 2** | **Crédit Commercial & Gestion du Risque Client** | ⏳ *À venir* |
-| **Sprint 3** | **Logistique, Expéditions & Preuve de Livraison (POD)** | ⏳ *À venir* |
+| **Sprint 3 (POD)** | **Logistique, Interface Livreur & Preuve de Décharge (Photo BL / Facture)** | ✅ **TERMINÉ** |
 | **Sprint 4** | **CRM & Pilotage de la Force de Vente** | ⏳ *À venir* |
 | **Sprint 5** | **Piste d'Audit Générale & Workflows de Validation** | ⏳ *À venir* |
 | **Sprint 6** | **Analytics, Décisionnel & Outils de Productivité** | ⏳ *À venir* |
+| **Sprint Perf** | **Impression Haute Vélocité (.jasper précompilé) & Criteria API Cmd Frs** | ✅ **TERMINÉ** |
+| **Sprint Tenant** | **Envoi d'Emails Multi-Tenant (EmailJS par Société)** | ✅ **TERMINÉ** |
+| **Sprint Achats** | **Fiche Fournisseur : Relevé & État des Produits Commandés (Global / Spécifique)** | ✅ **TERMINÉ** |
 
 ---
 
@@ -56,8 +59,9 @@ Organiser les sorties d'entrepôt, l'acheminement physique et la traçabilité j
   * Affectation d'un chauffeur et d'un véhicule à une tournée.
   * Génération d'une feuille de route / bon de chargement récapitulatif.
 * **Suivi de livraison & Preuve de Livraison (POD) :**
-  * Suivi du statut du BL : `EN_PREPARATION` $\rightarrow$ `EN_ROUTE` $\rightarrow$ `LIVRE` / `ECHEC_LIVRAISON`.
-  * Émargement numérique / signature sur écran smartphone/tablette ou upload de la photo du bon tamponné.
+  * Interface smartphone dédiée `/livraisons/livreur` (capture photo caméra arrière avec `capture="environment"`).
+  * Déclaration en 1 clic : **"Livraison effectuée"** (BL signé) ou **"Facture déposée"** (décharge facture).
+  * **Architecture non-intrusive :** Enregistrement de la preuve (`PreuveDepotLivreur`) sans forcer de mutation prématurée sur les états comptables ou les stocks.
 * **Livraison multi-dépôts :**
   * Capacité d'expédier les lignes d'une même commande client depuis des dépôts géographiques différents.
 

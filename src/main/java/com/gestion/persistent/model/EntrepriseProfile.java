@@ -125,6 +125,22 @@ public class EntrepriseProfile {
     @Column(name = "modification_numero_document_active")
     private Boolean modificationNumeroDocumentActive = false;
 
+    // Configuration EmailJS par Tenant
+    @Column(name = "emailjs_service_id")
+    private String emailjsServiceId;
+
+    @Column(name = "emailjs_template_id")
+    private String emailjsTemplateId;
+
+    @Column(name = "emailjs_public_key")
+    private String emailjsPublicKey;
+
+    @Column(name = "emailjs_private_key")
+    private String emailjsPrivateKey;
+
+    @Column(name = "emailjs_actif")
+    private Boolean emailjsActif = false;
+
     @Column(name = "date_mise_a_jour")
     private LocalDateTime dateMiseAJour = LocalDateTime.now();
 
@@ -448,5 +464,45 @@ public class EntrepriseProfile {
 
     public void setModificationNumeroDocumentActive(Boolean modificationNumeroDocumentActive) {
         this.modificationNumeroDocumentActive = modificationNumeroDocumentActive;
+    }
+
+    public String getEmailjsServiceId() {
+        return emailjsServiceId;
+    }
+
+    public void setEmailjsServiceId(String emailjsServiceId) {
+        this.emailjsServiceId = emailjsServiceId;
+    }
+
+    public String getEmailjsTemplateId() {
+        return emailjsTemplateId;
+    }
+
+    public void setEmailjsTemplateId(String emailjsTemplateId) {
+        this.emailjsTemplateId = emailjsTemplateId;
+    }
+
+    public String getEmailjsPublicKey() {
+        return emailjsPublicKey;
+    }
+
+    public void setEmailjsPublicKey(String emailjsPublicKey) {
+        this.emailjsPublicKey = emailjsPublicKey;
+    }
+
+    public String getEmailjsPrivateKey() {
+        return emailjsPrivateKey;
+    }
+
+    public void setEmailjsPrivateKey(String emailjsPrivateKey) {
+        this.emailjsPrivateKey = emailjsPrivateKey;
+    }
+
+    public Boolean getEmailjsActif() {
+        return emailjsActif != null && emailjsActif;
+    }
+
+    public void setEmailjsActif(Boolean emailjsActif) {
+        this.emailjsActif = emailjsActif;
     }
 }
