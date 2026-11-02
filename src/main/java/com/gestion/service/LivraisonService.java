@@ -185,7 +185,7 @@ public class LivraisonService {
                 TypeMouvement.ENTREE_LIVRAISON,
                 BigDecimal.valueOf(ligne.getQuantiteLivree()),
                 ligne.getQualiteProduit(),
-                "LIV-" + livraison.getNumeroLivraison(),
+                livraison.getNumeroLivraison(),
                 "Validation livraison avec lot " + lot.getNumeroLot()
             );
         }
@@ -255,7 +255,7 @@ public class LivraisonService {
                                 TypeMouvement.AJUSTEMENT_NEGATIF,
                                 BigDecimal.valueOf(ligne.getQuantiteLivree()),
                                 ligne.getQualiteProduit(),
-                                "ANNUL-LIV-" + (livraison.getNumeroLivraison() != null ? livraison.getNumeroLivraison() : livraison.getId()),
+                                (livraison.getNumeroLivraison() != null ? livraison.getNumeroLivraison() : String.valueOf(livraison.getId())),
                                 "Déduction stock suite remise en brouillon réception " + (livraison.getNumeroLivraison() != null ? livraison.getNumeroLivraison() : livraison.getId())
                         );
                     } catch (Exception ex) {
