@@ -31,6 +31,10 @@ public interface BonLivraisonClientMapper {
     @Mapping(target = "depotId", expression = "java(entity.getLignes() != null && !entity.getLignes().isEmpty() && entity.getLignes().get(0).getDepot() != null ? entity.getLignes().get(0).getDepot().getId() : null)")
     @Mapping(target = "depotNom", expression = "java(entity.getLignes() != null && !entity.getLignes().isEmpty() && entity.getLignes().get(0).getDepot() != null ? entity.getLignes().get(0).getDepot().getNom() : null)")
     @Mapping(target = "piecesJointes", ignore = true)
+    @Mapping(target = "date", ignore = true)
+    @Mapping(target = "dateBL", ignore = true)
+    @Mapping(target = "date_bl", ignore = true)
+    @Mapping(target = "dateLivraison", ignore = true)
     BonLivraisonClientDTO toDto(BonLivraisonClient entity);
 
     @Mapping(target = "client", ignore = true)

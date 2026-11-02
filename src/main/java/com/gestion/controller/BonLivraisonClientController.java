@@ -158,9 +158,16 @@ public class BonLivraisonClientController {
     }
 
 
-    @PutMapping("/{id}")
+    @RequestMapping(value = "/{id}", method = {RequestMethod.PUT, RequestMethod.PATCH})
     public ResponseEntity<BonLivraisonClientDTO> updateBonLivraisonClient(@PathVariable Long id, @RequestBody BonLivraisonClientDTO dto) {
         return ResponseEntity.ok(bonLivraisonClientService.updateBonLivraisonClient(id, dto));
+    }
+
+    @RequestMapping(value = "/{id}/date", method = {RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.POST})
+    public ResponseEntity<BonLivraisonClientDTO> updateDateBonLivraisonClient(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Object> body) {
+        return ResponseEntity.ok(bonLivraisonClientService.updateDateBl(id, body));
     }
 
     @PostMapping("/{id}/annuler")
