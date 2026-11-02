@@ -9,7 +9,12 @@ import java.util.List;
 public class BonLivraisonClientDTO {
     private Long id;
     private String numeroBl;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("dateBl")
+    @com.fasterxml.jackson.annotation.JsonAlias({"date", "dateBL", "date_bl", "dateLivraison", "dateLivraisonPrevue", "dateDocument"})
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.acommon.config.FlexibleLocalDateTimeDeserializer.class)
     private LocalDateTime dateBl;
+
     private Long clientId;
     private String clientNom;
     private String clientTelephone;
@@ -22,7 +27,15 @@ public class BonLivraisonClientDTO {
     private StatutLivraison statut;
     private Long livreurId;
     private String livreurNom;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("dateExpedition")
+    @com.fasterxml.jackson.annotation.JsonAlias({"date_expedition"})
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.acommon.config.FlexibleLocalDateTimeDeserializer.class)
     private LocalDateTime dateExpedition;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("dateLivraisonEffective")
+    @com.fasterxml.jackson.annotation.JsonAlias({"date_livraison_effective", "dateLivraisonReelle"})
+    @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.acommon.config.FlexibleLocalDateTimeDeserializer.class)
     private LocalDateTime dateLivraisonEffective;
     private String commentaireLivreur;
     private BigDecimal remiseGlobalePourcentage;
@@ -71,6 +84,18 @@ public class BonLivraisonClientDTO {
 
     public LocalDateTime getDateBl() { return dateBl; }
     public void setDateBl(LocalDateTime dateBl) { this.dateBl = dateBl; }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("date")
+    public void setDate(LocalDateTime date) { if (this.dateBl == null) this.dateBl = date; }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("dateBL")
+    public void setDateBL(LocalDateTime dateBL) { if (this.dateBl == null) this.dateBl = dateBL; }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("date_bl")
+    public void setDate_bl(LocalDateTime date_bl) { if (this.dateBl == null) this.dateBl = date_bl; }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("dateLivraison")
+    public void setDateLivraison(LocalDateTime dateLivraison) { if (this.dateBl == null) this.dateBl = dateLivraison; }
 
     public Long getClientId() { return clientId; }
     public void setClientId(Long clientId) { this.clientId = clientId; }

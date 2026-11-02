@@ -20,9 +20,26 @@ public class FlexibleLocalDateTimeDeserializer extends JsonDeserializer<LocalDat
             return null;
         }
         value = value.trim();
-        // Format YYYY-MM-DD
+        // Format date 10 caractères : YYYY-MM-DD, DD/MM/YYYY ou DD-MM-YYYY
         if (value.length() == 10) {
+            if (value.contains("/")) {
+                return LocalDate.parse(value, DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay();
+            }
+            if (value.charAt(2) == '-' && value.charAt(5) == '-') {
+                return LocalDate.parse(value, DateTimeFormatter.ofPattern("dd-MM-yyyy")).atStartOfDay();
+            }
             return LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay();
+        }
+        // Format avec slash et heure : DD/MM/YYYY HH:mm ou DD/MM/YYYY HH:mm:ss
+        if (value.contains("/")) {
+            try {
+                if (value.length() == 16) {
+                    return LocalDateTime.parse(value, DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                }
+                if (value.length() >= 19) {
+                    return LocalDateTime.parse(value.substring(0, 19), DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+                }
+            } catch (Exception ignored) {}
         }
         // Format ISO UTC Z (ex: 2026-09-04T12:00:00.000Z)
         if (value.endsWith("Z")) {

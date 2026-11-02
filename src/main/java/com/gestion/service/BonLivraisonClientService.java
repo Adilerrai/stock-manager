@@ -111,7 +111,17 @@ public class BonLivraisonClientService {
         Long tenantId = TenantContext.getCurrentTenant();
         Long effectiveTenant = tenantId != null ? tenantId : 1L;
         bl.setPointDeVenteId(effectiveTenant);
-        bl.setDateBl(LocalDateTime.now());
+        if (dto.getDateBl() != null) {
+            bl.setDateBl(dto.getDateBl());
+        } else {
+            bl.setDateBl(LocalDateTime.now());
+        }
+        if (dto.getDateExpedition() != null) {
+            bl.setDateExpedition(dto.getDateExpedition());
+        }
+        if (dto.getDateLivraisonEffective() != null) {
+            bl.setDateLivraisonEffective(dto.getDateLivraisonEffective());
+        }
         if (dto.getNumeroBl() != null && !dto.getNumeroBl().isBlank()) {
             String customNum = dto.getNumeroBl().trim();
             if (!entrepriseProfileService.isModificationNumeroDocumentActive()) {
