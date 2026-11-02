@@ -4,3 +4,4 @@ public enum TypeActionLivreur {
     LIVRAISON_EFFECTUEE,
     FACTURE_DEPOSEE
 }
+

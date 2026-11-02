@@ -99,3 +99,4 @@ public class FournisseurProduitResumeDTO {
         public void setMontantHT(BigDecimal montantHT) { this.montantHT = montantHT; }
     }
 }
+

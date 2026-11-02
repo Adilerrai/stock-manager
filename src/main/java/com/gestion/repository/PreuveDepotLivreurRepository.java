@@ -12,3 +12,4 @@ public interface PreuveDepotLivreurRepository extends JpaRepository<PreuveDepotL
 
     List<PreuveDepotLivreur> findByPointDeVenteIdAndLivreurUserIdOrderByDateDeclarationDesc(Long pointDeVenteId, Long livreurUserId);
 }
+
