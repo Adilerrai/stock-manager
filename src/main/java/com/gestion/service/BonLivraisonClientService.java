@@ -637,12 +637,27 @@ public class BonLivraisonClientService {
                 .or(() -> bonLivraisonClientRepository.findById(id))
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + id, HttpStatus.NOT_FOUND));
 
-        if (bl.getFacture() != null || Boolean.TRUE.equals(bl.isFacture())) {
-            throw new CommonException("Impossible de modifier un bon de livraison déjà facturé.", HttpStatus.BAD_REQUEST);
+        boolean lignesModifiees = isLignesModified(bl, dto.getLignes());
+
+        if (lignesModifiees) {
+            if (bl.getFacture() != null || Boolean.TRUE.equals(bl.isFacture())) {
+                throw new CommonException("Impossible de modifier les articles ou quantités d'un bon de livraison déjà facturé.", HttpStatus.BAD_REQUEST);
+            }
+
+            if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE || bl.getStatut() == StatutLivraison.EXPEDIE) {
+                throw new CommonException("Ce bon de livraison est déjà expédié ou livré. Veuillez d'abord le remettre en brouillon pour modifier les articles ou quantités.", HttpStatus.BAD_REQUEST);
+            }
         }
 
-        if (bl.getStatut() == StatutLivraison.LIVREE || bl.getStatut() == StatutLivraison.PARTIELLE || bl.getStatut() == StatutLivraison.EXPEDIE) {
-            throw new CommonException("Ce bon de livraison est déjà expédié ou livré. Veuillez d'abord le remettre en brouillon pour le modifier.", HttpStatus.BAD_REQUEST);
+        // Mise à jour de la date du bon de livraison
+        if (dto.getDateBl() != null) {
+            bl.setDateBl(dto.getDateBl());
+        }
+        if (dto.getDateExpedition() != null) {
+            bl.setDateExpedition(dto.getDateExpedition());
+        }
+        if (dto.getDateLivraisonEffective() != null) {
+            bl.setDateLivraisonEffective(dto.getDateLivraisonEffective());
         }
 
         // Modification manuelle du numéro de bon de livraison
@@ -680,7 +695,7 @@ public class BonLivraisonClientService {
             bl.setRemiseGlobaleMontant(dto.getRemiseGlobaleMontant());
         }
 
-        if (dto.getLignes() != null) {
+        if (lignesModifiees && dto.getLignes() != null) {
             if (bl.getLignes() != null) {
                 bl.getLignes().clear();
             } else {
@@ -727,11 +742,91 @@ public class BonLivraisonClientService {
 
                 bl.getLignes().add(ligne);
             }
+            bl.recalculerMontantTotal();
         }
 
-        bl.recalculerMontantTotal();
         BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
         return bonLivraisonClientMapper.toDto(saved);
+    }
+
+    private boolean isLignesModified(BonLivraisonClient bl, List<com.gestion.persistent.dto.LigneBonLivraisonClientDTO> dtoLignes) {
+        if (dtoLignes == null || dtoLignes.isEmpty()) {
+            return false;
+        }
+        List<LigneBonLivraisonClient> existantes = bl.getLignes() != null ? bl.getLignes() : java.util.Collections.emptyList();
+        if (dtoLignes.size() != existantes.size()) {
+            return true;
+        }
+        for (int i = 0; i < dtoLignes.size(); i++) {
+            com.gestion.persistent.dto.LigneBonLivraisonClientDTO lDto = dtoLignes.get(i);
+            LigneBonLivraisonClient lEx = existantes.get(i);
+            if (lDto.getProduitId() != null && (lEx.getProduit() == null || !lDto.getProduitId().equals(lEx.getProduit().getId()))) {
+                return true;
+            }
+            BigDecimal qteDto = lDto.getQuantiteLivree() != null ? lDto.getQuantiteLivree() : BigDecimal.ONE;
+            BigDecimal qteEx = lEx.getQuantiteLivree() != null ? lEx.getQuantiteLivree() : BigDecimal.ONE;
+            if (qteDto.compareTo(qteEx) != 0) {
+                return true;
+            }
+            BigDecimal puDto = lDto.getPrixVenteBrut() != null ? lDto.getPrixVenteBrut() : (lDto.getPrixVente() != null ? lDto.getPrixVente() : BigDecimal.ZERO);
+            BigDecimal puEx = lEx.getPrixVenteBrut() != null ? lEx.getPrixVenteBrut() : (lEx.getPrixVente() != null ? lEx.getPrixVente() : BigDecimal.ZERO);
+            if (puDto.compareTo(puEx) != 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public BonLivraisonClientDTO updateDateBl(Long id, java.util.Map<String, Object> body) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+
+        BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(id, effectiveTenantId)
+                .or(() -> bonLivraisonClientRepository.findById(id))
+                .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + id, HttpStatus.NOT_FOUND));
+
+        if (body != null) {
+            Object rawDate = body.get("dateBl");
+            if (rawDate == null) rawDate = body.get("date");
+            if (rawDate == null) rawDate = body.get("dateBL");
+            if (rawDate == null) rawDate = body.get("date_bl");
+            if (rawDate == null) rawDate = body.get("dateLivraison");
+
+            if (rawDate != null) {
+                LocalDateTime parsedDate = parseFlexibleDate(rawDate.toString().trim());
+                bl.setDateBl(parsedDate);
+                BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+                return bonLivraisonClientMapper.toDto(saved);
+            }
+        }
+        return bonLivraisonClientMapper.toDto(bl);
+    }
+
+    private LocalDateTime parseFlexibleDate(String strDate) {
+        if (strDate == null || strDate.trim().isEmpty()) return null;
+        strDate = strDate.trim();
+        try {
+            if (strDate.length() == 10) {
+                if (strDate.contains("/")) {
+                    return java.time.LocalDate.parse(strDate, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")).atStartOfDay();
+                } else if (strDate.charAt(2) == '-' && strDate.charAt(5) == '-') {
+                    return java.time.LocalDate.parse(strDate, java.time.format.DateTimeFormatter.ofPattern("dd-MM-yyyy")).atStartOfDay();
+                } else {
+                    return java.time.LocalDate.parse(strDate, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE).atStartOfDay();
+                }
+            } else if (strDate.contains("/")) {
+                if (strDate.length() == 16) {
+                    return LocalDateTime.parse(strDate, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+                } else if (strDate.length() >= 19) {
+                    return LocalDateTime.parse(strDate.substring(0, 19), java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+                }
+            } else if (strDate.endsWith("Z")) {
+                return java.time.Instant.parse(strDate).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
+            }
+            return LocalDateTime.parse(strDate.replace(" ", "T"));
+        } catch (Exception e) {
+            throw new CommonException("Format de date invalide: " + strDate, HttpStatus.BAD_REQUEST);
+        }
     }
 
     public List<BonLivraisonClientDTO> getBonsLivraison() {
