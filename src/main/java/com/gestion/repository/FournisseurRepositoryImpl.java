@@ -90,7 +90,9 @@ public class FournisseurRepositoryImpl implements FournisseurRepositoryCustom {
                     cb.like(cb.lower(root.get("email")), pattern),
                     cb.like(cb.lower(root.get("adresse")), pattern),
                     cb.like(cb.lower(root.get("ville")), pattern),
-                    cb.like(cb.lower(root.get("ice")), pattern)));
+                    cb.like(cb.lower(root.get("ice")), pattern),
+                    cb.like(cb.lower(root.get("numeroRegistreCommerce")), pattern),
+                    cb.like(cb.lower(root.get("numeroIdentificationFiscale")), pattern)));
         }
 
         // Critères ciblés (recherche avancée) : ET entre eux
@@ -101,6 +103,25 @@ public class FournisseurRepositoryImpl implements FournisseurRepositoryCustom {
         addLike(cb, root, predicates, "contact", c.getContact());
         addLike(cb, root, predicates, "ville", c.getVille());
         addLike(cb, root, predicates, "ice", c.getIce());
+        addLike(cb, root, predicates, "numeroRegistreCommerce", c.getNumeroRegistreCommerce());
+        addLike(cb, root, predicates, "numeroIdentificationFiscale", c.getNumeroIdentificationFiscale());
+        addLike(cb, root, predicates, "patente", c.getPatente());
+        addLike(cb, root, predicates, "pays", c.getPays());
+        addLike(cb, root, predicates, "codePostal", c.getCodePostal());
+        addLike(cb, root, predicates, "banqueNom", c.getBanqueNom());
+        addLike(cb, root, predicates, "conditionsPaiement", c.getConditionsPaiement());
+
+        // Délai de paiement (jours) : borne min / max inclusives
+        if (c.getDelaiPaiementMin() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("delaiPaiementJours"), c.getDelaiPaiementMin()));
+        }
+        if (c.getDelaiPaiementMax() != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("delaiPaiementJours"), c.getDelaiPaiementMax()));
+        }
+
+        if (c.getIncotermDefaut() != null) {
+            predicates.add(cb.equal(root.get("incotermDefaut"), c.getIncotermDefaut()));
+        }
 
         if (hasText(c.getDevise())) {
             String devise = c.getDevise().trim().toUpperCase();

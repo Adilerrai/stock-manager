@@ -1,13 +1,14 @@
 package com.gestion.persistent.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.gestion.persistent.enums.Incoterm;
 import com.gestion.persistent.enums.TypeFournisseur;
 
 /**
  * Critères de recherche multicritère des fournisseurs (POST /api/v1/fournisseurs/search).
  *
  * <ul>
- *   <li>{@code query} : recherche globale (OU) sur raison sociale, contact, téléphone, email, adresse, ville et ICE.</li>
+ *   <li>{@code query} : recherche globale (OU) sur raison sociale, contact, téléphone, email, adresse, ville, ICE, RC et IF.</li>
  *   <li>Les autres critères sont combinés entre eux par un ET.</li>
  * </ul>
  */
@@ -25,6 +26,22 @@ public class FournisseurSearchCriteria {
     private TypeFournisseur typeFournisseur;
     private Boolean actif;
     private Long societeId;
+
+    // Fiscalité & légalité
+    private String numeroRegistreCommerce;
+    private String numeroIdentificationFiscale;
+    private String patente;
+
+    // Localisation complémentaire
+    private String pays;
+    private String codePostal;
+
+    // Conditions d'achat & banque
+    private String banqueNom;
+    private String conditionsPaiement;
+    private Integer delaiPaiementMin;
+    private Integer delaiPaiementMax;
+    private Incoterm incotermDefaut;
 
     public FournisseurSearchCriteria() {}
 
@@ -124,4 +141,34 @@ public class FournisseurSearchCriteria {
     public void setSocieteId(Long societeId) {
         this.societeId = societeId;
     }
+
+    public String getNumeroRegistreCommerce() { return numeroRegistreCommerce; }
+    public void setNumeroRegistreCommerce(String numeroRegistreCommerce) { this.numeroRegistreCommerce = numeroRegistreCommerce; }
+
+    public String getNumeroIdentificationFiscale() { return numeroIdentificationFiscale; }
+    public void setNumeroIdentificationFiscale(String numeroIdentificationFiscale) { this.numeroIdentificationFiscale = numeroIdentificationFiscale; }
+
+    public String getPatente() { return patente; }
+    public void setPatente(String patente) { this.patente = patente; }
+
+    public String getPays() { return pays; }
+    public void setPays(String pays) { this.pays = pays; }
+
+    public String getCodePostal() { return codePostal; }
+    public void setCodePostal(String codePostal) { this.codePostal = codePostal; }
+
+    public String getBanqueNom() { return banqueNom; }
+    public void setBanqueNom(String banqueNom) { this.banqueNom = banqueNom; }
+
+    public String getConditionsPaiement() { return conditionsPaiement; }
+    public void setConditionsPaiement(String conditionsPaiement) { this.conditionsPaiement = conditionsPaiement; }
+
+    public Integer getDelaiPaiementMin() { return delaiPaiementMin; }
+    public void setDelaiPaiementMin(Integer delaiPaiementMin) { this.delaiPaiementMin = delaiPaiementMin; }
+
+    public Integer getDelaiPaiementMax() { return delaiPaiementMax; }
+    public void setDelaiPaiementMax(Integer delaiPaiementMax) { this.delaiPaiementMax = delaiPaiementMax; }
+
+    public Incoterm getIncotermDefaut() { return incotermDefaut; }
+    public void setIncotermDefaut(Incoterm incotermDefaut) { this.incotermDefaut = incotermDefaut; }
 }
