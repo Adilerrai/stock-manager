@@ -11,6 +11,13 @@ import com.gestion.persistent.model.LigneCommande;
 import com.gestion.persistent.dto.FournisseurProduitResumeDTO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.util.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -247,5 +254,256 @@ public class FournisseurService {
 
         return new ArrayList<>(resumeMap.values());
     }
-}
+    // =========================================================================
+    // EXPORT EXCEL : ÉTAT DES PRODUITS COMMANDÉS PAR FOURNISSEUR
+    // =========================================================================
 
+    @Transactional(readOnly = true)
+    public byte[] genererExcelEtatProduitsCommandes(Long fournisseurId, Long produitId, String search) {
+        Fournisseur fournisseur = getFournisseurById(fournisseurId);
+        List<FournisseurProduitResumeDTO> items = getEtatProduitsCommandes(fournisseurId, produitId, search);
+
+        try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Sheet sheet = workbook.createSheet("Produits commandés");
+
+            DataFormat dataFormat = workbook.createDataFormat();
+            short integerFormat = dataFormat.getFormat("#,##0");
+            short moneyFormat = dataFormat.getFormat("#,##0.00");
+
+            // Fonts
+            Font fontTitre = workbook.createFont();
+            fontTitre.setFontHeightInPoints((short) 14);
+            fontTitre.setBold(true);
+            fontTitre.setColor(IndexedColors.ROYAL_BLUE.getIndex());
+
+            Font fontSubtitle = workbook.createFont();
+            fontSubtitle.setFontHeightInPoints((short) 9);
+            fontSubtitle.setItalic(true);
+            fontSubtitle.setColor(IndexedColors.GREY_50_PERCENT.getIndex());
+
+            Font fontHeader = workbook.createFont();
+            fontHeader.setFontHeightInPoints((short) 10);
+            fontHeader.setBold(true);
+            fontHeader.setColor(IndexedColors.WHITE.getIndex());
+
+            Font fontData = workbook.createFont();
+            fontData.setFontHeightInPoints((short) 10);
+
+            Font fontBold = workbook.createFont();
+            fontBold.setFontHeightInPoints((short) 10);
+            fontBold.setBold(true);
+
+            // Styles
+            CellStyle styleTitle = workbook.createCellStyle();
+            styleTitle.setFont(fontTitre);
+            styleTitle.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            CellStyle styleSub = workbook.createCellStyle();
+            styleSub.setFont(fontSubtitle);
+            styleSub.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            CellStyle styleHeader = workbook.createCellStyle();
+            styleHeader.setFont(fontHeader);
+            styleHeader.setFillForegroundColor(IndexedColors.ROYAL_BLUE.getIndex());
+            styleHeader.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            styleHeader.setAlignment(HorizontalAlignment.CENTER);
+            styleHeader.setVerticalAlignment(VerticalAlignment.CENTER);
+            styleHeader.setBorderTop(BorderStyle.MEDIUM);
+            styleHeader.setBorderBottom(BorderStyle.MEDIUM);
+            styleHeader.setBorderLeft(BorderStyle.THIN);
+            styleHeader.setBorderRight(BorderStyle.THIN);
+
+            CellStyle styleText = createBorderedStyle(workbook, fontData, HorizontalAlignment.LEFT);
+            CellStyle styleCenter = createBorderedStyle(workbook, fontData, HorizontalAlignment.CENTER);
+            CellStyle styleQty = createBorderedStyle(workbook, fontData, HorizontalAlignment.RIGHT);
+            styleQty.setDataFormat(integerFormat);
+            CellStyle styleMoney = createBorderedStyle(workbook, fontData, HorizontalAlignment.RIGHT);
+            styleMoney.setDataFormat(moneyFormat);
+            CellStyle styleMoneyBold = createBorderedStyle(workbook, fontBold, HorizontalAlignment.RIGHT);
+            styleMoneyBold.setDataFormat(moneyFormat);
+
+            CellStyle styleTotal = workbook.createCellStyle();
+            styleTotal.setFont(fontBold);
+            styleTotal.setBorderTop(BorderStyle.THIN);
+            styleTotal.setBorderBottom(BorderStyle.DOUBLE);
+            styleTotal.setBorderLeft(BorderStyle.THIN);
+            styleTotal.setBorderRight(BorderStyle.THIN);
+            styleTotal.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            styleTotal.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            styleTotal.setAlignment(HorizontalAlignment.RIGHT);
+            styleTotal.setVerticalAlignment(VerticalAlignment.CENTER);
+
+            CellStyle styleTotalLabel = workbook.createCellStyle();
+            styleTotalLabel.cloneStyleFrom(styleTotal);
+            styleTotalLabel.setAlignment(HorizontalAlignment.LEFT);
+
+            CellStyle styleTotalQty = workbook.createCellStyle();
+            styleTotalQty.cloneStyleFrom(styleTotal);
+            styleTotalQty.setDataFormat(integerFormat);
+
+            CellStyle styleTotalMoney = workbook.createCellStyle();
+            styleTotalMoney.cloneStyleFrom(styleTotal);
+            styleTotalMoney.setDataFormat(moneyFormat);
+
+            String[] headers = {
+                    "Référence", "Désignation", "Catégorie", "Nb commandes",
+                    "Qté commandée", "Qté reçue", "Qté restante",
+                    "Dernier prix HT", "Prix moyen HT", "Montant total HT", "Montant total TTC", "Dernière commande"
+            };
+            int lastCol = headers.length - 1;
+
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+            // 1. Titre
+            int rowIdx = 0;
+            Row rowTitle = sheet.createRow(rowIdx++);
+            rowTitle.setHeightInPoints(24f);
+            Cell cellTitle = rowTitle.createCell(0);
+            cellTitle.setCellValue("État des produits commandés - " + (fournisseur.getNom() != null ? fournisseur.getNom() : ""));
+            cellTitle.setCellStyle(styleTitle);
+            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, lastCol));
+
+            // 2. Sous-titre
+            Row rowMeta = sheet.createRow(rowIdx++);
+            Cell cellMeta = rowMeta.createCell(0);
+            String meta = "Fournisseur #" + fournisseur.getId()
+                    + "   |   Généré le : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+            if (search != null && !search.isBlank()) {
+                meta += "   |   Filtre : \"" + search.trim() + "\"";
+            }
+            cellMeta.setCellValue(meta);
+            cellMeta.setCellStyle(styleSub);
+            sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, lastCol));
+
+            rowIdx++; // ligne vide
+
+            // 3. En-têtes
+            Row rowHeader = sheet.createRow(rowIdx++);
+            rowHeader.setHeightInPoints(20f);
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = rowHeader.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(styleHeader);
+            }
+            int firstDataRow = rowIdx;
+
+            // 4. Données
+            long totalCmd = 0, totalLiv = 0;
+            BigDecimal totalHT = BigDecimal.ZERO, totalTTC = BigDecimal.ZERO;
+
+            for (FournisseurProduitResumeDTO it : items) {
+                Row row = sheet.createRow(rowIdx++);
+                int qCmd = it.getQuantiteTotaleCommandee() != null ? it.getQuantiteTotaleCommandee() : 0;
+                int qLiv = it.getQuantiteTotaleLivree() != null ? it.getQuantiteTotaleLivree() : 0;
+                BigDecimal mHT = it.getMontantTotalHT() != null ? it.getMontantTotalHT() : BigDecimal.ZERO;
+                BigDecimal mTTC = it.getMontantTotalTTC() != null ? it.getMontantTotalTTC() : BigDecimal.ZERO;
+
+                int c = 0;
+                Cell cRef = row.createCell(c++);
+                cRef.setCellValue(it.getReference() != null ? it.getReference() : "-");
+                cRef.setCellStyle(styleText);
+
+                Cell cDes = row.createCell(c++);
+                cDes.setCellValue(it.getDesignation() != null ? it.getDesignation() : "-");
+                cDes.setCellStyle(styleText);
+
+                Cell cCat = row.createCell(c++);
+                cCat.setCellValue(it.getCategorie() != null ? it.getCategorie() : "-");
+                cCat.setCellStyle(styleText);
+
+                Cell cNb = row.createCell(c++);
+                cNb.setCellValue(it.getNombreCommandes() != null ? it.getNombreCommandes() : 0);
+                cNb.setCellStyle(styleCenter);
+
+                Cell cQc = row.createCell(c++);
+                cQc.setCellValue(qCmd);
+                cQc.setCellStyle(styleQty);
+
+                Cell cQl = row.createCell(c++);
+                cQl.setCellValue(qLiv);
+                cQl.setCellStyle(styleQty);
+
+                Cell cQr = row.createCell(c++);
+                cQr.setCellValue(Math.max(qCmd - qLiv, 0));
+                cQr.setCellStyle(styleQty);
+
+                Cell cDp = row.createCell(c++);
+                cDp.setCellValue(it.getDernierPrixAchat() != null ? it.getDernierPrixAchat().doubleValue() : 0d);
+                cDp.setCellStyle(styleMoney);
+
+                Cell cPm = row.createCell(c++);
+                cPm.setCellValue(it.getPrixMoyen() != null ? it.getPrixMoyen().doubleValue() : 0d);
+                cPm.setCellStyle(styleMoney);
+
+                Cell cHt = row.createCell(c++);
+                cHt.setCellValue(mHT.doubleValue());
+                cHt.setCellStyle(styleMoneyBold);
+
+                Cell cTtc = row.createCell(c++);
+                cTtc.setCellValue(mTTC.doubleValue());
+                cTtc.setCellStyle(styleMoney);
+
+                Cell cDate = row.createCell(c++);
+                cDate.setCellValue(it.getDateDerniereCommande() != null ? it.getDateDerniereCommande().format(dtf) : "-");
+                cDate.setCellStyle(styleCenter);
+
+                totalCmd += qCmd;
+                totalLiv += qLiv;
+                totalHT = totalHT.add(mHT);
+                totalTTC = totalTTC.add(mTTC);
+            }
+
+            // 5. Totaux
+            Row rowTotal = sheet.createRow(rowIdx++);
+            rowTotal.setHeightInPoints(18f);
+            for (int i = 0; i <= lastCol; i++) {
+                Cell cell = rowTotal.createCell(i);
+                cell.setCellStyle(styleTotal);
+            }
+            rowTotal.getCell(0).setCellValue("TOTAL (" + items.size() + " article" + (items.size() > 1 ? "s" : "") + ")");
+            rowTotal.getCell(0).setCellStyle(styleTotalLabel);
+            sheet.addMergedRegion(new CellRangeAddress(rowTotal.getRowNum(), rowTotal.getRowNum(), 0, 3));
+            rowTotal.getCell(4).setCellValue(totalCmd);
+            rowTotal.getCell(4).setCellStyle(styleTotalQty);
+            rowTotal.getCell(5).setCellValue(totalLiv);
+            rowTotal.getCell(5).setCellStyle(styleTotalQty);
+            rowTotal.getCell(6).setCellValue(Math.max(totalCmd - totalLiv, 0));
+            rowTotal.getCell(6).setCellStyle(styleTotalQty);
+            rowTotal.getCell(9).setCellValue(totalHT.doubleValue());
+            rowTotal.getCell(9).setCellStyle(styleTotalMoney);
+            rowTotal.getCell(10).setCellValue(totalTTC.doubleValue());
+            rowTotal.getCell(10).setCellStyle(styleTotalMoney);
+
+            // 6. Mise en page
+            sheet.createFreezePane(0, firstDataRow);
+            if (!items.isEmpty()) {
+                sheet.setAutoFilter(new CellRangeAddress(firstDataRow - 1, rowIdx - 2, 0, lastCol));
+            }
+            int[] widths = {18, 45, 24, 13, 14, 12, 13, 16, 16, 18, 18, 18};
+            for (int i = 0; i < widths.length; i++) {
+                sheet.setColumnWidth(i, widths[i] * 256);
+            }
+
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new IllegalStateException("Erreur lors de la génération du fichier Excel des produits commandés", e);
+        }
+    }
+
+    private CellStyle createBorderedStyle(Workbook workbook, Font font, HorizontalAlignment align) {
+        CellStyle style = workbook.createCellStyle();
+        style.setFont(font);
+        style.setAlignment(align);
+        style.setVerticalAlignment(VerticalAlignment.CENTER);
+        style.setBorderTop(BorderStyle.THIN);
+        style.setBorderBottom(BorderStyle.THIN);
+        style.setBorderLeft(BorderStyle.THIN);
+        style.setBorderRight(BorderStyle.THIN);
+        style.setTopBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setBottomBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setLeftBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setRightBorderColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        return style;
+    }
+}

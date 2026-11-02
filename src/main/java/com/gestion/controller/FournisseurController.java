@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import com.gestion.persistent.dto.FournisseurProduitResumeDTO;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -76,5 +77,17 @@ public class FournisseurController {
             @RequestParam(value = "search", required = false) String search) {
         List<FournisseurProduitResumeDTO> resume = fournisseurService.getEtatProduitsCommandes(id, produitId, search);
         return ResponseEntity.ok(resume);
+    }
+
+    @GetMapping("/{id}/produits-commandes/export-excel")
+    public ResponseEntity<byte[]> exporterExcelEtatProduitsCommandes(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "produitId", required = false) Long produitId,
+            @RequestParam(value = "search", required = false) String search) {
+        byte[] bytes = fournisseurService.genererExcelEtatProduitsCommandes(id, produitId, search);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=Produits_Commandes_Fournisseur_" + id + ".xlsx")
+                .body(bytes);
     }
 }
