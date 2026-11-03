@@ -34,6 +34,19 @@
         </pluginRepository>
     </pluginRepositories>
 
+    <dependencyManagement>
+        <dependencies>
+            <!-- Version des binaires de PostgreSQL embarqué, utilisé par les tests seulement -->
+            <dependency>
+                <groupId>io.zonky.test.postgres</groupId>
+                <artifactId>embedded-postgres-binaries-bom</artifactId>
+                <version>15.15.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <!-- Spring Boot -->
         <dependency>
@@ -97,6 +110,36 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <!-- Base de test. Maven résout une version par son chemin le plus court, portée ignorée :
+             sans ces exclusions, cette branche de test décide de jars livrés à l'exécution. -->
+        <dependency>
+            <groupId>io.zonky.test</groupId>
+            <artifactId>embedded-postgres</artifactId>
+            <version>2.2.2</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-codec</groupId>
+                    <artifactId>commons-codec</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-compress</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Swagger/OpenAPI -->
@@ -174,6 +217,31 @@
                     <source>17</source>
                     <target>17</target>
                     <parameters>true</parameters>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- Ces trois classes joignent la base configurée : jamais lancées par le cycle Maven -->
+                    <excludes>
+                        <exclude>**/ApplyMigrationsTest.java</exclude>
+                        <exclude>**/JureApplicationTests.java</exclude>
+                        <exclude>**/FournisseurRepositoryImplTest.java</exclude>
+                    </excludes>
+                    <!-- Motifs par défaut de Surefire, plus les classes *IT : mvn -Dgroups=compta test -->
+                    <includes>
+                        <include>**/Test*.java</include>
+                        <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
+                        <include>**/*TestCase.java</include>
+                        <include>**/*IT.java</include>
+                    </includes>
+                    <!-- Un test oublié, ou lancé par -Dtest qui ignore les exclusions, échoue sur ce port
+                         fermé au lieu de joindre une vraie base. @DynamicPropertySource passe avant. -->
+                    <environmentVariables>
+                        <SPRING_DATASOURCE_URL>jdbc:postgresql://127.0.0.1:1/interdit</SPRING_DATASOURCE_URL>
+                    </environmentVariables>
                 </configuration>
             </plugin>
             <plugin>
