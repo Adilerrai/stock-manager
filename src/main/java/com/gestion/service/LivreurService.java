@@ -67,8 +67,10 @@ public class LivreurService {
                 String num = bl.getNumeroBl() != null ? bl.getNumeroBl().toLowerCase() : "";
                 String clientNom = (bl.getClient() != null && bl.getClient().getNomComplet() != null)
                         ? bl.getClient().getNomComplet().toLowerCase() : "";
+                String factureNum = (bl.getFacture() != null && bl.getFacture().getNumeroFacture() != null)
+                        ? bl.getFacture().getNumeroFacture().toLowerCase() : "";
 
-                if (q.isEmpty() || num.contains(q) || clientNom.contains(q)) {
+                if (q.isEmpty() || num.contains(q) || clientNom.contains(q) || (!factureNum.isEmpty() && factureNum.contains(q))) {
                     DocumentLivreurCandidateDTO dto = new DocumentLivreurCandidateDTO();
                     dto.setId(bl.getId());
                     dto.setType("BON_LIVRAISON");
@@ -96,8 +98,10 @@ public class LivreurService {
                 String num = f.getNumeroFacture() != null ? f.getNumeroFacture().toLowerCase() : "";
                 String clientNom = (f.getClient() != null && f.getClient().getNomComplet() != null)
                         ? f.getClient().getNomComplet().toLowerCase() : "";
+                boolean blMatch = f.getBonsLivraison() != null && f.getBonsLivraison().stream()
+                        .anyMatch(b -> b.getNumeroBl() != null && b.getNumeroBl().toLowerCase().contains(q));
 
-                if (q.isEmpty() || num.contains(q) || clientNom.contains(q)) {
+                if (q.isEmpty() || num.contains(q) || clientNom.contains(q) || blMatch) {
                     DocumentLivreurCandidateDTO dto = new DocumentLivreurCandidateDTO();
                     dto.setId(f.getId());
                     dto.setType("FACTURE");
@@ -181,8 +185,67 @@ public class LivreurService {
         }
 
         PreuveDepotLivreur saved = preuveDepotLivreurRepository.save(preuve);
-        log.info("Action livreur déclarée avec succès (Preuve ID: {}, Action: {}, Document: {}) SANS modifier l'état métier existant.",
+        log.info("Action livreur déclarée avec succès (Preuve ID: {}, Action: {}, Document: {})",
                 saved.getId(), typeAction, numeroDocument);
+
+        // Association automatique de la pièce jointe à l'autre pièce (au BL et à la Facture)
+        if (photo != null && !photo.isEmpty() && saved.getPhotoUrl() != null) {
+            try {
+                if (documentType == TypeDocumentLivreur.BON_LIVRAISON) {
+                    bonLivraisonClientRepository.findById(documentId).ifPresent(bl -> {
+                        bl.setDateLivraisonEffective(LocalDateTime.now());
+                        if (commentaire != null && !commentaire.isBlank()) {
+                            bl.setCommentaireLivreur(commentaire);
+                        }
+                        bonLivraisonClientRepository.save(bl);
+
+                        if (bl.getFacture() != null) {
+                            PreuveDepotLivreur preuveFac = new PreuveDepotLivreur();
+                            preuveFac.setPointDeVenteId(tenantId);
+                            preuveFac.setDocumentType(TypeDocumentLivreur.FACTURE);
+                            preuveFac.setDocumentId(bl.getFacture().getId());
+                            preuveFac.setNumeroDocument(bl.getFacture().getNumeroFacture());
+                            preuveFac.setClientNom(clientNom);
+                            preuveFac.setTypeAction(TypeActionLivreur.FACTURE_DEPOSEE);
+                            preuveFac.setCommentaire("Pièce jointe décharge (BL " + numeroDocument + "). " + (commentaire != null ? commentaire : ""));
+                            preuveFac.setNomLivreur(nomLivreur);
+                            preuveFac.setLivreurUserId(livreurUserId);
+                            preuveFac.setLatitude(latitude);
+                            preuveFac.setLongitude(longitude);
+                            preuveFac.setDateDeclaration(LocalDateTime.now());
+                            preuveFac.setNomFichierPhoto(saved.getNomFichierPhoto());
+                            preuveFac.setPhotoUrl(saved.getPhotoUrl());
+                            preuveDepotLivreurRepository.save(preuveFac);
+                        }
+                    });
+                } else if (documentType == TypeDocumentLivreur.FACTURE) {
+                    factureRepository.findById(documentId).ifPresent(f -> {
+                        if (f.getBonsLivraison() != null && !f.getBonsLivraison().isEmpty()) {
+                            for (BonLivraisonClient bl : f.getBonsLivraison()) {
+                                PreuveDepotLivreur preuveBl = new PreuveDepotLivreur();
+                                preuveBl.setPointDeVenteId(tenantId);
+                                preuveBl.setDocumentType(TypeDocumentLivreur.BON_LIVRAISON);
+                                preuveBl.setDocumentId(bl.getId());
+                                preuveBl.setNumeroDocument(bl.getNumeroBl());
+                                preuveBl.setClientNom(clientNom);
+                                preuveBl.setTypeAction(TypeActionLivreur.LIVRAISON_EFFECTUEE);
+                                preuveBl.setCommentaire("Pièce jointe décharge (Facture " + numeroDocument + "). " + (commentaire != null ? commentaire : ""));
+                                preuveBl.setNomLivreur(nomLivreur);
+                                preuveBl.setLivreurUserId(livreurUserId);
+                                preuveBl.setLatitude(latitude);
+                                preuveBl.setLongitude(longitude);
+                                preuveBl.setDateDeclaration(LocalDateTime.now());
+                                preuveBl.setNomFichierPhoto(saved.getNomFichierPhoto());
+                                preuveBl.setPhotoUrl(saved.getPhotoUrl());
+                                preuveDepotLivreurRepository.save(preuveBl);
+                            }
+                        }
+                    });
+                }
+            } catch (Exception ex) {
+                log.warn("Impossible d'associer la décharge à la contrepartie : {}", ex.getMessage());
+            }
+        }
 
         return saved;
     }

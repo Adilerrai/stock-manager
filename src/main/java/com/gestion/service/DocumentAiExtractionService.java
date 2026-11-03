@@ -285,7 +285,7 @@ public class DocumentAiExtractionService {
               "lieuIncoterm": "Shanghai",
               "portEmbarquement": "Ningbo",
               "acompteExigePct": 100.0,
-              "conditionsPaiement": "100%TT Advanced PAYMENT",
+              "conditionsPaiement": "100%%TT Advanced PAYMENT",
               "tierType": "FOURNISSEUR",
               "tierId": 1,
               "tierNom": "Nom Société",
