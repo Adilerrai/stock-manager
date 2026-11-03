@@ -20,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -222,7 +224,7 @@ public class LivreurService {
         preuve.setDateDeclaration(LocalDateTime.now());
 
         if (photo != null && !photo.isEmpty()) {
-            Path uploadPath = Paths.get(UPLOAD_DIR);
+            Path uploadPath = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
@@ -237,7 +239,9 @@ public class LivreurService {
 
             String filename = "preuve_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
             Path filePath = uploadPath.resolve(filename);
-            photo.transferTo(filePath.toFile());
+            try (InputStream is = photo.getInputStream()) {
+                Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
+            }
 
             preuve.setNomFichierPhoto(originalName);
             preuve.setPhotoUrl(UPLOAD_DIR + filename);
