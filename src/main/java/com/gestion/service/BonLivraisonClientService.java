@@ -417,9 +417,8 @@ public class BonLivraisonClientService {
         mettreAJourCommandesLieesLorsLivraison(bl);
 
         // Si facture rattachée, la marquer comme DEPOSEE
-        if (bl.getFacture() != null && bl.getFacture().getStatut() != StatutFacture.ANNULEE) {
-            bl.getFacture().setStatut(StatutFacture.DEPOSEE);
-            factureRepository.save(bl.getFacture());
+        if (bl.getFacture() != null && bl.getFacture().getStatut() != com.gestion.persistent.enums.StatutFacture.ANNULEE) {
+            bl.getFacture().setStatut(com.gestion.persistent.enums.StatutFacture.DEPOSEE);
         }
 
         BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
