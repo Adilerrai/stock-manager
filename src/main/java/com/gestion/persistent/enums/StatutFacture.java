@@ -5,6 +5,7 @@ public enum StatutFacture {
     EN_ATTENTE,
     VALIDEE,
     ENVOYEE,
+    DEPOSEE,
     PAYEE_PARTIELLEMENT,
     PAYEE_TOTALEMENT,
     ANNULEE,

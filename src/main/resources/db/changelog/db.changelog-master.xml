@@ -178,4 +178,7 @@
     <!-- Changeset 056 : Table des preuves de passage et dépôt livreur sans impacter les statuts métier -->
     <include file="changes/056-add-preuve-depot-livreur.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 057 : Statut DEPOSEE (Facture) et CACHETE (Bon de Livraison) -->
+    <include file="changes/057-add-statut-deposee-et-cachete.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

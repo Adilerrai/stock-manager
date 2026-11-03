@@ -4,6 +4,8 @@ import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.DocumentLivreurCandidateDTO;
 import com.gestion.persistent.enums.TypeActionLivreur;
 import com.gestion.persistent.enums.TypeDocumentLivreur;
+import com.gestion.persistent.enums.StatutFacture;
+import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.persistent.model.Facture;
 import com.gestion.persistent.model.PreuveDepotLivreur;
@@ -188,23 +190,33 @@ public class LivreurService {
         log.info("Action livreur déclarée avec succès (Preuve ID: {}, Action: {}, Document: {})",
                 saved.getId(), typeAction, numeroDocument);
 
-        // Association automatique de la pièce jointe à l'autre pièce (au BL et à la Facture)
-        if (photo != null && !photo.isEmpty() && saved.getPhotoUrl() != null) {
-            try {
-                if (documentType == TypeDocumentLivreur.BON_LIVRAISON) {
-                    bonLivraisonClientRepository.findById(documentId).ifPresent(bl -> {
-                        bl.setDateLivraisonEffective(LocalDateTime.now());
-                        if (commentaire != null && !commentaire.isBlank()) {
-                            bl.setCommentaireLivreur(commentaire);
-                        }
-                        bonLivraisonClientRepository.save(bl);
+        // Association automatique de la pièce jointe et mise à jour des statuts métier :
+        // BL -> CACHETE / EXPEDIE, Facture -> DEPOSEE
+        try {
+            if (documentType == TypeDocumentLivreur.BON_LIVRAISON) {
+                bonLivraisonClientRepository.findById(documentId).ifPresent(bl -> {
+                    bl.setDateLivraisonEffective(LocalDateTime.now());
+                    if (commentaire != null && !commentaire.isBlank()) {
+                        bl.setCommentaireLivreur(commentaire);
+                    }
+                    if (bl.getStatut() != StatutLivraison.ANNULEE) {
+                        bl.setStatut(typeAction == TypeActionLivreur.LIVRAISON_EFFECTUEE ? StatutLivraison.CACHETE : StatutLivraison.EXPEDIE);
+                    }
+                    bonLivraisonClientRepository.save(bl);
 
-                        if (bl.getFacture() != null) {
+                    if (bl.getFacture() != null) {
+                        Facture fac = bl.getFacture();
+                        if (fac.getStatut() != StatutFacture.ANNULEE) {
+                            fac.setStatut(StatutFacture.DEPOSEE);
+                            factureRepository.save(fac);
+                        }
+
+                        if (photo != null && !photo.isEmpty() && saved.getPhotoUrl() != null) {
                             PreuveDepotLivreur preuveFac = new PreuveDepotLivreur();
                             preuveFac.setPointDeVenteId(tenantId);
                             preuveFac.setDocumentType(TypeDocumentLivreur.FACTURE);
-                            preuveFac.setDocumentId(bl.getFacture().getId());
-                            preuveFac.setNumeroDocument(bl.getFacture().getNumeroFacture());
+                            preuveFac.setDocumentId(fac.getId());
+                            preuveFac.setNumeroDocument(fac.getNumeroFacture());
                             preuveFac.setClientNom(clientNom);
                             preuveFac.setTypeAction(TypeActionLivreur.FACTURE_DEPOSEE);
                             preuveFac.setCommentaire("Pièce jointe décharge (BL " + numeroDocument + "). " + (commentaire != null ? commentaire : ""));
@@ -217,11 +229,27 @@ public class LivreurService {
                             preuveFac.setPhotoUrl(saved.getPhotoUrl());
                             preuveDepotLivreurRepository.save(preuveFac);
                         }
-                    });
-                } else if (documentType == TypeDocumentLivreur.FACTURE) {
-                    factureRepository.findById(documentId).ifPresent(f -> {
-                        if (f.getBonsLivraison() != null && !f.getBonsLivraison().isEmpty()) {
-                            for (BonLivraisonClient bl : f.getBonsLivraison()) {
+                    }
+                });
+            } else if (documentType == TypeDocumentLivreur.FACTURE) {
+                factureRepository.findById(documentId).ifPresent(f -> {
+                    if (f.getStatut() != StatutFacture.ANNULEE) {
+                        f.setStatut(StatutFacture.DEPOSEE);
+                        factureRepository.save(f);
+                    }
+
+                    if (f.getBonsLivraison() != null && !f.getBonsLivraison().isEmpty()) {
+                        for (BonLivraisonClient bl : f.getBonsLivraison()) {
+                            bl.setDateLivraisonEffective(LocalDateTime.now());
+                            if (bl.getStatut() != StatutLivraison.ANNULEE) {
+                                bl.setStatut(StatutLivraison.CACHETE);
+                            }
+                            if (commentaire != null && !commentaire.isBlank()) {
+                                bl.setCommentaireLivreur(commentaire);
+                            }
+                            bonLivraisonClientRepository.save(bl);
+
+                            if (photo != null && !photo.isEmpty() && saved.getPhotoUrl() != null) {
                                 PreuveDepotLivreur preuveBl = new PreuveDepotLivreur();
                                 preuveBl.setPointDeVenteId(tenantId);
                                 preuveBl.setDocumentType(TypeDocumentLivreur.BON_LIVRAISON);
@@ -240,11 +268,11 @@ public class LivreurService {
                                 preuveDepotLivreurRepository.save(preuveBl);
                             }
                         }
-                    });
-                }
-            } catch (Exception ex) {
-                log.warn("Impossible d'associer la décharge à la contrepartie : {}", ex.getMessage());
+                    }
+                });
             }
+        } catch (Exception ex) {
+            log.warn("Impossible d'associer la décharge ou mettre à jour les statuts : {}", ex.getMessage());
         }
 
         return saved;

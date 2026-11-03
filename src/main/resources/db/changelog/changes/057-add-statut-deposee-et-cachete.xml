@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- 
+      Changeset 057 : 
+      Ajout du statut DEPOSEE pour Factures (déposée / déclarée avec décharge)
+      et statut CACHETE pour Bons de Livraison (BL expédié et cacheté)
+    -->
+    <changeSet id="057-add-statut-deposee-et-cachete" author="antigravity">
+        <sql splitStatements="true">
+            -- 1. Contrainte sur bons_livraison_client.statut
+            ALTER TABLE IF EXISTS bons_livraison_client
+                DROP CONSTRAINT IF EXISTS bons_livraison_client_statut_check;
+
+            ALTER TABLE IF EXISTS bons_livraison_client
+                ADD CONSTRAINT bons_livraison_client_statut_check
+                CHECK (statut IN (
+                    'BROUILLON',
+                    'EN_ATTENTE',
+                    'EN_COURS',
+                    'EN_LIVRAISON',
+                    'EXPEDIE',
+                    'CACHETE',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+
+            -- 2. Contrainte sur livraisons.statut
+            ALTER TABLE IF EXISTS livraisons
+                DROP CONSTRAINT IF EXISTS livraisons_statut_check;
+
+            ALTER TABLE IF EXISTS livraisons
+                ADD CONSTRAINT livraisons_statut_check
+                CHECK (statut IN (
+                    'BROUILLON',
+                    'EN_ATTENTE',
+                    'EN_COURS',
+                    'EN_LIVRAISON',
+                    'EXPEDIE',
+                    'CACHETE',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+
+            -- 3. Contrainte sur commandes.statut_livraison
+            ALTER TABLE IF EXISTS commandes
+                DROP CONSTRAINT IF EXISTS commandes_statut_livraison_check;
+
+            ALTER TABLE IF EXISTS commandes
+                ADD CONSTRAINT commandes_statut_livraison_check
+                CHECK (statut_livraison IN (
+                    'BROUILLON',
+                    'EN_ATTENTE',
+                    'EN_COURS',
+                    'EN_LIVRAISON',
+                    'EXPEDIE',
+                    'CACHETE',
+                    'PARTIELLE',
+                    'LIVREE',
+                    'ANNULEE'
+                ));
+
+            -- 4. Contrainte sur factures.statut
+            ALTER TABLE IF EXISTS factures
+                DROP CONSTRAINT IF EXISTS factures_statut_check;
+
+            ALTER TABLE IF EXISTS factures
+                ADD CONSTRAINT factures_statut_check
+                CHECK (statut IN (
+                    'BROUILLON',
+                    'EN_ATTENTE',
+                    'VALIDEE',
+                    'ENVOYEE',
+                    'DEPOSEE',
+                    'PAYEE_PARTIELLEMENT',
+                    'PAYEE_TOTALEMENT',
+                    'ANNULEE',
+                    'EN_RETARD'
+                ));
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

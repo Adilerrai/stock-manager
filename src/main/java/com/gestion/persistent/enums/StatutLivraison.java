@@ -4,6 +4,7 @@ public enum StatutLivraison {
     BROUILLON("Brouillon"),
     EN_ATTENTE("En attente"),
     EXPEDIE("Expédiée"),
+    CACHETE("Cacheté"),
     EN_LIVRAISON("En livraison"),
     PARTIELLE("Partiellement livrée"),
     LIVREE("Livrée"),
