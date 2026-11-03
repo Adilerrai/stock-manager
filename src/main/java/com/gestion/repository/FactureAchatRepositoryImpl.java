@@ -3,6 +3,7 @@ package com.gestion.repository;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.FactureAchatSearchCriteria;
 import com.gestion.persistent.model.FactureAchat;
+import com.gestion.persistent.model.LigneFactureAchat;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -23,8 +24,7 @@ public class FactureAchatRepositoryImpl implements FactureAchatRepositoryCustom 
 
     private static final Set<String> ALLOWED_SORT_PROPERTIES = Set.of(
             "id", "numeroFacture", "dateFacture", "dateEcheance", "montantHt",
-            "montantTva", "montantTtc", "statut"
-    );
+            "montantTva", "montantTtc", "statut");
 
     @Override
     public List<FactureAchat> findByCriteria(FactureAchatSearchCriteria criteria) {
@@ -32,7 +32,7 @@ public class FactureAchatRepositoryImpl implements FactureAchatRepositoryCustom 
         CriteriaQuery<FactureAchat> query = cb.createQuery(FactureAchat.class);
         Root<FactureAchat> root = query.from(FactureAchat.class);
 
-        List<Predicate> predicates = buildPredicates(cb, root, criteria);
+        List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
         query.orderBy(cb.desc(root.get("dateFacture")), cb.desc(root.get("id")));
 
@@ -45,7 +45,7 @@ public class FactureAchatRepositoryImpl implements FactureAchatRepositoryCustom 
         CriteriaQuery<FactureAchat> query = cb.createQuery(FactureAchat.class);
         Root<FactureAchat> root = query.from(FactureAchat.class);
 
-        List<Predicate> predicates = buildPredicates(cb, root, criteria);
+        List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
 
         if (pageable.getSort().isSorted()) {
@@ -72,14 +72,15 @@ public class FactureAchatRepositoryImpl implements FactureAchatRepositoryCustom 
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<FactureAchat> countRoot = countQuery.from(FactureAchat.class);
-        List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria);
+        List<Predicate> countPredicates = buildPredicates(cb, countQuery, countRoot, criteria);
         countQuery.select(cb.count(countRoot)).where(countPredicates.toArray(new Predicate[0]));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(results, pageable, total);
     }
 
-    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<FactureAchat> root, FactureAchatSearchCriteria criteria) {
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, CommonAbstractCriteria query, Root<FactureAchat> root,
+            FactureAchatSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
         Long tenantId = (criteria != null && criteria.getSocieteId() != null)
@@ -96,7 +97,8 @@ public class FactureAchatRepositoryImpl implements FactureAchatRepositoryCustom 
         }
 
         if (criteria.getNumeroFacture() != null && !criteria.getNumeroFacture().trim().isEmpty()) {
-            predicates.add(cb.like(cb.lower(root.get("numeroFacture")), "%" + criteria.getNumeroFacture().trim().toLowerCase() + "%"));
+            predicates.add(cb.like(cb.lower(root.get("numeroFacture")),
+                    "%" + criteria.getNumeroFacture().trim().toLowerCase() + "%"));
         }
 
         if (criteria.getFournisseurId() != null) {
@@ -112,7 +114,8 @@ public class FactureAchatRepositoryImpl implements FactureAchatRepositoryCustom 
         }
 
         if (criteria.getDateFin() != null) {
-            predicates.add(cb.lessThanOrEqualTo(root.get("dateFacture"), criteria.getDateFin().atTime(23, 59, 59, 999999999)));
+            predicates.add(
+                    cb.lessThanOrEqualTo(root.get("dateFacture"), criteria.getDateFin().atTime(23, 59, 59, 999999999)));
         }
 
         if (criteria.getMontantMin() != null) {
@@ -130,6 +133,30 @@ public class FactureAchatRepositoryImpl implements FactureAchatRepositoryCustom 
             orPreds.add(cb.like(cb.lower(root.get("fournisseur").get("raisonSociale")), pattern));
             orPreds.add(cb.like(cb.lower(root.get("observations")), pattern));
             predicates.add(cb.or(orPreds.toArray(new Predicate[0])));
+        }
+
+        if (criteria.getProduitId() != null
+                || (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty())) {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<LigneFactureAchat> ligneRoot = subquery.from(LigneFactureAchat.class);
+            subquery.select(ligneRoot.get("factureAchat").get("id"));
+
+            List<Predicate> subPreds = new ArrayList<>();
+            subPreds.add(cb.equal(ligneRoot.get("factureAchat"), root));
+
+            if (criteria.getProduitId() != null) {
+                subPreds.add(cb.equal(ligneRoot.get("produit").get("id"), criteria.getProduitId()));
+            }
+
+            if (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty()) {
+                String pattern = "%" + criteria.getProduitQuery().trim().toLowerCase() + "%";
+                subPreds.add(cb.or(
+                        cb.like(cb.lower(ligneRoot.get("produit").get("reference")), pattern),
+                        cb.like(cb.lower(ligneRoot.get("produit").get("designation")), pattern)));
+            }
+
+            subquery.where(subPreds.toArray(new Predicate[0]));
+            predicates.add(cb.exists(subquery));
         }
 
         return predicates;

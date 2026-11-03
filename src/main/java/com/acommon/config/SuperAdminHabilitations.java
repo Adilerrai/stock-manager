@@ -57,32 +57,41 @@ public final class SuperAdminHabilitations {
     public static final String ROLE_VENDEUR = "ROLE_VENDEUR";
 
     /**
-     * Catalogue exhaustif des 40 habilitations métier standard configurables par l'administrateur
-     * et synchronisées avec l'interface AgenceWeb.
+     * Catalogue exhaustif des 73 habilitations métier synchronisées avec la BDD et AgenceWeb.
      */
     public static final java.util.List<String> BUSINESS_PERMISSIONS = java.util.List.of(
             // Produits (4)
             "PRODUIT_READ", "PRODUIT_CREATE", "PRODUIT_UPDATE", "PRODUIT_DELETE",
-            // Stocks (3)
-            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT",
-            // Ventes (3)
+            // Stocks (4)
+            "STOCK_READ", "STOCK_CREATE", "STOCK_TRANSFERT", "STOCK_INVENTAIRE",
+            // Ventes & Devis & Réservations (9)
             "VENTE_READ", "VENTE_CREATE", "VENTE_DELETE",
+            "DEVIS_READ", "DEVIS_CREATE", "DEVIS_VALIDER", "DEVIS_DELETE",
+            "RESERVATION_READ", "RESERVATION_MANAGE",
+            // Livraisons & Expéditions (5)
+            "LIVRAISON_READ", "LIVRAISON_CREATE", "LIVRAISON_EXPEDIER", "LIVRAISON_VALIDER", "LIVRAISON_ANNULER",
+            // Réceptions Achats (2)
+            "RECEPTION_READ", "RECEPTION_VALIDER",
             // Commandes (3)
             "COMMANDE_READ", "COMMANDE_CREATE", "COMMANDE_VALIDATE",
-            // Factures (4)
+            // Achats Demandes DA & DDP (4)
+            "ACHAT_DA_CREATE", "ACHAT_DA_VALIDER", "ACHAT_DDP_CREATE", "ACHAT_DDP_VALIDER",
+            // Factures & Avoirs (6)
             "FACTURE_READ", "FACTURE_CREATE", "FACTURE_VALIDER", "FACTURE_ANNULER",
-            // Clients (4)
-            "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE", "CLIENT_DELETE",
-            // Fournisseurs (3)
-            "FOURNISSEUR_READ", "FOURNISSEUR_CREATE", "FOURNISSEUR_UPDATE",
-            // Paiements (2)
-            "PAIEMENT_READ", "PAIEMENT_CREATE",
-            // Comptabilité (3)
-            "COMPTA_READ", "COMPTA_ECRITURE", "COMPTA_CLOTURE",
-            // Trésorerie (2)
-            "TRESORERIE_READ", "TRESORERIE_MOUVEMENT",
-            // Rapports (2)
-            "RAPPORT_READ", "RAPPORT_EXPORT",
+            "AVOIR_VENTE_CREATE", "AVOIR_ACHAT_CREATE",
+            // Clients & Espace Client (5)
+            "CLIENT_READ", "CLIENT_CREATE", "CLIENT_UPDATE", "CLIENT_DELETE", "CLIENT_COMPTE_CREATE",
+            // Fournisseurs (4)
+            "FOURNISSEUR_READ", "FOURNISSEUR_CREATE", "FOURNISSEUR_UPDATE", "FOURNISSEUR_DELETE",
+            // Paiements & Caisse & Dépenses & Effets (8)
+            "PAIEMENT_READ", "PAIEMENT_CREATE", "PAIEMENT_ANNULER", "PAIEMENT_DECISSEMENT",
+            "CAISSE_SESSION_MANAGE", "EFFET_GERER", "DEPENSE_READ", "DEPENSE_CREATE",
+            // Comptabilité & Fiscalité (5)
+            "COMPTA_READ", "COMPTA_ECRITURE", "COMPTA_LETTRAGE", "COMPTA_CLOTURE", "FISCALITE_LIASSE",
+            // Trésorerie (3)
+            "TRESORERIE_READ", "TRESORERIE_MOUVEMENT", "TRESORERIE_RAPPROCHEMENT",
+            // Rapports, Marges sensibles & Audit (4)
+            "RAPPORT_READ", "RAPPORT_EXPORT", "VENTE_PRIX_ACHAT_VIEW", "AUDIT_LOG_READ",
             // Utilisateurs (4)
             "USER_READ", "USER_CREATE", "USER_UPDATE", "USER_DELETE",
             // Administration (3)

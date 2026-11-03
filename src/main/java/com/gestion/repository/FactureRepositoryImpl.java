@@ -3,6 +3,7 @@ package com.gestion.repository;
 import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.FactureSearchCriteria;
 import com.gestion.persistent.model.Facture;
+import com.gestion.persistent.model.LigneFacture;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -34,7 +35,7 @@ public class FactureRepositoryImpl implements FactureRepositoryCustom {
         CriteriaQuery<Facture> query = cb.createQuery(Facture.class);
         Root<Facture> root = query.from(Facture.class);
 
-        List<Predicate> predicates = buildPredicates(cb, root, criteria);
+        List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
 
         if (pageable.getSort().isSorted()) {
@@ -61,14 +62,14 @@ public class FactureRepositoryImpl implements FactureRepositoryCustom {
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Facture> countRoot = countQuery.from(Facture.class);
-        List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria);
+        List<Predicate> countPredicates = buildPredicates(cb, countQuery, countRoot, criteria);
         countQuery.select(cb.count(countRoot)).where(countPredicates.toArray(new Predicate[0]));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(results, pageable, total);
     }
 
-    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Facture> root, FactureSearchCriteria criteria) {
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, CommonAbstractCriteria query, Root<Facture> root, FactureSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
         Long tenantId = (criteria != null && criteria.getSocieteId() != null)
@@ -132,6 +133,37 @@ public class FactureRepositoryImpl implements FactureRepositoryCustom {
 
         if (criteria.getMontantMax() != null) {
             predicates.add(cb.lessThanOrEqualTo(root.get("montantFinal"), criteria.getMontantMax()));
+        }
+
+        if (criteria.getProduitId() != null || (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty())) {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<LigneFacture> ligneRoot = subquery.from(LigneFacture.class);
+            subquery.select(ligneRoot.get("facture").get("id"));
+
+            List<Predicate> subPreds = new ArrayList<>();
+            subPreds.add(cb.equal(ligneRoot.get("facture"), root));
+
+            if (criteria.getProduitId() != null) {
+                subPreds.add(cb.equal(ligneRoot.get("produit").get("id"), criteria.getProduitId()));
+            }
+
+            if (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty()) {
+                String pattern = "%" + criteria.getProduitQuery().trim().toLowerCase() + "%";
+                subPreds.add(cb.or(
+                        cb.like(cb.lower(ligneRoot.get("reference")), pattern),
+                        cb.like(cb.lower(ligneRoot.get("designation")), pattern),
+                        cb.and(
+                                cb.isNotNull(ligneRoot.get("produit")),
+                                cb.or(
+                                        cb.like(cb.lower(ligneRoot.get("produit").get("reference")), pattern),
+                                        cb.like(cb.lower(ligneRoot.get("produit").get("designation")), pattern)
+                                )
+                        )
+                ));
+            }
+
+            subquery.where(subPreds.toArray(new Predicate[0]));
+            predicates.add(cb.exists(subquery));
         }
 
         return predicates;

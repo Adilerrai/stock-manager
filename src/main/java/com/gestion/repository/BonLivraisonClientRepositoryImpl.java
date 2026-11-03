@@ -6,6 +6,7 @@ import com.gestion.persistent.enums.StatutLivraison;
 import com.gestion.persistent.model.BonLivraisonClient;
 import com.gestion.persistent.model.Client;
 import com.gestion.persistent.model.CommandeClient;
+import com.gestion.persistent.model.LigneBonLivraisonClient;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -208,6 +209,30 @@ public class BonLivraisonClientRepositoryImpl implements BonLivraisonClientRepos
 
         if (criteria.getDateFin() != null) {
             predicates.add(cb.lessThanOrEqualTo(root.get("dateBl"), criteria.getDateFin()));
+        }
+
+        if (criteria.getProduitId() != null || (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty())) {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<LigneBonLivraisonClient> ligneRoot = subquery.from(LigneBonLivraisonClient.class);
+            subquery.select(ligneRoot.get("bonLivraisonClient").get("id"));
+
+            List<Predicate> subPreds = new ArrayList<>();
+            subPreds.add(cb.equal(ligneRoot.get("bonLivraisonClient"), root));
+
+            if (criteria.getProduitId() != null) {
+                subPreds.add(cb.equal(ligneRoot.get("produit").get("id"), criteria.getProduitId()));
+            }
+
+            if (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty()) {
+                String pattern = "%" + criteria.getProduitQuery().trim().toLowerCase() + "%";
+                subPreds.add(cb.or(
+                        cb.like(cb.lower(ligneRoot.get("produit").get("reference")), pattern),
+                        cb.like(cb.lower(ligneRoot.get("produit").get("designation")), pattern)
+                ));
+            }
+
+            subquery.where(subPreds.toArray(new Predicate[0]));
+            predicates.add(cb.exists(subquery));
         }
 
         return predicates;

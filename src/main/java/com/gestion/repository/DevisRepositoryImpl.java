@@ -4,6 +4,7 @@ import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.DevisSearchCriteria;
 import com.gestion.persistent.enums.StatutDevis;
 import com.gestion.persistent.model.Devis;
+import com.gestion.persistent.model.LigneDevis;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -35,7 +36,7 @@ public class DevisRepositoryImpl implements DevisRepositoryCustom {
         Root<Devis> root = query.from(Devis.class);
         root.fetch("client", JoinType.LEFT);
 
-        List<Predicate> predicates = buildPredicates(cb, root, criteria);
+        List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
 
         if (pageable.getSort().isSorted()) {
@@ -62,14 +63,14 @@ public class DevisRepositoryImpl implements DevisRepositoryCustom {
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<Devis> countRoot = countQuery.from(Devis.class);
-        List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria);
+        List<Predicate> countPredicates = buildPredicates(cb, countQuery, countRoot, criteria);
         countQuery.select(cb.count(countRoot)).where(countPredicates.toArray(new Predicate[0]));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(results, pageable, total);
     }
 
-    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<Devis> root, DevisSearchCriteria criteria) {
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, CommonAbstractCriteria query, Root<Devis> root, DevisSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
         Long tenantId = (criteria != null && criteria.getSocieteId() != null)
@@ -122,6 +123,31 @@ public class DevisRepositoryImpl implements DevisRepositoryCustom {
 
         if (criteria.getMontantMax() != null) {
             predicates.add(cb.lessThanOrEqualTo(root.get("montantFinal"), criteria.getMontantMax()));
+        }
+
+        if (criteria.getProduitId() != null || (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty())) {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<LigneDevis> ligneRoot = subquery.from(LigneDevis.class);
+            subquery.select(ligneRoot.get("devis").get("id"));
+
+            List<Predicate> subPreds = new ArrayList<>();
+            subPreds.add(cb.equal(ligneRoot.get("devis"), root));
+
+            if (criteria.getProduitId() != null) {
+                subPreds.add(cb.equal(ligneRoot.get("produit").get("id"), criteria.getProduitId()));
+            }
+
+            if (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty()) {
+                String pattern = "%" + criteria.getProduitQuery().trim().toLowerCase() + "%";
+                subPreds.add(cb.or(
+                        cb.like(cb.lower(ligneRoot.get("produit").get("reference")), pattern),
+                        cb.like(cb.lower(ligneRoot.get("produit").get("designation")), pattern),
+                        cb.like(cb.lower(ligneRoot.get("description")), pattern)
+                ));
+            }
+
+            subquery.where(subPreds.toArray(new Predicate[0]));
+            predicates.add(cb.exists(subquery));
         }
 
         return predicates;

@@ -22,6 +22,8 @@ public class FactureAchatSearchCriteria {
     private BigDecimal montantMax;
     private String query;
     private Long societeId;
+    private Long produitId;
+    private String produitQuery;
 
     public FactureAchatSearchCriteria() {}
 
@@ -95,5 +97,21 @@ public class FactureAchatSearchCriteria {
 
     public void setSocieteId(Long societeId) {
         this.societeId = societeId;
+    }
+
+    public Long getProduitId() {
+        return produitId;
+    }
+
+    public void setProduitId(Long produitId) {
+        this.produitId = produitId;
+    }
+
+    public String getProduitQuery() {
+        return produitQuery;
+    }
+
+    public void setProduitQuery(String produitQuery) {
+        this.produitQuery = produitQuery;
     }
 }

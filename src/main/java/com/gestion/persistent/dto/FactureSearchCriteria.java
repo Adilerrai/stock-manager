@@ -16,6 +16,8 @@ public class FactureSearchCriteria {
     private BigDecimal montantMax;
     private Long societeId;
     private Boolean inclureAnnulees;
+    private Long produitId;
+    private String produitQuery;
 
     public FactureSearchCriteria() {}
 
@@ -51,4 +53,10 @@ public class FactureSearchCriteria {
 
     public Long getSocieteId() { return societeId; }
     public void setSocieteId(Long societeId) { this.societeId = societeId; }
+
+    public Long getProduitId() { return produitId; }
+    public void setProduitId(Long produitId) { this.produitId = produitId; }
+
+    public String getProduitQuery() { return produitQuery; }
+    public void setProduitQuery(String produitQuery) { this.produitQuery = produitQuery; }
 }

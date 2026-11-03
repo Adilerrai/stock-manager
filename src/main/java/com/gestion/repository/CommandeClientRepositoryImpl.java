@@ -4,6 +4,7 @@ import com.acommon.persistant.model.TenantContext;
 import com.gestion.persistent.dto.CommandeClientSearchCriteria;
 import com.gestion.persistent.enums.StatutCommandeClient;
 import com.gestion.persistent.model.CommandeClient;
+import com.gestion.persistent.model.LigneCommandeClient;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.*;
@@ -34,7 +35,7 @@ public class CommandeClientRepositoryImpl implements CommandeClientRepositoryCus
         CriteriaQuery<CommandeClient> query = cb.createQuery(CommandeClient.class);
         Root<CommandeClient> root = query.from(CommandeClient.class);
 
-        List<Predicate> predicates = buildPredicates(cb, root, criteria);
+        List<Predicate> predicates = buildPredicates(cb, query, root, criteria);
         query.where(predicates.toArray(new Predicate[0]));
 
         if (pageable.getSort().isSorted()) {
@@ -61,14 +62,14 @@ public class CommandeClientRepositoryImpl implements CommandeClientRepositoryCus
 
         CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
         Root<CommandeClient> countRoot = countQuery.from(CommandeClient.class);
-        List<Predicate> countPredicates = buildPredicates(cb, countRoot, criteria);
+        List<Predicate> countPredicates = buildPredicates(cb, countQuery, countRoot, criteria);
         countQuery.select(cb.count(countRoot)).where(countPredicates.toArray(new Predicate[0]));
         Long total = entityManager.createQuery(countQuery).getSingleResult();
 
         return new PageImpl<>(results, pageable, total);
     }
 
-    private List<Predicate> buildPredicates(CriteriaBuilder cb, Root<CommandeClient> root, CommandeClientSearchCriteria criteria) {
+    private List<Predicate> buildPredicates(CriteriaBuilder cb, CommonAbstractCriteria query, Root<CommandeClient> root, CommandeClientSearchCriteria criteria) {
         List<Predicate> predicates = new ArrayList<>();
 
         Long tenantId = (criteria != null && criteria.getSocieteId() != null)
@@ -125,6 +126,30 @@ public class CommandeClientRepositoryImpl implements CommandeClientRepositoryCus
 
         if (criteria.getMontantMax() != null) {
             predicates.add(cb.lessThanOrEqualTo(root.get("montantTTC"), criteria.getMontantMax()));
+        }
+
+        if (criteria.getProduitId() != null || (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty())) {
+            Subquery<Long> subquery = query.subquery(Long.class);
+            Root<LigneCommandeClient> ligneRoot = subquery.from(LigneCommandeClient.class);
+            subquery.select(ligneRoot.get("commandeClient").get("id"));
+
+            List<Predicate> subPreds = new ArrayList<>();
+            subPreds.add(cb.equal(ligneRoot.get("commandeClient"), root));
+
+            if (criteria.getProduitId() != null) {
+                subPreds.add(cb.equal(ligneRoot.get("produit").get("id"), criteria.getProduitId()));
+            }
+
+            if (criteria.getProduitQuery() != null && !criteria.getProduitQuery().trim().isEmpty()) {
+                String pattern = "%" + criteria.getProduitQuery().trim().toLowerCase() + "%";
+                subPreds.add(cb.or(
+                        cb.like(cb.lower(ligneRoot.get("produit").get("reference")), pattern),
+                        cb.like(cb.lower(ligneRoot.get("produit").get("designation")), pattern)
+                ));
+            }
+
+            subquery.where(subPreds.toArray(new Predicate[0]));
+            predicates.add(cb.exists(subquery));
         }
 
         return predicates;
