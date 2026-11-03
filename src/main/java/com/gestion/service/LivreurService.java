@@ -57,7 +57,7 @@ public class LivreurService {
         String q = (query != null) ? query.trim().toLowerCase() : "";
         List<DocumentLivreurCandidateDTO> candidates = new ArrayList<>();
 
-        boolean searchBl = typeDocument == null || typeDocument.equalsIgnoreCase("ALL") || typeDocument.equalsIgnoreCase("BON_LIVRAISON");
+        boolean searchBl = typeDocument == null || typeDocument.equalsIgnoreCase("ALL") || typeDocument.equalsIgnoreCase("BON_LIVRAISON") || typeDocument.equalsIgnoreCase("BL");
         boolean searchFacture = typeDocument == null || typeDocument.equalsIgnoreCase("ALL") || typeDocument.equalsIgnoreCase("FACTURE");
 
         if (searchBl) {
@@ -136,6 +136,64 @@ public class LivreurService {
     }
 
     @Transactional
+    public PreuveDepotLivreur declarerActionFlexible(MultipartFile photo,
+                                                     String documentTypeStr,
+                                                     Long documentId,
+                                                     String numeroDocument,
+                                                     String clientNom,
+                                                     String typeActionStr,
+                                                     String commentaire,
+                                                     String nomLivreur,
+                                                     Long livreurUserId,
+                                                     Double latitude,
+                                                     Double longitude) throws IOException {
+        TypeActionLivreur typeAction;
+        try {
+            typeAction = TypeActionLivreur.valueOf(typeActionStr.toUpperCase().trim());
+        } catch (Exception e) {
+            typeAction = TypeActionLivreur.LIVRAISON_EFFECTUEE;
+        }
+
+        TypeDocumentLivreur documentType = null;
+        if (documentTypeStr != null && !documentTypeStr.isBlank()) {
+            String upper = documentTypeStr.toUpperCase().trim();
+            if (upper.equals("BL") || upper.equals("BON_LIVRAISON")) {
+                documentType = TypeDocumentLivreur.BON_LIVRAISON;
+            } else if (upper.equals("FACTURE")) {
+                documentType = TypeDocumentLivreur.FACTURE;
+            }
+        }
+
+        if (documentType == null) {
+            if (typeAction == TypeActionLivreur.FACTURE_DEPOSEE) {
+                documentType = TypeDocumentLivreur.FACTURE;
+            } else {
+                documentType = TypeDocumentLivreur.BON_LIVRAISON;
+            }
+        }
+
+        if ((numeroDocument == null || numeroDocument.isBlank() || clientNom == null || clientNom.isBlank()) && documentId != null) {
+            if (documentType == TypeDocumentLivreur.BON_LIVRAISON) {
+                var optBl = bonLivraisonClientRepository.findById(documentId);
+                if (optBl.isPresent()) {
+                    var bl = optBl.get();
+                    if (numeroDocument == null || numeroDocument.isBlank()) numeroDocument = bl.getNumeroBl();
+                    if ((clientNom == null || clientNom.isBlank()) && bl.getClient() != null) clientNom = bl.getClient().getNomComplet();
+                }
+            } else {
+                var optF = factureRepository.findById(documentId);
+                if (optF.isPresent()) {
+                    var f = optF.get();
+                    if (numeroDocument == null || numeroDocument.isBlank()) numeroDocument = f.getNumeroFacture();
+                    if ((clientNom == null || clientNom.isBlank()) && f.getClient() != null) clientNom = f.getClient().getNomComplet();
+                }
+            }
+        }
+
+        return declarerAction(photo, documentType, documentId, numeroDocument, clientNom, typeAction, commentaire, nomLivreur, livreurUserId, latitude, longitude);
+    }
+
+    @Transactional
     public PreuveDepotLivreur declarerAction(MultipartFile photo,
                                              TypeDocumentLivreur documentType,
                                              Long documentId,
@@ -200,7 +258,7 @@ public class LivreurService {
                         bl.setCommentaireLivreur(commentaire);
                     }
                     if (bl.getStatut() != StatutLivraison.ANNULEE) {
-                        bl.setStatut(typeAction == TypeActionLivreur.LIVRAISON_EFFECTUEE ? StatutLivraison.CACHETE : StatutLivraison.EXPEDIE);
+                        bl.setStatut((typeAction == TypeActionLivreur.LIVRAISON_EFFECTUEE || typeAction == TypeActionLivreur.BL_EXPEDIE || typeAction == TypeActionLivreur.LES_DEUX) ? StatutLivraison.CACHETE : StatutLivraison.EXPEDIE);
                     }
                     bonLivraisonClientRepository.save(bl);
 
