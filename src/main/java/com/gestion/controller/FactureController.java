@@ -100,6 +100,18 @@ public class FactureController {
         return ResponseEntity.ok(facture);
     }
 
+    @RequestMapping(value = "/{id}/statut", method = {RequestMethod.PUT, RequestMethod.PATCH, RequestMethod.POST})
+    public ResponseEntity<FactureDTO> changerStatut(
+            @PathVariable Long id,
+            @RequestParam(value = "statut", required = false) String statut,
+            @RequestBody(required = false) java.util.Map<String, String> body) {
+        String effectiveStatut = statut;
+        if ((effectiveStatut == null || effectiveStatut.isBlank()) && body != null) {
+            effectiveStatut = body.get("statut");
+        }
+        return ResponseEntity.ok(factureService.changerStatut(id, effectiveStatut));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<FactureDTO> modifierFacture(@PathVariable Long id, @RequestBody FactureDTO factureDTO) {
         FactureDTO updated = factureService.modifierFacture(id, factureDTO);

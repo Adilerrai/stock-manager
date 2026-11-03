@@ -395,6 +395,24 @@ public class FactureService {
         return factureMapper.toDto(factureRepository.save(facture));
     }
 
+    @Transactional
+    public FactureDTO changerStatut(Long id, String statutStr) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        if (tenantId == null) tenantId = 1L;
+
+        Facture f = factureRepository.findByIdAndPointDeVenteId(id, tenantId)
+                .or(() -> factureRepository.findById(id))
+                .orElseThrow(() -> new CommonException("Facture non trouvée avec l'id: " + id, HttpStatus.NOT_FOUND));
+
+        if (statutStr != null && !statutStr.isBlank()) {
+            StatutFacture sf = StatutFacture.valueOf(statutStr.trim().toUpperCase());
+            f.setStatut(sf);
+            Facture saved = factureRepository.save(f);
+            return factureMapper.toDto(saved);
+        }
+        return factureMapper.toDto(f);
+    }
+
     public FactureDTO modifierFacture(Long factureId, FactureDTO dto) {
         Long tenantId = TenantContext.getCurrentTenant();
         if (tenantId == null)

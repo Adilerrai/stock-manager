@@ -151,6 +151,12 @@ public class BonLivraisonClientController {
                 try { livreurId = Long.valueOf(body.get("livreurId")); } catch (Exception ignored) {}
             }
             return ResponseEntity.ok(bonLivraisonClientService.validerLivraisonParLivreur(id, livreurId, body != null ? body.get("commentaireLivreur") : null));
+        } else if (effectiveStatut != null && ("CACHETE".equalsIgnoreCase(effectiveStatut.trim()) || "CACHETEE".equalsIgnoreCase(effectiveStatut.trim()))) {
+            Long livreurId = null;
+            if (body != null && body.get("livreurId") != null) {
+                try { livreurId = Long.valueOf(body.get("livreurId")); } catch (Exception ignored) {}
+            }
+            return ResponseEntity.ok(bonLivraisonClientService.marquerCachete(id, livreurId, body != null ? body.get("commentaireLivreur") : null));
         } else if (effectiveStatut != null && "ANNULEE".equalsIgnoreCase(effectiveStatut.trim())) {
             return ResponseEntity.ok(bonLivraisonClientService.annulerBonLivraisonClient(id));
         }

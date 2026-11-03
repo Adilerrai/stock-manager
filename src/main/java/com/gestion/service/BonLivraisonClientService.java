@@ -374,6 +374,58 @@ public class BonLivraisonClientService {
         return validerLivraisonParLivreur(blId, null, null);
     }
 
+    /**
+     * Marquer le bon de livraison comme CACHETE (émargé / tamponné par le client)
+     */
+    public BonLivraisonClientDTO marquerCachete(Long blId, Long livreurId, String commentaireLivreur) {
+        Long tenantId = TenantContext.getCurrentTenant();
+        Long effectiveTenantId = tenantId != null ? tenantId : 1L;
+
+        BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
+                .or(() -> bonLivraisonClientRepository.findById(blId))
+                .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
+
+        if (bl.getStatut() == StatutLivraison.ANNULEE) {
+            throw new CommonException("Impossible de marquer un bon de livraison annulé", HttpStatus.BAD_REQUEST);
+        }
+
+        // Si le BL n'était pas encore au statut EXPEDIE ou déstocké, on déstocke
+        if (bl.getStatut() != StatutLivraison.EXPEDIE && bl.getStatut() != StatutLivraison.LIVREE && bl.getStatut() != StatutLivraison.CACHETE) {
+            destockerLignesBL(bl);
+            if (bl.getDateExpedition() == null) {
+                bl.setDateExpedition(LocalDateTime.now());
+            }
+        }
+
+        if (livreurId != null && userRepository != null) {
+            userRepository.findById(livreurId).ifPresent(bl::setLivreur);
+        } else if (bl.getLivreur() == null && userRepository != null) {
+            try {
+                org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getPrincipal() instanceof User u) {
+                    bl.setLivreur(u);
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (commentaireLivreur != null && !commentaireLivreur.isBlank()) {
+            bl.setCommentaireLivreur(commentaireLivreur.trim());
+        }
+        bl.setDateLivraisonEffective(LocalDateTime.now());
+        bl.setStatut(StatutLivraison.CACHETE);
+
+        mettreAJourCommandesLieesLorsLivraison(bl);
+
+        // Si facture rattachée, la marquer comme DEPOSEE
+        if (bl.getFacture() != null && bl.getFacture().getStatut() != StatutFacture.ANNULEE) {
+            bl.getFacture().setStatut(StatutFacture.DEPOSEE);
+            factureRepository.save(bl.getFacture());
+        }
+
+        BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+        return bonLivraisonClientMapper.toDto(saved);
+    }
+
     private void destockerLignesBL(BonLivraisonClient bl) {
         boolean isFromOrder = bl.getCommandeClient() != null;
 
