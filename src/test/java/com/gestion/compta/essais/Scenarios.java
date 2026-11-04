@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.*;
 
 /**
- * Prototype de la clôture et de la mesure canonique, joué sur les scénarios de l'audit (S1, S2, S3, S5, S6).
+ * Prototype de la clôture et de la mesure canonique, joué sur les scénarios S1, S2, S3, S5 et S6.
  * Écrit les mesures en JSON pour évaluation par etats_cgnc.json (eval_etats.py).
  */
 public class Scenarios {
