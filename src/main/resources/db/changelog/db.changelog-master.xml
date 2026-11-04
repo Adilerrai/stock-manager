@@ -184,4 +184,7 @@
     <!-- Changeset 058 : Colonne code_barre dans produits et initialisation depuis reference -->
     <include file="changes/058-add-code-barre-produits.xml" relativeToChangelogFile="true"/>
 
+    <!-- Nouvelle comptabilité : tables compta_* seulement, aucune table existante n'est modifiée -->
+    <include file="changes/compta/compta-changesets.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

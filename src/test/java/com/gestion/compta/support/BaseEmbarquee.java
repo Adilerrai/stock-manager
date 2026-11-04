@@ -73,10 +73,27 @@ final class BaseEmbarquee {
         }
     }
 
+    /** Une base à part sur le même serveur, au schéma de la vraie chaîne : des essais y commitent sans gêner les autres tests. */
+    String creerBaseSeparee(String nom) {
+        try (java.sql.Connection c = dataSource().getConnection(); java.sql.Statement s = c.createStatement()) {
+            s.execute("CREATE DATABASE " + nom);
+            appliquerLaChaineLiquibase(serveur.getDatabase(UTILISATEUR, nom));
+        } catch (java.sql.SQLException | IOException | LiquibaseException e) {
+            throw new IllegalStateException("Base séparée impossible : " + nom, e);
+        }
+        String url = serveur.getJdbcUrl(UTILISATEUR, nom);
+        GardeBase.controler(url, port(), dossierDonnees());
+        return url;
+    }
+
     /** Même classe et même fichier maître que l'application, sans copie de la valeur. */
     private void appliquerLaChaineLiquibase() throws IOException, LiquibaseException {
+        appliquerLaChaineLiquibase(dataSource());
+    }
+
+    private void appliquerLaChaineLiquibase(DataSource source) throws IOException, LiquibaseException {
         SpringLiquibase liquibase = new SpringLiquibase();
-        liquibase.setDataSource(dataSource());
+        liquibase.setDataSource(source);
         liquibase.setChangeLog(PropertiesLoaderUtils.loadAllProperties("application.properties")
                 .getProperty("spring.liquibase.change-log"));
         liquibase.setResourceLoader(new DefaultResourceLoader());

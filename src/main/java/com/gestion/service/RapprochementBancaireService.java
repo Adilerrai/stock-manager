@@ -155,7 +155,7 @@ public class RapprochementBancaireService {
         releve.setCompteFinancier(compte);
         releve.setPointDeVenteId(tenantId);
         releve.setDateImport(LocalDateTime.now());
-        releve.setReferenceReleve("REL-" + compte.getCode() + "-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")));
+        releve.setReferenceReleve("REL-" + compte.getCode() + "-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")));
 
         List<LigneReleveBancaire> lignes = new ArrayList<>();
         LocalDate minDate = null;
@@ -188,7 +188,7 @@ public class RapprochementBancaireService {
                     }
                 }
 
-                String[] cols = line.split(separator);
+                String[] cols = line.split(separator, -1);
                 if (cols.length < 3) continue;
 
                 LocalDate dateOp = parseDate(cols[0].trim());
