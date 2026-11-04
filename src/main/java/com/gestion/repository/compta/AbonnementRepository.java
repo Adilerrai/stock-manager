@@ -1,11 +1,14 @@
 package com.gestion.repository.compta;
 
 import com.gestion.persistent.dto.compta.LivreDtos.AbonnementDTO;
+import com.gestion.persistent.dto.compta.LivreDtos.DossierAbonnementDTO;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,6 +25,17 @@ public class AbonnementRepository {
     public boolean pointDeVenteExiste(Long pointDeVenteId) {
         return Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS (SELECT 1 FROM point_de_vente WHERE id = :id)",
                 Map.of("id", pointDeVenteId), Boolean.class));
+    }
+
+    /** Tous les dossiers pour le superadmin ; sinon le point de vente de l'utilisateur et ceux de son tenant. */
+    public List<DossierAbonnementDTO> dossiers(Long pointDeVenteId, Long tenantId, boolean tous) {
+        return jdbc.query("""
+                SELECT p.id, COALESCE(NULLIF(TRIM(p.nom_point_de_vente), ''), NULLIF(TRIM(p.nom), ''), 'Dossier ' || p.id), COALESCE(a.actif, FALSE), a.souscrit_le, a.modifie_par
+                  FROM point_de_vente p LEFT JOIN compta_abonnements a ON a.point_de_vente_id = p.id
+                 WHERE :tous OR p.id = CAST(:pointDeVente AS bigint) OR p.tenant_id = CAST(:tenant AS bigint)
+                 ORDER BY 2, 1
+                """, new MapSqlParameterSource().addValue("tous", tous).addValue("pointDeVente", pointDeVenteId, java.sql.Types.BIGINT).addValue("tenant", tenantId, java.sql.Types.BIGINT),
+                (rs, i) -> new DossierAbonnementDTO(rs.getLong(1), rs.getString(2), rs.getBoolean(3), rs.getObject(4, LocalDate.class), rs.getString(5)));
     }
 
     public Optional<AbonnementDTO> lire(Long pointDeVenteId) {

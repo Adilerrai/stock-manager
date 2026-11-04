@@ -1432,6 +1432,31 @@
         "required" : [ "comptes", "formule" ],
         "type" : "object"
       },
+      "DossierAbonnementDTO" : {
+        "properties" : {
+          "actif" : {
+            "type" : "boolean"
+          },
+          "modifiePar" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "nom" : {
+            "type" : "string"
+          },
+          "pointDeVenteId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "souscritLe" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "actif", "modifiePar", "nom", "pointDeVenteId", "souscritLe" ],
+        "type" : "object"
+      },
       "DotationPasseeDTO" : {
         "properties" : {
           "au" : {
@@ -6364,6 +6389,28 @@
   },
   "openapi" : "3.0.1",
   "paths" : {
+    "/api/v1/compta/abonnements" : {
+      "get" : {
+        "operationId" : "comptaAbonnementDossiers",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/DossierAbonnementDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les dossiers visibles et leur souscription : les siens pour l'admin du tenant, tous pour le superadmin",
+        "tags" : [ "Comptabilité : abonnement" ]
+      }
+    },
     "/api/v1/compta/abonnements/{pointDeVenteId}" : {
       "get" : {
         "operationId" : "comptaAbonnementLire",

@@ -75,6 +75,14 @@ public final class LivreDtos {
             @Schema(nullable = true) String modifiePar) {
     }
 
+    public record DossierAbonnementDTO(
+            Long pointDeVenteId,
+            String nom,
+            boolean actif,
+            @Schema(nullable = true) LocalDate souscritLe,
+            @Schema(nullable = true) String modifiePar) {
+    }
+
     public record AbonnementRequest(@NotNull Boolean actif) {
     }
 }

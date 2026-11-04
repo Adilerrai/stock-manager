@@ -238,7 +238,7 @@ class ContratReponsesIT extends AbstractComptaIT {
             JsonNode operation = route.getValue().path("get");
             JsonNode schema = operation.path("responses").path("200").path("content").path("application/json").path("schema");
             // Les abonnements se règlent côté administrateur : pour un utilisateur du dossier, un refus d'accès est la bonne réponse.
-            if (operation.isMissingNode() || schema.isMissingNode() || route.getKey().startsWith(RACINE + "/abonnements/")) {
+            if (operation.isMissingNode() || schema.isMissingNode() || route.getKey().startsWith(RACINE + "/abonnements")) {
                 continue;
             }
             routes++;

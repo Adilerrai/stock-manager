@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/v1/compta/abonnements", produces = "application/json")
 @CrossOrigin(origins = "*")
 @Tag(name = "Comptabilité : abonnement")
-@PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
+@PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN')")
 public class AbonnementComptaController {
 
     private final AbonnementComptaService service;
@@ -29,15 +29,21 @@ public class AbonnementComptaController {
         this.service = service;
     }
 
+    @GetMapping
+    @Operation(operationId = "comptaAbonnementDossiers", summary = "Les dossiers visibles et leur souscription : les siens pour l'admin du tenant, tous pour le superadmin")
+    public ResponseEntity<java.util.List<com.gestion.persistent.dto.compta.LivreDtos.DossierAbonnementDTO>> dossiers() {
+        return ResponseEntity.ok(service.dossiersVisibles());
+    }
+
     @GetMapping("/{pointDeVenteId}")
     @Operation(operationId = "comptaAbonnementLire", summary = "Abonnement d'un point de vente")
     public ResponseEntity<AbonnementDTO> lire(@PathVariable Long pointDeVenteId) {
-        return ResponseEntity.ok(service.lire(pointDeVenteId));
+        return ResponseEntity.ok(service.lireVisible(pointDeVenteId));
     }
 
     @PutMapping("/{pointDeVenteId}")
     @Operation(operationId = "comptaAbonnementModifier", summary = "Ouvre ou ferme le module pour un point de vente")
     public ResponseEntity<AbonnementDTO> modifier(@PathVariable Long pointDeVenteId, @Valid @RequestBody AbonnementRequest demande) {
-        return ResponseEntity.ok(service.modifier(pointDeVenteId, demande.actif()));
+        return ResponseEntity.ok(service.modifierVisible(pointDeVenteId, demande.actif()));
     }
 }
