@@ -175,7 +175,9 @@ public class RapprochementComptaService {
 
     @Transactional(readOnly = true)
     public List<PointageDTO> pointages(Long compteFinancierId) {
-        return repository.pointages(livre(), compteFinancierId);
+        Long livreId = livre();
+        exigerCompte(livreId, compteFinancierId);
+        return repository.pointages(livreId, compteFinancierId);
     }
 
     /** Même montant, sens croisés, date proche : une ligne de chaque côté au plus. Rien ne se pointe sans confirmation, et jamais d'un compte à l'autre. */
@@ -282,6 +284,8 @@ public class RapprochementComptaService {
 
     @Transactional(readOnly = true)
     public List<EtatValideDTO> etats(Long compteFinancierId) {
-        return repository.etats(livre(), compteFinancierId);
+        Long livreId = livre();
+        exigerCompte(livreId, compteFinancierId);
+        return repository.etats(livreId, compteFinancierId);
     }
 }

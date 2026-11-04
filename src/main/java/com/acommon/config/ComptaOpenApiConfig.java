@@ -55,6 +55,8 @@ public class ComptaOpenApiConfig {
                     proprietes.replaceAll((nom, p) -> nullables.contains(p.get$ref())
                             ? new ComposedSchema().addAllOfItem(new Schema<>().$ref(p.get$ref())).nullable(true)
                             : p);
+                    // Une colonne sans valeur, par exemple N-1 non repris, sort à null : la carte le dit.
+                    proprietes.values().stream().filter(p -> p.getAdditionalProperties() instanceof Schema).forEach(p -> ((Schema) p.getAdditionalProperties()).setNullable(true));
                     // @JsonFormat sort un montant en chaîne, mais le modèle le voit encore comme le BigDecimal du champ.
                     proprietes.values().stream().filter(p -> "number".equals(p.getType())).forEach(p -> {
                         p.setType("string");

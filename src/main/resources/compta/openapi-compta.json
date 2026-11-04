@@ -37,6 +37,71 @@
         "required" : [ "actif" ],
         "type" : "object"
       },
+      "AcompteDTO" : {
+        "properties" : {
+          "datePaiement" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "echeance" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "ecritureId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "montantDu" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "montantPaye" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "numero" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "reference" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "datePaiement", "echeance", "ecritureId", "montantDu", "montantPaye", "numero", "reference" ],
+        "type" : "object"
+      },
+      "AcomptesDTO" : {
+        "properties" : {
+          "acomptes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AcompteDTO"
+            },
+            "type" : "array"
+          },
+          "beneficeReference" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "exerciceReference" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "raison" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "acomptes", "beneficeReference", "exerciceReference", "raison" ],
+        "type" : "object"
+      },
       "ActivationLivreRequest" : {
         "properties" : {
           "dateDemarrage" : {
@@ -274,15 +339,61 @@
       },
       "ArreterRequest" : {
         "properties" : {
-          "declarationIs" : {
+          "motifDotations" : {
+            "nullable" : true,
             "type" : "string"
           },
-          "motifDotations" : {
+          "motifIs" : {
             "nullable" : true,
             "type" : "string"
           }
         },
-        "required" : [ "declarationIs", "motifDotations" ],
+        "required" : [ "motifDotations", "motifIs" ],
+        "type" : "object"
+      },
+      "AttestationDTO" : {
+        "properties" : {
+          "dateDelivrance" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "reference" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "saisieLe" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "saisiePar" : {
+            "type" : "string"
+          },
+          "verifieeSurDgi" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "dateDelivrance", "id", "reference", "saisieLe", "saisiePar", "verifieeSurDgi" ],
+        "type" : "object"
+      },
+      "AttestationRequest" : {
+        "properties" : {
+          "dateDelivrance" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "reference" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "verifieeSurDgi" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "dateDelivrance", "reference", "verifieeSurDgi" ],
         "type" : "object"
       },
       "BalanceAgeeDTO" : {
@@ -376,6 +487,21 @@
           }
         },
         "required" : [ "arrete", "contenu", "curseurSuivant", "expurgee", "ouvertureProvisoire", "resultat", "totaux", "totauxClasses" ],
+        "type" : "object"
+      },
+      "BlocLibreDTO" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "libelle" : {
+            "type" : "string"
+          },
+          "sens" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "libelle", "sens" ],
         "type" : "object"
       },
       "BrouillonDTO" : {
@@ -633,6 +759,106 @@
         "required" : [ "aExtourner", "dateEcriture", "datePiece", "journalId", "libelle", "lignes", "motif", "nature", "refPiece" ],
         "type" : "object"
       },
+      "CadrageDTO" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "droite" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "gauche" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "raison" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "reussi" : {
+            "nullable" : true,
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "code", "droite", "gauche", "raison", "reussi" ],
+        "type" : "object"
+      },
+      "CelluleSaisieDTO" : {
+        "properties" : {
+          "codeLigne" : {
+            "type" : "string"
+          },
+          "colonne" : {
+            "type" : "string"
+          },
+          "valeurNum" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "valeurTxt" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "codeLigne", "colonne", "valeurNum", "valeurTxt" ],
+        "type" : "object"
+      },
+      "CentralisateurLigneDTO" : {
+        "properties" : {
+          "au" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "credit" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "debit" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "du" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "ecritures" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "journalCode" : {
+            "type" : "string"
+          },
+          "journalId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "journalLibelle" : {
+            "type" : "string"
+          },
+          "numeroPeriode" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "periodeId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "typePeriode" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "au", "credit", "debit", "du", "ecritures", "journalCode", "journalId", "journalLibelle", "numeroPeriode", "periodeId", "typePeriode" ],
+        "type" : "object"
+      },
       "ClassementRequest" : {
         "properties" : {
           "classement" : {
@@ -766,6 +992,21 @@
           }
         },
         "required" : [ "code", "libelle" ],
+        "type" : "object"
+      },
+      "ColonneRegistreDTO" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "libelle" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "code", "libelle", "type" ],
         "type" : "object"
       },
       "ComplementsRequest" : {
@@ -1113,6 +1354,68 @@
         "required" : [ "cle", "compte", "typeCle" ],
         "type" : "object"
       },
+      "DeficitDTO" : {
+        "properties" : {
+          "anneeOrigine" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "montantInitial" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "montantRestant" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "nature" : {
+            "type" : "string"
+          },
+          "saisi" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "anneeOrigine", "id", "montantInitial", "montantRestant", "nature", "saisi" ],
+        "type" : "object"
+      },
+      "DeficitRequest" : {
+        "properties" : {
+          "anneeOrigine" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "montant" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "nature" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "anneeOrigine", "montant", "nature" ],
+        "type" : "object"
+      },
+      "DepotLiasseRequest" : {
+        "properties" : {
+          "deposeLe" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "numeroRecu" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "deposeLe", "numeroRecu" ],
+        "type" : "object"
+      },
       "DetailCelluleDTO" : {
         "properties" : {
           "comptes" : {
@@ -1196,6 +1499,332 @@
         "required" : [ "apercu" ],
         "type" : "object"
       },
+      "DpCalculRequest" : {
+        "properties" : {
+          "chiffreAffaires" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "chiffreAffaires" ],
+        "type" : "object"
+      },
+      "DpDeclarationDTO" : {
+        "properties" : {
+          "annee" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "au" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "calculee" : {
+            "type" : "boolean"
+          },
+          "chiffreAffaires" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "dateLimite" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "deposeLe" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "du" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "ecritureAmendeId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "id" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "lignes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DpLigneDTO"
+            },
+            "type" : "array"
+          },
+          "statut" : {
+            "type" : "string"
+          },
+          "totalAmende" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "totalHorsDelai" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "totalLitiges" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "totalNonPayees" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "trimestre" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "valideLe" : {
+            "format" : "date-time",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "validePar" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "versement" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          }
+        },
+        "required" : [ "annee", "au", "calculee", "chiffreAffaires", "dateLimite", "deposeLe", "du", "ecritureAmendeId", "id", "lignes", "statut", "totalAmende", "totalHorsDelai", "totalLitiges", "totalNonPayees", "trimestre", "valideLe", "validePar", "versement" ],
+        "type" : "object"
+      },
+      "DpDepotRequest" : {
+        "properties" : {
+          "deposeLe" : {
+            "format" : "date",
+            "type" : "string"
+          }
+        },
+        "required" : [ "deposeLe" ],
+        "type" : "object"
+      },
+      "DpFactureDTO" : {
+        "properties" : {
+          "dateEmission" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "dateLivraison" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "delaiConvenuJours" : {
+            "format" : "int32",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "delaiRetenu" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "echeance" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "factureAchatId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "fournisseur" : {
+            "type" : "string"
+          },
+          "litigeDate" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "litigeJugementDate" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "litigeMontant" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "montantTtc" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "numero" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "dateEmission", "dateLivraison", "delaiConvenuJours", "delaiRetenu", "echeance", "factureAchatId", "fournisseur", "litigeDate", "litigeJugementDate", "litigeMontant", "montantTtc", "numero" ],
+        "type" : "object"
+      },
+      "DpFactureRequest" : {
+        "properties" : {
+          "dateEmission" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "dateLivraison" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "delaiConvenuJours" : {
+            "format" : "int32",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "litigeDate" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "litigeJugementDate" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "litigeMontant" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "dateEmission", "dateLivraison", "delaiConvenuJours", "litigeDate", "litigeJugementDate", "litigeMontant" ],
+        "type" : "object"
+      },
+      "DpLigneDTO" : {
+        "properties" : {
+          "amende" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "dateEcheance" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "dateEmission" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "datePaiement" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "factureAchatId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "fournisseur" : {
+            "type" : "string"
+          },
+          "moisRetard" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "montantHorsDelai" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "montantNonPaye" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "montantTtc" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "numeroFacture" : {
+            "type" : "string"
+          },
+          "tauxApplique" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "tiersId" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "amende", "dateEcheance", "dateEmission", "datePaiement", "factureAchatId", "fournisseur", "moisRetard", "montantHorsDelai", "montantNonPaye", "montantTtc", "numeroFacture", "tauxApplique", "tiersId" ],
+        "type" : "object"
+      },
+      "DpTrimestreDTO" : {
+        "properties" : {
+          "annee" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "au" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "dateLimite" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "declarationId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "du" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "lignes" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "statut" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "totalAmende" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "trimestre" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "annee", "au", "dateLimite", "declarationId", "du", "lignes", "statut", "totalAmende", "trimestre" ],
+        "type" : "object"
+      },
+      "DpValidationRequest" : {
+        "properties" : {
+          "dateEcriture" : {
+            "format" : "date",
+            "type" : "string"
+          }
+        },
+        "required" : [ "dateEcriture" ],
+        "type" : "object"
+      },
       "EcarterRequest" : {
         "properties" : {
           "motif" : {
@@ -1203,6 +1832,91 @@
           }
         },
         "required" : [ "motif" ],
+        "type" : "object"
+      },
+      "EcheanceDTO" : {
+        "properties" : {
+          "article" : {
+            "type" : "string"
+          },
+          "dateLimite" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "enRetard" : {
+            "type" : "boolean"
+          },
+          "faitLe" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "libelle" : {
+            "type" : "string"
+          },
+          "periode" : {
+            "type" : "string"
+          },
+          "reference" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "article", "dateLimite", "enRetard", "faitLe", "id", "libelle", "periode", "reference", "statut", "type" ],
+        "type" : "object"
+      },
+      "EcheanceRequest" : {
+        "properties" : {
+          "faitLe" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "reference" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "faitLe", "reference", "statut" ],
+        "type" : "object"
+      },
+      "EcheancesDTO" : {
+        "properties" : {
+          "annee" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "avertissements" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "joursFeries" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "lignes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/EcheanceDTO"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "annee", "avertissements", "joursFeries", "lignes" ],
         "type" : "object"
       },
       "EcritureDTO" : {
@@ -2057,6 +2771,152 @@
         "required" : [ "aucunStock", "lignes", "methodeValorisation" ],
         "type" : "object"
       },
+      "IsDTO" : {
+        "properties" : {
+          "acomptesVerses" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "baseArrondie" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "baseCm" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "calcule" : {
+            "type" : "boolean"
+          },
+          "categorieTaux" : {
+            "type" : "string"
+          },
+          "cm" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "cmExoneree" : {
+            "type" : "boolean"
+          },
+          "css" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "deductions" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "deficitsImputes" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "ecritureChargeId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "ecritureLiquidationId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "excedent" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "excedentAnterieur" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "exercice" : {
+            "type" : "string"
+          },
+          "exerciceId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "impotDu" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "isTheorique" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "periodeOuverte" : {
+            "type" : "boolean"
+          },
+          "reintegrations" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "reliquat" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "resultatComptable" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "resultatFiscal" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "sources" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SourceFiscaleDTO"
+            },
+            "type" : "array"
+          },
+          "statut" : {
+            "type" : "string"
+          },
+          "tauxIs" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "valideLe" : {
+            "format" : "date-time",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "validePar" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "acomptesVerses", "baseArrondie", "baseCm", "calcule", "categorieTaux", "cm", "cmExoneree", "css", "deductions", "deficitsImputes", "ecritureChargeId", "ecritureLiquidationId", "excedent", "excedentAnterieur", "exercice", "exerciceId", "impotDu", "isTheorique", "periodeOuverte", "reintegrations", "reliquat", "resultatComptable", "resultatFiscal", "sources", "statut", "tauxIs", "valideLe", "validePar" ],
+        "type" : "object"
+      },
+      "JourFerieDTO" : {
+        "properties" : {
+          "jour" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "libelle" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "jour", "libelle" ],
+        "type" : "object"
+      },
       "JournalCreationRequest" : {
         "properties" : {
           "code" : {
@@ -2166,6 +3026,41 @@
           }
         },
         "required" : [ "motif" ],
+        "type" : "object"
+      },
+      "LiasseDTO" : {
+        "properties" : {
+          "deposeLe" : {
+            "format" : "date",
+            "nullable" : true,
+            "type" : "string"
+          },
+          "nonValideEdi" : {
+            "type" : "boolean"
+          },
+          "numeroRecu" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string"
+          },
+          "tableaux" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TableauResumeDTO"
+            },
+            "type" : "array"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "xmlSha256" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "deposeLe", "nonValideEdi", "numeroRecu", "statut", "tableaux", "version", "xmlSha256" ],
         "type" : "object"
       },
       "LigneAEnregistrerDTO" : {
@@ -2497,6 +3392,7 @@
           },
           "valeurs" : {
             "additionalProperties" : {
+              "nullable" : true,
               "type" : "string"
             },
             "type" : "object"
@@ -2699,6 +3595,37 @@
         "required" : [ "baseTva", "compte", "credit", "debit", "tauxTva", "tiers" ],
         "type" : "object"
       },
+      "LigneRegistreDTO" : {
+        "properties" : {
+          "numero" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "valeurs" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ValeurRegistreDTO"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "numero", "valeurs" ],
+        "type" : "object"
+      },
+      "LiquidationIsRequest" : {
+        "properties" : {
+          "compteFinancierId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "datePaiement" : {
+            "format" : "date",
+            "type" : "string"
+          }
+        },
+        "required" : [ "compteFinancierId", "datePaiement" ],
+        "type" : "object"
+      },
       "LivreDTO" : {
         "properties" : {
           "dateDemarrage" : {
@@ -2820,6 +3747,15 @@
         "required" : [ "entite", "exercice", "logiciel", "periode", "produitLe", "typeEtat" ],
         "type" : "object"
       },
+      "MotifRequest" : {
+        "properties" : {
+          "motif" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "motif" ],
+        "type" : "object"
+      },
       "PageCompteDTO" : {
         "properties" : {
           "contenu" : {
@@ -2909,6 +3845,30 @@
           }
         },
         "required" : [ "contenu", "curseurSuivant" ],
+        "type" : "object"
+      },
+      "PaiementAcompteRequest" : {
+        "properties" : {
+          "compteFinancierId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "datePaiement" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "montant" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "reference" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "compteFinancierId", "datePaiement", "montant", "reference" ],
         "type" : "object"
       },
       "ParametreFiscalDTO" : {
@@ -3400,6 +4360,206 @@
         "required" : [ "bloquants", "executeLe", "executePar", "execution", "resultats" ],
         "type" : "object"
       },
+      "RasLigneDTO" : {
+        "properties" : {
+          "article" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "attestation" : {
+            "type" : "string"
+          },
+          "cumulServices" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "datePaiement" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "ecritureId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "etat" : {
+            "type" : "string"
+          },
+          "factureAchatId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "fournisseur" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "montantBrut" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "montantHt" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "montantPaye" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "montantRetenu" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "montantTva" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "nature" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "numeroFacture" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "numeroReglement" : {
+            "type" : "string"
+          },
+          "operationId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "personnePhysique" : {
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "raison" : {
+            "type" : "string"
+          },
+          "reglementId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "tauxRetenue" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "tauxTva" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "tiersId" : {
+            "format" : "int64",
+            "nullable" : true,
+            "type" : "integer"
+          }
+        },
+        "required" : [ "article", "attestation", "cumulServices", "datePaiement", "ecritureId", "etat", "factureAchatId", "fournisseur", "montantBrut", "montantHt", "montantPaye", "montantRetenu", "montantTva", "nature", "numeroFacture", "numeroReglement", "operationId", "personnePhysique", "raison", "reglementId", "tauxRetenue", "tauxTva", "tiersId" ],
+        "type" : "object"
+      },
+      "RasMoisDTO" : {
+        "properties" : {
+          "annee" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "dateLimite" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "lignes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/RasLigneDTO"
+            },
+            "type" : "array"
+          },
+          "mois" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalRetenu" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "versement" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          }
+        },
+        "required" : [ "annee", "dateLimite", "lignes", "mois", "totalRetenu", "versement" ],
+        "type" : "object"
+      },
+      "RasMoisResumeDTO" : {
+        "properties" : {
+          "aQualifier" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "aRetenir" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "annee" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "dateLimite" : {
+            "format" : "date",
+            "type" : "string"
+          },
+          "mois" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "reglements" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "totalRetenu" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          }
+        },
+        "required" : [ "aQualifier", "aRetenir", "annee", "dateLimite", "mois", "reglements", "totalRetenu" ],
+        "type" : "object"
+      },
+      "RasNatureRequest" : {
+        "properties" : {
+          "nature" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "nature" ],
+        "type" : "object"
+      },
+      "RasRetenueRequest" : {
+        "properties" : {
+          "factureAchatId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "montantBrut" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "factureAchatId", "montantBrut" ],
+        "type" : "object"
+      },
       "RattachementPointDeVenteRequest" : {
         "properties" : {
           "dateRattachement" : {
@@ -3456,6 +4616,18 @@
           }
         },
         "required" : [ "codeAuxiliaire", "id", "nom" ],
+        "type" : "object"
+      },
+      "RegistreRequest" : {
+        "properties" : {
+          "lignes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LigneRegistreDTO"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "lignes" ],
         "type" : "object"
       },
       "ReleveNonPointeDTO" : {
@@ -3630,6 +4802,18 @@
         "required" : [ "codeErreur", "ecritureId", "evenement", "message", "numeroComplet", "reussi", "sourceId", "sourceType" ],
         "type" : "object"
       },
+      "SaisiesRequest" : {
+        "properties" : {
+          "cellules" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CelluleSaisieDTO"
+            },
+            "type" : "array"
+          }
+        },
+        "required" : [ "cellules" ],
+        "type" : "object"
+      },
       "SortieDTO" : {
         "properties" : {
           "amortissementsCumules" : {
@@ -3747,6 +4931,33 @@
         "required" : [ "evenement", "numero", "sourceId", "sourceType", "version" ],
         "type" : "object"
       },
+      "SourceFiscaleDTO" : {
+        "properties" : {
+          "cle" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "fiabilite" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "valeur" : {
+            "example" : 1200.0,
+            "format" : "decimal",
+            "type" : "string"
+          },
+          "valideDu" : {
+            "format" : "date",
+            "type" : "string"
+          }
+        },
+        "required" : [ "cle", "code", "fiabilite", "source", "valeur", "valideDu" ],
+        "type" : "object"
+      },
       "StatutExerciceDTO" : {
         "properties" : {
           "statut" : {
@@ -3802,6 +5013,123 @@
           }
         },
         "required" : [ "avantImpots", "charges", "impots", "net", "produits" ],
+        "type" : "object"
+      },
+      "TableauDTO" : {
+        "properties" : {
+          "blocs" : {
+            "items" : {
+              "$ref" : "#/components/schemas/BlocLibreDTO"
+            },
+            "type" : "array"
+          },
+          "cadrages" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CadrageDTO"
+            },
+            "type" : "array"
+          },
+          "categorie" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "colonnes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ColonneEtatDTO"
+            },
+            "type" : "array"
+          },
+          "colonnesRegistre" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ColonneRegistreDTO"
+            },
+            "type" : "array"
+          },
+          "lignes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LigneEtatDTO"
+            },
+            "type" : "array"
+          },
+          "modifiable" : {
+            "type" : "boolean"
+          },
+          "note" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "raison" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "registre" : {
+            "items" : {
+              "$ref" : "#/components/schemas/LigneRegistreDTO"
+            },
+            "type" : "array"
+          },
+          "registreLectureSeule" : {
+            "type" : "boolean"
+          },
+          "saisies" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CelluleSaisieDTO"
+            },
+            "type" : "array"
+          },
+          "saisissables" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "statut" : {
+            "type" : "string"
+          },
+          "titre" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "blocs", "cadrages", "categorie", "code", "colonnes", "colonnesRegistre", "lignes", "modifiable", "note", "raison", "registre", "registreLectureSeule", "saisies", "saisissables", "statut", "titre" ],
+        "type" : "object"
+      },
+      "TableauResumeDTO" : {
+        "properties" : {
+          "cadrages" : {
+            "items" : {
+              "$ref" : "#/components/schemas/CadrageDTO"
+            },
+            "type" : "array"
+          },
+          "categorie" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "etatEtic" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "raison" : {
+            "nullable" : true,
+            "type" : "string"
+          },
+          "statut" : {
+            "type" : "string"
+          },
+          "tableauEdi" : {
+            "format" : "int32",
+            "nullable" : true,
+            "type" : "integer"
+          },
+          "titre" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "cadrages", "categorie", "code", "etatEtic", "raison", "statut", "tableauEdi", "titre" ],
         "type" : "object"
       },
       "TiersCreationRequest" : {
@@ -3890,6 +5218,38 @@
           }
         },
         "required" : [ "actif", "codeAuxiliaire", "compteCollectif", "entrepriseLiee", "ice", "id", "identifiantFiscal", "nom", "nonResident", "organismePublic", "sourceId", "sourceType", "typeTiers" ],
+        "type" : "object"
+      },
+      "TiersFiscalDTO" : {
+        "properties" : {
+          "attestations" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AttestationDTO"
+            },
+            "type" : "array"
+          },
+          "nom" : {
+            "type" : "string"
+          },
+          "personnePhysique" : {
+            "nullable" : true,
+            "type" : "boolean"
+          },
+          "tiersId" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "attestations", "nom", "personnePhysique", "tiersId" ],
+        "type" : "object"
+      },
+      "TiersFormeRequest" : {
+        "properties" : {
+          "personnePhysique" : {
+            "type" : "boolean"
+          }
+        },
+        "required" : [ "personnePhysique" ],
         "type" : "object"
       },
       "TiersPatchRequest" : {
@@ -4878,6 +6238,19 @@
         "required" : [ "code", "compteTva", "libelle", "taux" ],
         "type" : "object"
       },
+      "ValeurRegistreDTO" : {
+        "properties" : {
+          "colonne" : {
+            "type" : "string"
+          },
+          "valeur" : {
+            "nullable" : true,
+            "type" : "string"
+          }
+        },
+        "required" : [ "colonne", "valeur" ],
+        "type" : "object"
+      },
       "ValiderEtatRequest" : {
         "properties" : {
           "arrete" : {
@@ -5418,6 +6791,484 @@
         "tags" : [ "Comptabilité : plan comptable" ]
       }
     },
+    "/api/v1/compta/delais/factures/{id}" : {
+      "get" : {
+        "operationId" : "comptaDelaisFiche",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DpFactureDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Ce que la facture d'achat ne porte pas : livraison, délai convenu, litige",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      },
+      "put" : {
+        "operationId" : "comptaDelaisFicheModifier",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DpFactureRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DpFactureDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Modifie la livraison, le délai convenu et le litige d'une facture",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/delais/{annee}" : {
+      "get" : {
+        "operationId" : "comptaDelaisTrimestres",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/DpTrimestreDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les quatre trimestres de l'année",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/delais/{annee}/{trimestre}" : {
+      "get" : {
+        "operationId" : "comptaDelaisLire",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "trimestre",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DpDeclarationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "La déclaration d'un trimestre",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/delais/{annee}/{trimestre}/calculer" : {
+      "post" : {
+        "operationId" : "comptaDelaisCalculer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "trimestre",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DpCalculRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DpDeclarationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Calcule le trimestre depuis les factures et les règlements fournisseurs",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/delais/{annee}/{trimestre}/depot" : {
+      "post" : {
+        "operationId" : "comptaDelaisDeposer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "trimestre",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DpDepotRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DpDeclarationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Enregistre le dépôt fait sur le portail",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/delais/{annee}/{trimestre}/etat.xlsx" : {
+      "get" : {
+        "operationId" : "comptaDelaisEtatXlsx",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "trimestre",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "L'état annexe, à viser",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/delais/{annee}/{trimestre}/rouvrir" : {
+      "post" : {
+        "operationId" : "comptaDelaisRouvrir",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "trimestre",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MotifRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DpDeclarationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Rouvre et contre-passe l'amende",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/delais/{annee}/{trimestre}/valider" : {
+      "post" : {
+        "operationId" : "comptaDelaisValider",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "trimestre",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DpValidationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/DpDeclarationDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Valide et passe l'amende : D 65831 / C 4458",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/echeances" : {
+      "get" : {
+        "operationId" : "comptaEcheancesLister",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EcheancesDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les échéances calculées pour une année",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/echeances/generer" : {
+      "post" : {
+        "operationId" : "comptaEcheancesGenerer",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EcheancesDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Calcule l'échéancier de l'année, selon la périodicité réelle",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/echeances/prochaines" : {
+      "get" : {
+        "operationId" : "comptaEcheancesProchaines",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "nombre",
+          "required" : false,
+          "schema" : {
+            "default" : 8,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/EcheanceDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les prochaines échéances à faire",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/echeances/{id}" : {
+      "put" : {
+        "operationId" : "comptaEcheanceMarquer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/EcheanceRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/EcheanceDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Marque une échéance faite ou sans objet",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
     "/api/v1/compta/ecritures" : {
       "get" : {
         "operationId" : "comptaEcritureRechercher",
@@ -5441,7 +7292,37 @@
           "name" : "montant",
           "required" : false,
           "schema" : {
-            "type" : "number"
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "libelle",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "compte",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "du",
+          "required" : false,
+          "schema" : {
+            "format" : "date",
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "au",
+          "required" : false,
+          "schema" : {
+            "format" : "date",
+            "type" : "string"
           }
         } ],
         "responses" : {
@@ -5459,7 +7340,7 @@
             "description" : "OK"
           }
         },
-        "summary" : "Recherche par pièce, date ou montant",
+        "summary" : "Recherche par pièce, date, montant de ligne, libellé, compte ou période. Les 200 plus récentes",
         "tags" : [ "Comptabilité : brouillons et écritures" ]
       }
     },
@@ -5880,6 +7761,37 @@
           }
         },
         "summary" : "Balance par tiers d'un compte collectif",
+        "tags" : [ "Comptabilité : consultations" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/centralisateur" : {
+      "get" : {
+        "operationId" : "comptaConsultationCentralisateur",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/CentralisateurLigneDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Journal centralisateur : les totaux de chaque journal, période par période",
         "tags" : [ "Comptabilité : consultations" ]
       }
     },
@@ -6560,6 +8472,240 @@
         "tags" : [ "Comptabilité : immobilisations et inventaire" ]
       }
     },
+    "/api/v1/compta/exercices/{id}/is" : {
+      "get" : {
+        "operationId" : "comptaIsLire",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IsDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "L'IS de l'exercice, avec les taux et leur source",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/is/acomptes" : {
+      "get" : {
+        "operationId" : "comptaIsAcomptes",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AcomptesDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les quatre acomptes, depuis le bénéfice de l'exercice clos",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/is/acomptes/{numero}/paiement" : {
+      "post" : {
+        "operationId" : "comptaIsAcomptePayer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "numero",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PaiementAcompteRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AcomptesDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Enregistre le paiement d'un acompte et passe son écriture",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/is/calculer" : {
+      "post" : {
+        "operationId" : "comptaIsCalculer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IsDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Calcule l'IS depuis le résultat et le tableau T3",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/is/liquidation" : {
+      "post" : {
+        "operationId" : "comptaIsLiquider",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LiquidationIsRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IsDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Solde l'impôt : acomptes imputés et reliquat payé",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/is/rouvrir" : {
+      "post" : {
+        "operationId" : "comptaIsRouvrir",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MotifRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IsDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Rouvre le calcul, par contre-passation de la charge",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/is/valider" : {
+      "post" : {
+        "operationId" : "comptaIsValider",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/IsDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Passe la charge d'impôt en période 99",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
     "/api/v1/compta/exercices/{id}/journal" : {
       "get" : {
         "operationId" : "comptaConsultationJournal",
@@ -6655,6 +8801,252 @@
         },
         "summary" : "Lève l'arrêté, avec un motif gardé en trace",
         "tags" : [ "Comptabilité : clôture" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/liasse" : {
+      "get" : {
+        "operationId" : "comptaLiasseLire",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LiasseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les tableaux de la liasse et le statut de chacun",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/liasse/depot" : {
+      "post" : {
+        "operationId" : "comptaLiasseDepot",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DepotLiasseRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LiasseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Enregistre le dépôt de la liasse",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/liasse/xml" : {
+      "get" : {
+        "operationId" : "comptaLiasseXml",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/xml" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Le dernier XML produit, marqué non validé",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      },
+      "post" : {
+        "operationId" : "comptaLiasseProduire",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/LiasseDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Produit le XML, marqué non validé",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/liasse/{tableau}" : {
+      "get" : {
+        "operationId" : "comptaLiasseTableau",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "tableau",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TableauDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Un tableau : valeurs, cellules à saisir, registre, cadrages",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/liasse/{tableau}/registre" : {
+      "put" : {
+        "operationId" : "comptaLiasseRegistre",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "tableau",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegistreRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TableauDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Remplace le registre d'un tableau",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
+    "/api/v1/compta/exercices/{id}/liasse/{tableau}/saisies" : {
+      "put" : {
+        "operationId" : "comptaLiasseSaisir",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "tableau",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SaisiesRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TableauDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Enregistre les cellules saisies ; une cellule vide se retire",
+        "tags" : [ "Comptabilité : IS et liasse" ]
       }
     },
     "/api/v1/compta/exercices/{id}/periodes" : {
@@ -6992,6 +9384,58 @@
         "tags" : [ "Comptabilité : immobilisations et inventaire" ]
       }
     },
+    "/api/v1/compta/is/deficits" : {
+      "get" : {
+        "operationId" : "comptaIsDeficits",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/DeficitDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les déficits reportables, par origine et par nature",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      },
+      "post" : {
+        "operationId" : "comptaIsDeficitSaisir",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeficitRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/DeficitDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Reprend un déficit antérieur au démarrage",
+        "tags" : [ "Comptabilité : IS et liasse" ]
+      }
+    },
     "/api/v1/compta/journaux" : {
       "get" : {
         "operationId" : "comptaJournalLister",
@@ -7039,6 +9483,28 @@
         },
         "summary" : "Ajoute un journal de banque ou de caisse",
         "tags" : [ "Comptabilité : journaux" ]
+      }
+    },
+    "/api/v1/compta/jours-feries" : {
+      "get" : {
+        "operationId" : "comptaJoursFeries",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/JourFerieDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les jours fériés légaux chargés. Vide tant que la liste n'a pas été lue",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
       }
     },
     "/api/v1/compta/lettrage/lignes" : {
@@ -8122,6 +10588,357 @@
         },
         "summary" : "Valide l'état : il doit tomber juste",
         "tags" : [ "Comptabilité : rapprochement" ]
+      }
+    },
+    "/api/v1/compta/ras/factures/{id}/nature" : {
+      "put" : {
+        "operationId" : "comptaRasNature",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RasNatureRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK"
+          }
+        },
+        "summary" : "La nature de l'achat : marchandise, bien d'équipement, travaux, service",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/operations/{id}/annuler" : {
+      "post" : {
+        "operationId" : "comptaRasAnnuler",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/MotifRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RasMoisDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Annule une retenue et contre-passe son écriture",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/reglements/{id}/retenue" : {
+      "post" : {
+        "operationId" : "comptaRasRetenir",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RasRetenueRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RasMoisDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Passe la retenue de ce règlement : D 4411 / C 4458",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/tiers/{id}" : {
+      "get" : {
+        "operationId" : "comptaRasTiers",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TiersFiscalDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "La forme du fournisseur et ses attestations",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/tiers/{id}/attestations" : {
+      "post" : {
+        "operationId" : "comptaRasAttestationAjouter",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AttestationRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TiersFiscalDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Enregistre une attestation de régularité fiscale",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/tiers/{id}/attestations/{attestationId}" : {
+      "delete" : {
+        "operationId" : "comptaRasAttestationRetirer",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "attestationId",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TiersFiscalDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Retire une attestation",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/tiers/{id}/forme" : {
+      "put" : {
+        "operationId" : "comptaRasTiersForme",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "id",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TiersFormeRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TiersFiscalDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Personne physique ou morale",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/{annee}" : {
+      "get" : {
+        "operationId" : "comptaRasAnnee",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/RasMoisResumeDTO"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les douze mois de l'année",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/{annee}/{mois}" : {
+      "get" : {
+        "operationId" : "comptaRasMois",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "mois",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RasMoisDTO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Les règlements du mois et leur retenue",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
+      }
+    },
+    "/api/v1/compta/ras/{annee}/{mois}/bordereau.xlsx" : {
+      "get" : {
+        "operationId" : "comptaRasBordereauXlsx",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "annee",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "path",
+          "name" : "mois",
+          "required" : true,
+          "schema" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : {
+                "schema" : {
+                  "format" : "binary",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "summary" : "Le bordereau du mois",
+        "tags" : [ "Comptabilité : délais, retenue à la source, échéancier" ]
       }
     },
     "/api/v1/compta/tiers" : {

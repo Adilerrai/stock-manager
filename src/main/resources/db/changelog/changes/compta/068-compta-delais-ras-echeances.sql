@@ -120,3 +120,26 @@ CREATE TABLE compta_jours_feries (
     jour     DATE PRIMARY KEY,
     libelle  VARCHAR(120) NOT NULL
 );
+
+-- Personne physique ou morale : la retenue sur services en dépend (art. 117-V). Nul tant que ce n'est pas dit : rien n'est supposé.
+ALTER TABLE compta_tiers ADD COLUMN personne_physique BOOLEAN;
+
+-- La nature de l'achat, portée par la facture (RAS-02). Nulle tant qu'elle n'est pas précisée.
+ALTER TABLE compta_dp_factures ADD COLUMN nature_achat VARCHAR(20);
+ALTER TABLE compta_dp_factures ADD CONSTRAINT ck_compta_dpf_nature CHECK (nature_achat IS NULL OR nature_achat IN ('MARCHANDISE', 'BIEN_EQUIPEMENT', 'TRAVAUX', 'SERVICE', 'SERVICE_EXCLU'));
+
+-- L'amende des délais de paiement a sa propre origine.
+ALTER TABLE compta_ecritures DROP CONSTRAINT ck_compta_ecr_origine;
+ALTER TABLE compta_ecritures ADD CONSTRAINT ck_compta_ecr_origine CHECK (origine IN ('SAISIE', 'PASSERELLE', 'OUVERTURE', 'CLOTURE', 'IMMOBILISATION', 'INVENTAIRE', 'TVA', 'IS', 'RAPPROCHEMENT', 'AFFECTATION', 'MODELE', 'DELAIS'));
+
+INSERT INTO compta_parametres_fiscaux (code, cle, rattachement, valide_du, valide_au, valeur, borne_min, borne_max, source, fiabilite) VALUES
+ ('DP_CA_MINIMUM', '', 'DATE_EMISSION', '2023-07-01', NULL, 2000000, NULL, NULL, 'C. com. art. 78-1 ; NC 734 p. 2', 'VERIFIE'),
+ ('DP_EXCLUSION_FACTURE', '', 'DATE_EMISSION', '2023-07-01', '2024-12-31', 10000, NULL, NULL, 'Loi 69-21 art. 2 ; NC 734 p. 9-10', 'VERIFIE'),
+ ('RAS_TAUX', 'AVEC_ATTESTATION', 'DATE_PAIEMENT', '2024-07-01', NULL, 75, NULL, NULL, 'CGI art. 117-V', 'VERIFIE'),
+ ('RAS_TAUX', 'SANS_ATTESTATION', 'DATE_PAIEMENT', '2024-07-01', NULL, 100, NULL, NULL, 'CGI art. 117-IV et V ; NC 735', 'VERIFIE'),
+ ('RAS_PETITE_PRESTATION', 'MONTANT_TTC', 'DATE_PAIEMENT', '2024-07-01', NULL, 5000, NULL, NULL, 'CGI art. 117 ; NC 735 p. 24', 'VERIFIE'),
+ ('RAS_PETITE_PRESTATION', 'CUMUL_MOIS_TTC', 'DATE_PAIEMENT', '2024-07-01', NULL, 50000, NULL, NULL, 'CGI art. 117 ; NC 735 p. 24', 'VERIFIE'),
+ ('RAS_ATTESTATION_MOIS', '', 'DATE_PAIEMENT', '2024-07-01', NULL, 6, NULL, NULL, 'CGI art. 117-IV', 'VERIFIE'),
+ ('RAS_SEUIL_CA', '', 'DATE_PAIEMENT', '2026-07-01', '2026-12-31', 500000000, NULL, NULL, 'CGI art. 247-XXXXVI ; NC 737 p. 59-60', 'VERIFIE'),
+ ('RAS_SEUIL_CA', '', 'DATE_PAIEMENT', '2027-01-01', '2027-12-31', 350000000, NULL, NULL, 'CGI art. 247-XXXXVI ; NC 737 p. 59-60', 'VERIFIE'),
+ ('RAS_SEUIL_CA', '', 'DATE_PAIEMENT', '2028-01-01', NULL, 200000000, NULL, NULL, 'CGI art. 247-XXXXVI ; NC 737 p. 59-60', 'VERIFIE');

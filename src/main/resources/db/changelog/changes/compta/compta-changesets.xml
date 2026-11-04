@@ -68,4 +68,9 @@
                  relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
     </changeSet>
 
+    <changeSet id="compta-068-delais-ras-echeances" author="compta">
+        <sqlFile path="db/changelog/changes/compta/068-compta-delais-ras-echeances.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
 </databaseChangeLog>

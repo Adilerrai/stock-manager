@@ -3,7 +3,6 @@ package com.gestion.service.compta;
 import com.acommon.exception.CommonException;
 import com.acommon.exception.ResourceNotFoundException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gestion.persistent.dto.compta.EtatDtos.ColonneEtatDTO;
@@ -22,6 +21,7 @@ import com.gestion.persistent.dto.compta.FiscalDtos.TableauResumeDTO;
 import com.gestion.persistent.dto.compta.FiscalDtos.ValeurRegistreDTO;
 import com.gestion.persistent.dto.compta.ReferentielDtos.ExerciceDTO;
 import com.gestion.persistent.enums.ActionAudit;
+import com.gestion.repository.compta.ClotureRepository;
 import com.gestion.repository.compta.ExerciceRepository;
 import com.gestion.repository.compta.FiscalComptaRepository;
 import com.gestion.repository.compta.FiscalComptaRepository.Liasse;
@@ -44,7 +44,6 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HexFormat;
@@ -70,11 +69,13 @@ public class LiasseComptaService {
     private final EtatService etats;
     private final ExerciceRepository exercices;
     private final LivreRepository livres;
+    private final ClotureRepository clotures;
     private final LivreCourantService livreCourant;
     private final AuditService audit;
     private final ObjectMapper json;
 
-    public LiasseComptaService(FiscalComptaRepository repository, DefinitionsLiasse liasse, EtatService etats, ExerciceRepository exercices, LivreRepository livres, LivreCourantService livreCourant, AuditService audit, ObjectMapper json) {
+    public LiasseComptaService(FiscalComptaRepository repository, DefinitionsLiasse liasse, EtatService etats, ExerciceRepository exercices, LivreRepository livres, ClotureRepository clotures, LivreCourantService livreCourant, AuditService audit, ObjectMapper json) {
+        this.clotures = clotures;
         this.repository = repository;
         this.liasse = liasse;
         this.etats = etats;
@@ -298,7 +299,7 @@ public class LiasseComptaService {
             Number duree = (Number) f.get("duree_mois");
             BigDecimal anterieurs = ((BigDecimal) f.get("cumul_reprise")).add((BigDecimal) f.get("anterieures"));
             BigDecimal taux = duree == null || duree.intValue() == 0 ? null : new BigDecimal("1200").divide(BigDecimal.valueOf(duree.longValue()), 2, RoundingMode.HALF_UP);
-            lignes.add(new LigneRegistreDTO(n++, List.of(valeur("IMMOBILISATION", f.get("designation")), valeur("DATE_ENTREE", f.get("date_acquisition")), valeur("PRIX", f.get("valeur_brute")), valeur("AMORT_ANTERIEURS", anterieurs), valeur("TAUX", taux), valeur("DUREE", duree), valeur("AMORT_DEDUITS_EXERCICE", f.get("exercice")))));
+            lignes.add(new LigneRegistreDTO(n++, List.of(valeur("IMMOBILISATION", f.get("designation")), valeur("DATE_ENTREE", f.get("date_acquisition")), valeur("PRIX", f.get("valeur_brute")), valeur("AMORT_ANTERIEURS", anterieurs), valeur("TAUX", taux), valeur("DUREE", duree), valeur("AMORT_EXERCICE", f.get("exercice")), valeur("TOTAL_FIN", anterieurs.add((BigDecimal) f.get("exercice"))))));
         }
         return lignes;
     }
@@ -371,9 +372,16 @@ public class LiasseComptaService {
         Long livreId = livreCourant.exiger().livreId();
         ExerciceDTO e = exiger(livreId, exerciceId);
         byte[] xml = xml(livreId, e);
-        repository.ecrireXml(livreId, exerciceId, e.figeageCourant() == null ? 0 : e.figeageCourant(), liasse.modeleEdi(), sha256(xml), xml);
+        repository.ecrireXml(livreId, exerciceId, clotures.dernierFigeage(livreId, exerciceId), liasse.modeleEdi(), sha256(xml), xml);
         audit.logAction(ActionAudit.MODIFICATION, "compta_liasses", exerciceId, "XML de la liasse " + e.code() + " produit, marqué non validé");
         return xml;
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] fichierXml(Long exerciceId) {
+        Long livreId = livreCourant.exiger().livreId();
+        exiger(livreId, exerciceId);
+        return repository.liasse(livreId, exerciceId).map(Liasse::xml).filter(x -> x != null).orElseThrow(() -> new CommonException("Produisez d'abord le fichier de la liasse.", HttpStatus.CONFLICT, "COMPTA_LIASSE_SANS_FICHIER"));
     }
 
     private byte[] xml(Long livreId, ExerciceDTO e) {
@@ -488,14 +496,5 @@ public class LiasseComptaService {
         repository.deposerLiasse(livreId, l.id(), r.deposeLe(), r.numeroRecu(), livreCourant.auteur());
         audit.logAction(ActionAudit.MODIFICATION, "compta_liasses", exerciceId, "Liasse " + e.code() + " déposée le " + r.deposeLe());
         return liste(exerciceId);
-    }
-
-    /** L'exemple de lecture du bloc JSON, gardé lisible pour le débogage. */
-    JsonNode brut(String donnees) throws JsonProcessingException {
-        return json.readTree(donnees);
-    }
-
-    LocalDate dateFin(ExerciceDTO e) {
-        return e.au();
     }
 }

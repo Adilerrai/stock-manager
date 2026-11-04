@@ -39,6 +39,12 @@ public class ConsultationController {
         return ResponseEntity.ok(service.journal(id, journalId, periodeId, curseur, taille));
     }
 
+    @GetMapping("/centralisateur")
+    @Operation(operationId = "comptaConsultationCentralisateur", summary = "Journal centralisateur : les totaux de chaque journal, période par période")
+    public ResponseEntity<java.util.List<com.gestion.persistent.dto.compta.ConsultationDtos.CentralisateurLigneDTO>> centralisateur(@PathVariable Long id) {
+        return ResponseEntity.ok(service.centralisateur(id));
+    }
+
     @GetMapping("/grand-livre")
     @Operation(operationId = "comptaConsultationGrandLivre", summary = "Grand livre d'un compte ou d'un tiers, par page")
     public ResponseEntity<GrandLivreCompteDTO> grandLivre(@PathVariable Long id, @RequestParam String compte, @RequestParam(required = false) Long tiersId,

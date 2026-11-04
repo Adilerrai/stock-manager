@@ -39,7 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ContratOpenApiIT extends AbstractComptaIT {
 
     private static final Path INSTANTANE = Path.of("src/main/resources/compta/openapi-compta.json");
-    private static final List<Class<?>> DTO = List.of(LivreDtos.class, ReferentielDtos.class, EcritureDtos.class, ConsultationDtos.class, com.gestion.persistent.dto.compta.EtatDtos.class, com.gestion.persistent.dto.compta.ClotureDtos.class, com.gestion.persistent.dto.compta.PasserelleDtos.class, com.gestion.persistent.dto.compta.TvaDtos.class, com.gestion.persistent.dto.compta.ImmobilisationDtos.class, com.gestion.persistent.dto.compta.RapprochementDtos.class, com.gestion.persistent.dto.compta.FiscalDtos.class);
+    private static final List<Class<?>> DTO = List.of(LivreDtos.class, ReferentielDtos.class, EcritureDtos.class, ConsultationDtos.class, com.gestion.persistent.dto.compta.EtatDtos.class, com.gestion.persistent.dto.compta.ClotureDtos.class, com.gestion.persistent.dto.compta.PasserelleDtos.class, com.gestion.persistent.dto.compta.TvaDtos.class, com.gestion.persistent.dto.compta.ImmobilisationDtos.class, com.gestion.persistent.dto.compta.RapprochementDtos.class, com.gestion.persistent.dto.compta.FiscalDtos.class, com.gestion.persistent.dto.compta.DeclarationsDtos.class);
 
     @Autowired private MockMvc mvc;
     @Autowired private ObjectMapper mapper;

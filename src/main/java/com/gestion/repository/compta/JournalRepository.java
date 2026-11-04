@@ -253,7 +253,23 @@ public class JournalRepository {
         return jdbc.queryForObject(sql.toString(), p, (rs, i) -> new BigDecimal[]{rs.getBigDecimal(1), rs.getBigDecimal(2)});
     }
 
-    public List<EcritureDTO> rechercher(Long livreId, String refPiece, LocalDate datePiece, BigDecimal montant) {
+    /** Les totaux de chaque journal, période par période : le journal centralisateur. */
+    public List<com.gestion.persistent.dto.compta.ConsultationDtos.CentralisateurLigneDTO> centralisateur(Long livreId, Long exerciceId) {
+        return jdbc.query("""
+                SELECT j.id, j.code, j.libelle, p.id, p.numero, p.type_periode, p.date_debut, p.date_fin, count(*), SUM(e.total_debit), SUM(e.total_credit)
+                  FROM compta_ecritures e
+                  JOIN compta_journaux j ON j.livre_id = e.livre_id AND j.id = e.journal_id
+                  JOIN compta_periodes p ON p.livre_id = e.livre_id AND p.id = e.periode_id
+                 WHERE e.livre_id = :livreId AND e.exercice_id = :exercice
+                 GROUP BY j.id, j.code, j.libelle, p.id, p.numero, p.type_periode, p.date_debut, p.date_fin
+                 ORDER BY p.numero, j.code
+                """, new MapSqlParameterSource().addValue("livreId", livreId).addValue("exercice", exerciceId),
+                (rs, i) -> new com.gestion.persistent.dto.compta.ConsultationDtos.CentralisateurLigneDTO(rs.getLong(1), rs.getString(2), rs.getString(3), rs.getLong(4), rs.getInt(5), rs.getString(6),
+                        rs.getObject(7, LocalDate.class), rs.getObject(8, LocalDate.class), rs.getLong(9), rs.getBigDecimal(10), rs.getBigDecimal(11)));
+    }
+
+    /** Un montant se cherche sur chaque ligne, pas seulement sur le total ; un compte cherche aussi ses sous-comptes. */
+    public List<EcritureDTO> rechercher(Long livreId, String refPiece, LocalDate datePiece, BigDecimal montant, String libelle, String compte, LocalDate du, LocalDate au) {
         StringBuilder sql = new StringBuilder(SELECTION_ECRITURE).append(" WHERE e.livre_id = :livreId");
         MapSqlParameterSource p = new MapSqlParameterSource().addValue("livreId", livreId);
         if (refPiece != null && !refPiece.isBlank()) {
@@ -265,8 +281,24 @@ public class JournalRepository {
             p.addValue("datePiece", Date.valueOf(datePiece));
         }
         if (montant != null) {
-            sql.append(" AND e.total_debit = :montant");
+            sql.append(" AND (e.total_debit = :montant OR EXISTS (SELECT 1 FROM compta_lignes lm WHERE lm.livre_id = e.livre_id AND lm.ecriture_id = e.id AND (lm.debit = :montant OR lm.credit = :montant)))");
             p.addValue("montant", montant);
+        }
+        if (libelle != null && !libelle.isBlank()) {
+            sql.append(" AND e.libelle ILIKE :libelle");
+            p.addValue("libelle", "%" + libelle.trim() + "%");
+        }
+        if (compte != null && !compte.isBlank()) {
+            sql.append(" AND EXISTS (SELECT 1 FROM compta_lignes lc WHERE lc.livre_id = e.livre_id AND lc.ecriture_id = e.id AND lc.compte_numero LIKE :compte)");
+            p.addValue("compte", compte.trim() + "%");
+        }
+        if (du != null) {
+            sql.append(" AND e.date_ecriture >= :du");
+            p.addValue("du", Date.valueOf(du));
+        }
+        if (au != null) {
+            sql.append(" AND e.date_ecriture <= :au");
+            p.addValue("au", Date.valueOf(au));
         }
         return jdbc.query(sql.append(" ORDER BY e.date_ecriture DESC, e.id DESC LIMIT 200").toString(), p, (rs, i) -> enTete(rs, List.of(), List.of(), List.of()));
     }

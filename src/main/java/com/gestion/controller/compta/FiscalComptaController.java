@@ -126,11 +126,18 @@ public class FiscalComptaController {
         return ResponseEntity.ok(liasse.enregistrerRegistre(id, tableau, demande));
     }
 
-    @PostMapping(value = "/exercices/{id}/liasse/xml", produces = MediaType.APPLICATION_XML_VALUE)
-    @Operation(operationId = "comptaLiasseXml", summary = "Produit le XML, marqué non validé",
+    @PostMapping("/exercices/{id}/liasse/xml")
+    @Operation(operationId = "comptaLiasseProduire", summary = "Produit le XML, marqué non validé")
+    public ResponseEntity<LiasseDTO> produire(@PathVariable Long id) {
+        liasse.produireXml(id);
+        return ResponseEntity.ok(liasse.liste(id));
+    }
+
+    @GetMapping(value = "/exercices/{id}/liasse/xml", produces = MediaType.APPLICATION_XML_VALUE)
+    @Operation(operationId = "comptaLiasseXml", summary = "Le dernier XML produit, marqué non validé",
             responses = @ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_XML_VALUE, schema = @Schema(type = "string", format = "binary"))))
     public ResponseEntity<byte[]> xml(@PathVariable Long id) {
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"liasse-NON-VALIDE-" + id + ".xml\"").contentType(MediaType.APPLICATION_XML).body(liasse.produireXml(id));
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"liasse-NON-VALIDE-" + id + ".xml\"").contentType(MediaType.APPLICATION_XML).body(liasse.fichierXml(id));
     }
 
     @PostMapping(value = "/exercices/{id}/liasse/depot", consumes = "application/json")

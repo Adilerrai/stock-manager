@@ -35,6 +35,10 @@ public abstract class AbstractComptaIT {
         GardeBase.controler(embarquee.urlJdbc(), embarquee.port(), embarquee.dossierDonnees());
     }
 
+    protected static String baseSeparee(String nom) {
+        return BaseEmbarquee.instance().creerBaseSeparee(nom);
+    }
+
     protected static DataSource base() {
         return BaseEmbarquee.instance().dataSource();
     }

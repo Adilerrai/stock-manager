@@ -38,7 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -423,10 +422,5 @@ public class IsComptaService {
         }
         repository.ecrireDeficit(livreId, null, r.anneeOrigine(), r.nature(), r.montant(), true);
         return repository.deficits(livreId);
-    }
-
-    /** Pour les messages : les mois écoulés d'une date à l'autre. */
-    static long mois(LocalDate du, LocalDate au) {
-        return ChronoUnit.MONTHS.between(du, au);
     }
 }

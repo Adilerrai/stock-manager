@@ -21,6 +21,10 @@ public final class ConsultationDtos {
     public record TotauxDTO(@MontantJson BigDecimal debit, @MontantJson BigDecimal credit) {
     }
 
+    public record CentralisateurLigneDTO(Long journalId, String journalCode, String journalLibelle, Long periodeId, int numeroPeriode, String typePeriode, LocalDate du, LocalDate au, long ecritures,
+                                         @MontantJson BigDecimal debit, @MontantJson BigDecimal credit) {
+    }
+
     public record PageJournalDTO(List<EcritureDTO> contenu, TotauxDTO totauxPage, TotauxDTO totauxPeriode,
                                  @Schema(nullable = true) String curseurSuivant) {
     }

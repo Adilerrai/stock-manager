@@ -217,6 +217,19 @@ public class TvaRepository {
         return ids.isEmpty() ? List.of() : reglementsOu(" AND l.id IN (:ids)", new MapSqlParameterSource().addValue("livreId", livreId).addValue("ids", ids));
     }
 
+    /** Les règlements d'un lot de factures, quelle que soit leur date : un retard se mesure aussi sur ce qui précède le rattachement du point de vente. */
+    public List<Reglement> reglementsDeFactures(Long livreId, Collection<Long> factures) {
+        if (factures.isEmpty()) {
+            return List.of();
+        }
+        return jdbc.query("WITH lus AS (" + REGLEMENTS_LUS + ") SELECT l.id, l.numero_reglement, l.date_effective, l.montant, l.mode_paiement, l.reference, l.type_reglement, l.point_de_vente_id, l.facture_achat_id, l.compte_financier_id, "
+                + EMPREINTE_REGLEMENT + " FROM lus l WHERE l.mode_paiement <> 'CREDIT'"
+                + " AND (l.statut_effet IS NULL OR l.statut_effet = 'ENCAISSE_COMPTABILISE' OR l.mode_paiement NOT IN " + EFFET_MODES + ")"
+                + " AND (l.facture_achat_id IN (:ids) OR l.id IN (SELECT reglement_id FROM compta_reglement_affectations WHERE livre_id = :livreId AND facture_achat_id IN (:ids))) ORDER BY l.date_effective, l.id",
+                new MapSqlParameterSource().addValue("livreId", livreId).addValue("ids", factures), (rs, i) -> new Reglement(rs.getLong(1), rs.getString(2), rs.getObject(3, LocalDate.class), rs.getBigDecimal(4), rs.getString(5), rs.getString(6), rs.getString(7),
+                        rs.getLong(8), (Long) rs.getObject(9), (Long) rs.getObject(10), rs.getString(11)));
+    }
+
     private List<Reglement> reglementsOu(String condition, MapSqlParameterSource parametres) {
         return jdbc.query("WITH lus AS (" + REGLEMENTS_LUS + ") SELECT l.id, l.numero_reglement, l.date_effective, l.montant, l.mode_paiement, l.reference, l.type_reglement, l.point_de_vente_id, l.facture_achat_id, l.compte_financier_id, "
                 + EMPREINTE_REGLEMENT + " FROM lus l WHERE l.mode_paiement <> 'CREDIT' AND COALESCE(l.type_reglement, 'FACTURE') <> 'ACOMPTE_COMMANDE' AND CAST(l.date_reglement AS date) >= l.date_rattachement"

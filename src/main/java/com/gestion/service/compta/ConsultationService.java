@@ -69,6 +69,13 @@ public class ConsultationService {
     }
 
     @Transactional(readOnly = true)
+    public List<com.gestion.persistent.dto.compta.ConsultationDtos.CentralisateurLigneDTO> centralisateur(Long exerciceId) {
+        Long livreId = livreCourant.exiger().livreId();
+        exigerExercice(livreId, exerciceId);
+        return journal.centralisateur(livreId, exerciceId);
+    }
+
+    @Transactional(readOnly = true)
     public PageJournalDTO journal(Long exerciceId, Long journalId, Long periodeId, String curseur, Integer taille) {
         Long livreId = livreCourant.exiger().livreId();
         exigerExercice(livreId, exerciceId);

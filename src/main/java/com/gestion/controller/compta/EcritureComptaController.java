@@ -83,11 +83,15 @@ public class EcritureComptaController {
     }
 
     @GetMapping("/ecritures")
-    @Operation(operationId = "comptaEcritureRechercher", summary = "Recherche par pièce, date ou montant")
+    @Operation(operationId = "comptaEcritureRechercher", summary = "Recherche par pièce, date, montant de ligne, libellé, compte ou période. Les 200 plus récentes")
     public ResponseEntity<List<EcritureDTO>> rechercher(@RequestParam(required = false) String refPiece,
                                                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate datePiece,
-                                                        @RequestParam(required = false) BigDecimal montant) {
-        return ResponseEntity.ok(service.rechercher(refPiece, datePiece, montant));
+                                                        @io.swagger.v3.oas.annotations.Parameter(schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string")) @RequestParam(required = false) BigDecimal montant,
+                                                        @RequestParam(required = false) String libelle,
+                                                        @RequestParam(required = false) String compte,
+                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate du,
+                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate au) {
+        return ResponseEntity.ok(service.rechercher(refPiece, datePiece, montant, libelle, compte, du, au));
     }
 
     @PostMapping("/ecritures/{id}/contrepasser")

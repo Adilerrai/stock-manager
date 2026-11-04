@@ -138,8 +138,8 @@ public class EcritureService {
     }
 
     @Transactional(readOnly = true)
-    public List<EcritureDTO> rechercher(String refPiece, LocalDate datePiece, BigDecimal montant) {
-        return journal.rechercher(livreCourant.exiger().livreId(), refPiece, datePiece, montant);
+    public List<EcritureDTO> rechercher(String refPiece, LocalDate datePiece, BigDecimal montant, String libelle, String compte, LocalDate du, LocalDate au) {
+        return journal.rechercher(livreCourant.exiger().livreId(), refPiece, datePiece, montant, libelle, compte, du, au);
     }
 
     /**

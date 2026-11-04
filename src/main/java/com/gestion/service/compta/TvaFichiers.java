@@ -254,11 +254,11 @@ public class TvaFichiers {
         });
     }
 
-    private interface Remplissage {
+    interface Remplissage {
         void remplir(XSSFWorkbook classeur);
     }
 
-    private static byte[] classeur(Remplissage remplissage) {
+    static byte[] classeur(Remplissage remplissage) {
         try (XSSFWorkbook classeur = new XSSFWorkbook(); ByteArrayOutputStream sortie = new ByteArrayOutputStream()) {
             remplissage.remplir(classeur);
             classeur.write(sortie);
@@ -268,7 +268,7 @@ public class TvaFichiers {
         }
     }
 
-    private static void ligne(Sheet feuille, int numero, Object... valeurs) {
+    static void ligne(Sheet feuille, int numero, Object... valeurs) {
         Row r = feuille.createRow(numero);
         for (int i = 0; i < valeurs.length; i++) {
             Object v = valeurs[i];
