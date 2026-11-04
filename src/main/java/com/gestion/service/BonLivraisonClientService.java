@@ -343,7 +343,7 @@ public class BonLivraisonClientService {
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
 
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
-                .or(() -> bonLivraisonClientRepository.findById(blId))
+                .or(() -> bonLivraisonClientRepository.findById(blId).filter(trouve -> estSuperAdmin()))
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
 
         if (bl.getStatut() == StatutLivraison.LIVREE) {
@@ -399,7 +399,7 @@ public class BonLivraisonClientService {
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
 
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
-                .or(() -> bonLivraisonClientRepository.findById(blId))
+                .or(() -> bonLivraisonClientRepository.findById(blId).filter(trouve -> estSuperAdmin()))
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
 
         if (bl.getStatut() == StatutLivraison.ANNULEE) {
@@ -549,7 +549,7 @@ public class BonLivraisonClientService {
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
 
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
-                .or(() -> bonLivraisonClientRepository.findById(blId))
+                .or(() -> bonLivraisonClientRepository.findById(blId).filter(trouve -> estSuperAdmin()))
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
 
         if (bl.getStatut() == StatutLivraison.ANNULEE) {
@@ -618,7 +618,7 @@ public class BonLivraisonClientService {
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
 
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
-                .or(() -> bonLivraisonClientRepository.findById(blId))
+                .or(() -> bonLivraisonClientRepository.findById(blId).filter(trouve -> estSuperAdmin()))
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
 
         if (bl.getFacture() != null || Boolean.TRUE.equals(bl.isFacture())) {
@@ -702,7 +702,7 @@ public class BonLivraisonClientService {
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
 
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(id, effectiveTenantId)
-                .or(() -> bonLivraisonClientRepository.findById(id))
+                .or(() -> bonLivraisonClientRepository.findById(id).filter(trouve -> estSuperAdmin()))
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + id, HttpStatus.NOT_FOUND));
 
         boolean lignesModifiees = isLignesModified(bl, dto.getLignes());
@@ -850,7 +850,7 @@ public class BonLivraisonClientService {
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
 
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(id, effectiveTenantId)
-                .or(() -> bonLivraisonClientRepository.findById(id))
+                .or(() -> bonLivraisonClientRepository.findById(id).filter(trouve -> estSuperAdmin()))
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + id, HttpStatus.NOT_FOUND));
 
         if (body != null) {
