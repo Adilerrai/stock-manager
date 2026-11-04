@@ -57,6 +57,10 @@ public class LivreurService {
     public List<DocumentLivreurCandidateDTO> searchDocuments(String query, String typeDocument) {
         Long tenantId = getCurrentTenant();
         String q = (query != null) ? query.trim().toLowerCase() : "";
+        // Exiger un code complété comportant au moins un chiffre (ne pas retourner de résultats si seules des lettres/préfixes sont saisis)
+        if (q.isEmpty() || !q.matches(".*\\d.*")) {
+            return List.of();
+        }
         List<DocumentLivreurCandidateDTO> candidates = new ArrayList<>();
 
         boolean searchBl = typeDocument == null || typeDocument.equalsIgnoreCase("ALL") || typeDocument.equalsIgnoreCase("BON_LIVRAISON") || typeDocument.equalsIgnoreCase("BL");
@@ -69,12 +73,10 @@ public class LivreurService {
                     continue;
                 }
                 String num = bl.getNumeroBl() != null ? bl.getNumeroBl().toLowerCase() : "";
-                String clientNom = (bl.getClient() != null && bl.getClient().getNomComplet() != null)
-                        ? bl.getClient().getNomComplet().toLowerCase() : "";
                 String factureNum = (bl.getFacture() != null && bl.getFacture().getNumeroFacture() != null)
                         ? bl.getFacture().getNumeroFacture().toLowerCase() : "";
 
-                if (q.isEmpty() || num.contains(q) || clientNom.contains(q) || (!factureNum.isEmpty() && factureNum.contains(q))) {
+                if (num.contains(q) || (!factureNum.isEmpty() && factureNum.contains(q))) {
                     DocumentLivreurCandidateDTO dto = new DocumentLivreurCandidateDTO();
                     dto.setId(bl.getId());
                     dto.setType("BON_LIVRAISON");
@@ -100,12 +102,10 @@ public class LivreurService {
                     continue;
                 }
                 String num = f.getNumeroFacture() != null ? f.getNumeroFacture().toLowerCase() : "";
-                String clientNom = (f.getClient() != null && f.getClient().getNomComplet() != null)
-                        ? f.getClient().getNomComplet().toLowerCase() : "";
                 boolean blMatch = f.getBonsLivraison() != null && f.getBonsLivraison().stream()
                         .anyMatch(b -> b.getNumeroBl() != null && b.getNumeroBl().toLowerCase().contains(q));
 
-                if (q.isEmpty() || num.contains(q) || clientNom.contains(q) || blMatch) {
+                if (num.contains(q) || blMatch) {
                     DocumentLivreurCandidateDTO dto = new DocumentLivreurCandidateDTO();
                     dto.setId(f.getId());
                     dto.setType("FACTURE");

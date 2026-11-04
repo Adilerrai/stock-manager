@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/api/v1/compta/abonnements", produces = "application/json")
 @CrossOrigin(origins = "*")
 @Tag(name = "Comptabilité : abonnement")
-@PreAuthorize("hasAuthority('ROLE_SUPERADMIN')")
+@PreAuthorize("hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_ADMIN') or hasAnyRole('SUPERADMIN', 'ADMIN')")
 public class AbonnementComptaController {
 
     private final AbonnementComptaService service;
