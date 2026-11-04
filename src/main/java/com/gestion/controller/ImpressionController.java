@@ -1,14 +1,19 @@
 package com.gestion.controller;
 
+import com.gestion.persistent.dto.EtiquetteCodeBarreRequest;
 import com.gestion.persistent.model.*;
 import com.gestion.repository.*;
+import com.gestion.service.BarcodeService;
 import com.gestion.service.ImpressionService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/impressions")
@@ -28,6 +33,9 @@ public class ImpressionController {
     private final FactureAchatRepository factureAchatRepository;
     private final TransfertStockRepository transfertStockRepository;
     private final DemandePrixRepository demandePrixRepository;
+
+    @Autowired(required = false)
+    private BarcodeService barcodeService;
 
     public ImpressionController(ImpressionService impressionService,
                                 FactureRepository factureRepository,
@@ -223,6 +231,46 @@ public class ImpressionController {
 
         byte[] pdf = impressionService.genererDemandePrixPdf(id, fournisseurId);
         return createPdfResponse(pdf, fileName);
+    }
+
+    /**
+     * Impression des étiquettes de codes-barres des produits (GET).
+     */
+    @GetMapping("/etiquettes-produits")
+    public ResponseEntity<byte[]> imprimerEtiquettesProduits(
+            @RequestParam(required = false) List<Long> ids,
+            @RequestParam(required = false) Long categorieId,
+            @RequestParam(required = false, defaultValue = "sticker") String modele,
+            @RequestParam(required = false, defaultValue = "2") Integer colonnes,
+            @RequestParam(required = false, defaultValue = "1") Integer exemplaires,
+            @RequestParam(required = false, defaultValue = "false") Boolean afficherPrix) {
+        if (barcodeService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        }
+        EtiquetteCodeBarreRequest req = new EtiquetteCodeBarreRequest();
+        req.setProduitIds(ids);
+        req.setCategorieId(categorieId);
+        req.setModele(modele);
+        req.setColonnes(colonnes);
+        req.setExemplaires(exemplaires);
+        req.setAfficherPrix(afficherPrix);
+
+        byte[] pdf = barcodeService.genererEtiquettesPdf(req);
+        return createPdfResponse(pdf, "etiquettes-produits.pdf");
+    }
+
+    /**
+     * Impression des étiquettes de codes-barres des produits (POST).
+     */
+    @PostMapping("/etiquettes-produits")
+    public ResponseEntity<byte[]> imprimerEtiquettesProduitsPost(
+            @RequestBody(required = false) EtiquetteCodeBarreRequest request) {
+        if (barcodeService == null) {
+            return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+        }
+        EtiquetteCodeBarreRequest req = (request != null) ? request : new EtiquetteCodeBarreRequest();
+        byte[] pdf = barcodeService.genererEtiquettesPdf(req);
+        return createPdfResponse(pdf, "etiquettes-produits.pdf");
     }
 
     public static String buildPdfFileName(String code, String raisonSociale) {

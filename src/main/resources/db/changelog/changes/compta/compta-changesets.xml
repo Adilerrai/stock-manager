@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+    logicalFilePath="db/changelog/db.changelog-master.xml">
+
+    <!-- Le SQL est à part : les déclencheurs contiennent $$, inférieur et supérieur. Un changeset par lot livré. -->
+
+    <changeSet id="compta-057-abonnements" author="compta">
+        <sqlFile path="db/changelog/changes/compta/057-compta-abonnements.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-058-referentiel-comptes" author="compta">
+        <sqlFile path="db/changelog/changes/compta/058-compta-referentiel-comptes.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-059-livre" author="compta">
+        <sqlFile path="db/changelog/changes/compta/059-compta-livre.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-060-journal" author="compta">
+        <sqlFile path="db/changelog/changes/compta/060-compta-journal.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-061-lettrage" author="compta">
+        <sqlFile path="db/changelog/changes/compta/061-compta-lettrage.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-062-etats-parametres" author="compta">
+        <sqlFile path="db/changelog/changes/compta/062-compta-etats-parametres.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-062-brouillon-extourne" author="compta">
+        <sqlFile path="db/changelog/changes/compta/062-compta-brouillon-extourne.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-063-passerelle" author="compta">
+        <sqlFile path="db/changelog/changes/compta/063-compta-passerelle.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-064-tva" author="compta">
+        <sqlFile path="db/changelog/changes/compta/064-compta-tva.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-065-immobilisations" author="compta">
+        <sqlFile path="db/changelog/changes/compta/065-compta-immobilisations-inventaire.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+    <changeSet id="compta-066-rapprochement" author="compta">
+        <sqlFile path="db/changelog/changes/compta/066-compta-rapprochement.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
+</databaseChangeLog>

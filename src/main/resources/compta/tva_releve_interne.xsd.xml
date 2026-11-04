@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Non officiel. Écrit depuis l'annexe 1 V4.0 du cahier EDI pour détecter nos propres régressions : il ne dit pas que la DGI acceptera le fichier. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+  <xs:element name="DeclarationReleveDeduction">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="identifiantFiscal" type="xs:string"/>
+        <xs:element name="annee" type="xs:string"/>
+        <xs:element name="periode" type="xs:positiveInteger"/>
+        <xs:element name="regime" type="xs:positiveInteger"/>
+        <xs:element name="releveDeductions">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="rd" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="ord" type="xs:positiveInteger"/>
+                    <xs:element name="num" type="xs:string"/>
+                    <xs:element name="des" type="xs:string"/>
+                    <xs:element name="mht" type="xs:decimal"/>
+                    <xs:element name="tva" type="xs:decimal"/>
+                    <xs:element name="ttc" type="xs:decimal"/>
+                    <xs:element name="refF">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="if" type="xs:string"/>
+                          <xs:element name="nom" type="xs:string"/>
+                          <xs:element name="ice" type="xs:string"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="tx" type="xs:decimal"/>
+                    <xs:element name="prorata" type="xs:decimal" minOccurs="0"/>
+                    <xs:element name="mp">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="id">
+                            <xs:simpleType>
+                              <xs:restriction base="xs:integer">
+                                <xs:minInclusive value="1"/>
+                                <xs:maxInclusive value="7"/>
+                              </xs:restriction>
+                            </xs:simpleType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="dpai" type="xs:date"/>
+                    <xs:element name="dfac" type="xs:date"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

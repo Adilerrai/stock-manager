@@ -181,4 +181,7 @@
     <!-- Changeset 057 : Statut DEPOSEE (Facture) et CACHETE (Bon de Livraison) -->
     <include file="changes/057-add-statut-deposee-et-cachete.xml" relativeToChangelogFile="true"/>
 
+    <!-- Nouvelle comptabilité : tables compta_* seulement, aucune table existante n'est modifiée -->
+    <include file="changes/compta/compta-changesets.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
