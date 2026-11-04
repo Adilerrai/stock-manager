@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+      Changeset 059 : un appareil abonné au push appartient à un seul utilisateur à la fois.
+      L'endpoint est unique : s'il est réenregistré par un autre compte, la ligne change de propriétaire.
+    -->
+    <changeSet id="059-create-push-subscriptions" author="stock-manager">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="push_subscriptions"/>
+            </not>
+        </preConditions>
+        <sql>
+            CREATE TABLE push_subscriptions (
+                id                BIGSERIAL    PRIMARY KEY,
+                user_id           BIGINT       NOT NULL,
+                endpoint          TEXT         NOT NULL,
+                p256dh            VARCHAR(255) NOT NULL,
+                auth              VARCHAR(255) NOT NULL,
+                date_creation     TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                date_modification TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT uk_push_subscriptions_endpoint UNIQUE (endpoint),
+                CONSTRAINT fk_push_subscriptions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            );
+            CREATE INDEX idx_push_subscriptions_user ON push_subscriptions(user_id);
+        </sql>
+    </changeSet>
+
+    <changeSet id="059-add-habilitation-notif-bl-expedie" author="stock-manager">
+        <comment>L'admin du tenant la reçoit d'office, les autres rôles depuis Équipe > Rôles</comment>
+        <sql>
+            INSERT INTO habilitations (nom)
+            SELECT 'NOTIF_BL_EXPEDIE'
+            WHERE NOT EXISTS (SELECT 1 FROM habilitations WHERE nom = 'NOTIF_BL_EXPEDIE');
+
+            INSERT INTO roles_habilitations (role_id, habilitation_id)
+            SELECT r.id, h.id
+              FROM roles r
+              JOIN habilitations h ON h.nom = 'NOTIF_BL_EXPEDIE'
+             WHERE r.nom = 'ROLE_ADMIN'
+            ON CONFLICT DO NOTHING;
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

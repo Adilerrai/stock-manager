@@ -70,6 +70,7 @@ public final class SuperAdminHabilitations {
             "RESERVATION_READ", "RESERVATION_MANAGE",
             // Livraisons & Expéditions (5)
             "LIVRAISON_READ", "LIVRAISON_CREATE", "LIVRAISON_EXPEDIER", "LIVRAISON_VALIDER", "LIVRAISON_ANNULER",
+            "NOTIF_BL_EXPEDIE",
             // Réceptions Achats (2)
             "RECEPTION_READ", "RECEPTION_VALIDER",
             // Commandes (3)

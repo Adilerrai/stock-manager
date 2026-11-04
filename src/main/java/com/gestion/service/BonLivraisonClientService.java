@@ -52,6 +52,12 @@ public class BonLivraisonClientService {
     private final GedService gedService;
     private final EntrepriseProfileService entrepriseProfileService;
     private final UserRepository userRepository;
+    private com.gestion.service.push.ExpeditionBlNotifier expeditionBlNotifier;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public void setExpeditionBlNotifier(com.gestion.service.push.ExpeditionBlNotifier expeditionBlNotifier) {
+        this.expeditionBlNotifier = expeditionBlNotifier;
+    }
 
     @org.springframework.beans.factory.annotation.Autowired
     public BonLivraisonClientService(BonLivraisonClientRepository bonLivraisonClientRepository,
@@ -281,8 +287,9 @@ public class BonLivraisonClientService {
         Long tenantId = TenantContext.getCurrentTenant();
         Long effectiveTenantId = tenantId != null ? tenantId : 1L;
 
+        // Hors de son tenant, seul le superadmin retrouve un BL : expédier déstocke et notifie
         BonLivraisonClient bl = bonLivraisonClientRepository.findByIdAndPointDeVenteId(blId, effectiveTenantId)
-                .or(() -> bonLivraisonClientRepository.findById(blId))
+                .or(() -> bonLivraisonClientRepository.findById(blId).filter(trouve -> estSuperAdmin()))
                 .orElseThrow(() -> new CommonException("Bon de livraison non trouvé avec l'id: " + blId, HttpStatus.NOT_FOUND));
 
         if (bl.getStatut() == StatutLivraison.LIVREE) {
@@ -311,10 +318,20 @@ public class BonLivraisonClientService {
             bl.setObservations(observations);
         }
         bl.setDateExpedition(LocalDateTime.now());
+        StatutLivraison statutPrecedent = bl.getStatut();
         bl.setStatut(StatutLivraison.EXPEDIE);
 
         BonLivraisonClient saved = bonLivraisonClientRepository.save(bl);
+        if (expeditionBlNotifier != null) {
+            expeditionBlNotifier.signaler(saved, statutPrecedent);
+        }
         return bonLivraisonClientMapper.toDto(saved);
+    }
+
+    private static boolean estSuperAdmin() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getPrincipal() instanceof User u
+                && u.getRole() != null && "ROLE_SUPERADMIN".equalsIgnoreCase(u.getRole().getNom());
     }
 
     /**

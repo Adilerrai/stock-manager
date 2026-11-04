@@ -12,6 +12,7 @@ import com.gestion.persistent.model.PreuveDepotLivreur;
 import com.gestion.repository.BonLivraisonClientRepository;
 import com.gestion.repository.FactureRepository;
 import com.gestion.repository.PreuveDepotLivreurRepository;
+import com.gestion.service.push.ExpeditionBlNotifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -39,13 +40,16 @@ public class LivreurService {
     private final PreuveDepotLivreurRepository preuveDepotLivreurRepository;
     private final BonLivraisonClientRepository bonLivraisonClientRepository;
     private final FactureRepository factureRepository;
+    private final ExpeditionBlNotifier expeditionBlNotifier;
 
     public LivreurService(PreuveDepotLivreurRepository preuveDepotLivreurRepository,
                           BonLivraisonClientRepository bonLivraisonClientRepository,
-                          FactureRepository factureRepository) {
+                          FactureRepository factureRepository,
+                          ExpeditionBlNotifier expeditionBlNotifier) {
         this.preuveDepotLivreurRepository = preuveDepotLivreurRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.factureRepository = factureRepository;
+        this.expeditionBlNotifier = expeditionBlNotifier;
     }
 
     private Long getCurrentTenant() {
@@ -256,15 +260,17 @@ public class LivreurService {
         // BL -> CACHETE / EXPEDIE, Facture -> DEPOSEE
         try {
             if (documentType == TypeDocumentLivreur.BON_LIVRAISON) {
-                bonLivraisonClientRepository.findById(documentId).ifPresent(bl -> {
+                bonLivraisonClientRepository.findByIdAndPointDeVenteId(documentId, tenantId).ifPresent(bl -> {
                     bl.setDateLivraisonEffective(LocalDateTime.now());
                     if (commentaire != null && !commentaire.isBlank()) {
                         bl.setCommentaireLivreur(commentaire);
                     }
+                    StatutLivraison statutPrecedent = bl.getStatut();
                     if (bl.getStatut() != StatutLivraison.ANNULEE) {
                         bl.setStatut((typeAction == TypeActionLivreur.LIVRAISON_EFFECTUEE || typeAction == TypeActionLivreur.BL_EXPEDIE || typeAction == TypeActionLivreur.LES_DEUX) ? StatutLivraison.CACHETE : StatutLivraison.EXPEDIE);
                     }
                     bonLivraisonClientRepository.save(bl);
+                    expeditionBlNotifier.signaler(bl, statutPrecedent);
 
                     if (bl.getFacture() != null) {
                         Facture fac = bl.getFacture();

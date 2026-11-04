@@ -89,6 +89,35 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Web Push (VAPID + chiffrement aes128gcm), sans Firebase.
+             La CLI et le client Netty de la librairie ne servent pas : seul PushService est utilisé. -->
+        <dependency>
+            <groupId>nl.martijndwars</groupId>
+            <artifactId>web-push</artifactId>
+            <version>5.1.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.beust</groupId>
+                    <artifactId>jcommander</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.asynchttpclient</groupId>
+                    <artifactId>async-http-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- web-push les déclare en runtime alors que l'API de PushService les expose à la compilation -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpasyncclient</artifactId>
+            <version>4.1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.bitbucket.b_c</groupId>
+            <artifactId>jose4j</artifactId>
+            <version>0.7.9</version>
+        </dependency>
+
         <!-- Database & Liquibase -->
         <dependency>
             <groupId>org.postgresql</groupId>
