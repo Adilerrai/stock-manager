@@ -181,4 +181,7 @@
     <!-- Changeset 057 : Statut DEPOSEE (Facture) et CACHETE (Bon de Livraison) -->
     <include file="changes/057-add-statut-deposee-et-cachete.xml" relativeToChangelogFile="true"/>
 
+    <!-- Changeset 058 : Colonne code_barre dans produits et initialisation depuis reference -->
+    <include file="changes/058-add-code-barre-produits.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- 
+      Changeset 058 : Colonne code_barre dans produits et initialisation depuis reference
+      Permet la génération et l'impression des étiquettes codes-barres Code 128
+    -->
+    <changeSet id="058-ensure-code-barre-produits" author="stock-manager">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="produits" columnName="code_barre"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="produits">
+            <column name="code_barre" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="058-populate-code-barre-from-reference" author="stock-manager">
+        <comment>Initialise le code_barre avec la reference pour tous les produits existants sans code barre</comment>
+        <sql>
+            UPDATE produits 
+            SET code_barre = reference 
+            WHERE (code_barre IS NULL OR TRIM(code_barre) = '') 
+              AND reference IS NOT NULL 
+              AND TRIM(reference) != '';
+        </sql>
+    </changeSet>
+
+    <changeSet id="058-create-index-code-barre-produits" author="stock-manager">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="produits" indexName="idx_produits_code_barre"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="produits" indexName="idx_produits_code_barre">
+            <column name="code_barre"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>
+
