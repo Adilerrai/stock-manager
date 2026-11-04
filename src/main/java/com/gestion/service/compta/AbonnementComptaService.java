@@ -34,7 +34,7 @@ public class AbonnementComptaService {
     public AbonnementDTO modifier(Long pointDeVenteId, boolean actif) {
         Long cible = resoudreEtControlerPointDeVente(pointDeVenteId, actif);
         repository.enregistrer(cible, actif, livreCourant.auteur());
-        audit.logAction(ActionAudit.MODIFICATION, "compta_abonnements", cible, actif ? "Abonnement activé" : "Abonnement coupé");
+        audit.logAction(ActionAudit.MODIFICATION, "compta_abonnements", cible, actif ? "Abonnement activé" : "Abonnement coupé", cible);
         return lire(cible);
     }
 

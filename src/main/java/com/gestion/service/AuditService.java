@@ -43,7 +43,10 @@ public class AuditService {
 
     private Long getTenantId() {
         Long t = TenantContext.getCurrentTenant();
-        return t != null ? t : 1L;
+        if (t != null && t > 0) {
+            return t;
+        }
+        return 1L;
     }
 
     private String getCurrentUser() {
@@ -91,8 +94,14 @@ public class AuditService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void logAction(ActionAudit action, String entite, Long entiteId, String description) {
+        logAction(action, entite, entiteId, description, null);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void logAction(ActionAudit action, String entite, Long entiteId, String description, Long pointDeVenteId) {
+        Long pdv = (pointDeVenteId != null && pointDeVenteId > 0) ? pointDeVenteId : getTenantId();
         AuditLog log = AuditLog.action(action, entite, entiteId,
-                description, getCurrentUser(), getTenantId());
+                description, getCurrentUser(), pdv);
         auditLogRepository.save(log);
     }
 
