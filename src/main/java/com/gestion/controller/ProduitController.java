@@ -148,7 +148,7 @@ public class ProduitController {
     public ResponseEntity<byte[]> imprimerEtiquettesPdf(
             @RequestParam(required = false) List<Long> ids,
             @RequestParam(required = false) Long categorieId,
-            @RequestParam(required = false, defaultValue = "sticker") String modele,
+            @RequestParam(required = false, defaultValue = "grille") String modele,
             @RequestParam(required = false, defaultValue = "2") Integer colonnes,
             @RequestParam(required = false, defaultValue = "1") Integer exemplaires,
             @RequestParam(required = false, defaultValue = "false") Boolean afficherPrix) {

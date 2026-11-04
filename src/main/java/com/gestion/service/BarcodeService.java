@@ -162,7 +162,6 @@ public class BarcodeService {
             }
         }
 
-        // Tri par référence pour un ordre propre
         produits.sort((a, b) -> {
             String ra = a.getReference() != null ? a.getReference() : "";
             String rb = b.getReference() != null ? b.getReference() : "";
@@ -186,7 +185,6 @@ public class BarcodeService {
         boolean afficherPrix = request.getAfficherPrix();
         String modele = request.getModele();
 
-        // Répéter chaque produit selon le nombre d'exemplaires demandé
         List<Produit> listeImpression = new ArrayList<>();
         for (Produit p : produits) {
             for (int i = 0; i < copies; i++) {
@@ -194,17 +192,18 @@ public class BarcodeService {
             }
         }
 
-        Document document = new Document(PageSize.A4, 18, 18, 20, 20);
+        Document document = new Document(PageSize.A4, 16, 16, 18, 18);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
         try {
             PdfWriter writer = PdfWriter.getInstance(document, baos);
             document.open();
 
-            if ("grille".equalsIgnoreCase(modele) || "modele02".equalsIgnoreCase(modele)) {
-                buildModeleGrille(document, writer, listeImpression, cols, afficherPrix);
-            } else {
+            if ("sticker".equalsIgnoreCase(modele)) {
                 buildModeleSticker(document, writer, listeImpression, cols, afficherPrix);
+            } else {
+                // Par défaut : MODÈLE 02 - GRILLE INVENTAIRE (conforme à l'image demandée)
+                buildModeleGrille(document, writer, listeImpression, cols, afficherPrix);
             }
 
             document.close();
@@ -216,139 +215,23 @@ public class BarcodeService {
     }
 
     /**
-     * MODÈLE 01 : Étiquette sticker épurée et centrée (conforme à l'image 2).
-     */
-    private void buildModeleSticker(Document document, PdfWriter writer, List<Produit> produits, int cols, boolean afficherPrix) throws Exception {
-        PdfContentByte cb = writer.getDirectContent();
-
-        // Largeurs de colonnes : intercaler un séparateur blanc de 3% entre les étiquettes
-        float[] relativeWidths;
-        if (cols == 3) {
-            relativeWidths = new float[]{31.3f, 3.0f, 31.3f, 3.0f, 31.4f};
-        } else {
-            // cols == 2 par défaut
-            relativeWidths = new float[]{48.5f, 3.0f, 48.5f};
-        }
-
-        PdfPTable table = new PdfPTable(relativeWidths);
-        table.setWidthPercentage(100);
-        table.getDefaultCell().setBorder(Rectangle.NO_BORDER);
-
-        Font fontDesignation = FontFactory.getFont(FontFactory.HELVETICA_BOLD, cols == 3 ? 8.0f : 9.0f, Color.BLACK);
-        Font fontCode = FontFactory.getFont(FontFactory.HELVETICA_BOLD, cols == 3 ? 8.5f : 9.5f, Color.BLACK);
-        Font fontPrix = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, new Color(0x0A, 0x3B, 0x75));
-
-        int cellInRow = 0;
-
-        for (Produit p : produits) {
-            String code = resolveCode(p);
-            String designation = p.getDesignation() != null && !p.getDesignation().trim().isEmpty()
-                    ? p.getDesignation().trim()
-                    : (p.getDescription() != null ? p.getDescription().trim() : p.getReference());
-
-            PdfPCell cardCell = new PdfPCell();
-            cardCell.setBorder(Rectangle.BOX);
-            cardCell.setBorderWidth(0.8f);
-            cardCell.setBorderColor(new Color(210, 215, 222));
-            cardCell.setPadding(8.0f);
-            cardCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            cardCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
-            cardCell.setBackgroundColor(Color.WHITE);
-
-            // 1. Désignation produit
-            Paragraph pDesig = new Paragraph(designation.toUpperCase(), fontDesignation);
-            pDesig.setAlignment(Element.ALIGN_CENTER);
-            pDesig.setLeading(cols == 3 ? 9.5f : 11.0f);
-            pDesig.setSpacingAfter(6.0f);
-            cardCell.addElement(pDesig);
-
-            // 2. Code-barre vectoriel Code 128
-            Barcode128 barcode = new Barcode128();
-            barcode.setCodeType(Barcode128.CODE128);
-            barcode.setCode(code);
-            barcode.setFont(null); // On affiche le texte séparément pour une netteté parfaite
-            barcode.setBarHeight(cols == 3 ? 28.0f : 34.0f);
-            barcode.setX(cols == 3 ? 0.95f : 1.10f);
-
-            Image barcodeImg = barcode.createImageWithBarcode(cb, Color.BLACK, Color.BLACK);
-            barcodeImg.setAlignment(Element.ALIGN_CENTER);
-            cardCell.addElement(barcodeImg);
-
-            // 3. Code en texte sous le code-barre
-            Paragraph pCode = new Paragraph(code, fontCode);
-            pCode.setAlignment(Element.ALIGN_CENTER);
-            pCode.setSpacingBefore(4.0f);
-            cardCell.addElement(pCode);
-
-            // 4. Prix optionnel
-            if (afficherPrix) {
-                BigDecimal prix = p.getPrixVenteTtc() != null ? p.getPrixVenteTtc() : p.getPrixVente();
-                if (prix != null && prix.compareTo(BigDecimal.ZERO) > 0) {
-                    Paragraph pPrix = new Paragraph(String.format(Locale.FRANCE, "%,.2f MAD", prix), fontPrix);
-                    pPrix.setAlignment(Element.ALIGN_CENTER);
-                    pPrix.setSpacingBefore(3.0f);
-                    cardCell.addElement(pPrix);
-                }
-            }
-
-            table.addCell(cardCell);
-            cellInRow++;
-
-            if (cellInRow < cols) {
-                // Espace horizontal entre étiquettes
-                PdfPCell spacer = new PdfPCell();
-                spacer.setBorder(Rectangle.NO_BORDER);
-                table.addCell(spacer);
-            } else {
-                cellInRow = 0;
-                // Espace vertical entre rangées d'étiquettes
-                for (int i = 0; i < relativeWidths.length; i++) {
-                    PdfPCell vSpacer = new PdfPCell();
-                    vSpacer.setBorder(Rectangle.NO_BORDER);
-                    vSpacer.setFixedHeight(10.0f);
-                    table.addCell(vSpacer);
-                }
-            }
-        }
-
-        // Compléter la dernière ligne si incomplète
-        if (cellInRow > 0) {
-            while (cellInRow < cols) {
-                // Espace intermédiaire
-                PdfPCell spacer = new PdfPCell();
-                spacer.setBorder(Rectangle.NO_BORDER);
-                table.addCell(spacer);
-
-                // Cellule vide
-                PdfPCell empty = new PdfPCell();
-                empty.setBorder(Rectangle.NO_BORDER);
-                table.addCell(empty);
-
-                cellInRow++;
-            }
-        }
-
-        document.add(table);
-    }
-
-    /**
-     * MODÈLE 02 : Étiquettes Grille Inventaire avec bandeau bleu pastel (conforme à l'image 1).
+     * MODÈLE 02 : Étiquettes Grille Inventaire avec bandeau bleu pastel (conforme aux images fournies).
      */
     private void buildModeleGrille(Document document, PdfWriter writer, List<Produit> produits, int cols, boolean afficherPrix) throws Exception {
         PdfContentByte cb = writer.getDirectContent();
 
-        // 1. Bandeau En-tête bleu nuit
+        // 1. Bandeau En-tête bleu nuit (INVENTAIRE | ETIQUETTES PRODUITS)
         PdfPTable headerTable = new PdfPTable(1);
         headerTable.setWidthPercentage(100);
-        headerTable.setSpacingAfter(12.0f);
+        headerTable.setSpacingAfter(10.0f);
 
         PdfPCell headerCell = new PdfPCell();
-        headerCell.setBackgroundColor(new Color(0x0A, 0x25, 0x40));
-        headerCell.setPadding(9.0f);
+        headerCell.setBackgroundColor(new Color(0x0A, 0x28, 0x47));
+        headerCell.setPadding(8.0f);
         headerCell.setBorder(Rectangle.NO_BORDER);
 
-        Font fontHeaderTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12.0f, Color.WHITE);
-        Font fontHeaderSub = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, new Color(0xCF, 0xD8, 0xDC));
+        Font fontHeaderTitle = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 11.5f, Color.WHITE);
+        Font fontHeaderSub = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, new Color(0xCF, 0xD8, 0xDC));
 
         Paragraph title = new Paragraph("INVENTAIRE | ETIQUETTES PRODUITS", fontHeaderTitle);
         Paragraph sub = new Paragraph("MODELE 02 • CODE 128 • IMPRESSION A4 A 100 %", fontHeaderSub);
@@ -361,16 +244,17 @@ public class BarcodeService {
 
         // 2. Grille de cartes
         float[] relativeWidths = (cols == 3)
-                ? new float[]{31.3f, 3.0f, 31.3f, 3.0f, 31.4f}
-                : new float[]{48.5f, 3.0f, 48.5f};
+                ? new float[]{31.5f, 2.7f, 31.5f, 2.7f, 31.6f}
+                : new float[]{48.6f, 2.8f, 48.6f};
 
         PdfPTable table = new PdfPTable(relativeWidths);
         table.setWidthPercentage(100);
         table.getDefaultCell().setBorder(Rectangle.NO_BORDER);
 
         Font fontBadgeCode = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10.0f, new Color(0x0A, 0x3B, 0x75));
-        Font fontDesignation = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.5f, new Color(0x22, 0x22, 0x22));
-        Font fontBottomCode = FontFactory.getFont(FontFactory.HELVETICA, 8.5f, new Color(0x44, 0x44, 0x44));
+        Font fontDesignation = FontFactory.getFont(FontFactory.HELVETICA_BOLD, cols == 3 ? 7.5f : 8.5f, new Color(0x1F, 0x29, 0x37));
+        Font fontBottomCode = FontFactory.getFont(FontFactory.HELVETICA, 8.5f, new Color(0x37, 0x41, 0x51));
+        Font fontPrix = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, new Color(0x0A, 0x3B, 0x75));
 
         int cellInRow = 0;
 
@@ -388,7 +272,11 @@ public class BarcodeService {
             PdfPCell badgeCell = new PdfPCell();
             badgeCell.setBackgroundColor(new Color(0xEB, 0xF3, 0xFA));
             badgeCell.setBorder(Rectangle.NO_BORDER);
-            badgeCell.setPadding(6.0f);
+            badgeCell.setPaddingLeft(8.0f);
+            badgeCell.setPaddingTop(5.0f);
+            badgeCell.setPaddingBottom(5.0f);
+            badgeCell.setFixedHeight(22.0f);
+
             Paragraph pBadge = new Paragraph(code, fontBadgeCode);
             pBadge.setAlignment(Element.ALIGN_LEFT);
             badgeCell.addElement(pBadge);
@@ -397,7 +285,10 @@ public class BarcodeService {
             // B. Corps de la carte
             PdfPCell bodyCell = new PdfPCell();
             bodyCell.setBorder(Rectangle.NO_BORDER);
-            bodyCell.setPadding(8.0f);
+            bodyCell.setPaddingLeft(8.0f);
+            bodyCell.setPaddingRight(8.0f);
+            bodyCell.setPaddingTop(8.0f);
+            bodyCell.setPaddingBottom(8.0f);
             bodyCell.setBackgroundColor(Color.WHITE);
 
             // Désignation
@@ -411,8 +302,8 @@ public class BarcodeService {
             barcode.setCodeType(Barcode128.CODE128);
             barcode.setCode(code);
             barcode.setFont(null);
-            barcode.setBarHeight(30.0f);
-            barcode.setX(1.05f);
+            barcode.setBarHeight(32.0f);
+            barcode.setX(cols == 3 ? 0.95f : 1.10f);
 
             Image barcodeImg = barcode.createImageWithBarcode(cb, Color.BLACK, Color.BLACK);
             barcodeImg.setAlignment(Element.ALIGN_CENTER);
@@ -424,12 +315,23 @@ public class BarcodeService {
             pCode.setSpacingBefore(4.0f);
             bodyCell.addElement(pCode);
 
+            // Prix optionnel
+            if (afficherPrix) {
+                BigDecimal prix = p.getPrixVenteTtc() != null ? p.getPrixVenteTtc() : p.getPrixVente();
+                if (prix != null && prix.compareTo(BigDecimal.ZERO) > 0) {
+                    Paragraph pPrix = new Paragraph(String.format(Locale.FRANCE, "%,.2f MAD", prix), fontPrix);
+                    pPrix.setAlignment(Element.ALIGN_CENTER);
+                    pPrix.setSpacingBefore(3.0f);
+                    bodyCell.addElement(pPrix);
+                }
+            }
+
             cardInnerTable.addCell(bodyCell);
 
             // Envelopper cardInnerTable dans une cellule avec bordure
             PdfPCell wrapperCell = new PdfPCell();
             wrapperCell.setBorder(Rectangle.BOX);
-            wrapperCell.setBorderWidth(0.8f);
+            wrapperCell.setBorderWidth(0.75f);
             wrapperCell.setBorderColor(new Color(210, 218, 226));
             wrapperCell.setPadding(0);
             wrapperCell.addElement(cardInnerTable);
@@ -468,5 +370,106 @@ public class BarcodeService {
 
         document.add(table);
     }
-}
 
+    /**
+     * MODÈLE 01 : Étiquette sticker épurée et centrée.
+     */
+    private void buildModeleSticker(Document document, PdfWriter writer, List<Produit> produits, int cols, boolean afficherPrix) throws Exception {
+        PdfContentByte cb = writer.getDirectContent();
+
+        float[] relativeWidths = (cols == 3)
+                ? new float[]{31.5f, 2.7f, 31.5f, 2.7f, 31.6f}
+                : new float[]{48.6f, 2.8f, 48.6f};
+
+        PdfPTable table = new PdfPTable(relativeWidths);
+        table.setWidthPercentage(100);
+        table.getDefaultCell().setBorder(Rectangle.NO_BORDER);
+
+        Font fontDesignation = FontFactory.getFont(FontFactory.HELVETICA_BOLD, cols == 3 ? 8.0f : 9.0f, Color.BLACK);
+        Font fontCode = FontFactory.getFont(FontFactory.HELVETICA_BOLD, cols == 3 ? 8.5f : 9.5f, Color.BLACK);
+        Font fontPrix = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8.0f, new Color(0x0A, 0x3B, 0x75));
+
+        int cellInRow = 0;
+
+        for (Produit p : produits) {
+            String code = resolveCode(p);
+            String designation = p.getDesignation() != null && !p.getDesignation().trim().isEmpty()
+                    ? p.getDesignation().trim()
+                    : (p.getDescription() != null ? p.getDescription().trim() : p.getReference());
+
+            PdfPCell cardCell = new PdfPCell();
+            cardCell.setBorder(Rectangle.BOX);
+            cardCell.setBorderWidth(0.75f);
+            cardCell.setBorderColor(new Color(210, 215, 222));
+            cardCell.setPadding(8.0f);
+            cardCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            cardCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+            cardCell.setBackgroundColor(Color.WHITE);
+
+            Paragraph pDesig = new Paragraph(designation.toUpperCase(), fontDesignation);
+            pDesig.setAlignment(Element.ALIGN_CENTER);
+            pDesig.setLeading(cols == 3 ? 9.5f : 11.0f);
+            pDesig.setSpacingAfter(6.0f);
+            cardCell.addElement(pDesig);
+
+            Barcode128 barcode = new Barcode128();
+            barcode.setCodeType(Barcode128.CODE128);
+            barcode.setCode(code);
+            barcode.setFont(null);
+            barcode.setBarHeight(cols == 3 ? 28.0f : 34.0f);
+            barcode.setX(cols == 3 ? 0.95f : 1.10f);
+
+            Image barcodeImg = barcode.createImageWithBarcode(cb, Color.BLACK, Color.BLACK);
+            barcodeImg.setAlignment(Element.ALIGN_CENTER);
+            cardCell.addElement(barcodeImg);
+
+            Paragraph pCode = new Paragraph(code, fontCode);
+            pCode.setAlignment(Element.ALIGN_CENTER);
+            pCode.setSpacingBefore(4.0f);
+            cardCell.addElement(pCode);
+
+            if (afficherPrix) {
+                BigDecimal prix = p.getPrixVenteTtc() != null ? p.getPrixVenteTtc() : p.getPrixVente();
+                if (prix != null && prix.compareTo(BigDecimal.ZERO) > 0) {
+                    Paragraph pPrix = new Paragraph(String.format(Locale.FRANCE, "%,.2f MAD", prix), fontPrix);
+                    pPrix.setAlignment(Element.ALIGN_CENTER);
+                    pPrix.setSpacingBefore(3.0f);
+                    cardCell.addElement(pPrix);
+                }
+            }
+
+            table.addCell(cardCell);
+            cellInRow++;
+
+            if (cellInRow < cols) {
+                PdfPCell spacer = new PdfPCell();
+                spacer.setBorder(Rectangle.NO_BORDER);
+                table.addCell(spacer);
+            } else {
+                cellInRow = 0;
+                for (int i = 0; i < relativeWidths.length; i++) {
+                    PdfPCell vSpacer = new PdfPCell();
+                    vSpacer.setBorder(Rectangle.NO_BORDER);
+                    vSpacer.setFixedHeight(10.0f);
+                    table.addCell(vSpacer);
+                }
+            }
+        }
+
+        if (cellInRow > 0) {
+            while (cellInRow < cols) {
+                PdfPCell spacer = new PdfPCell();
+                spacer.setBorder(Rectangle.NO_BORDER);
+                table.addCell(spacer);
+
+                PdfPCell empty = new PdfPCell();
+                empty.setBorder(Rectangle.NO_BORDER);
+                table.addCell(empty);
+
+                cellInRow++;
+            }
+        }
+
+        document.add(table);
+    }
+}

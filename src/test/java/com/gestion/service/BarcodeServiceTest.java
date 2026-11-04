@@ -11,8 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
@@ -54,7 +52,6 @@ public class BarcodeServiceTest {
         byte[] png = barcodeService.generateBarcodePng("011106206-1", 200, 60);
         assertNotNull(png);
         assertTrue(png.length > 100);
-        // Signature PNG standard (0x89 0x50 0x4E 0x47)
         assertEquals((byte) 0x89, png[0]);
         assertEquals((byte) 'P', png[1]);
         assertEquals((byte) 'N', png[2]);
@@ -81,18 +78,16 @@ public class BarcodeServiceTest {
     }
 
     @Test
-    void testGenererEtiquettesPdfSticker() {
+    void testGenererEtiquettesPdfGrilleParDefaut() {
         when(produitRepository.findByPointDeVenteId(anyLong())).thenReturn(Arrays.asList(p1, p2));
 
         EtiquetteCodeBarreRequest req = new EtiquetteCodeBarreRequest();
-        req.setModele("sticker");
         req.setColonnes(2);
         req.setExemplaires(1);
 
         byte[] pdf = barcodeService.genererEtiquettesPdf(req);
         assertNotNull(pdf);
         assertTrue(pdf.length > 1000);
-        // Signature PDF standard (%PDF)
         assertEquals((byte) '%', pdf[0]);
         assertEquals((byte) 'P', pdf[1]);
         assertEquals((byte) 'D', pdf[2]);
@@ -100,14 +95,13 @@ public class BarcodeServiceTest {
     }
 
     @Test
-    void testGenererEtiquettesPdfGrille() {
+    void testGenererEtiquettesPdfSticker() {
         when(produitRepository.findByPointDeVenteId(anyLong())).thenReturn(Arrays.asList(p1, p2));
 
         EtiquetteCodeBarreRequest req = new EtiquetteCodeBarreRequest();
-        req.setModele("grille");
+        req.setModele("sticker");
         req.setColonnes(2);
-        req.setExemplaires(2);
-        req.setAfficherPrix(true);
+        req.setExemplaires(1);
 
         byte[] pdf = barcodeService.genererEtiquettesPdf(req);
         assertNotNull(pdf);

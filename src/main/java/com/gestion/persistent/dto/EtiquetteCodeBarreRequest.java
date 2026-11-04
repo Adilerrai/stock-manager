@@ -19,10 +19,10 @@ public class EtiquetteCodeBarreRequest {
 
     /**
      * Modèle de rendu :
+     * "grille" (ou "modele02") : style inventaire avec cartouche bleu pastel et en-tête (DÉFAUT)
      * "sticker" : étiquette épurée centrée (titre + code barre + référence)
-     * "grille"  : style inventaire avec cartouche bleu pastel et en-tête
      */
-    private String modele = "sticker";
+    private String modele = "grille";
 
     /**
      * Nombre de colonnes par page A4 (2 ou 3). Défaut = 2.
@@ -59,7 +59,7 @@ public class EtiquetteCodeBarreRequest {
     }
 
     public String getModele() {
-        return modele != null ? modele : "sticker";
+        return (modele != null && !modele.trim().isEmpty()) ? modele : "grille";
     }
 
     public void setModele(String modele) {
@@ -90,4 +90,3 @@ public class EtiquetteCodeBarreRequest {
         this.afficherPrix = afficherPrix;
     }
 }
-
