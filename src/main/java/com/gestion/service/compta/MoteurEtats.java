@@ -41,11 +41,24 @@ public final class MoteurEtats {
     private final DefinitionsEtats definitions;
     private final List<JeuMesures> jeux;
     private final Map<String, BigDecimal> memoire = new HashMap<>();
+    private final Saisies saisies;
+
+    /**
+     * Ce que la liasse saisit : une cellule par « ligne|colonne », et le total d'un bloc libre ou d'un registre par « bloc|colonne ».
+     * Une cellule à saisir restée vide compte pour zéro dans un calcul ; une cellule de registre non servie laisse le calcul sans valeur.
+     */
+    public record Saisies(Map<String, BigDecimal> cellules, Map<String, BigDecimal> blocs) {
+    }
 
     /** @param jeux N d'abord, puis N-1 et N-2 ; un élément nul quand l'exercice n'existe pas et qu'aucune balance n'a été reprise */
     public MoteurEtats(DefinitionsEtats definitions, List<JeuMesures> jeux) {
+        this(definitions, jeux, null);
+    }
+
+    public MoteurEtats(DefinitionsEtats definitions, List<JeuMesures> jeux, Saisies saisies) {
         this.definitions = definitions;
         this.jeux = new ArrayList<>(jeux);
+        this.saisies = saisies;
     }
 
     public BigDecimal cellule(String ligne, String colonne) {
@@ -137,8 +150,17 @@ public final class MoteurEtats {
 
     private BigDecimal calculer(String ligne, String colonne, int decalage) {
         Forme forme = forme(ligne, colonne);
+        if (saisies != null && decalage == 0) {
+            BigDecimal saisie = saisies.cellules().get(ligne + "|" + colonne);
+            if (saisie != null) {
+                return saisie;
+            }
+        }
         if (forme == null || forme.vide()) {
             return null;
+        }
+        if (forme.saisie()) {
+            return saisies != null ? BigDecimal.ZERO : null;
         }
         if (forme.termes() != null) {
             return termes(forme.termes(), decalage);
@@ -310,7 +332,24 @@ public final class MoteurEtats {
             }
             return "positif".equals(nom) ? valeur.max(BigDecimal.ZERO) : valeur.negate().max(BigDecimal.ZERO);
         }
-        // Les fonctions de la liasse arrivent avec elle. D'ici là, leur cellule n'a pas de valeur, plutôt qu'un zéro qui paraîtrait juste.
+        if ("RATIO".equals(nom)) {
+            BigDecimal a = addition(jetons, position, decalage);
+            position[0]++;
+            BigDecimal b = addition(jetons, position, decalage);
+            position[0]++;
+            return a == null || b == null || b.signum() == 0 ? null : a.divide(b, 6, java.math.RoundingMode.HALF_UP);
+        }
+        if (("BLOC".equals(nom) || "SOMME".equals(nom)) && saisies != null && decalage == 0) {
+            StringBuilder cle = new StringBuilder();
+            while (!jetons.get(position[0]).estOperateur(")")) {
+                Jeton j = jetons.get(position[0]++);
+                cle.append(j.estOperateur(",") ? "|" : j.texte());
+            }
+            position[0]++;
+            String clef = cle.toString();
+            return saisies.blocs().getOrDefault(clef, BigDecimal.ZERO);
+        }
+        // Une fonction que le module ne sert pas encore ne donne pas de valeur, plutôt qu'un zéro qui paraîtrait juste.
         int profondeur = 1;
         while (profondeur > 0) {
             Jeton courant = jetons.get(position[0]++);

@@ -27,7 +27,7 @@ public final class ClotureDtos {
     }
 
     /** Tant que l'inventaire et l'IS n'ont pas leur module, l'arrêté ne suppose jamais en silence que ce travail a été fait. */
-    public record ArreterRequest(@NotBlank String declarationIs, @io.swagger.v3.oas.annotations.media.Schema(nullable = true) String motifDotations) {
+    public record ArreterRequest(@io.swagger.v3.oas.annotations.media.Schema(nullable = true) String motifIs, @io.swagger.v3.oas.annotations.media.Schema(nullable = true) String motifDotations) {
     }
 
     public record ArreteDTO(String statut, int figeage, @MontantJson BigDecimal resultatNet) {

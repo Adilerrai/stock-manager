@@ -25,10 +25,12 @@ CREATE TABLE compta_is_calculs (
     parametres             JSONB          NOT NULL,
     statut                 VARCHAR(10)    NOT NULL DEFAULT 'BROUILLON',
     ecriture_charge_id     BIGINT,
+    ecriture_liquidation_id BIGINT,
     valide_le              TIMESTAMP,
     valide_par             VARCHAR(150),
     CONSTRAINT fk_compta_isc_exercice FOREIGN KEY (livre_id, exercice_id) REFERENCES compta_exercices(livre_id, id) ON DELETE RESTRICT,
     CONSTRAINT fk_compta_isc_ecriture FOREIGN KEY (livre_id, ecriture_charge_id) REFERENCES compta_ecritures(livre_id, id) ON DELETE RESTRICT,
+    CONSTRAINT fk_compta_isc_liquidation FOREIGN KEY (livre_id, ecriture_liquidation_id) REFERENCES compta_ecritures(livre_id, id) ON DELETE RESTRICT,
     CONSTRAINT uk_compta_isc UNIQUE (livre_id, exercice_id),
     -- CGI art. 144 : l'impôt exigible est le plus élevé des deux, aucun crédit de CM sur l'IS suivant.
     CONSTRAINT ck_compta_isc_max CHECK (impot_du = GREATEST(is_theorique, cm)),

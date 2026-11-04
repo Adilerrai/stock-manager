@@ -109,6 +109,15 @@ public class LivreRepository {
                 """, p, Long.class);
     }
 
+    /** L'identité complète du livre : l'IS et la liasse en lisent les dates et la catégorie. */
+    public IdentiteLivreDTO identite(Long livreId) {
+        return jdbc.queryForObject("""
+                SELECT raison_sociale, forme_juridique, identifiant_fiscal, ice, registre_commerce, taxe_professionnelle, adresse, ville, activite_principale, date_constitution, date_debut_exploitation, categorie_is
+                  FROM compta_livres WHERE id = :livreId
+                """, Map.of("livreId", livreId), (rs, i) -> new IdentiteLivreDTO(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4), rs.getString(5), rs.getString(6), rs.getString(7), rs.getString(8), rs.getString(9),
+                rs.getObject(10, LocalDate.class), rs.getObject(11, LocalDate.class), rs.getString(12)));
+    }
+
     /** T01 et T31 se corrigent depuis la déclaration : seuls ces deux champs bougent. */
     public void modifierIdentifiants(Long livreId, String identifiantFiscal, String ice) {
         jdbc.update("UPDATE compta_livres SET identifiant_fiscal = :fiscal, ice = :ice WHERE id = :livreId",

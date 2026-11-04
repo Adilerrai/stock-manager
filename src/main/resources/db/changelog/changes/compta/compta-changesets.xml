@@ -63,4 +63,9 @@
                  relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
     </changeSet>
 
+    <changeSet id="compta-067-fiscal-liasse" author="compta">
+        <sqlFile path="db/changelog/changes/compta/067-compta-fiscal-liasse.sql"
+                 relativeToChangelogFile="false" splitStatements="false" stripComments="false" encoding="UTF-8"/>
+    </changeSet>
+
 </databaseChangeLog>

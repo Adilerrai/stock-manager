@@ -93,13 +93,15 @@ public class ClotureService {
     private final TransactionTemplate transaction;
 
     private final InventaireClotureService inventaires;
+    private final IsComptaService impots;
     private final ImmobilisationComptaService immobilisations;
 
     public ClotureService(ExerciceRepository exercices, ExerciceService exerciceService, PeriodeRepository periodes, JournalRepository journal, JournauxRepository journaux,
                           BrouillonRepository brouillons, ClotureRepository clotures, ControleRepository controleRepository, MesuresRepository mesures, PosteurEcritures posteur,
                           EtatService etats, EtatExports exports, ControleService controles, FecService fec, LivreCourantService livreCourant, AuditService audit,
-                          PlatformTransactionManager transactions, InventaireClotureService inventaires, ImmobilisationComptaService immobilisations) {
+                          PlatformTransactionManager transactions, InventaireClotureService inventaires, ImmobilisationComptaService immobilisations, @org.springframework.context.annotation.Lazy IsComptaService impots) {
         this.inventaires = inventaires;
+        this.impots = impots;
         this.immobilisations = immobilisations;
         this.exercices = exercices;
         this.exerciceService = exerciceService;
@@ -138,7 +140,8 @@ public class ClotureService {
         etapes.add(new EtapeClotureDTO("INVENTAIRE", inventaireValide ? "FAIT" : "A_FAIRE", inventaireValide ? "Inventaire validé" : "Validez l'inventaire, ou déclarez qu'il n'y a aucun stock"));
         long manquantes = immobilisations.dotationsManquantes(livreId, exercice);
         etapes.add(new EtapeClotureDTO("DOTATIONS", manquantes == 0 ? "FAIT" : "A_FAIRE", manquantes == 0 ? "Aucune dotation en attente" : manquantes + " immobilisation(s) sans dotation : passez-les, ou donnez un motif à l'arrêté"));
-        etapes.add(new EtapeClotureDTO("IS", ouvert ? "A_DECLARER" : "FAIT", ouvert ? "Déclaration écrite demandée à l'arrêté, jusqu'à la livraison du module d'impôt" : "Déclaré à l'arrêté"));
+        boolean isValide = impots.estValide(livreId, exerciceId);
+        etapes.add(new EtapeClotureDTO("IS", isValide ? "FAIT" : ouvert ? "A_FAIRE" : "NON_EFFECTUE", isValide ? "IS validé" : "Calculez et validez l'IS, ou donnez un motif à l'arrêté"));
         etapes.add(etapeControles(exerciceId));
         Optional<String> sha = clotures.empreinteArchive(livreId, exerciceId, ARCHIVE_FEC);
         if (clos) {
@@ -196,6 +199,10 @@ public class ClotureService {
         if (manquantes > 0 && motifDotations.isEmpty()) {
             throw new CommonException(manquantes + " immobilisation(s) sans dotation : passez les dotations, ou donnez un motif.", HttpStatus.CONFLICT, "COMPTA_ARRETE_IMPOSSIBLE");
         }
+        String motifIs = demande.motifIs() == null ? "" : demande.motifIs().trim();
+        if (!impots.estValide(livreId, exerciceId) && motifIs.isEmpty()) {
+            throw new CommonException("L'IS de " + exercice.code() + " n'est pas validé : validez-le, ou donnez un motif.", HttpStatus.CONFLICT, "COMPTA_ARRETE_IMPOSSIBLE");
+        }
         RapportControlesDTO rapport = controles.rejouer(exerciceId);
         if (rapport.bloquants() > 0) {
             StringBuilder liste = new StringBuilder(rapport.bloquants() + " contrôle(s) bloquant(s) :");
@@ -217,7 +224,7 @@ public class ClotureService {
             BigDecimal resultat = etats.resultatNet(livreId, exercice);
             clotures.arreter(livreId, exerciceId, figeage, resultat, auteur);
             audit.logAction(ActionAudit.CLOTURE, "compta_exercices", exerciceId, tronquer("Arrêté de " + exercice.code() + ", figeage " + figeage
-                    + ". IS : " + demande.declarationIs().trim() + (manquantes > 0 ? ". Dotations non passées : " + motifDotations : "")));
+                    + (motifIs.isEmpty() ? "" : ". IS non validé : " + motifIs) + (manquantes > 0 ? ". Dotations non passées : " + motifDotations : "")));
             return new ArreteDTO("ARRETE", figeage, resultat);
         });
     }

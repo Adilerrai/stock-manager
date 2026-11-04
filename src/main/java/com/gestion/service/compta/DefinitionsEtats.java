@@ -26,7 +26,7 @@ public final class DefinitionsEtats {
     }
 
     /** Une seule des formes est remplie. Saisie et registre n'ont aucune forme calculée : leur valeur n'existe pas tant que leur lot n'est pas là. */
-    public record Forme(List<Terme> termes, List<String> somme, String expr, String n1, String n2, boolean vide, String lisible) {
+    public record Forme(List<Terme> termes, List<String> somme, String expr, String n1, String n2, boolean vide, String lisible, boolean saisie) {
     }
 
     public record Ligne(String code, int ordre, String type, String libelle, String masse, boolean horsTotal, Boolean negatifAutorise, Map<String, Forme> colonnes) {
@@ -108,7 +108,7 @@ public final class DefinitionsEtats {
 
     private static Forme forme(JsonNode f) {
         return new Forme(f.has("termes") ? termes(f.path("termes")) : null, f.has("somme") ? textes(f.path("somme")) : null, texte(f, "expr"), texte(f, "n1"), texte(f, "n2"),
-                f.path("vide").asBoolean(false), texte(f, "lisible"));
+                f.path("vide").asBoolean(false), texte(f, "lisible"), f.has("saisie"));
     }
 
     private static List<Terme> termes(JsonNode noeud) {
