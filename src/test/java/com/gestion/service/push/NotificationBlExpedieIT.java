@@ -35,6 +35,7 @@ import static org.mockito.Mockito.when;
 
 /** Sur la vraie chaîne Liquibase : qui reçoit, et à quel moment de la transaction. */
 @SpringBootTest
+@org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 class NotificationBlExpedieIT extends AbstractComptaIT {
 
     private static final String P256DH = "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM";
@@ -46,6 +47,9 @@ class NotificationBlExpedieIT extends AbstractComptaIT {
     @Autowired private UserRepository utilisateurs;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private PlatformTransactionManager transactions;
+
+    @Autowired private org.springframework.test.web.servlet.MockMvc http;
+    @Autowired private com.gestion.service.LivreurService livreurs;
 
     @MockBean private WebPushSender sender;
 
@@ -141,6 +145,75 @@ class NotificationBlExpedieIT extends AbstractComptaIT {
         transaction.executeWithoutResult(etat ->
                 notifier.signaler(bl(tenant), com.gestion.persistent.enums.StatutLivraison.EN_ATTENTE));
         verify(sender, timeout(5000)).envoyer(eq(endpoint), eq(P256DH), eq(AUTH), any());
+    }
+
+    @Test
+    void uneActionDuLivreurQuiPasseLeBlAExpedieEnvoieUnMessageSansClientNiMontant() throws Exception {
+        long tenant = SocieteDeTest.creer().pointDeVenteId();
+        connecter(tenant);
+        String endpoint = abonner(creerUtilisateur("ROLE_ADMIN", tenant, true, null));
+        when(sender.envoyer(eq(endpoint), any(), any(), any())).thenReturn(WebPushSender.Resultat.ENVOYE);
+        long client = jdbc.queryForObject("INSERT INTO clients (nom, nom_complet, pays, point_de_vente_id) VALUES ('Droguerie', 'Droguerie Moulay', 'MA', ?) RETURNING id", Long.class, tenant);
+        String numero = "BL-PUSH-" + UUID.randomUUID().toString().substring(0, 8);
+        long blId = jdbc.queryForObject("""
+                INSERT INTO bons_livraison_client (numero_bl, date_bl, client_id, point_de_vente_id, statut)
+                VALUES (?, CURRENT_TIMESTAMP, ?, ?, 'EN_ATTENTE') RETURNING id
+                """, Long.class, numero, client, tenant);
+
+        declarer(blId, numero);
+
+        org.mockito.ArgumentCaptor<byte[]> message = org.mockito.ArgumentCaptor.forClass(byte[].class);
+        verify(sender, timeout(5000)).envoyer(eq(endpoint), eq(P256DH), eq(AUTH), message.capture());
+        String texte = new String(message.getValue(), java.nio.charset.StandardCharsets.UTF_8);
+        assertTrue(texte.contains("BL " + numero + " expédié"), texte);
+        assertTrue(texte.contains("/livraisons/expedition/" + blId), texte);
+        assertTrue(!texte.contains("Droguerie"), texte);
+        assertEquals("EXPEDIE", jdbc.queryForObject("SELECT statut FROM bons_livraison_client WHERE id = ?", String.class, blId));
+
+        // Déjà expédié : une seconde déclaration ne renotifie pas
+        declarer(blId, numero);
+        verify(sender, after(1500).times(1)).envoyer(eq(endpoint), any(), any(), any());
+    }
+
+    @Test
+    void lesRoutesLisentLUtilisateurDuTokenEtRefusentUnServiceInconnu() throws Exception {
+        long tenant = SocieteDeTest.creer().pointDeVenteId();
+        long id = creerUtilisateur("ROLE_ADMIN", tenant, true, null);
+        User utilisateur = utilisateurs.findById(id).orElseThrow();
+        var connecte = org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user(utilisateur);
+        String endpoint = endpoint();
+        when(sender.actif()).thenReturn(true);
+        when(sender.clePublique()).thenReturn("CLE-PUBLIQUE");
+
+        http.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/push/configuration"))
+                .andExpect(result -> assertTrue(List.of(401, 403).contains(result.getResponse().getStatus()), "anonyme refusé"));
+
+        http.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/push/configuration").with(connecte))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.clePublique").value("CLE-PUBLIQUE"));
+
+        http.perform(abonnement(endpoint).with(connecte))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNoContent());
+        assertEquals(1, abonnements.findByUserId(id).size());
+
+        http.perform(abonnement("https://169.254.169.254/latest/meta-data").with(connecte))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isBadRequest());
+        assertEquals(1, abonnements.findByUserId(id).size());
+
+        http.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/push/abonnements/retrait").with(connecte)
+                        .contentType("application/json").content("{\"endpoint\":\"" + endpoint + "\"}"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().isNoContent());
+        assertTrue(abonnements.findByUserId(id).isEmpty());
+    }
+
+    private static org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder abonnement(String endpoint) {
+        return org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/push/abonnements").contentType("application/json")
+                .content("{\"endpoint\":\"" + endpoint + "\",\"p256dh\":\"" + P256DH + "\",\"auth\":\"" + AUTH + "\"}");
+    }
+
+    private void declarer(long blId, String numero) throws Exception {
+        livreurs.declarerAction(null, com.gestion.persistent.enums.TypeDocumentLivreur.BON_LIVRAISON, blId, numero, "Droguerie",
+                com.gestion.persistent.enums.TypeActionLivreur.FACTURE_DEPOSEE, null, "Livreur", null, null, null);
     }
 
     private static com.gestion.persistent.model.BonLivraisonClient bl(long tenant) {

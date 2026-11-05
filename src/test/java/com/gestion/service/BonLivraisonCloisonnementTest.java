@@ -86,6 +86,33 @@ class BonLivraisonCloisonnementTest {
         assertEquals(HttpStatus.BAD_REQUEST, erreur.getStatus());
     }
 
+    @Test
+    void uneExpeditionNeSignaleQueLePremierPassageAExpedie() {
+        connecter("ROLE_ADMIN");
+        com.gestion.service.push.ExpeditionBlNotifier notifier = mock(com.gestion.service.push.ExpeditionBlNotifier.class);
+        BonLivraisonClientService avecStock = new BonLivraisonClientService(depot, null, null, null, null,
+                mock(MouvementStockService.class), mock(com.gestion.mapper.BonLivraisonClientMapper.class), null, null, null, null, null, null);
+        avecStock.setExpeditionBlNotifier(notifier);
+
+        com.gestion.persistent.model.Produit produit = new com.gestion.persistent.model.Produit();
+        produit.setId(1L);
+        com.gestion.persistent.model.LigneBonLivraisonClient ligne = new com.gestion.persistent.model.LigneBonLivraisonClient();
+        ligne.setProduit(produit);
+        BonLivraisonClient bl = new BonLivraisonClient();
+        bl.setId(5L);
+        bl.setPointDeVenteId(TENANT);
+        bl.setStatut(StatutLivraison.EN_ATTENTE);
+        bl.setLignes(new java.util.ArrayList<>(List.of(ligne)));
+        when(depot.findByIdAndPointDeVenteId(5L, TENANT)).thenReturn(Optional.of(bl));
+        when(depot.save(bl)).thenReturn(bl);
+
+        avecStock.expedierBL(5L, null, null);
+        avecStock.expedierBL(5L, null, "Modification après expédition");
+
+        assertEquals(StatutLivraison.EXPEDIE, bl.getStatut());
+        verify(notifier, org.mockito.Mockito.times(1)).signaler(bl, StatutLivraison.EN_ATTENTE);
+    }
+
     private static void connecter(String nomRole) {
         Role role = new Role();
         role.setNom(nomRole);
