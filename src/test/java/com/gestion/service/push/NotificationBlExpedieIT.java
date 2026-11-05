@@ -175,6 +175,30 @@ class NotificationBlExpedieIT extends AbstractComptaIT {
         verify(sender, after(1500).times(1)).envoyer(eq(endpoint), any(), any(), any());
     }
 
+    /** Ce que le bouton « Déclarer BL Expédié » envoie réellement. */
+    @Test
+    void leBoutonBlExpedieDuLivreurNotifieUneSeuleFois() throws Exception {
+        long tenant = SocieteDeTest.creer().pointDeVenteId();
+        connecter(tenant);
+        String endpoint = abonner(creerUtilisateur("ROLE_ADMIN", tenant, true, null));
+        when(sender.envoyer(eq(endpoint), any(), any(), any())).thenReturn(WebPushSender.Resultat.ENVOYE);
+        long client = jdbc.queryForObject("INSERT INTO clients (nom, nom_complet, pays, point_de_vente_id) VALUES ('Droguerie', 'Droguerie Moulay', 'MA', ?) RETURNING id", Long.class, tenant);
+        String numero = "BL-PUSH-" + UUID.randomUUID().toString().substring(0, 8);
+        long blId = jdbc.queryForObject("""
+                INSERT INTO bons_livraison_client (numero_bl, date_bl, client_id, point_de_vente_id, statut)
+                VALUES (?, CURRENT_TIMESTAMP, ?, ?, 'EN_ATTENTE') RETURNING id
+                """, Long.class, numero, client, tenant);
+
+        for (int i = 0; i < 2; i++) {
+            livreurs.declarerAction(null, com.gestion.persistent.enums.TypeDocumentLivreur.BON_LIVRAISON, blId, numero, "Droguerie",
+                    com.gestion.persistent.enums.TypeActionLivreur.LIVRAISON_EFFECTUEE, null, "Livreur", null, null, null);
+        }
+
+        verify(sender, timeout(5000)).envoyer(eq(endpoint), eq(P256DH), eq(AUTH), any());
+        verify(sender, after(1500).times(1)).envoyer(eq(endpoint), any(), any(), any());
+        assertEquals("CACHETE", jdbc.queryForObject("SELECT statut FROM bons_livraison_client WHERE id = ?", String.class, blId));
+    }
+
     @Test
     void lesRoutesLisentLUtilisateurDuTokenEtRefusentUnServiceInconnu() throws Exception {
         long tenant = SocieteDeTest.creer().pointDeVenteId();

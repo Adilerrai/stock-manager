@@ -26,7 +26,23 @@ public class ExpeditionBlNotifier {
     }
 
     public void signaler(BonLivraisonClient bl, StatutLivraison statutPrecedent) {
-        if (bl.getStatut() != StatutLivraison.EXPEDIE || DEJA_PARTI.contains(statutPrecedent) || !blDuTenantDeLActeur(bl)) {
+        if (bl.getStatut() == StatutLivraison.EXPEDIE) {
+            publier(bl, statutPrecedent);
+        }
+    }
+
+    /**
+     * L'écran du livreur appelle « BL Expédié » une action qui met le BL en CACHETE, pas en EXPEDIE :
+     * le statut ne suffit donc pas ici. Seule exception, un BL annulé, que la déclaration ne modifie pas.
+     */
+    public void signalerDeclarationLivreur(BonLivraisonClient bl, StatutLivraison statutPrecedent) {
+        if (bl.getStatut() != StatutLivraison.ANNULEE) {
+            publier(bl, statutPrecedent);
+        }
+    }
+
+    private void publier(BonLivraisonClient bl, StatutLivraison statutPrecedent) {
+        if (DEJA_PARTI.contains(statutPrecedent) || !blDuTenantDeLActeur(bl)) {
             return;
         }
         evenements.publishEvent(new BonLivraisonExpedieEvent(bl.getId(), bl.getNumeroBl(), bl.getPointDeVenteId()));

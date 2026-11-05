@@ -69,6 +69,40 @@ class ExpeditionBlNotifierTest {
         assertTrue(publies.isEmpty());
     }
 
+    @ParameterizedTest
+    @EnumSource(value = StatutLivraison.class, names = {"CACHETE", "EXPEDIE"})
+    void uneDeclarationDuLivreurNotifieQuelQueSoitLeStatutObtenu(StatutLivraison statutObtenu) {
+        connecter(7L);
+        notifier.signalerDeclarationLivreur(bl(statutObtenu, 7L), StatutLivraison.EN_ATTENTE);
+
+        assertEquals(List.of(new BonLivraisonExpedieEvent(42L, "BL-2026-0012", 7L)), publies);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = StatutLivraison.class, names = {"EXPEDIE", "EN_LIVRAISON", "PARTIELLE", "CACHETE", "LIVREE"})
+    void uneDeclarationSurUnBlDejaPartiNeNotifiePas(StatutLivraison precedent) {
+        connecter(7L);
+        notifier.signalerDeclarationLivreur(bl(StatutLivraison.CACHETE, 7L), precedent);
+
+        assertTrue(publies.isEmpty());
+    }
+
+    @Test
+    void uneDeclarationSurUnBlAnnuleNeNotifiePas() {
+        connecter(7L);
+        notifier.signalerDeclarationLivreur(bl(StatutLivraison.ANNULEE, 7L), StatutLivraison.ANNULEE);
+
+        assertTrue(publies.isEmpty());
+    }
+
+    @Test
+    void uneDeclarationSurUnBlDUnAutreTenantNeNotifiePas() {
+        connecter(7L);
+        notifier.signalerDeclarationLivreur(bl(StatutLivraison.CACHETE, 8L), StatutLivraison.EN_ATTENTE);
+
+        assertTrue(publies.isEmpty());
+    }
+
     private static void connecter(Long tenant) {
         User acteur = new User();
         acteur.setTenantId(tenant);

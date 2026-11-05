@@ -270,7 +270,7 @@ public class LivreurService {
                         bl.setStatut((typeAction == TypeActionLivreur.LIVRAISON_EFFECTUEE || typeAction == TypeActionLivreur.BL_EXPEDIE || typeAction == TypeActionLivreur.LES_DEUX) ? StatutLivraison.CACHETE : StatutLivraison.EXPEDIE);
                     }
                     bonLivraisonClientRepository.save(bl);
-                    expeditionBlNotifier.signaler(bl, statutPrecedent);
+                    expeditionBlNotifier.signalerDeclarationLivreur(bl, statutPrecedent);
 
                     if (bl.getFacture() != null) {
                         Facture fac = bl.getFacture();
