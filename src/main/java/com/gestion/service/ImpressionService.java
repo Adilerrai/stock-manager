@@ -4,6 +4,12 @@ import com.gestion.persistent.model.*;
 import com.gestion.persistent.enums.*;
 import com.gestion.repository.*;
 import com.gestion.util.FrenchNumberToWords;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.WriterException;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import net.sf.jasperreports.engine.util.JRLoader;
@@ -14,10 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.imageio.ImageIO;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -138,6 +146,7 @@ public class ImpressionService {
 
         Map<String, Object> params = initCommonTenantParams();
         params.put("numeroFacture", facture.getNumeroFacture());
+        ajouterQrCode(params, QR_PREFIXE_FACTURE, facture.getNumeroFacture());
         params.put("dateFacture",
                 facture.getDateFacture() != null ? facture.getDateFacture().format(DATE_FORMATTER) : "-");
         params.put("dateEcheance",
@@ -291,6 +300,7 @@ public class ImpressionService {
         Map<String, Object> params = initCommonTenantParams();
         params.put("afficherPrix", afficherPrix);
         params.put("numeroBl", bl.getNumeroBl());
+        ajouterQrCode(params, QR_PREFIXE_BL, bl.getNumeroBl());
         params.put("dateBl", bl.getDateBl() != null ? bl.getDateBl().format(DATETIME_FORMATTER) : "-");
         params.put("statut", bl.getStatut() != null ? bl.getStatut().toString() : "LIVRÉ");
         String cmdRef = bl.getCommandeClient() != null ? bl.getCommandeClient().getNumeroCommande() : null;
@@ -1126,6 +1136,57 @@ public class ImpressionService {
         params.put("totalArticles", totalArticles);
 
         return exportToPdf("transfert_stock", params, lignes);
+    }
+
+    // ==========================================
+    // Utilitaires : QR code des documents clients (BL / Facture)
+    // ==========================================
+    // Format partagé avec le frontend (scanner) : "TADBEER:BL:<numeroBl>" et "TADBEER:FACTURE:<numeroFacture>".
+    // Le numéro est repris tel qu'il est stocké, sans retouche.
+    static final String QR_PREFIXE_BL = "TADBEER:BL:";
+    static final String QR_PREFIXE_FACTURE = "TADBEER:FACTURE:";
+    static final String PARAM_QR_CODE = "qrCode";
+    private static final int QR_TAILLE_PX = 300;
+
+    /**
+     * Place l'image QR dans le paramètre "qrCode" du rapport. Si le numéro est vide (ou si
+     * l'encodage échoue), rien n'est ajouté : le gabarit masque alors la zone QR.
+     * Visibilité paquet pour les tests.
+     */
+    static void ajouterQrCode(Map<String, Object> params, String prefixe, String numero) {
+        if (numero == null || numero.isBlank()) {
+            return;
+        }
+        try {
+            params.put(PARAM_QR_CODE, genererImageQrCode(prefixe + numero));
+        } catch (WriterException | RuntimeException e) {
+            log.warn("Impossible de générer le QR code « {}{} » : {}", prefixe, numero, e.getMessage());
+        }
+    }
+
+    /**
+     * Dessine le QR (correction d'erreur M, marge 1 module) en noir sur fond blanc, ~300 px.
+     * Image ARGB entièrement opaque : JasperReports encode en JPEG toute image sans canal alpha
+     * (RendererUtil.getRenderable), ce qui baverait sur les modules ; avec alpha il l'encode en PNG, sans perte.
+     */
+    static BufferedImage genererImageQrCode(String contenu) throws WriterException {
+        Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
+        hints.put(EncodeHintType.MARGIN, 1);
+        // UTF-8 (avec en-tête ECI) uniquement si le numéro sort de l'ASCII : sinon encodage standard, lu par tous les lecteurs
+        if (!StandardCharsets.US_ASCII.newEncoder().canEncode(contenu)) {
+            hints.put(EncodeHintType.CHARACTER_SET, StandardCharsets.UTF_8.name());
+        }
+        BitMatrix matrice = new QRCodeWriter().encode(contenu, BarcodeFormat.QR_CODE, QR_TAILLE_PX, QR_TAILLE_PX, hints);
+        int largeur = matrice.getWidth();
+        int hauteur = matrice.getHeight();
+        BufferedImage image = new BufferedImage(largeur, hauteur, BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < hauteur; y++) {
+            for (int x = 0; x < largeur; x++) {
+                image.setRGB(x, y, matrice.get(x, y) ? 0xFF000000 : 0xFFFFFFFF);
+            }
+        }
+        return image;
     }
 
     // ==========================================

@@ -55,6 +55,13 @@ public class GedService {
         return tenantId != null ? tenantId : 1L;
     }
 
+    /** Hors de sa société, seul le superadmin atteint un document : sinon un simple id suffirait à lire ou effacer les pièces d'un autre tenant. */
+    private static boolean estSuperAdmin() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return auth != null && auth.getPrincipal() instanceof User u
+                && u.getRole() != null && "ROLE_SUPERADMIN".equalsIgnoreCase(u.getRole().getNom());
+    }
+
     private String getUsername() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -306,8 +313,8 @@ public class GedService {
     public DocumentComptableDTO getDocument(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
-                .orElseGet(() -> documentRepository.findById(id)
-                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable avec l'ID: " + id)));
+                .or(() -> documentRepository.findById(id).filter(d -> estSuperAdmin()))
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable avec l'ID: " + id));
         return toDto(doc);
     }
 
@@ -315,8 +322,8 @@ public class GedService {
     public Resource chargerFichier(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
-                .orElseGet(() -> documentRepository.findById(id)
-                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable avec l'ID: " + id)));
+                .or(() -> documentRepository.findById(id).filter(d -> estSuperAdmin()))
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable avec l'ID: " + id));
 
         try {
             Path file = Paths.get(doc.getCheminStockage());
@@ -348,8 +355,8 @@ public class GedService {
     public DocumentComptableDTO lierAEcriture(Long documentId, Long ecritureId) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(documentId, tenantId)
-                .orElseGet(() -> documentRepository.findById(documentId)
-                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId)));
+                .or(() -> documentRepository.findById(documentId).filter(d -> estSuperAdmin()))
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId));
 
         doc.setEcritureId(ecritureId);
         DocumentComptable saved = documentRepository.save(doc);
@@ -371,8 +378,8 @@ public class GedService {
     public DocumentComptableDTO lierDocument(Long documentId, Long factureAchatId, Long commandeClientId, Long livraisonId, Long paiementId, Long chequeEffetId, Long bonLivraisonClientId, Long depenseId) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(documentId, tenantId)
-                .orElseGet(() -> documentRepository.findById(documentId)
-                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId)));
+                .or(() -> documentRepository.findById(documentId).filter(d -> estSuperAdmin()))
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + documentId));
 
         if (factureAchatId != null) doc.setFactureAchatId(factureAchatId);
         if (commandeClientId != null) doc.setCommandeClientId(commandeClientId);
@@ -389,8 +396,8 @@ public class GedService {
     public void supprimerDocument(Long id) {
         Long tenantId = getTenantId();
         DocumentComptable doc = documentRepository.findByIdAndPointDeVenteId(id, tenantId)
-                .orElseGet(() -> documentRepository.findById(id)
-                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + id)));
+                .or(() -> documentRepository.findById(id).filter(d -> estSuperAdmin()))
+                        .orElseThrow(() -> new IllegalArgumentException("Document introuvable ID: " + id));
 
         // Suppression physique du fichier sur le disque
         try {

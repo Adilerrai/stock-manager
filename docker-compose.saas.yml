@@ -5,6 +5,9 @@ services:
     container_name: saas-app-api
     image: saas-app-api:latest
     restart: unless-stopped
+    # GED et photos des livreurs : hors du conteneur, sinon perdues à chaque redéploiement
+    volumes:
+      - saas-uploads:/app/uploads
     environment:
       - SERVER_PORT=8010
       - PUSH_VAPID_PUBLIC_KEY=${PUSH_VAPID_PUBLIC_KEY:-}
@@ -21,3 +24,7 @@ services:
 networks:
   apps.prod:
     external: true
+
+volumes:
+  saas-uploads:
+    name: saas-uploads

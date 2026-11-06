@@ -1,6 +1,8 @@
 package com.gestion.service;
 
+import com.acommon.exception.CommonException;
 import com.acommon.persistant.model.TenantContext;
+import org.springframework.http.HttpStatus;
 import com.gestion.persistent.dto.DocumentLivreurCandidateDTO;
 import com.gestion.persistent.enums.TypeActionLivreur;
 import com.gestion.persistent.enums.TypeDocumentLivreur;
@@ -19,37 +21,34 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class LivreurService {
 
     private static final Logger log = LoggerFactory.getLogger(LivreurService.class);
-    private static final String UPLOAD_DIR = "uploads/ged/livraisons/";
+    /** Type de pièce GED des photos de décharge : les distingue des pièces ajoutées au bureau. */
+    static final String TYPE_PIECE_DECHARGE = "DECHARGE_LIVREUR";
 
     private final PreuveDepotLivreurRepository preuveDepotLivreurRepository;
     private final BonLivraisonClientRepository bonLivraisonClientRepository;
     private final FactureRepository factureRepository;
     private final ExpeditionBlNotifier expeditionBlNotifier;
+    private final GedService gedService;
 
     public LivreurService(PreuveDepotLivreurRepository preuveDepotLivreurRepository,
                           BonLivraisonClientRepository bonLivraisonClientRepository,
                           FactureRepository factureRepository,
-                          ExpeditionBlNotifier expeditionBlNotifier) {
+                          ExpeditionBlNotifier expeditionBlNotifier,
+                          GedService gedService) {
         this.preuveDepotLivreurRepository = preuveDepotLivreurRepository;
         this.bonLivraisonClientRepository = bonLivraisonClientRepository;
         this.factureRepository = factureRepository;
         this.expeditionBlNotifier = expeditionBlNotifier;
+        this.gedService = gedService;
     }
 
     private Long getCurrentTenant() {
@@ -213,6 +212,17 @@ public class LivreurService {
                                              Double longitude) throws IOException {
         Long tenantId = getCurrentTenant();
 
+        // Le document doit appartenir à la société du livreur : sinon ni statut, ni photo, ni notification
+        BonLivraisonClient blDeclare = null;
+        Facture factureDeclaree = null;
+        if (documentType == TypeDocumentLivreur.BON_LIVRAISON) {
+            blDeclare = bonLivraisonClientRepository.findByIdAndPointDeVenteId(documentId, tenantId)
+                    .orElseThrow(() -> new CommonException("Bon de livraison introuvable", HttpStatus.NOT_FOUND));
+        } else if (documentType == TypeDocumentLivreur.FACTURE) {
+            factureDeclaree = factureRepository.findByIdAndPointDeVenteId(documentId, tenantId)
+                    .orElseThrow(() -> new CommonException("Facture introuvable", HttpStatus.NOT_FOUND));
+        }
+
         PreuveDepotLivreur preuve = new PreuveDepotLivreur();
         preuve.setPointDeVenteId(tenantId);
         preuve.setDocumentType(documentType);
@@ -227,29 +237,10 @@ public class LivreurService {
         preuve.setLongitude(longitude);
         preuve.setDateDeclaration(LocalDateTime.now());
 
+        // Hors du try plus bas : une photo qui ne s'enregistre pas fait échouer la déclaration au lieu de se perdre
         if (photo != null && !photo.isEmpty()) {
-            Path uploadPath = Paths.get(UPLOAD_DIR).toAbsolutePath().normalize();
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            String originalName = photo.getOriginalFilename();
-            String extension = "";
-            if (originalName != null && originalName.contains(".")) {
-                extension = originalName.substring(originalName.lastIndexOf("."));
-            } else {
-                extension = ".jpg";
-            }
-
-            String filename = "preuve_" + System.currentTimeMillis() + "_" + UUID.randomUUID().toString().substring(0, 8) + extension;
-            Path filePath = uploadPath.resolve(filename);
-            try (InputStream is = photo.getInputStream()) {
-                Files.copy(is, filePath, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            preuve.setNomFichierPhoto(originalName);
-            preuve.setPhotoUrl(UPLOAD_DIR + filename);
-            log.info("Photo de livraison/facture enregistrée: {}", filePath);
+            preuve.setNomFichierPhoto(photo.getOriginalFilename());
+            preuve.setPhotoUrl(rattacherDechargeAGed(photo, blDeclare, factureDeclaree, nomLivreur, commentaire));
         }
 
         PreuveDepotLivreur saved = preuveDepotLivreurRepository.save(preuve);
@@ -259,8 +250,8 @@ public class LivreurService {
         // Association automatique de la pièce jointe et mise à jour des statuts métier :
         // BL -> CACHETE / EXPEDIE, Facture -> DEPOSEE
         try {
-            if (documentType == TypeDocumentLivreur.BON_LIVRAISON) {
-                bonLivraisonClientRepository.findByIdAndPointDeVenteId(documentId, tenantId).ifPresent(bl -> {
+            if (blDeclare != null) {
+                java.util.Optional.of(blDeclare).ifPresent(bl -> {
                     bl.setDateLivraisonEffective(LocalDateTime.now());
                     if (commentaire != null && !commentaire.isBlank()) {
                         bl.setCommentaireLivreur(commentaire);
@@ -299,8 +290,8 @@ public class LivreurService {
                         }
                     }
                 });
-            } else if (documentType == TypeDocumentLivreur.FACTURE) {
-                factureRepository.findById(documentId).ifPresent(f -> {
+            } else if (factureDeclaree != null) {
+                java.util.Optional.of(factureDeclaree).ifPresent(f -> {
                     if (f.getStatut() != StatutFacture.ANNULEE) {
                         f.setStatut(StatutFacture.DEPOSEE);
                         factureRepository.save(f);
@@ -344,6 +335,41 @@ public class LivreurService {
         }
 
         return saved;
+    }
+
+    /**
+     * La photo va dans la GED de la société : elle apparaît dans les pièces jointes du BL et de sa facture,
+     * avec son empreinte SHA-256. Une seule pièce quand le BL et sa facture vont ensemble ;
+     * chaque BL de plus sur la même facture reçoit sa propre copie, la GED ne liant qu'un BL par pièce.
+     *
+     * @return l'URL de visualisation de la pièce principale
+     */
+    private String rattacherDechargeAGed(MultipartFile photo, BonLivraisonClient bl, Facture facture,
+                                         String nomLivreur, String commentaire) throws IOException {
+        String description = "Décharge livreur"
+                + (nomLivreur != null && !nomLivreur.isBlank() ? " (" + nomLivreur.trim() + ")" : "")
+                + (commentaire != null && !commentaire.isBlank() ? " : " + commentaire.trim() : "");
+        if (description.length() > 500) {
+            description = description.substring(0, 500);
+        }
+        if (bl != null) {
+            Facture sienne = bl.getFacture();
+            return stockerDecharge(photo, description, bl.getId(), sienne != null ? sienne.getId() : null);
+        }
+        if (facture != null) {
+            List<BonLivraisonClient> bls = facture.getBonsLivraison() != null ? new ArrayList<>(facture.getBonsLivraison()) : List.of();
+            String url = stockerDecharge(photo, description, bls.isEmpty() ? null : bls.get(0).getId(), facture.getId());
+            for (int i = 1; i < bls.size(); i++) {
+                stockerDecharge(photo, description, bls.get(i).getId(), null);
+            }
+            return url;
+        }
+        return stockerDecharge(photo, description, null, null);
+    }
+
+    private String stockerDecharge(MultipartFile photo, String description, Long blId, Long factureId) throws IOException {
+        return gedService.stockerDocument(photo, TYPE_PIECE_DECHARGE, description,
+                null, null, factureId, null, null, null, null, blId).getUrlVisualisation();
     }
 
     @Transactional(readOnly = true)

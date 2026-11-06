@@ -208,6 +208,13 @@
             <version>6.20.6</version>
         </dependency>
 
+        <!-- ZXing (core seul) : QR code imprimé sur le BL client et la facture client -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
         <!-- iText patché (version js8) pour compatibilité JasperReports -->
         <dependency>
             <groupId>com.lowagie</groupId>

@@ -5,6 +5,9 @@ services:
     container_name: omega-app-api
     image: omega-app-api:latest
     restart: unless-stopped
+    # GED et photos des livreurs : hors du conteneur, sinon perdues à chaque redéploiement
+    volumes:
+      - omega-uploads:/app/uploads
     environment:
       - SERVER_PORT=8009
       - PUSH_VAPID_PUBLIC_KEY=${PUSH_VAPID_PUBLIC_KEY:-}
@@ -21,3 +24,7 @@ services:
 networks:
   apps.prod:
     external: true
+
+volumes:
+  omega-uploads:
+    name: omega-uploads

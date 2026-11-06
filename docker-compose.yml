@@ -4,6 +4,9 @@ services:
     image: ${IMAGE_NAME:-pointvente-app-api}:latest
     build: .
     restart: unless-stopped
+    # GED et photos des livreurs : hors du conteneur, sinon perdues à chaque redéploiement
+    volumes:
+      - pointvente-uploads:/app/uploads
     environment:
       - SERVER_PORT=${SERVER_PORT:-8009}
       - PUSH_VAPID_PUBLIC_KEY=${PUSH_VAPID_PUBLIC_KEY:-}
@@ -20,4 +23,8 @@ services:
 networks:
   apps.prod:
     external: true
+
+volumes:
+  pointvente-uploads:
+    name: ${UPLOADS_VOLUME:-pointvente-uploads}
 
