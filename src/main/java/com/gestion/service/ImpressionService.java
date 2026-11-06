@@ -500,7 +500,8 @@ public class ImpressionService {
                     map.put("designation", ld.getProduit() != null ? ld.getProduit().getDesignation() : "Article");
                     map.put("quantite", ld.getQuantite() != null ? ld.getQuantite() : BigDecimal.ZERO);
                     map.put("prixUnitaireHT", ld.getPrixUnitaireHT() != null ? ld.getPrixUnitaireHT() : BigDecimal.ZERO);
-                    map.put("tauxTVA", ld.getTauxTVA() != null ? ld.getTauxTVA() : new BigDecimal("20.00"));
+                    // Le taux imprimé est celui du calcul : une ligne sans taux est comptée à 0 % (LigneDevis.calculerMontants)
+                    map.put("tauxTVA", ld.getTauxTVA() != null ? ld.getTauxTVA() : BigDecimal.ZERO);
                     map.put("montantHT", ld.getMontantHT() != null ? ld.getMontantHT() : BigDecimal.ZERO);
                     map.put("etatStock", etatStock);
                     map.put("disponible", disponible);
@@ -514,7 +515,7 @@ public class ImpressionService {
             mo.put("designation", "MAIN D'ŒUVRE");
             mo.put("quantite", BigDecimal.ONE);
             mo.put("prixUnitaireHT", totalMoHT);
-            mo.put("tauxTVA", moTauxTVA != null ? moTauxTVA : new BigDecimal("20.00"));
+            mo.put("tauxTVA", moTauxTVA != null ? moTauxTVA : BigDecimal.ZERO);
             mo.put("montantHT", totalMoHT);
             mo.put("etatStock", "Disponible");
             mo.put("disponible", true);
