@@ -40,6 +40,8 @@ public final class SuperAdminHabilitations {
 
     // 5. Pilotage, Rapports & Administration
     public static final String DASHBOARD_VOIR = "DASHBOARD_VOIR";
+    /** Voir le journal d'activité du tableau de bord (devis, BC, BL, factures, encaissements, règlements). */
+    public static final String JOURNAL_ACTIVITE_READ = "JOURNAL_ACTIVITE_READ";
     public static final String RAPPORT_VOIR = "RAPPORT_VOIR";
     public static final String ADMIN_ROLES = "ADMIN_ROLES";
     public static final String ADMIN_HABILITATIONS = "ADMIN_HABILITATIONS";
@@ -91,8 +93,8 @@ public final class SuperAdminHabilitations {
             "COMPTA_READ", "COMPTA_ECRITURE", "COMPTA_LETTRAGE", "COMPTA_CLOTURE", "FISCALITE_LIASSE",
             // Trésorerie (3)
             "TRESORERIE_READ", "TRESORERIE_MOUVEMENT", "TRESORERIE_RAPPROCHEMENT",
-            // Rapports, Marges sensibles & Audit (4)
-            "RAPPORT_READ", "RAPPORT_EXPORT", "VENTE_PRIX_ACHAT_VIEW", "AUDIT_LOG_READ",
+            // Rapports, Marges sensibles, Audit & Journal d'activité (5)
+            "RAPPORT_READ", "RAPPORT_EXPORT", "VENTE_PRIX_ACHAT_VIEW", "AUDIT_LOG_READ", JOURNAL_ACTIVITE_READ,
             // Utilisateurs (4)
             "USER_READ", "USER_CREATE", "USER_UPDATE", "USER_DELETE",
             // Administration (3)
